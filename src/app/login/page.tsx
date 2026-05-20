@@ -1,7 +1,7 @@
 "use client";
 
 import { Alert, Button, Card, Input, Label } from "@/components/ui";
-import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
+import { APP_NAME, APP_TAGLINE, ORG_NAME, ORG_URL } from "@/lib/brand";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -73,6 +73,11 @@ export default function LoginPage() {
         <p className="mt-6 text-xs text-panel-muted">
           Default after first start: admin / changeme or klant / changeme (see README).
           Development: set VIRTUALMIN_MOCK=true in .env.local.
+        </p>
+        <p className="mt-3 text-center text-xs text-panel-muted">
+          <a href={ORG_URL} className="hover:text-white" rel="noopener noreferrer">
+            {ORG_NAME}
+          </a>
         </p>
       </Card>
     </div>

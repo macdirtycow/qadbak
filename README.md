@@ -1,6 +1,7 @@
 # Nexmin
 
-**Website:** [nexmin.net](https://nexmin.net)
+**Nexmin (this product):** [nexmin.net](https://nexmin.net)  
+**Omiiba (official):** [omiiba.dev](https://omiiba.dev) · [omiiba.com](https://omiiba.com)
 
 **Nexmin** is a modern English UI layer **on top of** [VirtualMin](https://virtualmin.com) / Webmin — not a fork. Domains, email, databases, DNS, SSL, server management, and Webmin login links with role-based access (admin / client).
 
