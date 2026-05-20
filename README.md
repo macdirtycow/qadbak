@@ -111,4 +111,4 @@ scripts/          test-api, hash-password
 
 ## License
 
-Private project — no public distribution unless you choose otherwise later.
+**All Rights Reserved.** This repository is public for transparency and reference only. You may not use, copy, modify, or distribute the code without written permission from the copyright holder. See [LICENSE](LICENSE).
