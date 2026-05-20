@@ -13,7 +13,7 @@ export interface DomainFileEntry {
 }
 
 export interface DomainFilesListing {
-  mode: "panel" | "virtualmin";
+  mode: "nexmin" | "virtualmin";
   home: string;
   cwd: string;
   breadcrumbs: { label: string; path: string }[];
@@ -179,7 +179,7 @@ const MOCK_TEXT: Record<string, string> = {
 </head>
 <body>
   <h1>Website</h1>
-  <p>Manage this file via the panel.</p>
+  <p>Manage this file in Nexmin.</p>
 </body>
 </html>`,
   "public_html/robots.txt": "User-agent: *\nDisallow:\n",
@@ -353,13 +353,13 @@ export function listDomainFiles(
   }
 
   const entries = (MOCK_TREE[cwd] ?? []).map((e) => enrichEntry({ ...e }));
-  return { ...base, mode: "panel", entries };
+  return { ...base, mode: "nexmin", entries };
 }
 
 export function getDomainFile(path: string): DomainFileContent {
   if (!isPanelFilesMode()) {
     throw new VirtualMinError(
-      "File content is only available in the panel with VIRTUALMIN_MOCK=true.",
+      "File content is only available in Nexmin with VIRTUALMIN_MOCK=true.",
     );
   }
   const name = path.split("/").pop() ?? path;
@@ -392,7 +392,7 @@ export function getDomainFile(path: string): DomainFileContent {
 export function saveDomainFileContent(path: string, content: string): void {
   if (!isPanelFilesMode()) {
     throw new VirtualMinError(
-      "Saving via the panel is not available on the live server.",
+      "Saving in Nexmin is not available on the live server.",
     );
   }
   const parent = path.includes("/") ? path.replace(/\/[^/]+$/, "") : "";
@@ -485,7 +485,7 @@ export function getDomainFileDownload(
 
 export function deleteDomainFilePath(path: string): void {
   if (!isPanelFilesMode()) {
-    throw new VirtualMinError("Deleting via the panel is not available on the live server.");
+    throw new VirtualMinError("Deleting in Nexmin is not available on the live server.");
   }
   const parent = path.includes("/") ? path.replace(/\/[^/]+$/, "") : "";
   const entry = MOCK_TREE[parent]?.find((e) => e.path === path);
@@ -504,7 +504,7 @@ export function deleteDomainFilePath(path: string): void {
 
 export function createDomainDirectory(parent: string, name: string): string {
   if (!isPanelFilesMode()) {
-    throw new VirtualMinError("Creating directories via the panel is not available on the live server.");
+    throw new VirtualMinError("Creating directories in Nexmin is not available on the live server.");
   }
   const parentNorm = normalizeDir(parent);
   assertWritableDir(parentNorm);

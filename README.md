@@ -1,6 +1,6 @@
-# VirtualMin Panel
+# Nexmin
 
-Modern English UI layer **on top of** [VirtualMin](https://virtualmin.com) / Webmin — not a fork. Domains, email, databases, DNS, SSL, server management, and Webmin login links with role-based access (admin / client).
+**Nexmin** is a modern English UI layer **on top of** [VirtualMin](https://virtualmin.com) / Webmin — not a fork. Domains, email, databases, DNS, SSL, server management, and Webmin login links with role-based access (admin / client).
 
 > **Status:** Work in progress — UI phases 1–8 are implemented; production testing on a separate VPS is planned.
 
@@ -14,7 +14,7 @@ Modern English UI layer **on top of** [VirtualMin](https://virtualmin.com) / Web
 
 ```bash
 git clone <your-private-repo-url>
-cd virtualmin-panel
+cd nexmin
 cp .env.example .env.local
 ```
 
@@ -51,7 +51,7 @@ node scripts/hash-password.mjs your-password
 4. `WEBMIN_UI_URL` / `USERMIN_UI_URL` for Webmin/Usermin links
 5. API test: `npm run test-api`
 6. Build: `npm run build && npm run start`
-7. Reverse proxy: [deploy/nginx-panel.conf](deploy/nginx-panel.conf)
+7. Reverse proxy: [deploy/nginx-nexmin.conf](deploy/nginx-nexmin.conf)
 
 For self-signed TLS on port 10000: prefer a valid certificate; otherwise temporarily `NODE_TLS_REJECT_UNAUTHORIZED=0` (testing only).
 
@@ -68,7 +68,7 @@ For self-signed TLS on port 10000: prefer a valid certificate; otherwise tempora
 | Phase | Scope |
 |-------|--------|
 | 1–2 | Domains, email, DB, DNS, SSL, aliases, redirects, backups |
-| 3 | Files (panel mock / Webmin live), logs, PHP, protected directories |
+| 3 | Files (Nexmin mock / Webmin live), logs, PHP, protected directories |
 | 4–6 | Lifecycle, scripts, cron, extended mail, FTP |
 | 7–8 | Server/reseller admin, cloud S3, system config |
 
@@ -77,7 +77,7 @@ Active phase: `IMPLEMENTED_PHASE` in `src/lib/features.ts`. In-app overview: `/f
 ## Architecture
 
 ```
-Browser → Next.js panel (auth, RBAC, English UI)
+Browser → Nexmin (Next.js, auth, RBAC, English UI)
               ↓ server-side only
          virtualmin.ts → remote.cgi
               ↓

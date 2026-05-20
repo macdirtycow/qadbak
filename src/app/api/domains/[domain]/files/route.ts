@@ -36,7 +36,7 @@ export async function POST(request: Request, { params }: Params) {
     const { session, domain } = await requireDomainApi((await params).domain);
     if (!isPanelFilesMode()) {
       return jsonError(
-        "File actions on the server are done via the VirtualMin file manager. Open Files in the panel.",
+        "File actions on the server are done via the VirtualMin file manager. Open Files in Nexmin.",
         501,
       );
     }
@@ -85,7 +85,7 @@ export async function DELETE(request: Request, { params }: Params) {
   try {
     const { session, domain } = await requireDomainApi((await params).domain);
     if (!isPanelFilesMode()) {
-      return jsonError("Deleting via the panel is not available on the live server.", 501);
+      return jsonError("Deleting in Nexmin is not available on the live server.", 501);
     }
     const body = (await request.json()) as { path?: string };
     if (!body.path) return jsonError("Path is required.");
