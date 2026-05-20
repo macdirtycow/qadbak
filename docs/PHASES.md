@@ -1,4 +1,4 @@
-# Integration phases — VirtualMin Panel
+# Integration phases — Nexmin
 
 Full VirtualMin coverage is delivered in phases. Each phase adds API programs to RBAC (`src/lib/features.ts`) and UI under `/domains/[domain]/…`.
 
@@ -8,7 +8,7 @@ Full VirtualMin coverage is delivered in phases. Each phase adds API programs to
 
 ## Phase 1 — Core (complete)
 
-| Area | VirtualMin API | Panel route |
+| Area | VirtualMin API | Nexmin route |
 |------|----------------|-------------|
 | Domain overview | `list-domains` | `/domains` |
 | Enable / disable domain | `enable-domain`, `disable-domain` | detail |
@@ -34,7 +34,7 @@ Full VirtualMin coverage is delivered in phases. Each phase adds API programs to
 
 | Area | API | Route |
 |------|-----|-------|
-| Files (public_html) | `create-login-link` → file manager; mock: panel browser | `/domains/…/files` |
+| Files (public_html) | `create-login-link` → file manager; mock: Nexmin browser | `/domains/…/files` |
 | Webmin & Usermin | `create-login-link` (root / domain / usermin-user) | `/admin/webmin`, `/domains/…/webmin` |
 | Website logs | `get-logs` | `/domains/…/logs` |
 | PHP per directory | `list-php-versions`, `list-php-directories`, `set-php-directory`, `delete-php-directory` | `/domains/…/php` |
@@ -107,13 +107,13 @@ Full VirtualMin coverage is delivered in phases. Each phase adds API programs to
 | Global features | `set-global-feature`, `list-global-features` | `/admin/system` |
 | System bundle | `config-system` | `/admin/system` |
 
-`list-global-features` is a panel helper (mock); on real servers the feature list may differ.
+`list-global-features` is a Nexmin helper (mock); on real servers the feature list may differ.
 
 ---
 
 ## Design rules (all phases)
 
-1. **No direct `remote.cgi` in the browser** — everything goes through the panel API + RBAC.
+1. **No direct `remote.cgi` in the browser** — everything goes through the Nexmin API + RBAC.
 2. **Client = domain-scoped** — same UI, fewer programs in the allowlist.
 3. **Unknown / complex actions** — “Open in VirtualMin” button.
 4. **Mock mode** — each phase gets mock data in `virtualmin.ts` for local UI development.

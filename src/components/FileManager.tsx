@@ -259,7 +259,7 @@ export function FileManager({
     }
   }
 
-  const isPanel = listing.mode === "panel";
+  const isNexmin = listing.mode === "nexmin";
   const writable = listing.writable !== false;
 
   return (
@@ -292,16 +292,16 @@ export function FileManager({
           All Webmin modules
         </Button>
         <Button variant="ghost" onClick={openFileManager} disabled={loading}>
-          {isPanel ? "File manager (direct)" : "Open file manager"}
+          {isNexmin ? "File manager (direct)" : "Open file manager"}
         </Button>
       </div>
 
-      {!isPanel && (
+      {!isNexmin && (
         <Card>
           <h2 className="text-lg font-medium text-white">File management on the server</h2>
           <p className="mt-2 text-sm text-panel-muted">
             On a live VirtualMin server, use the built-in file manager for upload,
-            download, and editing. The panel opens a one-time login link.
+            download, and editing. Nexmin opens a one-time login link.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button onClick={openFileManager} disabled={loading}>
@@ -321,7 +321,7 @@ export function FileManager({
         </Card>
       )}
 
-      {isPanel && (
+      {isNexmin && (
         <>
           {writable && (
             <Card

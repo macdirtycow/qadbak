@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Hosting Panel",
-  description: "VirtualMin overlay — simpler management",
+  title: APP_NAME,
+  description: APP_TAGLINE,
 };
 
 export default function RootLayout({

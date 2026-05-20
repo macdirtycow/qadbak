@@ -1,6 +1,6 @@
 # VirtualMin API — MVP command reference
 
-Panel calls go through `src/lib/virtualmin.ts` with RBAC. Direct `remote.cgi` access is server-side only.
+Nexmin calls go through `src/lib/virtualmin.ts` with RBAC. Direct `remote.cgi` access is server-side only.
 
 ## Domains
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { APP_NAME } from "@/lib/brand";
 import { NavLink, Button } from "./ui";
 
 interface AppShellProps {
@@ -26,7 +27,7 @@ export function AppShell({ children, username, role }: AppShellProps) {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="text-lg font-semibold text-white">
-              Hosting Panel
+              {APP_NAME}
             </Link>
             <nav className="flex gap-1">
               <NavLink href="/dashboard" active={pathname === "/dashboard"}>

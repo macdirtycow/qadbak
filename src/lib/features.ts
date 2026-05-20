@@ -17,7 +17,7 @@ export interface DomainFeature {
   navOrder?: number;
 }
 
-/** All VirtualMin programs used by the panel, grouped per feature. */
+/** All VirtualMin programs used by Nexmin, grouped per feature. */
 export const DOMAIN_FEATURES: DomainFeature[] = [
   {
     id: "email",
@@ -135,7 +135,7 @@ export const DOMAIN_FEATURES: DomainFeature[] = [
     id: "webmin",
     phase: 3,
     label: "Webmin",
-    description: "Virtualmin & Usermin alongside the panel",
+    description: "Virtualmin & Usermin alongside Nexmin",
     path: "webmin",
     navOrder: 8,
     programs: {

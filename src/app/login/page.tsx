@@ -1,6 +1,7 @@
 "use client";
 
 import { Alert, Button, Card, Input, Label } from "@/components/ui";
+import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -38,10 +39,8 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
-        <h1 className="text-2xl font-semibold text-white">Hosting Panel</h1>
-        <p className="mt-1 text-sm text-panel-muted">
-          Simpler management on top of VirtualMin
-        </p>
+        <h1 className="text-2xl font-semibold text-white">{APP_NAME}</h1>
+        <p className="mt-1 text-sm text-panel-muted">{APP_TAGLINE}</p>
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
           {error && <Alert>{error}</Alert>}
           <div>
