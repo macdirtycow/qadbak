@@ -5,6 +5,10 @@
 
 **Qadbak** is a modern English UI layer **on top of** [VirtualMin](https://virtualmin.com) / Webmin — not a fork. Domains, email, databases, DNS, SSL, server management, and Webmin login links with role-based access (admin / client).
 
+### About the name
+
+In 2009, [Qadbak Investments](https://en.wikipedia.org/wiki/Qadbak_Investments) made headlines around Notts County and BMW Sauber F1 — later remembered as hype without substance. This panel **reuses the name** for the opposite: working code on your VPS, as the **front door** to VirtualMin (not affiliated with that entity). Story: [docs/ABOUT-THE-NAME.md](docs/ABOUT-THE-NAME.md) · in-app: `/about`.
+
 > **Status:** v1 code complete — validate on a **dedicated test VPS** ([docs/V1-TEST-SERVER.md](docs/V1-TEST-SERVER.md)). Do not install on production hosts (e.g. mareades).
 
 ## Requirements
@@ -81,6 +85,7 @@ Output: **`dist/qadbak-site-upload.zip`** (extract and upload; see `marketing-si
 | [docs/API.md](docs/API.md) | MVP VirtualMin commands |
 | [docs/TEST-VPS.md](docs/TEST-VPS.md) | Short test VPS notes |
 | [docs/FRONT-DOOR.md](docs/FRONT-DOOR.md) | IP/443 → Qadbak, not :10000 |
+| [docs/ABOUT-THE-NAME.md](docs/ABOUT-THE-NAME.md) | Why “Qadbak” (2009 → panel) |
 
 ## Integration phases (overview)
 

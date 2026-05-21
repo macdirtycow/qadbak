@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 const COOKIE_NAME = "panel_session";
-const PUBLIC = ["/", "/login", "/api/auth/login"];
+const PUBLIC = ["/", "/login", "/about", "/api/auth/login"];
 
 function getSecret(): Uint8Array | null {
   const secret = process.env.SESSION_SECRET;
