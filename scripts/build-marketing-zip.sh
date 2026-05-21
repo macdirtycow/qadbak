@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Build nexmin-site-upload.zip (static-only fallback; prefer full Next.js deploy).
+# Build qadbak-site-upload.zip (static-only fallback; prefer full Next.js deploy).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SITE="$ROOT/marketing-site"
-OUT="$ROOT/dist/nexmin-site-upload.zip"
+OUT="$ROOT/dist/qadbak-site-upload.zip"
 TMP="$(mktemp -d)"
 mkdir -p "$ROOT/dist"
 rm -f "$OUT"
@@ -13,7 +13,7 @@ sed -i '' \
   -e 's|href="/landing.css"|href="assets/css/style.css"|g' \
   -e 's|src="/landing.js"|src="assets/js/main.js"|g' \
   -e 's|href="/favicon.svg"|href="assets/img/favicon.svg"|g' \
-  -e 's|href="/login"|href="https://nexmin.net/login"|g' \
+  -e 's|href="/login"|href="https://qadbak.com/login"|g' \
   "$TMP/index.html"
 (cd "$TMP" && zip -r "$OUT" . -x "*.DS_Store")
 rm -rf "$TMP"

@@ -418,7 +418,7 @@ function mockCall(
       return { status: "ok", message: "Restore started (mock)" };
     case "list-s3-buckets":
       return [
-        { name: "nexmin-backups", region: "eu-west-1" },
+        { name: "qadbak-backups", region: "eu-west-1" },
         { name: "archief-2024", region: "eu-west-1" },
       ];
     case "list-s3-files":
@@ -443,7 +443,7 @@ function mockCall(
   }
 }
 
-/** Maps Nexmin cron aliases to run-api-command on real VirtualMin servers. */
+/** Maps Qadbak cron aliases to run-api-command on real VirtualMin servers. */
 function resolveProgramCall(
   program: string,
   params: Record<string, string>,

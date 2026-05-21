@@ -8,7 +8,7 @@ export async function GET(request: Request, { params }: Params) {
   try {
     await requireDomainApi((await params).domain);
     if (!isPanelFilesMode()) {
-      return jsonError("Viewing files in Nexmin is only available in mock mode.", 501);
+      return jsonError("Viewing files in Qadbak is only available in mock mode.", 501);
     }
     const url = new URL(request.url);
     const path = url.searchParams.get("path");

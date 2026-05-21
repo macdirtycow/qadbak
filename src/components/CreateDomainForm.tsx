@@ -6,11 +6,13 @@ import { useState } from "react";
 
 export function CreateDomainForm({
   parentOptions,
+  initialType = "top",
 }: {
   parentOptions: string[];
+  initialType?: "top" | "sub" | "alias";
 }) {
   const router = useRouter();
-  const [type, setType] = useState<"top" | "sub" | "alias">("top");
+  const [type, setType] = useState<"top" | "sub" | "alias">(initialType);
   const [domain, setDomain] = useState("");
   const [pass, setPass] = useState("");
   const [user, setUser] = useState("");
@@ -104,7 +106,7 @@ export function CreateDomainForm({
           <Input id="user" value={user} onChange={(e) => setUser(e.target.value)} />
         </div>
         <div>
-          <Label htmlFor="pass">Password eigenaar</Label>
+          <Label htmlFor="pass">Owner password</Label>
           <Input
             id="pass"
             type="password"

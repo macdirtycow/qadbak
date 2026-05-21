@@ -1,6 +1,6 @@
 {
-  "name": "nexmin",
-  "description": "Nexmin — modern English UI on top of VirtualMin / Webmin",
+  "name": "qadbak",
+  "description": "Qadbak — modern English UI on top of VirtualMin / Webmin",
   "version": "0.1.0",
   "private": true,
   "scripts": {

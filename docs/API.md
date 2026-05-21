@@ -1,6 +1,6 @@
 # VirtualMin API — MVP command reference
 
-Nexmin calls go through `src/lib/virtualmin.ts` with RBAC. Direct `remote.cgi` access is server-side only.
+Qadbak calls go through `src/lib/virtualmin.ts` with RBAC. Direct `remote.cgi` access is server-side only.
 
 ## Domains
 

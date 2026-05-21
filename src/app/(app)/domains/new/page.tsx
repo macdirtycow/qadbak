@@ -4,10 +4,16 @@ import { listDomains } from "@/lib/virtualmin";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-export default async function NewDomainPage() {
+type Props = { searchParams: Promise<{ type?: string }> };
+
+export default async function NewDomainPage({ searchParams }: Props) {
   const session = await getSession();
   if (!session) redirect("/login");
   if (session.role !== "admin") redirect("/domains");
+
+  const sp = await searchParams;
+  const initialType =
+    sp.type === "sub" || sp.type === "alias" ? sp.type : "top";
 
   const domains = await listDomains(session);
   const parentOptions = domains.map((d) => d.name);
@@ -19,7 +25,10 @@ export default async function NewDomainPage() {
           ← Domains
         </Link>
       </p>
-      <CreateDomainForm parentOptions={parentOptions} />
+      <CreateDomainForm
+        parentOptions={parentOptions}
+        initialType={initialType}
+      />
     </div>
   );
 }

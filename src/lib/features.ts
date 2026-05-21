@@ -17,7 +17,7 @@ export interface DomainFeature {
   navOrder?: number;
 }
 
-/** All VirtualMin programs used by Nexmin, grouped per feature. */
+/** All VirtualMin programs used by Qadbak, grouped per feature. */
 export const DOMAIN_FEATURES: DomainFeature[] = [
   {
     id: "email",
@@ -123,9 +123,21 @@ export const DOMAIN_FEATURES: DomainFeature[] = [
     id: "files",
     phase: 3,
     label: "Files",
-    description: "public_html and other directories",
+    description: "File manager (browser or embedded on live server)",
     path: "files",
     navOrder: 5,
+    programs: {
+      admin: ["create-login-link"],
+      client: ["create-login-link"],
+    },
+  },
+  {
+    id: "terminal",
+    phase: 3,
+    label: "Terminal",
+    description: "SSH shell in panel (Webmin xterm)",
+    path: "terminal",
+    navOrder: 6,
     programs: {
       admin: ["create-login-link"],
       client: ["create-login-link"],
@@ -135,7 +147,7 @@ export const DOMAIN_FEATURES: DomainFeature[] = [
     id: "webmin",
     phase: 3,
     label: "Webmin",
-    description: "Virtualmin & Usermin alongside Nexmin",
+    description: "Virtualmin & Usermin alongside the panel",
     path: "webmin",
     navOrder: 8,
     programs: {
@@ -396,6 +408,7 @@ export const IMPLEMENTED_PHASE: FeaturePhase = 8;
 
 export const ADMIN_NAV = [
   { path: "/admin", label: "Overview" },
+  { path: "/admin/status", label: "Status" },
   { path: "/admin/server", label: "Server" },
   { path: "/admin/resellers", label: "Resellers" },
   { path: "/admin/plans", label: "Plans" },
@@ -403,8 +416,14 @@ export const ADMIN_NAV = [
   { path: "/admin/admins", label: "Administrators" },
   { path: "/admin/license", label: "License" },
   { path: "/admin/cloud", label: "Cloud (S3)" },
-  { path: "/admin/system", label: "System" },
-  { path: "/admin/webmin", label: "Webmin" },
+  { path: "/admin/system", label: "Virtualmin" },
+  { path: "/admin/system-menu", label: "System" },
+  { path: "/admin/servers-menu", label: "Servers" },
+  { path: "/admin/tools-menu", label: "Tools" },
+  { path: "/admin/networking-menu", label: "Network" },
+  { path: "/admin/hardware-menu", label: "Hardware" },
+  { path: "/admin/cluster-menu", label: "Cluster" },
+  { path: "/admin/webmin", label: "Webmin links" },
 ] as const;
 
 const GLOBAL_ADMIN_BASE = [

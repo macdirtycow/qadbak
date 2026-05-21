@@ -1,6 +1,7 @@
 import { auditLog } from "@/lib/audit";
 import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
+import { catalogModule } from "@/lib/webmin-catalog";
 import {
   createWebminLoginLink,
   moduleById,
@@ -16,7 +17,9 @@ export async function GET(request: Request) {
 
     let redirectPath = redirect ?? undefined;
     if (moduleId) {
-      const mod = moduleById(webminModulesForAdmin(), moduleId);
+      const mod =
+        moduleById(webminModulesForAdmin(), moduleId) ??
+        catalogModule(moduleId);
       if (!mod) return jsonError("Unknown Webmin module.");
       redirectPath = mod.path;
     }

@@ -42,7 +42,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <p className="mb-4 text-center text-sm">
           <Link href="/" className="text-panel-muted hover:text-white">
-            ← Back to nexmin.net
+            ← Back to home
           </Link>
         </p>
         <h1 className="text-2xl font-semibold text-white">{APP_NAME}</h1>

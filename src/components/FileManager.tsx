@@ -15,6 +15,7 @@ import {
 } from "@/lib/domain-files";
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
+import { WebminEmbed } from "@/components/WebminEmbed";
 import { DomainPageHeader } from "./DomainPageHeader";
 
 export function FileManager({
@@ -259,7 +260,7 @@ export function FileManager({
     }
   }
 
-  const isNexmin = listing.mode === "nexmin";
+  const isQadbak = listing.mode === "qadbak";
   const writable = listing.writable !== false;
 
   return (
@@ -292,36 +293,20 @@ export function FileManager({
           All Webmin modules
         </Button>
         <Button variant="ghost" onClick={openFileManager} disabled={loading}>
-          {isNexmin ? "File manager (direct)" : "Open file manager"}
+          {isQadbak ? "File manager (direct)" : "Open file manager"}
         </Button>
       </div>
 
-      {!isNexmin && (
-        <Card>
-          <h2 className="text-lg font-medium text-white">File management on the server</h2>
-          <p className="mt-2 text-sm text-panel-muted">
-            On a live VirtualMin server, use the built-in file manager for upload,
-            download, and editing. Nexmin opens a one-time login link.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={openFileManager} disabled={loading}>
-              Open public_html in VirtualMin
-            </Button>
-            {listing.fileManagerUrl && (
-              <Link
-                href={listing.fileManagerUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-lg border border-panel-border px-4 py-2 text-sm text-panel-muted hover:text-white"
-              >
-                Directe link
-              </Link>
-            )}
-          </div>
-        </Card>
+      {!isQadbak && (
+        <WebminEmbed
+          title="File manager"
+          description="Webmin file manager for this domain (public_html and home)."
+          fetchUrl={`/api/domains/${enc}/virtualmin-link?dest=fileman`}
+          height="min(70vh, 720px)"
+        />
       )}
 
-      {isNexmin && (
+      {isQadbak && (
         <>
           {writable && (
             <Card

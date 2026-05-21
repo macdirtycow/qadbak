@@ -11,7 +11,7 @@ export default async function AdminWebminPage() {
   return (
     <WebminHub
       title="Webmin"
-      description="Full server management interface alongside Nexmin — Apache, DNS, firewall, logs, and more."
+      description="Full server management interface alongside Qadbak — Apache, DNS, firewall, logs, and more."
       modules={webminModulesForAdmin()}
       linkApiPath="/api/admin/webmin/link"
       showRootBanner

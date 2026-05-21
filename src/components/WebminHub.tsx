@@ -93,7 +93,7 @@ export function WebminHub({
         <p className="text-sm text-panel-muted">
           Webmin opens in a new tab via a one-time login link (
           <code className="text-white">create-login-link</code>). No password
-          is stored in Nexmin.
+          is stored in Qadbak.
         </p>
         <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
           <div>
