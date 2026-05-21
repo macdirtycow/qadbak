@@ -24,6 +24,16 @@ test.describe("public", () => {
     expect(body.mock).toBe(true);
   });
 
+  test("login sets session cookie without Secure on http", async ({ request }) => {
+    const res = await request.post("/api/auth/login", {
+      data: { username: "admin", password: "changeme" },
+    });
+    expect(res.status()).toBe(200);
+    const setCookie = res.headers()["set-cookie"] ?? "";
+    expect(setCookie).toContain("panel_session=");
+    expect(setCookie).not.toContain("Secure");
+  });
+
   test("marketing home loads", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { name: /your hosting panel/i })).toBeVisible();

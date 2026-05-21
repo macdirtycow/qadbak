@@ -1,9 +1,15 @@
 import { clearSessionCookieOptions } from "@/lib/session";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function POST() {
-  const jar = await cookies();
-  jar.set(clearSessionCookieOptions());
-  return NextResponse.json({ ok: true });
+  const response = NextResponse.json({ ok: true });
+  const opts = clearSessionCookieOptions();
+  response.cookies.set(opts.name, opts.value, {
+    httpOnly: opts.httpOnly,
+    secure: opts.secure,
+    sameSite: opts.sameSite,
+    path: opts.path,
+    maxAge: opts.maxAge,
+  });
+  return response;
 }

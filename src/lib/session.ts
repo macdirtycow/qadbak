@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import type { NextResponse } from "next/server";
 import type { SessionPayload } from "./types";
 
 const COOKIE_NAME = "panel_session";
@@ -63,6 +64,19 @@ export function sessionCookieOptions(token: string) {
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   };
+}
+
+/** Attach session to a Route Handler response (required for browser login). */
+export function applySessionCookie(response: NextResponse, token: string) {
+  const opts = sessionCookieOptions(token);
+  response.cookies.set(opts.name, opts.value, {
+    httpOnly: opts.httpOnly,
+    secure: opts.secure,
+    sameSite: opts.sameSite,
+    path: opts.path,
+    maxAge: opts.maxAge,
+  });
+  return response;
 }
 
 export function clearSessionCookieOptions() {
