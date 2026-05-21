@@ -2,6 +2,7 @@
 
 import { Alert, Button, Card, Input, Label } from "@/components/ui";
 import { APP_NAME, APP_TAGLINE, ORG_NAME, ORG_URL } from "@/lib/brand";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -39,6 +40,11 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
+        <p className="mb-4 text-center text-sm">
+          <Link href="/" className="text-panel-muted hover:text-white">
+            ← Back to nexmin.net
+          </Link>
+        </p>
         <h1 className="text-2xl font-semibold text-white">{APP_NAME}</h1>
         <p className="mt-1 text-sm text-panel-muted">{APP_TAGLINE}</p>
         <form onSubmit={onSubmit} className="mt-8 space-y-4">

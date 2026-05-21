@@ -9,14 +9,14 @@
       content="Nexmin is a modern English UI on top of VirtualMin and Webmin. Domains, email, DNS, SSL, backups, and Webmin login links — with admin and client roles."
     />
     <meta name="theme-color" content="#0f1419" />
-    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="assets/css/style.css" />
+    <link rel="stylesheet" href="/landing.css" />
     <meta property="og:title" content="Nexmin — Premium control panel for VirtualMin" />
     <meta property="og:description" content="Simpler hosting management on top of VirtualMin. Not a fork." />
     <meta property="og:url" content="https://nexmin.net" />
@@ -31,7 +31,7 @@
 
     <header class="nav">
       <div class="container nav-inner">
-        <a href="#" class="logo">
+        <a href="/" class="logo">
           <span class="logo-mark" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
               <path d="M4 12h6v8H4v-8zm10-10h6v18h-6V2z" stroke-linecap="round" stroke-linejoin="round"/>
@@ -47,7 +47,7 @@
         </nav>
         <div class="nav-actions">
           <a href="https://omiiba.dev" class="btn btn-ghost" rel="noopener">Omiiba</a>
-          <a href="#" data-panel-link class="btn btn-primary">Open panel</a>
+          <a href="/login" class="btn btn-primary">Open panel</a>
           <button type="button" class="nav-toggle" aria-label="Menu" aria-expanded="false">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round"/>
@@ -60,7 +60,7 @@
         <a href="#how">How it works</a>
         <a href="#roles">Roles</a>
         <a href="#faq">FAQ</a>
-        <a href="#" data-panel-link>Open panel</a>
+        <a href="/login">Open panel</a>
       </div>
     </header>
 
@@ -75,7 +75,7 @@
               Give admins and clients a focused panel for domains, mail, DNS, SSL, and more.
             </p>
             <div class="hero-cta">
-              <a href="#" data-panel-link class="btn btn-primary btn-lg">Open panel</a>
+              <a href="/login" class="btn btn-primary btn-lg">Open panel</a>
               <a href="#features" class="btn btn-secondary btn-lg">Explore features</a>
             </div>
             <div class="hero-trust">
@@ -316,7 +316,7 @@
               Deploy the open reference build, connect your Remote API, and put a premium face on hosting management at nexmin.net.
             </p>
             <div class="cta-buttons">
-              <a href="#" data-panel-link class="btn btn-primary btn-lg">Open panel</a>
+              <a href="/login" class="btn btn-primary btn-lg">Open panel</a>
               <a href="mailto:info@mareades.com" class="btn btn-secondary btn-lg">Contact Omiiba</a>
             </div>
           </div>
@@ -372,7 +372,7 @@
     <footer class="footer">
       <div class="container footer-grid">
         <div>
-          <a href="#" class="logo">
+          <a href="/" class="logo">
             <span class="logo-mark" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
                 <path d="M4 12h6v8H4v-8zm10-10h6v18h-6V2z" stroke-linecap="round" stroke-linejoin="round"/>
@@ -386,7 +386,7 @@
           <h4>Product</h4>
           <ul>
             <li><a href="#features">Features</a></li>
-            <li><a href="#" data-panel-link>Panel</a></li>
+            <li><a href="/login">Panel</a></li>
             <li><a href="https://github.com/macdirtycow/nexmin" rel="noopener">GitHub</a></li>
           </ul>
         </div>
@@ -405,6 +405,6 @@
       </div>
     </footer>
 
-    <script src="assets/js/main.js"></script>
+    <script src="/landing.js"></script>
   </body>
 </html>
