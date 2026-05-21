@@ -52,14 +52,21 @@ apt-get update -qq
 apt-get install -y -qq curl git nginx certbot python3-certbot-nginx
 
 if ! command -v node &>/dev/null || [[ "$(node -v | cut -d. -f1 | tr -d v)" -lt "$NODE_MAJOR" ]]; then
-  echo "==> Node.js $NODE_MAJOR"
+  echo "==> Node.js $NODE_MAJOR + npm (NodeSource)"
   curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash -
   apt-get install -y -qq nodejs
 fi
+if ! command -v npm &>/dev/null; then
+  echo "ERROR: npm missing after nodejs install" >&2
+  exit 1
+fi
+echo "    node $(node -v) · npm $(npm -v)"
 
 if ! command -v pm2 &>/dev/null; then
+  echo "==> pm2 (via npm)"
   npm install -g pm2
 fi
+echo "    pm2 $(pm2 -v 2>/dev/null || echo installed)"
 
 if [[ ! -x /usr/share/webmin/virtualmin/install.sh ]] && [[ ! -f /etc/webmin/virtual-server ]]; then
   echo "==> VirtualMin (official install.sh)"

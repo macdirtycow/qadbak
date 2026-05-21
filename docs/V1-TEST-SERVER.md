@@ -52,6 +52,8 @@ When prompted:
 
 Wait until the script finishes. VirtualMin install can take 15–40 minutes.
 
+The installer also installs **Node.js 20, npm, and pm2** — you do not need to run `apt install npm` separately.
+
 ---
 
 ## Step 3 — API smoke test

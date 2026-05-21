@@ -28,8 +28,10 @@ You will be prompted for:
 
 | Component | Location |
 |-----------|----------|
-| VirtualMin | Official `virtualmin-install.sh` |
-| Qadbak app | `/opt/qadbak` |
+| **Node.js 20 + npm** | NodeSource apt repo (automatic — nothing to install by hand) |
+| **pm2** | `npm install -g pm2` if not present |
+| VirtualMin | Official `virtualmin-install.sh` (includes Webmin) |
+| Qadbak app | `/opt/qadbak` — `npm install` + `npm run build` |
 | Process manager | `pm2` as user `qadbak` |
 | Reverse proxy | nginx from `deploy/nginx-qadbak.conf` |
 
