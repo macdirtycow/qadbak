@@ -1,11 +1,10 @@
 import { auditLog } from "@/lib/audit";
 import { jsonError, jsonOk } from "@/lib/api";
 import {
+  applySessionCookie,
   createSession,
-  sessionCookieOptions,
 } from "@/lib/session";
 import { findUserByUsername, verifyPassword } from "@/lib/users";
-import { cookies } from "next/headers";
 
 export async function POST(request: Request) {
   try {
@@ -29,16 +28,16 @@ export async function POST(request: Request) {
       domains: user.domains,
     });
 
-    const jar = await cookies();
-    jar.set(sessionCookieOptions(token));
-
-    await auditLog(user.username, "login");
-
-    return jsonOk({
+    const response = jsonOk({
       username: user.username,
       role: user.role,
       domains: user.domains,
     });
+    applySessionCookie(response, token);
+
+    await auditLog(user.username, "login");
+
+    return response;
   } catch (err) {
     if (err instanceof Error && err.message.includes("SESSION_SECRET")) {
       return jsonError(err.message, 500);

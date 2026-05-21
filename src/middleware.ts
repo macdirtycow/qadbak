@@ -3,7 +3,23 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 const COOKIE_NAME = "panel_session";
-const PUBLIC = ["/", "/login", "/about", "/api/auth/login", "/api/health"];
+
+const PUBLIC_EXACT = new Set([
+  "/",
+  "/login",
+  "/about",
+  "/api/auth/login",
+  "/api/health",
+  "/landing.css",
+  "/landing.js",
+  "/favicon.svg",
+]);
+
+function isPublicPath(pathname: string): boolean {
+  if (PUBLIC_EXACT.has(pathname)) return true;
+  if (pathname.startsWith("/_next")) return true;
+  return false;
+}
 
 function getSecret(): Uint8Array | null {
   const secret = process.env.SESSION_SECRET;
@@ -14,11 +30,7 @@ function getSecret(): Uint8Array | null {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (
-    PUBLIC.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon")
-  ) {
+  if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
 
