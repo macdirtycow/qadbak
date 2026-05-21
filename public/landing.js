@@ -30,15 +30,4 @@
       }
     });
   });
-
-  var nav = document.querySelector(".nav");
-  window.addEventListener(
-    "scroll",
-    function () {
-      if (!nav) return;
-      nav.style.boxShadow =
-        window.scrollY > 8 ? "0 8px 32px rgba(0,0,0,0.25)" : "none";
-    },
-    { passive: true },
-  );
 })();

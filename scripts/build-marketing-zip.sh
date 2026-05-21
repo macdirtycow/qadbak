@@ -14,7 +14,15 @@ sed -i '' \
   -e 's|src="/landing.js"|src="assets/js/main.js"|g' \
   -e 's|href="/favicon.svg"|href="assets/img/favicon.svg"|g' \
   -e 's|href="/login"|href="https://qadbak.com/login"|g' \
+  -e 's|<head>|<head>\n    <link rel="canonical" href="https://qadbak.com/" />|' \
   "$TMP/index.html"
+# Refresh CSS/JS from Next.js public assets when present
+if [[ -f "$ROOT/public/landing.css" ]]; then
+  cp "$ROOT/public/landing.css" "$TMP/assets/css/style.css"
+fi
+if [[ -f "$ROOT/public/landing.js" ]]; then
+  cp "$ROOT/public/landing.js" "$TMP/assets/js/main.js"
+fi
 (cd "$TMP" && zip -r "$OUT" . -x "*.DS_Store")
 rm -rf "$TMP"
 echo "Created $OUT ($(du -h "$OUT" | cut -f1))"

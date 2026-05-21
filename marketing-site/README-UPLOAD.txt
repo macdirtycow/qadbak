@@ -1,16 +1,10 @@
-=============================================
-  Qadbak marketing site — static upload
-=============================================
+Qadbak marketing site (static)
+===============================
 
-RECOMMENDED: Deploy the full Qadbak Next.js app on qadbak.com instead of
-uploading this zip. That gives you:
-  • Marketing homepage at https://qadbak.com/
-  • Working “Open panel” at https://qadbak.com/login
+Upload to the web root of https://qadbak.com
 
-See the main repo README (Production section) and deploy/nginx-qadbak.conf.
+For a working panel login, deploy the full app from:
+  https://github.com/macdirtycow/qadbak
 
-If you still use the static zip (build-marketing-zip.sh):
-  • “Open panel” links to https://qadbak.com/login — that only works if the
-    Next.js panel is deployed at that hostname.
-
-Upload all files in this folder to your web root (or extract dist/qadbak-site-upload.zip).
+Build zip from main repo:
+  bash scripts/build-marketing-zip.sh
