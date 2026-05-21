@@ -1,48 +1,45 @@
-# Automated E2E (Playwright)
+# E2E testing
 
-Stable **mock-mode** tests — no VirtualMin VPS required for CI/local.
+Two modes — **not separate products**, one flows into the other.
 
-## Run (default)
+## 1. Install / production panel (real)
+
+**Runs automatically** at the end of `install/qadbak-install.sh` via `post-install-verify.sh`:
+
+1. Preflight (`pm2`, `.env.local`, `test-api`)
+2. `/api/health` with `"mock": false`
+3. **Playwright** `e2e/install-verify.spec.ts` against `http://127.0.0.1:3000` with the admin password you chose at install
+
+Re-run on the server:
+
+```bash
+sudo bash /opt/qadbak/scripts/post-install-verify.sh
+# or
+npm run test:e2e:install   # as root, with .install-test.env present
+```
+
+Uses `.install-test.env` (written by installer, gitignored).
+
+## 2. Local / CI (mock)
+
+Fast regression without VirtualMin:
 
 ```bash
 npm run test:e2e
 ```
 
-This will:
+Starts a temporary app on port **3099** with `VIRTUALMIN_MOCK=true` and runs `e2e/smoke.spec.ts`.
 
-1. Copy `data/users.example.json` → `data/users.json` (admin/klant, password `changeme`)
-2. Build Next.js if needed
-3. Start the app on port **3099** with `VIRTUALMIN_MOCK=true`
-4. Run Chromium tests: health, home, about, admin login + domains, client RBAC
-
-## What is covered
-
-| Test | Proves |
-|------|--------|
-| `/api/health` | App boots, mock flag |
-| `/` | Marketing page |
-| `/about` | Name story page |
-| Admin login | Session cookie, dashboard |
-| Mock domains | `voorbeeld.nl`, `demo.test` on dashboard |
-| `/domains` | Domains list route |
-| `/admin` | Admin-only area |
-| Client `klant` | Only `voorbeeld.nl`, `/admin` → redirect |
-
-This is **not** a substitute for live VPS checks in [E2E-CHECKLIST.md](./E2E-CHECKLIST.md) — run those once on a test server with `VIRTUALMIN_MOCK=false`.
-
-## Live VPS (optional)
+## Optional manual VPS from your laptop
 
 ```bash
-E2E_LIVE_URL=https://panel-test.example.com \
-E2E_LIVE_USER=admin \
-E2E_LIVE_PASS='your-password' \
-npm run test:e2e:live
+E2E_BASE_URL=https://panel-test.example.com \
+E2E_ADMIN_USER=admin \
+E2E_ADMIN_PASS='your-password' \
+E2E_INSTALL_VERIFY=1 \
+npx playwright test e2e/install-verify.spec.ts
 ```
 
-## Troubleshooting
+## After automated E2E
 
-| Issue | Fix |
-|-------|-----|
-| Port 3099 in use | `E2E_PORT=3100 npm run test:e2e` |
-| Browser missing | `npx playwright install chromium` |
-| Build slow first run | Normal; later runs reuse `.next` |
+Use [E2E-CHECKLIST.md](./E2E-CHECKLIST.md) for VirtualMin-specific actions (create domain, mailbox, DNS record) — those need data on the server.

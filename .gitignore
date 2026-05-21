@@ -5,6 +5,7 @@ dist/
 .env
 .env.local
 data/users.json
+.install-test.env
 data/audit.log
 *.log
 .DS_Store

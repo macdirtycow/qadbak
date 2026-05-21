@@ -26,7 +26,7 @@ You will be prompted for:
 5. **Optional demo client user** (RBAC testing)
 6. **Optional UFW** (SSH + 80 + 443)
 
-Runs **post-install verification** automatically at the end.
+Runs **post-install verification** at the end: preflight, VirtualMin API, **Playwright E2E** on the live panel (same run, not a separate step).
 
 ## What it installs
 

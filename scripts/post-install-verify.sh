@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Run on the VPS right after install/qadbak-install.sh (as root or qadbak).
+# Full post-install verification: preflight, API, Playwright E2E on live panel.
+# Called automatically by install/qadbak-install.sh.
 set -euo pipefail
 ROOT="${QADBAK_DIR:-/opt/qadbak}"
 USER="${QADBAK_USER:-qadbak}"
@@ -26,6 +27,11 @@ else
   echo "  FAIL /api/health"
   exit 1
 fi
+if echo "$HEALTH" | grep -q '"mock":true'; then
+  echo "  FAIL health still in mock mode on server" >&2
+  exit 1
+fi
+echo "  OK   live mode (not mock)"
 
 if [[ -f "$ROOT/.env.local" ]]; then
   # shellcheck disable=SC1091
@@ -36,4 +42,17 @@ if [[ -f "$ROOT/.env.local" ]]; then
 fi
 
 echo ""
-echo "Next: docs/E2E-CHECKLIST.md (create a test domain in VirtualMin first)"
+echo "==> Playwright E2E (installed panel)"
+if [[ -f "$ROOT/scripts/run-install-e2e.sh" ]]; then
+  bash "$ROOT/scripts/run-install-e2e.sh"
+else
+  echo "  FAIL run-install-e2e.sh missing" >&2
+  exit 1
+fi
+
+echo ""
+echo "============================================"
+echo " Post-install + E2E: PASSED"
+echo " Optional manual checks: docs/E2E-CHECKLIST.md"
+echo "   (create test domain, mail, DNS — after VirtualMin setup)"
+echo "============================================"

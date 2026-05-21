@@ -21,10 +21,4 @@ echo "==> Playwright browsers (chromium)"
 npx playwright install chromium
 
 echo "==> E2E tests (mock mode, port $E2E_PORT)"
-if [[ "${1:-}" == "live" ]]; then
-  export E2E_LIVE_ONLY=1
-  shift
-  npx playwright test e2e/live.optional.spec.ts "$@"
-else
-  npx playwright test "$@"
-fi
+npx playwright test "$@"

@@ -13,7 +13,7 @@
     "post-install": "bash scripts/post-install-verify.sh",
     "update": "bash scripts/update-qadbak.sh",
     "test:e2e": "bash scripts/run-e2e.sh",
-    "test:e2e:live": "bash scripts/run-e2e.sh live"
+    "test:e2e:install": "bash scripts/run-install-e2e.sh"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

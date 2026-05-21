@@ -179,6 +179,20 @@ fi
 chown "$QADBAK_USER:$QADBAK_USER" "$USERS_FILE"
 chmod 600 "$USERS_FILE"
 
+INSTALL_TEST_ENV="$QADBAK_DIR/.install-test.env"
+cat >"$INSTALL_TEST_ENV" <<EOF
+E2E_ADMIN_USER=$QB_USER
+E2E_ADMIN_PASS=$QB_PASS
+EOF
+if [[ "$ADD_CLIENT" =~ ^[Yy]$ && -n "$CLIENT_PASS" ]]; then
+  cat >>"$INSTALL_TEST_ENV" <<EOF
+E2E_CLIENT_USER=$CLIENT_USER
+E2E_CLIENT_PASS=$CLIENT_PASS
+EOF
+fi
+chmod 600 "$INSTALL_TEST_ENV"
+chown "$QADBAK_USER:$QADBAK_USER" "$INSTALL_TEST_ENV"
+
 echo "==> pm2"
 sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && pm2 delete qadbak 2>/dev/null || true; pm2 start npm --name qadbak -- start && pm2 save"
 env PATH="$PATH:/usr/bin" pm2 startup systemd -u "$QADBAK_USER" --hp "$QADBAK_DIR" | tail -1 | bash || true
@@ -204,7 +218,7 @@ fi
 
 VERIFY_OK=0
 
-echo "==> Post-install verify"
+echo "==> Post-install verify (preflight + API + E2E)"
 if bash "$QADBAK_DIR/scripts/post-install-verify.sh"; then
   VERIFY_OK=1
 else
@@ -221,9 +235,9 @@ echo "   https://$PANEL_HOST/login"
 [[ "$SERVER_FQDN" != "$PANEL_HOST" ]] && echo "   https://$SERVER_FQDN/login"
 echo " User:   $QB_USER"
 echo " Webmin (engine, not homepage): https://${FQDN}:10000"
-echo " Verify: sudo bash $QADBAK_DIR/scripts/post-install-verify.sh"
-echo " Update: sudo bash $QADBAK_DIR/scripts/update-qadbak.sh"
-echo " E2E:    $QADBAK_DIR/docs/E2E-CHECKLIST.md"
+echo " Re-verify: sudo bash $QADBAK_DIR/scripts/post-install-verify.sh"
+echo " Update:   sudo bash $QADBAK_DIR/scripts/update-qadbak.sh"
+echo " Manual:   $QADBAK_DIR/docs/E2E-CHECKLIST.md (domains/mail/DNS in VirtualMin)"
 [[ "$ADD_CLIENT" =~ ^[Yy]$ ]] && echo " Client: $CLIENT_USER (assign domains in data/users.json)"
 [[ "$VERIFY_OK" -eq 1 ]] && echo " Post-install: PASSED" || echo " Post-install: check warnings"
 echo "============================================"
