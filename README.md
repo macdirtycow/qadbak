@@ -60,6 +60,16 @@ Deploy the panel at **https://nexmin.net** (see [deploy/nginx-nexmin.conf](deplo
 
 For self-signed TLS on port 10000: prefer a valid certificate; otherwise temporarily `NODE_TLS_REJECT_UNAUTHORIZED=0` (testing only).
 
+## Marketing site (nexmin.net)
+
+Static landing page matching the Nexmin panel UI — upload to your web root:
+
+```bash
+bash scripts/build-marketing-zip.sh
+```
+
+Output: **`dist/nexmin-site-upload.zip`** (extract and upload; see `marketing-site/README-UPLOAD.txt`).
+
 ## Documentation
 
 | File | Contents |

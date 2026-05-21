@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexmin — Premium control panel for VirtualMin</title>
+    <meta
+      name="description"
+      content="Nexmin is a modern English UI on top of VirtualMin and Webmin. Domains, email, DNS, SSL, backups, and Webmin login links — with admin and client roles."
+    />
+    <meta name="theme-color" content="#0f1419" />
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <meta property="og:title" content="Nexmin — Premium control panel for VirtualMin" />
+    <meta property="og:description" content="Simpler hosting management on top of VirtualMin. Not a fork." />
+    <meta property="og:url" content="https://nexmin.net" />
+    <meta property="og:type" content="website" />
+  </head>
+  <body>
+    <div class="bg-mesh" aria-hidden="true">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+
+    <header class="nav">
+      <div class="container nav-inner">
+        <a href="#" class="logo">
+          <span class="logo-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+              <path d="M4 12h6v8H4v-8zm10-10h6v18h-6V2z" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          Nexmin
+        </a>
+        <nav class="nav-links" aria-label="Main">
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#roles">Roles</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+        <div class="nav-actions">
+          <a href="https://omiiba.dev" class="btn btn-ghost" rel="noopener">Omiiba</a>
+          <a href="#" data-panel-link class="btn btn-primary">Open panel</a>
+          <button type="button" class="nav-toggle" aria-label="Menu" aria-expanded="false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="mobile-menu" aria-label="Mobile">
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#roles">Roles</a>
+        <a href="#faq">FAQ</a>
+        <a href="#" data-panel-link>Open panel</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container hero-grid">
+          <div>
+            <span class="badge"><span class="badge-dot"></span> Built for VirtualMin</span>
+            <h1>Hosting control, <span>reimagined</span></h1>
+            <p class="hero-lead">
+              Nexmin is a premium English UI layer on VirtualMin and Webmin — not a fork.
+              Give admins and clients a focused panel for domains, mail, DNS, SSL, and more.
+            </p>
+            <div class="hero-cta">
+              <a href="#" data-panel-link class="btn btn-primary btn-lg">Open panel</a>
+              <a href="#features" class="btn btn-secondary btn-lg">Explore features</a>
+            </div>
+            <div class="hero-trust">
+              <div><strong>8 phases</strong> integrated</div>
+              <div><strong>RBAC</strong> admin &amp; client</div>
+              <div><strong>Remote API</strong> server-side only</div>
+            </div>
+          </div>
+          <div class="preview" aria-hidden="true">
+            <div class="preview-bar">
+              <span class="preview-dot"></span>
+              <span class="preview-dot"></span>
+              <span class="preview-dot"></span>
+              <span class="preview-url">nexmin.net/dashboard</span>
+            </div>
+            <div class="preview-body">
+              <aside class="preview-sidebar">
+                <div class="preview-logo-sm">Nexmin</div>
+                <div class="preview-nav-item active">Dashboard</div>
+                <div class="preview-nav-item">Domains</div>
+                <div class="preview-nav-item">Server admin</div>
+                <div class="preview-nav-item">Webmin</div>
+              </aside>
+              <div class="preview-main">
+                <div class="preview-title">Dashboard</div>
+                <div class="preview-sub">Overview of your virtual servers</div>
+                <div class="preview-cards">
+                  <div class="preview-stat"><span>Total</span><strong>12</strong></div>
+                  <div class="preview-stat"><span>Active</span><strong>11</strong></div>
+                  <div class="preview-stat"><span>Disabled</span><strong>1</strong></div>
+                </div>
+                <div class="preview-table">
+                  <div class="preview-row head"><span>Domain</span><span>Plan</span><span>Status</span></div>
+                  <div class="preview-row"><span>example.com</span><span>Pro</span><span class="status">Active</span></div>
+                  <div class="preview-row"><span>shop.io</span><span>Basic</span><span class="status">Active</span></div>
+                  <div class="preview-row"><span>blog.net</span><span>Pro</span><span class="status">Active</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="strip">
+        <div class="container strip-inner">
+          <span class="strip-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            VirtualMin Remote API
+          </span>
+          <span class="strip-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            Webmin login links
+          </span>
+          <span class="strip-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Role-based access
+          </span>
+          <span class="strip-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+            English UI
+          </span>
+        </div>
+      </div>
+
+      <section id="features">
+        <div class="container">
+          <p class="section-label">Features</p>
+          <h2 class="section-title">Everything clients expect. Nothing they don’t.</h2>
+          <p class="section-lead">
+            Eight integration phases cover domains, mail, databases, DNS, SSL, files, server admin, and cloud backups — with mock mode for development.
+          </p>
+          <div class="grid-3">
+            <article class="card">
+              <div class="card-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              </div>
+              <h3>Domains &amp; lifecycle</h3>
+              <p>Create, enable, disable, clone, migrate, and transfer virtual servers from one place.</p>
+            </article>
+            <article class="card">
+              <div class="card-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
+              </div>
+              <h3>Email &amp; mailboxes</h3>
+              <p>Mailboxes, aliases, IMAP tools, mail logs, catch-all, autoresponders, and shared addresses.</p>
+            </article>
+            <article class="card">
+              <div class="card-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+              </div>
+              <h3>Databases</h3>
+              <p>MySQL and PostgreSQL — create databases and rotate passwords without opening Webmin.</p>
+            </article>
+            <article class="card">
+              <div class="card-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <h3>DNS &amp; SSL</h3>
+              <p>Edit DNS records and manage certificates, including Let’s Encrypt, with clear status.</p>
+            </article>
+            <article class="card">
+              <div class="card-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+              </div>
+              <h3>Files &amp; PHP</h3>
+              <p>File manager in mock mode; live servers get secure Webmin links. PHP per directory and ini.</p>
+            </article>
+            <article class="card">
+              <div class="card-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+              </div>
+              <h3>Backups &amp; cloud</h3>
+              <p>Scheduled backups, restore, and S3 bucket management for administrators.</p>
+            </article>
+            <article class="card">
+              <div class="card-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+              </div>
+              <h3>Webmin &amp; Usermin</h3>
+              <p>One-click login links for root Webmin, domain Virtualmin, and Usermin — no password sharing.</p>
+            </article>
+            <article class="card">
+              <div class="card-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+              </div>
+              <h3>Server &amp; resellers</h3>
+              <p>Bandwidth, services, plans, templates, extra admins, and license info for hosters.</p>
+            </article>
+            <article class="card">
+              <div class="card-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+              </div>
+              <h3>Admin &amp; client roles</h3>
+              <p>Same polished UI — different API allowlists. Clients stay domain-scoped.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="how">
+        <div class="container">
+          <p class="section-label">How it works</p>
+          <h2 class="section-title">VirtualMin stays in charge. Nexmin stays in front.</h2>
+          <p class="section-lead">
+            Your stack does not change. Nexmin talks to <code style="color:#93c5fd">remote.cgi</code> on the server — never from the browser.
+          </p>
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">01</div>
+              <h3>Install on your VPS</h3>
+              <p>Run Nexmin beside VirtualMin. Point environment variables at your Remote API and Webmin URLs.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">02</div>
+              <h3>Proxy nexmin.net</h3>
+              <p>Terminate TLS at nginx and forward to the Next.js app. Keep Webmin on its own host or port.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">03</div>
+              <h3>Invite admins &amp; clients</h3>
+              <p>Panel users authenticate via Nexmin. VirtualMin credentials never leave the server.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container">
+          <div class="split">
+            <div>
+              <p class="section-label">Architecture</p>
+              <h2 class="section-title">Not a fork. An overlay.</h2>
+              <p class="section-lead" style="margin-bottom: 0">
+                Nexmin is built for hosters who want a product-grade experience without maintaining a VirtualMin fork.
+              </p>
+              <ul class="check-list">
+                <li>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                  Server-side RBAC on every API route
+                </li>
+                <li>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                  JWT sessions — no direct remote.cgi in the browser
+                </li>
+                <li>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                  “Open in VirtualMin” for complex edge cases
+                </li>
+                <li>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                  Mock mode for local UI development
+                </li>
+              </ul>
+            </div>
+            <div class="comparison">
+              <div class="compare-card">
+                <h4>Classic Webmin UI</h4>
+                <p>Powerful and complete — dense for everyday client tasks.</p>
+              </div>
+              <div class="compare-card good">
+                <h4>Nexmin</h4>
+                <p>Focused workflows, English copy, dark premium UI — VirtualMin underneath.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="roles">
+        <div class="container">
+          <p class="section-label">Access</p>
+          <h2 class="section-title">One panel. Two experiences.</h2>
+          <p class="section-lead">Administrators manage the fleet; clients see only their domains.</p>
+          <div class="roles">
+            <article class="role-card">
+              <span class="role-tag admin">Administrator</span>
+              <h3>Server-wide control</h3>
+              <p style="color: var(--muted); font-size: 0.9375rem; margin: 0">
+                Resellers, plans, templates, cloud S3, system features, Webmin root sessions, and full domain lifecycle.
+              </p>
+            </article>
+            <article class="role-card">
+              <span class="role-tag client">Client</span>
+              <h3>Domain-scoped simplicity</h3>
+              <p style="color: var(--muted); font-size: 0.9375rem; margin: 0">
+                Email, databases, DNS, SSL, files, and backups for assigned domains — without server admin noise.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container">
+          <div class="cta-block">
+            <h2>Ready to use Nexmin on your VirtualMin server?</h2>
+            <p>
+              Deploy the open reference build, connect your Remote API, and put a premium face on hosting management at nexmin.net.
+            </p>
+            <div class="cta-buttons">
+              <a href="#" data-panel-link class="btn btn-primary btn-lg">Open panel</a>
+              <a href="mailto:info@mareades.com" class="btn btn-secondary btn-lg">Contact Omiiba</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq">
+        <div class="container">
+          <p class="section-label">FAQ</p>
+          <h2 class="section-title" style="text-align: center">Common questions</h2>
+          <div class="faq">
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false">
+                Does Nexmin replace VirtualMin?
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="faq-a">
+                No. VirtualMin and Webmin remain the source of truth. Nexmin is a UI and API gateway with role-based access — you still need a licensed VirtualMin installation.
+              </div>
+            </div>
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false">
+                Is the source code open?
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="faq-a">
+                The repository is public for transparency, under a strict proprietary license. You may not use, copy, or distribute it without written permission from Omiiba.
+              </div>
+            </div>
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false">
+                Where does the file manager run?
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="faq-a">
+                In development mock mode, files are managed inside Nexmin. On a live server, Nexmin opens secure one-time Webmin file manager links via the VirtualMin API.
+              </div>
+            </div>
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false">
+                What do I need to run it?
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="faq-a">
+                Node.js 20+, VirtualMin with Remote API enabled, and environment configuration for API URL, Webmin/Usermin public URLs, and a strong session secret.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-grid">
+        <div>
+          <a href="#" class="logo">
+            <span class="logo-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                <path d="M4 12h6v8H4v-8zm10-10h6v18h-6V2z" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            Nexmin
+          </a>
+          <p>Premium control panel for VirtualMin. A product by Omiiba.</p>
+        </div>
+        <div>
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#" data-panel-link>Panel</a></li>
+            <li><a href="https://github.com/macdirtycow/nexmin" rel="noopener">GitHub</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Omiiba</h4>
+          <ul>
+            <li><a href="https://omiiba.dev" rel="noopener">omiiba.dev</a></li>
+            <li><a href="https://omiiba.com" rel="noopener">omiiba.com</a></li>
+            <li><a href="mailto:info@mareades.com">info@mareades.com</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="container footer-bottom">
+        <span>© 2026 Omiiba · Nexmin</span>
+        <span>nexmin.net</span>
+      </div>
+    </footer>
+
+    <script src="assets/js/main.js"></script>
+  </body>
+</html>
