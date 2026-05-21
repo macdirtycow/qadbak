@@ -4,11 +4,9 @@ import { Alert, Button, Card, Input, Label } from "@/components/ui";
 import { PanelFooter } from "@/components/PanelFooter";
 import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,17 +20,22 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ username, password }),
       });
-      const data = await res.json();
+      let data: { error?: string } = {};
+      try {
+        data = await res.json();
+      } catch {
+        setError("Server returned an invalid response. Is the app running?");
+        return;
+      }
       if (!res.ok) {
         setError(data.error ?? "Sign-in failed.");
         return;
       }
-      router.push("/dashboard");
-      router.refresh();
-    } catch {
-      setError("Cannot reach the server.");
+      // Full navigation ensures session cookie is applied (Brave / npm start + Secure fix)
+      window.location.assign("/dashboard");
     } finally {
       setLoading(false);
     }
@@ -78,8 +81,9 @@ export default function LoginPage() {
           </Button>
         </form>
         <p className="mt-6 text-xs text-panel-muted">
-          Default after first start: admin / changeme or klant / changeme (see README).
-          Development: set VIRTUALMIN_MOCK=true in .env.local.
+          Default: <strong className="text-slate-300">admin</strong> / <strong className="text-slate-300">changeme</strong> (or klant / changeme).
+          Local: <code className="text-slate-400">VIRTUALMIN_MOCK=true</code> and{" "}
+          <code className="text-slate-400">QADBAK_COOKIE_SECURE=false</code> in .env.local, then restart the server.
         </p>
         <div className="mt-6">
           <PanelFooter showBlurb />

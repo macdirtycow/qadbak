@@ -4,6 +4,16 @@ import type { SessionPayload } from "./types";
 
 const COOKIE_NAME = "panel_session";
 
+/**
+ * Secure cookies are ignored by browsers on http://localhost.
+ * Set QADBAK_COOKIE_SECURE=false for local `npm run start`.
+ */
+function sessionCookieSecure(): boolean {
+  if (process.env.QADBAK_COOKIE_SECURE === "false") return false;
+  if (process.env.QADBAK_COOKIE_SECURE === "true") return true;
+  return process.env.NODE_ENV === "production";
+}
+
 function secretKey(): Uint8Array {
   const secret = process.env.SESSION_SECRET;
   if (!secret || secret.length < 16) {
@@ -48,7 +58,7 @@ export function sessionCookieOptions(token: string) {
     name: COOKIE_NAME,
     value: token,
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: sessionCookieSecure(),
     sameSite: "lax" as const,
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
@@ -60,7 +70,7 @@ export function clearSessionCookieOptions() {
     name: COOKIE_NAME,
     value: "",
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: sessionCookieSecure(),
     sameSite: "lax" as const,
     path: "/",
     maxAge: 0,
