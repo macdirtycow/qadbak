@@ -1,6 +1,6 @@
 # Qadbak product roadmap
 
-Full UI replacement of Webmin/Virtualmin. Product name: **Qadbak** (repo may still be `nexmin` until GitHub rename).
+Full UI replacement of Webmin/Virtualmin. Product name: **Qadbak** (repo: `macdirtycow/qadbak`, local folder: `~/Projects/qadbak`).
 
 See [PARITY-AUDIT.md](./PARITY-AUDIT.md) for per-menu status.
 

@@ -12,11 +12,11 @@ fi
 npm install
 npm run build
 
+if pm2 describe nexmin &>/dev/null; then
+  pm2 delete nexmin
+fi
 if pm2 describe qadbak &>/dev/null; then
   pm2 restart qadbak
-elif pm2 describe nexmin &>/dev/null; then
-  pm2 delete nexmin
-  pm2 start npm --name qadbak -- start
 else
   pm2 start npm --name qadbak -- start
 fi
