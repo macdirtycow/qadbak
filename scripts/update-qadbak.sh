@@ -34,7 +34,8 @@ if [[ "$(id -u)" -eq 0 ]]; then
     configure-domain-repair-sudo.sh \
     configure-domain-terminal-sudo.sh \
     configure-host-services-sudo.sh \
-    configure-stack-helper-sudo.sh; do
+    configure-stack-helper-sudo.sh \
+    configure-provisioning-helper-sudo.sh; do
     echo "    $helper"
     if ! bash "$ROOT/scripts/$helper"; then
       echo "    WARN: $helper failed (see above)" >&2

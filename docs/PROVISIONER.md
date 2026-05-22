@@ -11,7 +11,13 @@ QADBAK_PROVISIONER=virtualmin
 # Development — still uses virtualmin adapter; mock data via VIRTUALMIN_MOCK=true
 # QADBAK_PROVISIONER=mock
 
-# Future — own engine (phase 8, not implemented)
+# Phase 8 — hybrid: native modules + VM fallback (see NATIVE-PHASES.md)
+# QADBAK_PROVISIONER=hybrid
+# QADBAK_NATIVE_FEATURES=ssl,dns,mail,db,domain,backup,cron
+# QADBAK_VIRTUALMIN_FALLBACK=true
+# QADBAK_DISABLE_WEBMIN=true
+
+# Strict native (no remote.cgi)
 # QADBAK_PROVISIONER=native
 ```
 

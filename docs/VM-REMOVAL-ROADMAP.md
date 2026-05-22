@@ -87,11 +87,27 @@ curl -s http://127.0.0.1:3000/api/health
 # Mail/DNS/SSL: werken nog via VM API op de achtergrond
 ```
 
-### Volgende ontwikkeling (repo)
+### Volgende ontwikkeling (repo) — **geïmplementeerd als sub-fases**
 
-1. Per feature: native script + `getProvisioner()` route → geen `virtualMinCall`.
-2. `scripts/audit-vm-dependency.sh` — welke API-programma's worden nog aangeroepen (log/analyse).
-3. Wanneer audit groen voor jouw workflow: `QADBAK_VIRTUALMIN_FALLBACK=false`, `QADBAK_PROVISIONER=native`.
+Zie [NATIVE-PHASES.md](./NATIVE-PHASES.md).
+
+| Sub-fase | Commando op VPS |
+|----------|-----------------|
+| 8a SSL | `sudo bash scripts/apply-phase8-native-phase.sh ssl` |
+| 8b DNS | `... phase.sh ssl,dns` |
+| 8c domain | `... domain` |
+| 8d mail | `... mail` (CLI, geen API) |
+| 8e db | `... db` |
+| 8f backup | `... backup` |
+| 8g cron | `... cron` |
+| Alles | `sudo bash scripts/apply-phase8-native-enable.sh` |
+
+```bash
+bash scripts/audit-vm-dependency.sh
+sudo bash scripts/test-native-provisioning.sh
+```
+
+Wanneer alles getest: `QADBAK_VIRTUALMIN_FALLBACK=false`, `QADBAK_PROVISIONER=native`.
 
 ### Pas daarna: pakketten eraf (irreversibel zonder backup)
 
