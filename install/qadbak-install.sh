@@ -29,7 +29,7 @@ fi
 
 FQDN="$(hostname -f 2>/dev/null || hostname)"
 echo "Server FQDN: $FQDN"
-echo "Qadbak becomes the homepage on port 80/443 (IP and hostname), not VirtualMin :10000."
+echo "Qadbak panel on your panel hostname (+ optional :11000). Customer domains use Apache on port 80."
 read -rp "Panel hostname — users open Qadbak here (DNS → this server) [$FQDN]: " PANEL_HOST
 PANEL_HOST="${PANEL_HOST:-$FQDN}"
 if [[ "$PANEL_HOST" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -235,9 +235,12 @@ echo "==> pm2"
 sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && pm2 delete qadbak 2>/dev/null || true; pm2 start npm --name qadbak -- start && pm2 save"
 env PATH="$PATH:/usr/bin" pm2 startup systemd -u "$QADBAK_USER" --hp "$QADBAK_DIR" | tail -1 | bash || true
 
-echo "==> nginx (80/443 → Qadbak; :10000 stays Webmin)"
+echo "==> nginx (panel host → Qadbak; other hosts → Apache; :10000 stays Webmin)"
+APACHE_BACKEND="$(bash "$QADBAK_DIR/scripts/detect-apache-backend.sh")"
+echo "    Apache backend: $APACHE_BACKEND"
 NGX="/etc/nginx/sites-available/qadbak"
 sed -e "s/__PANEL_HOST__/$PANEL_HOST/g" -e "s/__SERVER_FQDN__/$SERVER_FQDN/g" \
+  -e "s|__APACHE_BACKEND__|$APACHE_BACKEND|g" \
   "$QADBAK_DIR/deploy/nginx-qadbak.conf" >"$NGX"
 ln -sf "$NGX" /etc/nginx/sites-enabled/qadbak
 rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
@@ -272,9 +275,9 @@ fi
 echo ""
 echo "============================================"
 echo " Qadbak install complete"
-echo " Front door (Qadbak UI):"
-echo "   http://YOUR_SERVER_IP/     → Qadbak"
+echo " Qadbak panel:"
 echo "   https://$PANEL_HOST/login"
+echo "   Customer websites: http(s)://their-domain/ → public_html (Apache)"
 [[ "$SERVER_FQDN" != "$PANEL_HOST" ]] && echo "   https://$SERVER_FQDN/login"
 if [[ -n "$PANEL_ALT_PORT" ]]; then
   echo "   http://YOUR_SERVER_IP:$PANEL_ALT_PORT/login  (Contabo: open TCP $PANEL_ALT_PORT in cloud firewall)"

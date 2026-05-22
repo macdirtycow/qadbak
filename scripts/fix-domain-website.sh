@@ -60,10 +60,19 @@ fi
 
 echo ""
 echo "==> Local probe (Apache on this server)"
-if curl -sI --max-time 5 -H "Host: $DOMAIN" http://127.0.0.1/ | head -1; then
-  echo "    OK — web server answers locally for Host: $DOMAIN"
+PROBE_BODY="$(mktemp)"
+trap 'rm -f "$PROBE_BODY"' EXIT
+HTTP_CODE="$(curl -sS --max-time 8 -o "$PROBE_BODY" -w '%{http_code}' -H "Host: $DOMAIN" http://127.0.0.1/ || echo 000)"
+if [[ "$HTTP_CODE" =~ ^[0-9]+$ ]] && (( HTTP_CODE > 0 && HTTP_CODE < 500 )); then
+  if grep -qiE 'qadbak.*virtualmin|your hosting panel|sign in at qadbak' "$PROBE_BODY" 2>/dev/null; then
+    echo "    WARN — Host $DOMAIN still serves the Qadbak marketing page (not public_html)"
+    echo "    Fix:  sudo bash $ROOT/scripts/apply-hosting-nginx.sh"
+    echo "          sudo bash $ROOT/scripts/fix-domain-website.sh $DOMAIN"
+  else
+    echo "    OK — HTTP $HTTP_CODE for Host: $DOMAIN (looks like a hosted site)"
+  fi
 else
-  echo "    FAIL — no HTTP response on 127.0.0.1 for Host: $DOMAIN"
+  echo "    FAIL — no HTTP response on 127.0.0.1 for Host: $DOMAIN (code: $HTTP_CODE)"
   echo "    Check: virtualmin list-domains | grep -i $DOMAIN"
   echo "    Logs: tail -50 /var/log/apache2/error.log"
 fi
