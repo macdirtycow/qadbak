@@ -26,7 +26,7 @@ else
     \"\$VIRTUALMIN_URL\" | head -c 2000"
   echo ""
   curl -sk -u "$(grep VIRTUALMIN_USER "$ROOT/.env.local" | cut -d= -f2-):$(grep VIRTUALMIN_PASS "$ROOT/.env.local" | cut -d= -f2-)" \
-    -d "program=list-domains&json=1&multiline=1&toplevel=1" \
+    -d "program=list-domains&json=1&multiline" \
     "$(grep VIRTUALMIN_URL "$ROOT/.env.local" | cut -d= -f2-)" | head -c 3000
 fi
 

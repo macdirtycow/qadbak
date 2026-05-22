@@ -515,11 +515,8 @@ export async function listDomains(actor: {
   role: Role;
   domains: string[];
 }): Promise<VirtualMinDomain[]> {
-  const data = await virtualMinCall(
-    "list-domains",
-    { multiline: "1", "toplevel": "1" },
-    actor,
-  );
+  // Remote API: empty value = flag only (--multiline), not --multiline 1
+  const data = await virtualMinCall("list-domains", { multiline: "" }, actor);
   const rows = normalizeList(data);
   const mapped = rows.map((row) => ({
     name: rowDomainName(row),
