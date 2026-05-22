@@ -92,7 +92,9 @@ export function WebsiteHealthCard({
   const subtitle = panelHijack
     ? "This domain shows the Qadbak landing page instead of your site in public_html."
     : apacheDefault
-      ? "Apache serves the Ubuntu default page — not your public_html (Repair fixes DocumentRoot)."
+      ? health?.localProbe.ok
+        ? "Public URL still shows Ubuntu page — purge Cloudflare cache; origin may already be fixed."
+        : "Apache serves the Ubuntu default page — Repair installs nginx vhosts for public_html."
       : cf502
       ? "Cloudflare error 502 — origin answers badly (nginx→Apache or HTTPS without cert)."
       : cf523
@@ -171,7 +173,9 @@ export function WebsiteHealthCard({
               >
                 {health.localProbe.servingPanelLanding
                   ? "Qadbak landing — not public_html"
-                  : health.localProbe.ok
+                  : health.localProbe.servingApacheDefault
+                    ? "Ubuntu/Apache default — not public_html"
+                    : health.localProbe.ok
                     ? `OK — HTTP ${health.localProbe.status ?? ""}`
                     : health.localProbe.error ?? "No response"}
               </p>

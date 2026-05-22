@@ -150,9 +150,15 @@ function buildIssues(
   }
 
   if (localProbe.servingApacheDefault || publicProbe.servingApacheDefault) {
-    issues.push(
-      "Visitors see the Ubuntu/Apache default page, not public_html — use Repair on server (disables default vhost, fixes DocumentRoot).",
-    );
+    if (localProbe.ok && publicProbe.servingApacheDefault) {
+      issues.push(
+        "Origin serves your site locally but the public URL still shows the Ubuntu page — purge Cloudflare cache (Caching → Purge Everything), then refresh.",
+      );
+    } else {
+      issues.push(
+        "Visitors see the Ubuntu/Apache default page, not public_html — use Repair on server (nginx public_html vhosts + Apache DocumentRoot).",
+      );
+    }
   }
 
   if (publicProbe.cloudflare523 && localProbe.ok) {

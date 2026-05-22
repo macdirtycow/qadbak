@@ -46,6 +46,8 @@ sudo bash scripts/fix-domain-website.sh siccamanagement.nl
 
 Your edited file must be `/home/USER/public_html/index.html`, not `/var/www/html/index.html`.
 
+**Repair** also runs `apply-customer-nginx-vhosts.sh`: nginx `server_name` per domain points **directly** at `public_html` (wins over `default_server` → Apache). PHP still goes to Apache on the backend port.
+
 ## Cloudflare
 
 - **A** record → VPS IP (`QADBAK_ORIGIN_IP` in `.env.local`).

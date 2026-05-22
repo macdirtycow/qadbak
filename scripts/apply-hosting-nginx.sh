@@ -68,6 +68,11 @@ rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
 nginx -t
 systemctl reload nginx
 
+if [[ -f "$QADBAK_DIR/scripts/apply-customer-nginx-vhosts.sh" ]] && command -v virtualmin &>/dev/null; then
+  echo ""
+  APACHE_BACKEND="$APACHE_BACKEND" bash "$QADBAK_DIR/scripts/apply-customer-nginx-vhosts.sh"
+fi
+
 if is_ip "$(grep -E '^QADBAK_PUBLIC_HOST=' "$QADBAK_DIR/.env.local" 2>/dev/null | cut -d= -f2- || true)"; then
   sed -i "s/^QADBAK_PUBLIC_HOST=.*/QADBAK_PUBLIC_HOST=$SERVER_FQDN/" "$QADBAK_DIR/.env.local" 2>/dev/null || true
   chown qadbak:qadbak "$QADBAK_DIR/.env.local" 2>/dev/null || true

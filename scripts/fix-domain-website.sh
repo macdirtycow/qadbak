@@ -75,6 +75,11 @@ export APACHE_BACKEND
 
 fix_apache_vhost_for_domain "$DOMAIN" "$VM_USER" "$PUB" "$ROOT"
 
+if [[ -f "$ROOT/scripts/apply-customer-nginx-vhosts.sh" ]]; then
+  echo ""
+  APACHE_BACKEND="${APACHE_BACKEND:-127.0.0.1:8080}" bash "$ROOT/scripts/apply-customer-nginx-vhosts.sh"
+fi
+
 if [[ -d "$PUB" ]]; then
   chown -R "$VM_USER:$VM_USER" "$PUB"
   find "$PUB" -type d -exec chmod 755 {} \;
