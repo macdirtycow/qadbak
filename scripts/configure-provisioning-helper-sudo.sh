@@ -11,9 +11,7 @@ NODE_BIN="$(sudo -u "$QADBAK_USER" -H bash -lc 'command -v node' | head -1)"
 NODE_BIN="$(readlink -f "$NODE_BIN")"
 
 chmod 755 "$HELPER" "$WRAPPER"
-if grep -q '^QADBAK_NODE_BIN=' "$WRAPPER"; then
-  sed -i "s|^QADBAK_NODE_BIN=.*|QADBAK_NODE_BIN=$NODE_BIN|" "$WRAPPER"
-fi
+# Wrapper resolves node via command -v — do not sed (avoids git drift on pull).
 
 cat >"/etc/sudoers.d/qadbak-provisioning-helper" <<EOF
 # Qadbak native provisioning (phase 8)
@@ -27,3 +25,4 @@ sudo -u "$QADBAK_USER" sudo -n "$WRAPPER" ping | grep -q '"ok"' || {
   exit 1
 }
 echo "OK — $WRAPPER"
+echo "     node:    $NODE_BIN (runtime: command -v node)"

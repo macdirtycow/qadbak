@@ -4,6 +4,10 @@ set -euo pipefail
 DOMAIN="${1:?domain}"
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
 
+if ! grep -q 'load-env-local' "$QADBAK_DIR/scripts/provisioning-helper.mjs" 2>/dev/null; then
+  echo "WARN: git pull needed (old provisioning-helper). Run: sudo bash scripts/pull-and-helpers.sh" >&2
+fi
+
 echo "==> .env mail settings"
 grep -E '^QADBAK_(MAIL|PROVISIONER|VIRTUALMIN)' "$QADBAK_DIR/.env.local" 2>/dev/null || true
 
