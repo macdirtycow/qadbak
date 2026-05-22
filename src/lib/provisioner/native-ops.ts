@@ -194,3 +194,80 @@ export async function deleteCronJobNative(
 ): Promise<void> {
   await runProvisioningHelper("cron-delete", domain, id);
 }
+
+export async function listAliasesNative(
+  domain: string,
+  _actor: Actor,
+): Promise<{ from: string; to: string }[]> {
+  const r = await runProvisioningHelper("alias-list", domain);
+  return (r.aliases as { from: string; to: string }[]) ?? [];
+}
+
+export async function createAliasNative(
+  domain: string,
+  from: string,
+  to: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("alias-create", domain, from, to);
+}
+
+export async function deleteAliasNative(
+  domain: string,
+  from: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("alias-delete", domain, from);
+}
+
+export async function listRedirectsNative(
+  domain: string,
+  _actor: Actor,
+): Promise<{ path: string; dest: string; type?: string }[]> {
+  const r = await runProvisioningHelper("redirect-list", domain);
+  return (r.redirects as { path: string; dest: string; type?: string }[]) ?? [];
+}
+
+export async function createRedirectNative(
+  domain: string,
+  path: string,
+  dest: string,
+  type: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("redirect-create", domain, path, dest, type || "301");
+}
+
+export async function deleteRedirectNative(
+  domain: string,
+  path: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("redirect-delete", domain, path);
+}
+
+export async function listDomainFeaturesNative(
+  domain: string,
+  _actor: Actor,
+): Promise<{ feature: string; enabled: boolean; label?: string }[]> {
+  const r = await runProvisioningHelper("feature-list", domain);
+  return (r.features as { feature: string; enabled: boolean; label?: string }[]) ?? [];
+}
+
+export async function setDomainFeatureNative(
+  domain: string,
+  feature: string,
+  enabled: boolean,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("feature-set", domain, feature, enabled ? "true" : "false");
+}
+
+export async function getWebsiteLogsNative(
+  domain: string,
+  logType: "access" | "error",
+  _actor: Actor,
+): Promise<string> {
+  const r = await runProvisioningHelper("logs-tail", domain, logType);
+  return String(r.log ?? "");
+}

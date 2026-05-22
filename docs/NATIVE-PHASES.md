@@ -13,6 +13,10 @@ Elke sub-fase voegt scripts + `QADBAK_NATIVE_FEATURES` toe. Hybrid blijft VM-fal
 | 8e | `db` | db-list, db-create, db-pass | Databases |
 | 8f | `backup` | backup-list, backup-create | Backups-tab |
 | 8g | `cron` | cron-list, cron-create, cron-delete | Cron-tab |
+| 8h | `aliases` | alias-list, alias-create, alias-delete | Email aliases + Postfix map |
+| 8i | `redirects` | redirect-* + `apply-domain-nginx.sh` | URL redirects in nginx |
+| 8j | `features` | feature-list, feature-set | Features-tab (local JSON) |
+| 8k | `logs` | logs-tail | Website logs (tail files) |
 
 ## Alles inschakelen (test VPS)
 
@@ -21,6 +25,8 @@ cd /opt/qadbak
 git pull
 
 sudo bash scripts/apply-phase8-native-enable.sh
+# Of v1 panel compleet (zonder domain create):
+sudo bash scripts/apply-phase8-native-v1-panel.sh
 # Zet QADBAK_NATIVE_FEATURES=ssl,dns,mail,db,domain,backup,cron, rebuild + smoke tests
 ```
 

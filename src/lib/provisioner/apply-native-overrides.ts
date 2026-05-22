@@ -40,6 +40,23 @@ export function applyNativeOverrides<T extends Provisioner>(base: T): T {
     out.createCronJob = native.createCronJobNative;
     out.deleteCronJob = native.deleteCronJobNative;
   }
+  if (nativeFeatureEnabled("aliases")) {
+    out.listAliases = native.listAliasesNative;
+    out.createAlias = native.createAliasNative;
+    out.deleteAlias = native.deleteAliasNative;
+  }
+  if (nativeFeatureEnabled("redirects")) {
+    out.listRedirects = native.listRedirectsNative;
+    out.createRedirect = native.createRedirectNative;
+    out.deleteRedirect = native.deleteRedirectNative;
+  }
+  if (nativeFeatureEnabled("features")) {
+    out.listDomainFeatures = native.listDomainFeaturesNative;
+    out.setDomainFeature = native.setDomainFeatureNative;
+  }
+  if (nativeFeatureEnabled("logs")) {
+    out.getWebsiteLogs = native.getWebsiteLogsNative;
+  }
 
   return out;
 }

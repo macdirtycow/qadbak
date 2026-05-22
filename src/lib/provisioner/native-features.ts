@@ -7,6 +7,10 @@ const ALL = [
   "domain",
   "backup",
   "cron",
+  "aliases",
+  "redirects",
+  "features",
+  "logs",
 ] as const;
 
 export type NativeFeature = (typeof ALL)[number];

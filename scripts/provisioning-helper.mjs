@@ -11,6 +11,10 @@ import { dbList, dbCreate, dbPass } from "./lib/provision-db.mjs";
 import { domainCreate, domainDelete } from "./lib/provision-domain.mjs";
 import { backupList, backupCreate } from "./lib/provision-backup.mjs";
 import { cronList, cronCreate, cronDelete } from "./lib/provision-cron.mjs";
+import { aliasList, aliasCreate, aliasDelete } from "./lib/provision-aliases.mjs";
+import { redirectList, redirectCreate, redirectDelete } from "./lib/provision-redirects.mjs";
+import { featureList, featureSet } from "./lib/provision-features.mjs";
+import { logsTail } from "./lib/provision-logs.mjs";
 
 const cmd = process.argv[2];
 const args = process.argv.slice(3);
@@ -85,6 +89,33 @@ async function main() {
       break;
     case "cron-delete":
       await cronDelete(args[0], args[1]);
+      break;
+    case "alias-list":
+      await aliasList(args[0]);
+      break;
+    case "alias-create":
+      await aliasCreate(args[0], args[1], args[2]);
+      break;
+    case "alias-delete":
+      await aliasDelete(args[0], args[1]);
+      break;
+    case "redirect-list":
+      await redirectList(args[0]);
+      break;
+    case "redirect-create":
+      await redirectCreate(args[0], args[1], args[2], args[3]);
+      break;
+    case "redirect-delete":
+      await redirectDelete(args[0], args[1]);
+      break;
+    case "feature-list":
+      await featureList(args[0]);
+      break;
+    case "feature-set":
+      await featureSet(args[0], args[1], args[2] === "true" || args[2] === "1");
+      break;
+    case "logs-tail":
+      await logsTail(args[0], args[1] || "access");
       break;
     default:
       emit({ ok: false, error: `Unknown command: ${cmd}` });

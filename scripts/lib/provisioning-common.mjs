@@ -52,3 +52,25 @@ export async function fileExists(p) {
     return false;
   }
 }
+
+export function domainConfigDir(domain) {
+  return path.join(QADBAK_DIR, "data", "domain-config", String(domain).toLowerCase());
+}
+
+export async function readDomainConfigJson(domain, filename, fallback) {
+  const p = path.join(domainConfigDir(domain), filename);
+  try {
+    const raw = await readFile(p, "utf8");
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
+
+export async function writeDomainConfigJson(domain, filename, data) {
+  const dir = domainConfigDir(domain);
+  await mkdir(dir, { recursive: true });
+  const p = path.join(dir, filename);
+  await writeFile(p, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+  return p;
+}
