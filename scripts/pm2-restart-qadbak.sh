@@ -33,3 +33,4 @@ sleep 2
 curl -sf "http://127.0.0.1:3000/api/health" | head -c 120 || true
 echo ""
 echo "Done. Open Domains in the panel to manage your VirtualMin sites."
+echo "Check processes: sudo -u $USER pm2 list"

@@ -16,13 +16,17 @@ Browser (xterm.js) ←WebSocket→ nginx /ws/domain-terminal → qadbak-terminal
 
 ```bash
 cd /opt/qadbak
-npm install
+sudo bash scripts/install-node-build-deps.sh   # make/g++ for node-pty (once)
+sudo bash scripts/fix-qadbak-ownership.sh     # if you ran npm install as root before
+sudo -u qadbak bash -c 'cd /opt/qadbak && npm install && npm run build'
 sudo bash scripts/configure-domain-terminal-sudo.sh
 sudo bash scripts/enable-panel-port.sh 11000   # if you use :11000
 sudo bash scripts/apply-hosting-nginx.sh       # WebSocket proxy in nginx
-sudo -u qadbak bash -c 'npm run build'
 sudo bash scripts/pm2-restart-qadbak.sh
+sudo -u qadbak pm2 list
 ```
+
+**Do not** run `npm install` as root — `node-pty` must compile as the `qadbak` user and needs `build-essential` on Ubuntu.
 
 `pm2` must show **qadbak** and **qadbak-terminal** online.
 

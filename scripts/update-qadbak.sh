@@ -20,7 +20,12 @@ run_as_qadbak "cd '$ROOT' && \
   fi && \
   git pull"
 
-echo "==> Build"
+if [[ "$(id -u)" -eq 0 ]]; then
+  bash "$ROOT/scripts/install-node-build-deps.sh" 2>/dev/null || true
+  bash "$ROOT/scripts/fix-qadbak-ownership.sh" 2>/dev/null || true
+fi
+
+echo "==> Build (as $USER — never npm install as root)"
 run_as_qadbak "cd '$ROOT' && npm install && npm run build"
 
 if [[ "$(id -u)" -eq 0 ]]; then

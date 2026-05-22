@@ -45,6 +45,9 @@ if [[ -f "$QADBAK_DIR/scripts/configure-webmin-embed.sh" ]]; then
 fi
 
 echo "==> Native terminal (bash as domain user, no Webmin UI)"
+if [[ -f "$QADBAK_DIR/scripts/install-node-build-deps.sh" ]]; then
+  bash "$QADBAK_DIR/scripts/install-node-build-deps.sh" || true
+fi
 if [[ -f "$QADBAK_DIR/scripts/configure-domain-terminal-sudo.sh" ]]; then
   bash "$QADBAK_DIR/scripts/configure-domain-terminal-sudo.sh" || true
 fi
