@@ -29,7 +29,8 @@ fi
 
 if command -v iptables &>/dev/null; then
   if ! iptables -C INPUT -p tcp --dport "$PORT" -j ACCEPT 2>/dev/null; then
-    iptables -I INPUT 5 -p tcp --dport "$PORT" -m conntrack --ctstate NEW -j ACCEPT
+    iptables -I INPUT -p tcp --dport "$PORT" -m conntrack --ctstate NEW -j ACCEPT 2>/dev/null \
+      || iptables -A INPUT -p tcp --dport "$PORT" -j ACCEPT
     echo "    iptables: ACCEPT tcp/${PORT}"
   else
     echo "    iptables: rule already present"
