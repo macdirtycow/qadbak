@@ -8,7 +8,12 @@ type Health = {
   originIp: string;
   repairAvailable?: boolean;
   validation: { valid: boolean; messages: string[] };
-  localProbe: { ok: boolean; status?: number; error?: string };
+  localProbe: {
+    ok: boolean;
+    status?: number;
+    error?: string;
+    servingPanelLanding?: boolean;
+  };
   cloudflare: {
     error523LikelyCauses: string[];
     dnsChecklist: string[];
@@ -68,11 +73,20 @@ export function WebsiteHealthCard({
   }
 
   const localOk = health?.localProbe.ok;
+  const panelHijack = health?.localProbe.servingPanelLanding;
   const repairOk = health?.repairAvailable !== false;
   const showCloudflareHelp = health && (localOk || !localOk);
 
   return (
-    <Card className={localOk ? "border-emerald-500/30" : "border-amber-500/40"}>
+    <Card
+      className={
+        panelHijack
+          ? "border-rose-500/40"
+          : localOk
+            ? "border-emerald-500/30"
+            : "border-amber-500/40"
+      }
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-medium text-white">Website & Cloudflare</h2>
@@ -127,10 +141,20 @@ export function WebsiteHealthCard({
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <p className="text-panel-muted">Local web server (this VPS)</p>
-              <p className={localOk ? "text-emerald-400" : "text-amber-300"}>
-                {localOk
-                  ? `OK — HTTP ${health.localProbe.status ?? ""}`
-                  : `Not reachable — ${health.localProbe.error ?? "no response"}`}
+              <p
+                className={
+                  panelHijack
+                    ? "text-rose-300"
+                    : localOk
+                      ? "text-emerald-400"
+                      : "text-amber-300"
+                }
+              >
+                {panelHijack
+                  ? "Shows Qadbak landing — not your site in public_html"
+                  : localOk
+                    ? `OK — HTTP ${health.localProbe.status ?? ""}`
+                    : `Not reachable — ${health.localProbe.error ?? "no response"}`}
               </p>
             </div>
             <div>

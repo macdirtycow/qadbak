@@ -14,6 +14,9 @@ cd "$QADBAK_DIR"
 echo "==> git pull"
 git pull
 
+echo "==> Nginx (hosted domains → Apache, panel host → Qadbak)"
+bash "$QADBAK_DIR/scripts/apply-hosting-nginx.sh"
+
 echo "==> Sudo helpers"
 bash "$QADBAK_DIR/scripts/configure-domain-fs-sudo.sh"
 bash "$QADBAK_DIR/scripts/configure-domain-repair-sudo.sh" 2>/dev/null || true

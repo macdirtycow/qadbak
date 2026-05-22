@@ -7,7 +7,13 @@ export interface WebsiteHealthReport {
   originIp: string;
   repairAvailable: boolean;
   validation: { valid: boolean; messages: string[] };
-  localProbe: { ok: boolean; status?: number; error?: string };
+  localProbe: {
+    ok: boolean;
+    status?: number;
+    error?: string;
+    /** True when nginx serves the Qadbak marketing app instead of Apache/public_html */
+    servingPanelLanding?: boolean;
+  };
   cloudflare: {
     error523LikelyCauses: string[];
     dnsChecklist: string[];
@@ -22,6 +28,18 @@ function serverOriginIp(): string {
   );
 }
 
+function looksLikeQadbakLanding(body: string, headers: Headers): boolean {
+  const powered = headers.get("x-powered-by") ?? "";
+  if (/next\.js/i.test(powered)) return true;
+  const sample = body.slice(0, 12000).toLowerCase();
+  return (
+    sample.includes("qadbak") &&
+    (sample.includes("virtualmin") ||
+      sample.includes("your hosting panel") ||
+      sample.includes("sign in at qadbak"))
+  );
+}
+
 async function probeLocalWebsite(domain: string): Promise<WebsiteHealthReport["localProbe"]> {
   try {
     const res = await fetch(`http://127.0.0.1/`, {
@@ -29,9 +47,15 @@ async function probeLocalWebsite(domain: string): Promise<WebsiteHealthReport["l
       signal: AbortSignal.timeout(8000),
       redirect: "manual",
     });
+    const body = await res.text().catch(() => "");
+    const servingPanelLanding = looksLikeQadbakLanding(body, res.headers);
     return {
-      ok: res.status > 0 && res.status < 500,
+      ok: res.status > 0 && res.status < 500 && !servingPanelLanding,
       status: res.status,
+      servingPanelLanding,
+      error: servingPanelLanding
+        ? "Nginx still routes this domain to the Qadbak landing page — run apply-hosting-nginx on the server."
+        : undefined,
     };
   } catch (e) {
     return {
@@ -58,7 +82,11 @@ export async function getWebsiteHealth(
   const originIp = serverOriginIp();
 
   const error523LikelyCauses: string[] = [];
-  if (!localProbe.ok) {
+  if (localProbe.servingPanelLanding) {
+    error523LikelyCauses.push(
+      "This domain hits the Qadbak marketing page instead of public_html — on the VPS run: sudo bash scripts/apply-hosting-nginx.sh",
+    );
+  } else if (!localProbe.ok) {
     error523LikelyCauses.push(
       "Apache/Nginx is not responding on this server for this domain (run repair on the VPS).",
     );

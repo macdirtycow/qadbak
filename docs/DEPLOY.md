@@ -82,7 +82,9 @@ sudo nginx -t && sudo systemctl reload nginx
 sudo certbot --nginx -d "$PANEL" -d "$FQDN"
 ```
 
-- `http://SERVER_IP/` → Qadbak (default_server on port 80)
+- `http://SERVER_IP:11000/` → Qadbak panel (if `enable-panel-port.sh` was run)
+- `http://customer-domain/` → Apache / `public_html` (nginx `default_server` → Apache backend)
+- `https://panel-host/` → Qadbak
 - `https://$PANEL/login` → Qadbak
 - `https://$FQDN:10000` → Webmin only (do not use as client entry URL)
 
