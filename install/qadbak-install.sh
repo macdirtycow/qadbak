@@ -231,9 +231,7 @@ echo "==> nginx (panel host → Qadbak; other hosts → Apache; :10000 stays Web
 APACHE_BACKEND="$(bash "$QADBAK_DIR/scripts/detect-apache-backend.sh")"
 echo "    Apache backend: $APACHE_BACKEND"
 NGX="/etc/nginx/sites-available/qadbak"
-sed -e "s/__PANEL_HOST__/$PANEL_HOST/g" -e "s/__SERVER_FQDN__/$SERVER_FQDN/g" \
-  -e "s|__APACHE_BACKEND__|$APACHE_BACKEND|g" \
-  "$QADBAK_DIR/deploy/nginx-qadbak.conf" >"$NGX"
+bash "$QADBAK_DIR/scripts/apply-hosting-nginx.sh"
 ln -sf "$NGX" /etc/nginx/sites-enabled/qadbak
 rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
 nginx -t && systemctl reload nginx
