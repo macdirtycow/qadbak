@@ -13,7 +13,12 @@ run_as_qadbak() {
 }
 
 echo "==> Pull $ROOT"
-run_as_qadbak "cd '$ROOT' && git pull"
+run_as_qadbak "cd '$ROOT' && \
+  if ! git diff --quiet package-lock.json 2>/dev/null; then \
+    echo '    Reset package-lock.json (local npm drift)'; \
+    git checkout -- package-lock.json; \
+  fi && \
+  git pull"
 
 echo "==> Build"
 run_as_qadbak "cd '$ROOT' && npm install && npm run build"
