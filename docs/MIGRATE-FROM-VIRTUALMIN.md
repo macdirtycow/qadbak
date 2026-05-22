@@ -2,6 +2,18 @@
 
 For servers that **already run VirtualMin** (like a Contabo VPS after `qadbak-install.sh`):
 
+## Test server (e.g. siccamanagement.nl on Contabo)
+
+Use the **hybrid** apply script — keeps VirtualMin, adds phase 6 stack + helpers:
+
+```bash
+cd /opt/qadbak
+git pull
+sudo bash scripts/apply-phase6-test-server.sh
+```
+
+No full `qadbak-install-native.sh` on a box that already has VirtualMin and live test domains.
+
 ## You do not need phase 6 reinstall
 
 - Panel uses `getProvisioner()` → VirtualMin API (headless Webmin)
