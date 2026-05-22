@@ -13,16 +13,23 @@ run_as_qadbak() {
 }
 
 echo "==> Pull $ROOT"
-run_as_qadbak "cd '$ROOT' && \
-  if ! git diff --quiet package-lock.json 2>/dev/null; then \
-    echo '    Reset package-lock.json (local npm drift)'; \
-    git checkout -- package-lock.json; \
-  fi && \
-  git pull"
-
 if [[ "$(id -u)" -eq 0 ]]; then
+  # Pull as root is common on VPS; fix ownership before npm run as qadbak.
+  cd "$ROOT"
+  if ! git diff --quiet package-lock.json 2>/dev/null; then
+    echo "    Reset package-lock.json (local npm drift)"
+    git checkout -- package-lock.json
+  fi
+  git pull
+  bash "$ROOT/scripts/fix-qadbak-ownership.sh"
   bash "$ROOT/scripts/install-node-build-deps.sh" 2>/dev/null || true
-  bash "$ROOT/scripts/fix-qadbak-ownership.sh" 2>/dev/null || true
+else
+  run_as_qadbak "cd '$ROOT' && \
+    if ! git diff --quiet package-lock.json 2>/dev/null; then \
+      echo '    Reset package-lock.json (local npm drift)'; \
+      git checkout -- package-lock.json; \
+    fi && \
+    git pull"
 fi
 
 echo "==> Build (as $USER — never npm install as root)"
