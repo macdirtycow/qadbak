@@ -62,7 +62,7 @@ Deploy the panel at **https://qadbak.com** (see [deploy/nginx-qadbak.conf](deplo
 6. Build: `npm run build && npm run start`
 7. Nginx + TLS for `qadbak.com`: [deploy/nginx-qadbak.conf](deploy/nginx-qadbak.conf)
 
-For self-signed TLS on port 10000: prefer a valid certificate; otherwise temporarily `NODE_TLS_REJECT_UNAUTHORIZED=0` (testing only).
+For self-signed TLS on port 10000: prefer a valid certificate; otherwise `VIRTUALMIN_TLS_INSECURE=true` in `.env.local` (VirtualMin API only — see `docs/PRODUCTION-HARDENING.md`).
 
 ## Marketing site (qadbak.com)
 

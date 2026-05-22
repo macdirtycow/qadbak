@@ -11,6 +11,7 @@ import type {
 
 export { VirtualMinError } from "./errors";
 import { VirtualMinError } from "./errors";
+import { virtualMinFetch } from "./virtualmin-http";
 
 function normalizeFieldKey(key: string): string {
   return key.toLowerCase().replace(/\s+/g, "_");
@@ -188,7 +189,7 @@ export async function virtualMinCall(
   const body = buildVirtualMinRequestBody(apiProgram, apiParams);
   const auth = Buffer.from(`${user}:${pass}`).toString("base64");
 
-  const res = await fetch(url, {
+  const res = await virtualMinFetch(url, {
     method: "POST",
     headers: {
       Authorization: `Basic ${auth}`,

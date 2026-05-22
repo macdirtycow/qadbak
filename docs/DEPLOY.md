@@ -34,11 +34,13 @@ VIRTUALMIN_UI_URL=https://panel-test.yourdomain.com:10000
 PORT=3000
 ```
 
-If self-signed TLS on 10000:
+If self-signed TLS on 10000 (VirtualMin API only — not global):
 
-```bash
-export NODE_TLS_REJECT_UNAUTHORIZED=0
+```env
+VIRTUALMIN_TLS_INSECURE=true
 ```
+
+Do **not** set `NODE_TLS_REJECT_UNAUTHORIZED=0` (disables TLS for the entire Node process). See `docs/PRODUCTION-HARDENING.md`.
 
 ## 2. Verify API
 
