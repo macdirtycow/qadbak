@@ -34,6 +34,10 @@ Until `QADBAK_PROVISIONER=native` (phase 8) exists:
 2. **Migrate** from an existing box — see [MIGRATE-FROM-VIRTUALMIN.md](./MIGRATE-FROM-VIRTUALMIN.md), or  
 3. **Mock mode** — UI development only (`VIRTUALMIN_MOCK=true`)
 
-## Your current server
+## Test VPS with VirtualMin already (siccamanagement.nl)
 
-Preflight passed with **local VirtualMin** — you are on the **VirtualMin path** (phases 1–5). Phase 6 does not require changes on `vmi3317912` unless you build a second test VPS.
+```bash
+sudo bash /opt/qadbak/scripts/apply-phase6-test-server.sh
+```
+
+Hybrid mode: native stack + helpers, VirtualMin stays as engine. See [MIGRATE-FROM-VIRTUALMIN.md](./MIGRATE-FROM-VIRTUALMIN.md).

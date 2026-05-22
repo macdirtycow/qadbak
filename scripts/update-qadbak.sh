@@ -59,4 +59,7 @@ echo "==> Verify"
 run_as_qadbak "cd '$ROOT' && bash scripts/v1-test-preflight.sh" || true
 curl -sf "http://127.0.0.1:${PORT:-3000}/api/health" | head -c 200
 echo ""
+if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/apply-phase6-test-server.sh" ]]; then
+  echo "Test VPS (hybrid phase 6): sudo bash $ROOT/scripts/apply-phase6-test-server.sh"
+fi
 echo "Done."
