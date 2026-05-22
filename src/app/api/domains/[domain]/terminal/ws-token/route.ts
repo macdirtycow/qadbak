@@ -26,6 +26,7 @@ export async function GET(request: Request, { params }: Params) {
 
     return jsonOk({
       available: true,
+      token,
       wsUrl,
       unixUser,
       domain,

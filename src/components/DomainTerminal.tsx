@@ -8,11 +8,21 @@ import "@xterm/xterm/css/xterm.css";
 
 type SessionInfo = {
   available: boolean;
+  token?: string;
   wsUrl?: string;
   unixUser?: string;
   domain?: string;
   error?: string;
 };
+
+function resolveWsUrl(session: SessionInfo): string | null {
+  if (session.token && typeof window !== "undefined") {
+    const proto = window.location.protocol === "https:" ? "wss" : "ws";
+    const q = new URLSearchParams({ token: session.token });
+    return `${proto}//${window.location.host}/ws/domain-terminal?${q.toString()}`;
+  }
+  return session.wsUrl ?? null;
+}
 
 export function DomainTerminal({
   domain,
@@ -38,7 +48,8 @@ export function DomainTerminal({
 
   const connect = useCallback(
     async (session: SessionInfo) => {
-      if (!session.wsUrl || !containerRef.current) return;
+      const wsUrl = resolveWsUrl(session);
+      if (!wsUrl || !containerRef.current) return;
       disconnect();
 
       const term =
@@ -63,7 +74,7 @@ export function DomainTerminal({
       }
       fit.fit();
 
-      const ws = new WebSocket(session.wsUrl);
+      const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -92,12 +103,17 @@ export function DomainTerminal({
 
       ws.onerror = () => {
         setError(
-          "WebSocket connection failed. On the VPS: sudo bash scripts/configure-domain-terminal-sudo.sh && pm2 restart (see docs/TERMINAL-NATIVE.md).",
+          `WebSocket failed (${wsUrl.replace(/token=[^&]+/, "token=…")}). On the VPS: sudo -u qadbak pm2 list (qadbak-terminal online?), curl -sI http://127.0.0.1:11000/ws/domain-terminal, then sudo bash scripts/install-node-build-deps.sh && sudo -u qadbak bash -c 'cd /opt/qadbak && npm install && npm run build' && sudo bash scripts/pm2-restart-qadbak.sh`,
         );
       };
 
-      ws.onclose = () => {
+      ws.onclose = (ev) => {
         setConnected(false);
+        if (ev.code !== 1000 && ev.code !== 1005) {
+          setError(
+            `Terminal closed (code ${ev.code}${ev.reason ? `: ${ev.reason}` : ""}). Check: sudo -u qadbak pm2 logs qadbak-terminal --lines 20`,
+          );
+        }
         term.writeln("\r\n\r\n[session ended]");
       };
     },

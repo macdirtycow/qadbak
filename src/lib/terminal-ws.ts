@@ -27,15 +27,17 @@ export async function createTerminalWsToken(
     .sign(secretKey());
 }
 
-/** Build same-origin WebSocket URL for the native terminal. */
+/** Build WebSocket URL from the incoming API request (prefer client-side builder in browser). */
 export function terminalWsUrl(request: Request, token: string): string {
+  const reqUrl = new URL(request.url);
   const host =
     request.headers.get("x-forwarded-host") ??
     request.headers.get("host") ??
-    "localhost";
+    reqUrl.host;
+  const forwarded = request.headers.get("x-forwarded-proto");
   const proto =
-    request.headers.get("x-forwarded-proto") ??
-    (host.includes("localhost") ? "http" : "https");
+    forwarded ??
+    (reqUrl.protocol === "https:" ? "https" : "http");
   const wsProto = proto === "https" ? "wss" : "ws";
   const q = new URLSearchParams({ token });
   return `${wsProto}://${host}/ws/domain-terminal?${q.toString()}`;
