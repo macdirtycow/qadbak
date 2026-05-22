@@ -86,6 +86,17 @@ On your laptop browser:
 
 If `http://VPS_IP` shows Apache/default: re-run nginx step from [FRONT-DOOR.md](./FRONT-DOOR.md).
 
+### Provider firewall blocks port 80?
+
+Use an extra panel port (default **11000** — not Webmin’s **10000**):
+
+```bash
+sudo bash /opt/qadbak/scripts/enable-panel-port.sh 11000
+```
+
+Open **TCP 11000** in the Contabo (or other) firewall panel, then open  
+`http://VPS_IP:11000/login` on your Mac.
+
 ---
 
 ## Step 5 — Automated preflight (on VPS)

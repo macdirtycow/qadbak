@@ -32,6 +32,17 @@ echo "Server FQDN: $FQDN"
 echo "Qadbak becomes the homepage on port 80/443 (IP and hostname), not VirtualMin :10000."
 read -rp "Panel hostname — users open Qadbak here (DNS → this server) [$FQDN]: " PANEL_HOST
 PANEL_HOST="${PANEL_HOST:-$FQDN}"
+if [[ "$PANEL_HOST" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "  Do not use a bare IP as panel hostname (breaks TLS/mail). Using $FQDN instead." >&2
+  PANEL_HOST="$FQDN"
+fi
+read -rp "Also expose panel on TCP 11000 (recommended for Contabo)? [Y/n]: " USE_ALT_PORT
+USE_ALT_PORT="${USE_ALT_PORT:-Y}"
+PANEL_ALT_PORT=""
+if [[ ! "$USE_ALT_PORT" =~ ^[Nn]$ ]]; then
+  read -rp "Extra public panel port [11000]: " PANEL_ALT_PORT
+  PANEL_ALT_PORT="${PANEL_ALT_PORT:-11000}"
+fi
 read -rp "Also answer HTTPS for server FQDN $FQDN? [Y/n]: " ALSO_FQDN
 ALSO_FQDN="${ALSO_FQDN:-Y}"
 if [[ ! "$ALSO_FQDN" =~ ^[Yy] ]]; then
@@ -214,7 +225,12 @@ fi
 
 if [[ "$SET_UFW" =~ ^[Yy]$ ]]; then
   echo "==> UFW"
-  OPEN_WEBMIN=N bash "$QADBAK_DIR/scripts/configure-ufw-qadbak.sh" || true
+  PANEL_ALT_PORT="${PANEL_ALT_PORT:-}" OPEN_WEBMIN=N bash "$QADBAK_DIR/scripts/configure-ufw-qadbak.sh" || true
+fi
+
+if [[ -n "$PANEL_ALT_PORT" ]]; then
+  echo "==> Public panel port $PANEL_ALT_PORT (nginx + host firewall)"
+  bash "$QADBAK_DIR/scripts/enable-panel-port.sh" "$PANEL_ALT_PORT"
 fi
 
 VERIFY_OK=0
@@ -234,6 +250,9 @@ echo " Front door (Qadbak UI):"
 echo "   http://YOUR_SERVER_IP/     → Qadbak"
 echo "   https://$PANEL_HOST/login"
 [[ "$SERVER_FQDN" != "$PANEL_HOST" ]] && echo "   https://$SERVER_FQDN/login"
+if [[ -n "$PANEL_ALT_PORT" ]]; then
+  echo "   http://YOUR_SERVER_IP:$PANEL_ALT_PORT/login  (Contabo: open TCP $PANEL_ALT_PORT in cloud firewall)"
+fi
 echo " User:   $QB_USER"
 echo " Webmin (engine, not homepage): https://${FQDN}:10000"
 echo " Re-verify: sudo bash $QADBAK_DIR/scripts/post-install-verify.sh"
