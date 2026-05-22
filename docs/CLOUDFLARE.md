@@ -29,9 +29,29 @@ QADBAK_ORIGIN_IP=173.212.250.158
 
 (Public DNS may show Cloudflare IPs `104.21.x` / `172.67.x` when proxied — that is normal.)
 
-### Contabo firewall
+### Contabo firewall (Inbound Rules)
 
-In the Contabo panel, allow **inbound TCP 80 and 443** (same as 22 and 11000). See [CONTABO-FIREWALL.md](./CONTABO-FIREWALL.md).
+Rules are evaluated **top to bottom**. **Accept rules for 80 and 443 must sit above** “Block all traffic”.
+
+| Rule | Required |
+|------|----------|
+| TCP **80** ACCEPT | **Yes** — Cloudflare Flexible uses HTTP to origin |
+| TCP **443** ACCEPT | Yes — for HTTPS / Full SSL |
+| TCP 11000 | Qadbak panel only |
+
+Your screenshot had **443** and **11000**, but **no dedicated TCP 80** rule. A broad “ssh / Any port” rule may cover IPv4, but add an explicit rule to be safe:
+
+- **Action:** ACCEPT · **Protocol:** TCP · **Port:** 80 · **Source:** Any  
+- Place it **above** “Block all traffic”.
+
+Also open port 80 on the **VPS OS** firewall:
+
+```bash
+sudo bash /opt/qadbak/scripts/open-host-firewall-port.sh 80
+sudo bash /opt/qadbak/scripts/open-host-firewall-port.sh 443
+```
+
+See [CONTABO-FIREWALL.md](./CONTABO-FIREWALL.md).
 
 ### SSL mode
 
