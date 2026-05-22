@@ -24,9 +24,13 @@ detect_panel_url() {
   fi
   if [[ -n "${QADBAK_PANEL_URL:-}" ]]; then
     url="${QADBAK_PANEL_URL%/}"
-    if [[ "$url" =~ ^https?://([0-9.]+):([0-9]+)$ ]] && [[ -n "$host_for_port" ]] && ! is_bare_ip "$host_for_port"; then
-      echo "http://${host_for_port}:${BASH_REMATCH[2]}"
-      return
+    local panel_port=""
+    if [[ "$url" =~ ^https?://([0-9.]+):([0-9]+)$ ]]; then
+      panel_port="${BASH_REMATCH[2]}"
+      if [[ -n "$host_for_port" ]] && ! is_bare_ip "$host_for_port"; then
+        echo "http://${host_for_port}:${panel_port}"
+        return
+      fi
     fi
     echo "$url"
     return

@@ -71,6 +71,9 @@ done
 echo "==> .env.local markers (phase 6 hybrid test server)"
 set_env_key "QADBAK_INSTALL_MODE" "hybrid"
 set_env_key "QADBAK_TEST_SERVER" "siccamanagement.nl"
+if [[ -n "$DETECT_DOMAIN" && "$DETECT_DOMAIN" =~ \. ]]; then
+  set_env_key "TEST_DOMAIN" "$DETECT_DOMAIN"
+fi
 chown "$QADBAK_USER:$QADBAK_USER" "$QADBAK_DIR/.env.local"
 chmod 600 "$QADBAK_DIR/.env.local"
 

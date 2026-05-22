@@ -26,21 +26,26 @@ fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck source=lib/virtualmin-domains.sh
 source "$ROOT/scripts/lib/virtualmin-domains.sh" 2>/dev/null || true
+# shellcheck source=lib/extract-virtualmin-domain.sh
+source "$ROOT/scripts/lib/extract-virtualmin-domain.sh" 2>/dev/null || true
+
 TEST_DOMAIN="${TEST_DOMAIN:-}"
+if [[ -z "$TEST_DOMAIN" && -f "$ROOT/.env.local" ]]; then
+  TEST_DOMAIN="$(grep -E '^TEST_DOMAIN=' "$ROOT/.env.local" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d "\"'" || true)"
+fi
+if [[ -z "$TEST_DOMAIN" && -f "$ROOT/.env.local" ]]; then
+  TEST_DOMAIN="$(grep -E '^QADBAK_TEST_SERVER=' "$ROOT/.env.local" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d "\"'" || true)"
+fi
 if [[ -n "$TEST_DOMAIN" ]] && [[ ! "$TEST_DOMAIN" =~ \. ]]; then
   TEST_DOMAIN=""
 fi
 if [[ -z "$TEST_DOMAIN" ]]; then
   TEST_DOMAIN="$(first_virtualmin_domain 2>/dev/null || true)"
 fi
+if [[ -z "$TEST_DOMAIN" ]] && [[ "$(id -u)" -eq 0 ]] && command -v virtualmin &>/dev/null; then
+  TEST_DOMAIN="$(virtualmin list-domains --name-only 2>/dev/null | sed '/^$/d' | grep -E '^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$' | head -1 || true)"
+fi
 LIST_DOMAINS_TMP=""
-extract_domain_from_json() {
-  local file="$1"
-  grep -oE '"website_hostnames"[[:space:]]*:[[:space:]]*\[[[:space:]]*"[^"]+"' "$file" 2>/dev/null \
-    | head -1 \
-    | grep -oE '[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)+' \
-    | head -1
-}
 echo "Using TEST_DOMAIN=${TEST_DOMAIN:-<from list-domains>}"
 
 FAILED=0
@@ -85,7 +90,7 @@ call_api() {
   if [[ "$program" == "list-domains" ]]; then
     LIST_DOMAINS_TMP="$tmp"
     if [[ -z "$TEST_DOMAIN" ]]; then
-      TEST_DOMAIN="$(extract_domain_from_json "$tmp")"
+      TEST_DOMAIN="$(extract_domain_from_vm_json "$tmp" 2>/dev/null || true)"
     fi
     tmp="" # keep file for optional calls
     if [[ -n "$TEST_DOMAIN" ]]; then
