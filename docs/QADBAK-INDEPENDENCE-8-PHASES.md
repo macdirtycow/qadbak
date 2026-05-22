@@ -144,7 +144,7 @@ sudo -u qadbak pm2 logs qadbak-terminal --lines 20
 
 ---
 
-## Fase 5 — Config-bestanden + helpers (Webmin modules vervangen)
+## Fase 5 — Config-bestanden + helpers (Webmin modules vervangen) ✅ in repo
 
 **Doel:** Gevoelige bewerkingen via **gevalideerde helpers**, niet door 70 Webmin-modules.
 
@@ -156,6 +156,8 @@ sudo -u qadbak pm2 logs qadbak-terminal --lines 20
 | BIND | Zone files of API (nsupdate) | Hestia DNS |
 | MariaDB | `mysql` CLI + beperkte users | CloudPanel DB UI |
 | Firewall | `ufw`/`firewalld` wrappers | Hestia |
+
+**Gedaan:** `stack-helper.mjs` + sudo + `/admin/stack` + domain **Stack validate**; docs [STACK-HELPERS.md](./STACK-HELPERS.md).
 
 **Exit:** [PARITY-AUDIT.md](./PARITY-AUDIT.md) v2/v3 items = UI of helper, geen Embed.
 

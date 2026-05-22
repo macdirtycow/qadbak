@@ -25,6 +25,7 @@ bash "$QADBAK_DIR/scripts/configure-domain-fs-sudo.sh"
 bash "$QADBAK_DIR/scripts/configure-domain-repair-sudo.sh"
 bash "$QADBAK_DIR/scripts/configure-domain-terminal-sudo.sh"
 bash "$QADBAK_DIR/scripts/configure-host-services-sudo.sh"
+bash "$QADBAK_DIR/scripts/configure-stack-helper-sudo.sh"
 
 echo "==> Hosting stack (nginx, public_html, Webmin login)"
 bash "$QADBAK_DIR/scripts/install-hosting-stack.sh"

@@ -99,13 +99,13 @@ Reference screenshots: **mareades.com** (read-only audit source — **do not ins
 
 | Item | Module path | Status | Phase |
 |------|-------------|--------|-------|
-| Apache Webserver | `/apache/` | Embed | v3 |
+| Apache Webserver | `/apache/` | Helper (`/admin/stack`) | v3 / phase 5 |
 | AWStats Reporting | `/awstats/` | Embed | v3 |
-| BIND DNS Server | `/bind8/` | Embed | v3 |
-| Dovecot IMAP/POP3 Server | `/dovecot/` | Embed | v3 |
-| MariaDB Database Server | `/mysql/` | Embed | v3 |
-| Nginx Webserver | `/nginx/` | Embed | v3 |
-| Postfix Mail Server | `/postfix/` | Embed | v3 |
+| BIND DNS Server | `/bind8/` | Helper (validate) | v3 / phase 5 |
+| Dovecot IMAP/POP3 Server | `/dovecot/` | Helper (validate) | v3 / phase 5 |
+| MariaDB Database Server | `/mysql/` | Helper (validate) | v3 / phase 5 |
+| Nginx Webserver | `/nginx/` | Helper (`/admin/stack`) | v3 / phase 5 |
+| Postfix Mail Server | `/postfix/` | Helper (validate) | v3 / phase 5 |
 | Procmail Mail Filter | `/procmail/` | Embed | v3 |
 | ProFTPD Server | `/proftpd/` | Embed | v3 |
 | Read User Mail | `/mailboxes/` | Embed | v3 |
@@ -138,8 +138,8 @@ Reference screenshots: **mareades.com** (read-only audit source — **do not ins
 |------|-------------|--------|-------|
 | Bandwidth Monitoring | `/bandwidth/` | UI partial + Embed | v4 |
 | Fail2Ban Intrusion Detector | `/fail2ban/` | Embed | v4 |
-| FirewallD | `/firewalld/` | Embed | v4 |
-| Linux Firewall | `/firewall/` | Embed | v4 |
+| FirewallD | `/firewalld/` | Helper (host metrics / stack) | v4 / phase 5 |
+| Linux Firewall | `/firewall/` | Helper (`/admin/stack` ufw-allow) | v4 / phase 5 |
 | Network Configuration | `/net/` | Embed | v4 |
 | NIS Client and Server | `/nis/` | Embed | v4 |
 | TCP Wrappers | `/tcpwrappers/` | Embed | v4 |

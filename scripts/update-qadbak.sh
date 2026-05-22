@@ -41,6 +41,7 @@ if [[ "$(id -u)" -eq 0 ]]; then
   bash "$ROOT/scripts/configure-domain-repair-sudo.sh" 2>/dev/null || true
   bash "$ROOT/scripts/configure-domain-terminal-sudo.sh" 2>/dev/null || true
   bash "$ROOT/scripts/configure-host-services-sudo.sh" 2>/dev/null || true
+  bash "$ROOT/scripts/configure-stack-helper-sudo.sh" 2>/dev/null || true
   bash "$ROOT/scripts/install-hosting-stack.sh" || true
 fi
 

@@ -38,4 +38,4 @@ Without sudo, service list/restart falls back to VirtualMin `list-server-statuse
 - Main nav hides Webmin module menus unless `QADBAK_SHOW_WEBMIN_NAV=true` in `.env.local`.
 - Overview card links to the Webmin hub for emergencies.
 
-See [QADBAK-INDEPENDENCE-8-PHASES.md](./QADBAK-INDEPENDENCE-8-PHASES.md) phase 4.
+See [QADBAK-INDEPENDENCE-8-PHASES.md](./QADBAK-INDEPENDENCE-8-PHASES.md) phase 4 · [STACK-HELPERS.md](./STACK-HELPERS.md) phase 5.

@@ -37,6 +37,8 @@ export function WebsiteHealthCard({
   const [health, setHealth] = useState<Health | null>(null);
   const [loading, setLoading] = useState(true);
   const [repairing, setRepairing] = useState(false);
+  const [stackChecking, setStackChecking] = useState(false);
+  const [stackLog, setStackLog] = useState("");
   const [error, setError] = useState("");
   const [repairLog, setRepairLog] = useState("");
 
@@ -58,6 +60,30 @@ export function WebsiteHealthCard({
   useEffect(() => {
     load();
   }, [load]);
+
+  async function validateStack() {
+    setStackChecking(true);
+    setError("");
+    setStackLog("");
+    try {
+      const res = await fetch(`/api/domains/${enc}/stack`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Stack validate failed.");
+      if (data.available === false) {
+        setStackLog(data.error ?? "Stack helper not configured.");
+        return;
+      }
+      const lines = (data.checks ?? []).map(
+        (c: { label: string; ok: boolean; detail: string }) =>
+          `${c.ok ? "OK" : "FAIL"} ${c.label}: ${c.detail}`,
+      );
+      setStackLog(lines.join("\n") || (data.ok ? "All stack checks passed." : "Issues found."));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error.");
+    } finally {
+      setStackChecking(false);
+    }
+  }
 
   async function repair() {
     setRepairing(true);
@@ -126,6 +152,15 @@ export function WebsiteHealthCard({
           <Button variant="ghost" disabled={loading} onClick={load}>
             Refresh
           </Button>
+          {isAdmin && (
+            <Button
+              variant="ghost"
+              disabled={stackChecking}
+              onClick={validateStack}
+            >
+              {stackChecking ? "Checking…" : "Stack validate"}
+            </Button>
+          )}
           {isAdmin && repairOk && (
             <Button variant="secondary" disabled={repairing} onClick={repair}>
               {repairing ? "Repairing…" : "Repair on server"}
@@ -141,6 +176,11 @@ export function WebsiteHealthCard({
         <div className="mt-4">
           <Alert>{error}</Alert>
         </div>
+      )}
+      {stackLog && (
+        <pre className="mt-4 max-h-32 overflow-auto rounded-lg bg-panel-bg p-3 text-xs text-panel-muted">
+          {stackLog}
+        </pre>
       )}
       {repairLog && (
         <pre className="mt-4 max-h-40 overflow-auto rounded-lg bg-panel-bg p-3 text-xs text-panel-muted">
