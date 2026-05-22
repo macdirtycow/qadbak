@@ -45,7 +45,15 @@ git pull --ff-only
 bash "$QADBAK_DIR/scripts/fix-qadbak-ownership.sh"
 
 echo "==> Native stack packages (idempotent)"
-bash "$QADBAK_DIR/scripts/install-native-stack.sh"
+if ! bash "$QADBAK_DIR/scripts/install-native-stack.sh"; then
+  echo "    WARN: install-native-stack had issues — running Apache repair" >&2
+  bash "$QADBAK_DIR/scripts/fix-apache-phase6.sh" || true
+fi
+
+if ! systemctl is-active --quiet apache2 2>/dev/null; then
+  echo "==> Apache not running — repair before continuing"
+  bash "$QADBAK_DIR/scripts/fix-apache-phase6.sh"
+fi
 
 echo "==> Sudo helpers"
 for helper in \
