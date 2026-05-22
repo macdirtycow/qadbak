@@ -228,18 +228,14 @@ sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && pm2 delete qadbak 2>/dev/nul
 env PATH="$PATH:/usr/bin" pm2 startup systemd -u "$QADBAK_USER" --hp "$QADBAK_DIR" | tail -1 | bash || true
 
 echo "==> nginx (panel host → Qadbak; other hosts → Apache; :10000 stays Webmin)"
-APACHE_BACKEND="$(bash "$QADBAK_DIR/scripts/detect-apache-backend.sh")"
-echo "    Apache backend: $APACHE_BACKEND"
-NGX="/etc/nginx/sites-available/qadbak"
+export PANEL_HOST SERVER_FQDN
 bash "$QADBAK_DIR/scripts/apply-hosting-nginx.sh"
-ln -sf "$NGX" /etc/nginx/sites-enabled/qadbak
-rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
-nginx -t && systemctl reload nginx
 
 if [[ -n "$LE_EMAIL" ]]; then
   CERT_DOMAINS=(-d "$PANEL_HOST")
   [[ "$SERVER_FQDN" != "$PANEL_HOST" ]] && CERT_DOMAINS+=(-d "$SERVER_FQDN")
   certbot --nginx "${CERT_DOMAINS[@]}" --non-interactive --agree-tos -m "$LE_EMAIL" || true
+  bash "$QADBAK_DIR/scripts/apply-hosting-nginx.sh"
 fi
 
 if [[ "$SET_UFW" =~ ^[Yy]$ ]]; then
