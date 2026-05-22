@@ -67,4 +67,4 @@ Use a separate Ubuntu 22.04 VPS (not production). Verify:
 
 Installer writes `/opt/qadbak/.env.local` including `QADBAK_PUBLIC_HOST` for branding metadata.
 
-`NODE_TLS_REJECT_UNAUTHORIZED=0` is set when VirtualMin uses a self-signed certificate on localhost — replace with proper CA on production if possible.
+`VIRTUALMIN_TLS_INSECURE=true` is set when VirtualMin uses a self-signed certificate on localhost (scoped to API calls only). Prefer a valid Webmin certificate in production — see `docs/PRODUCTION-HARDENING.md`.

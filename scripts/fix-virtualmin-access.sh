@@ -59,8 +59,12 @@ if [[ -f "$ENV_FILE" ]]; then
       echo "${key}=${WEBMIN_URL}" >>"$ENV_FILE"
     fi
   done
-  grep -q '^NODE_TLS_REJECT_UNAUTHORIZED=' "$ENV_FILE" || \
-    echo 'NODE_TLS_REJECT_UNAUTHORIZED=0' >>"$ENV_FILE"
+  if grep -q '^NODE_TLS_REJECT_UNAUTHORIZED=0' "$ENV_FILE" 2>/dev/null; then
+    sed -i '/^NODE_TLS_REJECT_UNAUTHORIZED=/d' "$ENV_FILE"
+    echo "    Removed global NODE_TLS_REJECT_UNAUTHORIZED=0 (use VIRTUALMIN_TLS_INSECURE instead)"
+  fi
+  grep -q '^VIRTUALMIN_TLS_INSECURE=' "$ENV_FILE" || \
+    echo 'VIRTUALMIN_TLS_INSECURE=true' >>"$ENV_FILE"
   grep -q '^VIRTUALMIN_MOCK=' "$ENV_FILE" && \
     sed -i 's/^VIRTUALMIN_MOCK=.*/VIRTUALMIN_MOCK=false/' "$ENV_FILE"
   chown qadbak:qadbak "$ENV_FILE"
