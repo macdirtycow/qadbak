@@ -4,8 +4,20 @@ set -euo pipefail
 DOMAIN="${1:?domain}"
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
 
-echo "==> Mail layout for $DOMAIN"
+echo "==> .env mail settings"
+grep -E '^QADBAK_(MAIL|PROVISIONER|VIRTUALMIN)' "$QADBAK_DIR/.env.local" 2>/dev/null || true
+
+echo ""
+echo "==> mail-list (expect source: postfix-dovecot)"
 sudo -u qadbak sudo -n "$QADBAK_DIR/scripts/run-provisioning-helper.sh" mail-list "$DOMAIN" | tail -1
+
+OWNER="$(grep -o '"user":"[^"]*"' "$QADBAK_DIR/data/native-domains.json" | head -1 | sed 's/"user":"//;s/"//')"
+if [[ -n "$OWNER" ]]; then
+  echo ""
+  echo "==> home / Maildir"
+  ls -la "/home/$OWNER/Maildir" 2>/dev/null | head -5 || echo "    no /home/$OWNER/Maildir"
+  ls -la "/home/$OWNER/homes" 2>/dev/null | head -5 || echo "    no /home/$OWNER/homes"
+fi
 
 echo ""
 echo "==> postconf"

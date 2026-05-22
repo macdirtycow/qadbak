@@ -21,7 +21,7 @@ async function virtualminAvailable() {
 
 function useVirtualminCli() {
   const mode = process.env.QADBAK_MAIL_BACKEND?.trim().toLowerCase();
-  if (mode === "direct" || mode === "postfix") return false;
+  if (mode === "direct" || mode === "postfix" || mode === "dovecot") return false;
   if (mode === "virtualmin" || mode === "cli") return true;
   const prov = process.env.QADBAK_PROVISIONER?.trim().toLowerCase();
   const fb = process.env.QADBAK_VIRTUALMIN_FALLBACK?.trim().toLowerCase();

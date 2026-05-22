@@ -3,6 +3,7 @@
  * Native provisioning (phase 8) — SSL, DNS, mail, DB, domain, backup, cron without remote.cgi.
  */
 import { emit } from "./lib/provisioning-common.mjs";
+import { loadEnvLocal } from "./lib/load-env-local.mjs";
 import { sslList, sslIssue } from "./lib/provision-ssl.mjs";
 import { dnsGet, dnsAdd, dnsDel } from "./lib/provision-dns.mjs";
 import { mailList, mailCreate, mailDelete, mailPass } from "./lib/provision-mail.mjs";
@@ -23,6 +24,7 @@ function parseJsonArg(i) {
 }
 
 async function main() {
+  await loadEnvLocal();
   switch (cmd) {
     case "ping":
       emit({ ok: true, helper: "provisioning-helper", phase: 8 });
