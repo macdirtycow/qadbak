@@ -19,6 +19,15 @@ sudo bash /opt/qadbak/scripts/configure-host-services-sudo.sh
 pm2 restart qadbak
 ```
 
+After `git pull` as **root**, fix ownership before `npm install` as qadbak:
+
+```bash
+sudo bash /opt/qadbak/scripts/fix-qadbak-ownership.sh
+sudo -u qadbak npm install && sudo -u qadbak npm run build
+```
+
+Or use one command: `sudo bash /opt/qadbak/scripts/update-qadbak.sh`
+
 Allowlisted units: `nginx`, `apache2`/`httpd`, `postfix`, `dovecot`, `named`/`bind9`, `mariadb`, PHP-FPM.
 
 Without sudo, service list/restart falls back to VirtualMin `list-server-statuses` / `restart-server`.
