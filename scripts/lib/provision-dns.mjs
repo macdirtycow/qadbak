@@ -160,7 +160,11 @@ function parseZone(text, origin) {
     if (!type) continue;
     let value = parts.slice(i).join(" ").replace(/\.$/, "");
     if (type === "SOA") {
-      value = value.replace(/^\(/, "").replace(/\)\s*$/, "").replace(/\s+/g, " ").trim();
+      value = value
+        .replace(/^\(+/, "")
+        .replace(/\)+$/, "")
+        .replace(/\s+/g, " ")
+        .trim();
     }
     let priority;
     if (type === "MX" || type === "SRV") {

@@ -19,7 +19,10 @@ for f in ssl dns mail db domain backup cron; do
 done
 echo ""
 if [[ "${QADBAK_VIRTUALMIN_FALLBACK:-true}" == "false" ]]; then
-  echo "Fallback OFF — safe to remove VirtualMin packages after testing."
+  echo "Mode: INDEPENDENT — no remote.cgi; non-native panel actions will error."
+  echo "  Apply: sudo bash scripts/apply-phase8-independent.sh"
+  echo "  Revert: QADBAK_PROVISIONER=hybrid + QADBAK_VIRTUALMIN_FALLBACK=true"
 else
-  echo "Fallback ON — panel may still call remote.cgi for disabled features."
+  echo "Mode: HYBRID — panel may still call remote.cgi for disabled features."
+  echo "  Next: sudo bash scripts/apply-phase8-independent.sh (after panel tests)"
 fi

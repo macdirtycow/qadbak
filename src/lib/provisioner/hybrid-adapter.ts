@@ -1,5 +1,6 @@
 import * as vm from "../virtualmin";
 import { applyNativeOverrides } from "./apply-native-overrides";
+import { createUnimplementedProvisioner } from "./native-stub";
 import { createVirtualminProvisioner } from "./virtualmin-adapter";
 import {
   findDomainByNameNative,
@@ -20,19 +21,20 @@ function vmFallbackEnabled(): boolean {
 }
 
 export function createHybridProvisioner(strictNative = false): Provisioner {
-  const backend = vmFallbackEnabled() && !strictNative
-    ? createVirtualminProvisioner()
-    : null;
+  const independent = strictNative || !vmFallbackEnabled();
+  const backend =
+    vmFallbackEnabled() && !strictNative ? createVirtualminProvisioner() : null;
 
   const nativeList = listEnabledNativeFeatures();
-  const label =
-    strictNative || !vmFallbackEnabled()
-      ? `Qadbak native (${nativeList.join(",") || "domains only"})`
-      : `Qadbak hybrid (${nativeList.join(",") || "domains"}+VM fallback)`;
+  const label = independent
+    ? `Qadbak independent (${nativeList.join(",") || "domains only"})`
+    : `Qadbak hybrid (${nativeList.join(",") || "domains"}+VM fallback)`;
+
+  const engine = backend ?? (independent ? createUnimplementedProvisioner() : vm);
 
   let hybrid: Provisioner = {
-    ...(backend ?? vm),
-    id: strictNative || !vmFallbackEnabled() ? "native" : "hybrid",
+    ...engine,
+    id: independent ? "native" : "hybrid",
     label,
     listDomains: listDomainsNative,
     findDomainByName: async (domainName, actor) => {

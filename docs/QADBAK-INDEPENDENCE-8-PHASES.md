@@ -195,22 +195,30 @@ sudo -u qadbak pm2 logs qadbak-terminal --lines 20
 
 ---
 
-## Fase 8 — VirtualMin verwijderen (eigen engine) 🚧 hybrid in repo
+## Fase 8 — Onafhankelijk (eigen engine) 🚧 hybrid + independent in repo
 
-**Doel:** `QADBAK_PROVISIONER=native` — geen Perl/Webmin pakketten.
+**Doel:** Qadbak is de control plane; geen Webmin-UI; geen `remote.cgi` voor dagelijkse hosting.
+
+| Sub-modus | Commando | Status |
+|-----------|----------|--------|
+| **8-hybrid** (veilig) | `apply-phase8-native-enable.sh` | ✅ ssl,dns,mail,db,backup,cron + VM fallback |
+| **8-onafhankelijk** (geen API) | `apply-phase8-independent.sh` | ✅ `native` + `FALLBACK=false` + stubs |
+| **8-pakketten weg** | `apt remove webmin` | 🔜 na CLI-vrije mail + parity |
 
 | Stap | Status |
 |------|--------|
 | Geen Webmin UI (`QADBAK_DISABLE_WEBMIN`) | ✅ |
-| Domeinlijst zonder VM API (`data/native-domains.json`) | ✅ hybrid |
-| Mail/DNS/create via VM fallback | ✅ optioneel `QADBAK_VIRTUALMIN_FALLBACK` |
-| Volledig zonder `remote.cgi` | 🔜 per feature native scripts |
+| Domeinlijst zonder VM API (`native-domains.json`) | ✅ |
+| Native provisioning (8a–8g) | ✅ scripts + helper |
+| Geen `remote.cgi` (onafhankelijk) | ✅ test-VPS via `apply-phase8-independent.sh` |
+| Geen `virtualmin` CLI (mail direct) | 🔜 |
+| `dpkg -l webmin` niet meer nodig | 🔜 |
 
-**Test VPS:** `sudo bash scripts/apply-phase8-test-server.sh` — [PHASE-8-NATIVE.md](./PHASE-8-NATIVE.md).
+**Docs:** [PHASE-8-NATIVE.md](./PHASE-8-NATIVE.md) · [PHASE-8-INDEPENDENT.md](./PHASE-8-INDEPENDENT.md) · [NATIVE-PHASES.md](./NATIVE-PHASES.md)
 
-**Exit:** `dpkg -l webmin` niet meer nodig; Qadbak is de enige control plane.
+**Exit fase 8 (API-onafhankelijk):** health → `"provisioner":"native"`, panel-kern werkt zonder fallback.
 
-**Risico:** Hoog voor package removal — hybrid eerst op test-VPS.
+**Exit fase 8 (volledig):** packages verwijderd — aparte migratie met backup.
 
 ---
 
