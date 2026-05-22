@@ -21,6 +21,12 @@ bash "$QADBAK_DIR/scripts/configure-domain-repair-sudo.sh" 2>/dev/null || true
 echo "==> Test VirtualMin login link"
 sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && bash scripts/test-login-link.sh siccamanagement.nl" || true
 
+echo "==> Verify repair sudo"
+REPAIR="$QADBAK_DIR/scripts/fix-domain-website.sh"
+sudo -u "$QADBAK_USER" sudo -n "$REPAIR" __probe__ || {
+  echo "Repair sudo failed — run: sudo bash scripts/configure-domain-repair-sudo.sh" >&2
+}
+
 echo "==> Build + restart"
 sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && npm run build"
 sudo -u "$QADBAK_USER" pm2 restart qadbak

@@ -12,7 +12,7 @@ const REPAIR_SCRIPT =
 export async function repairAvailable(): Promise<boolean> {
   try {
     await access(REPAIR_SCRIPT);
-    await execFileAsync("sudo", ["-n", "bash", REPAIR_SCRIPT, "__probe__"], {
+    await execFileAsync("sudo", ["-n", REPAIR_SCRIPT, "__probe__"], {
       timeout: 10_000,
     });
     return true;
@@ -24,7 +24,7 @@ export async function repairAvailable(): Promise<boolean> {
 export async function repairDomainWebsite(domain: string): Promise<string> {
   const { stdout, stderr } = await execFileAsync(
     "sudo",
-    ["-n", "bash", REPAIR_SCRIPT, domain],
+    ["-n", REPAIR_SCRIPT, domain],
     { timeout: 120_000, maxBuffer: 2 * 1024 * 1024 },
   );
   return [stdout, stderr].filter(Boolean).join("\n").trim() || "Repair completed.";

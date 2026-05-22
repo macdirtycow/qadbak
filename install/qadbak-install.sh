@@ -162,7 +162,7 @@ chmod 755 "$QADBAK_DIR/scripts/domain-fs-helper.mjs"
 SUDOERS="/etc/sudoers.d/qadbak-domain-fs"
 cat >"$SUDOERS" <<EOF
 # Qadbak native file browser — list/read/write under /home/
-$QADBAK_USER ALL=(root) NOPASSWD: $NODE_BIN $QADBAK_DIR/scripts/domain-fs-helper.mjs
+$QADBAK_USER ALL=(root) NOPASSWD: $NODE_BIN $QADBAK_DIR/scripts/domain-fs-helper.mjs *
 EOF
 chmod 440 "$SUDOERS"
 visudo -cf "$SUDOERS" 2>/dev/null || true
@@ -172,7 +172,7 @@ REPAIR_SCRIPT="$QADBAK_DIR/scripts/fix-domain-website.sh"
 chmod 755 "$REPAIR_SCRIPT"
 SUDOERS_REPAIR="/etc/sudoers.d/qadbak-domain-repair"
 cat >"$SUDOERS_REPAIR" <<EOF
-$QADBAK_USER ALL=(root) NOPASSWD: /bin/bash $REPAIR_SCRIPT
+$QADBAK_USER ALL=(root) NOPASSWD: $REPAIR_SCRIPT *
 EOF
 chmod 440 "$SUDOERS_REPAIR"
 visudo -cf "$SUDOERS_REPAIR" 2>/dev/null || true
