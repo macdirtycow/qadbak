@@ -34,7 +34,15 @@ Full VirtualMin coverage is delivered in phases. Each phase adds API programs to
 
 | Area | API | Route |
 |------|-----|-------|
-| Files (public_html) | `create-login-link` → file manager; mock: Qadbak browser | `/domains/…/files` |
+| Files (public_html) | Native: `domain-fs-helper.mjs` (sudo); fallback: `create-login-link` → filemin; mock: Qadbak browser | `/domains/…/files` |
+
+### Live server — Files (2026-05)
+
+1. **Remote API:** `simple-multiline` on non-`list-*` calls (fixes `Unknown parameter --multiline` on `create-login-link` and embeds).
+2. **Native browser:** `scripts/domain-fs-helper.mjs` + sudoers (`configure-domain-fs-sudo.sh`) lists/edits files under `/home/`.
+3. **Fallback:** Webmin filemin embed when sudo helper is unavailable.
+
+---
 | Webmin & Usermin | `create-login-link` (root / domain / usermin-user) | `/admin/webmin`, `/domains/…/webmin` |
 | Website logs | `get-logs` | `/domains/…/logs` |
 | PHP per directory | `list-php-versions`, `list-php-directories`, `set-php-directory`, `delete-php-directory` | `/domains/…/php` |

@@ -1,5 +1,5 @@
 import type { VirtualMinDomain } from "./types";
-import { VirtualMinError } from "./virtualmin";
+import { VirtualMinError } from "./errors";
 
 export interface DomainFileEntry {
   name: string;
@@ -208,7 +208,7 @@ export function domainHomePath(domain: VirtualMinDomain | string): string {
   return `/home/${domainUnixUser(domain)}`;
 }
 
-function normalizeDir(dir: string): string {
+export function normalizeDir(dir: string): string {
   return dir.replace(/^\/+/, "").replace(/\/+$/, "");
 }
 
@@ -274,7 +274,7 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function breadcrumbsFor(cwd: string): DomainFilesListing["breadcrumbs"] {
+export function breadcrumbsFor(cwd: string): DomainFilesListing["breadcrumbs"] {
   const crumbs: DomainFilesListing["breadcrumbs"] = [{ label: "Home", path: "" }];
   if (!cwd) return crumbs;
   const parts = cwd.split("/");
@@ -299,7 +299,7 @@ function assertWritableDir(cwd: string): void {
   }
 }
 
-function enrichEntry(entry: DomainFileEntry): DomainFileEntry {
+export function enrichEntry(entry: DomainFileEntry): DomainFileEntry {
   const size =
     entry.size ??
     (entry.sizeBytes !== undefined ? formatBytes(entry.sizeBytes) : undefined);

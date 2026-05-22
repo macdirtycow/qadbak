@@ -1,7 +1,8 @@
 import { auditLog } from "@/lib/audit";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
 import { requireDomainApi } from "@/lib/domain-api";
-import { addDnsRecord, getDns } from "@/lib/virtualmin";
+import { addDnsRecord, deleteDnsRecord, getDns } from "@/lib/virtualmin";
+import type { DnsRecord } from "@/lib/virtualmin";
 
 type Params = { params: Promise<{ domain: string }> };
 
@@ -40,6 +41,21 @@ export async function POST(request: Request, { params }: Params) {
       session,
     );
     await auditLog(session.username, "modify-dns", domain, body.name);
+    return jsonOk({ ok: true });
+  } catch (err) {
+    return handleApiError(err);
+  }
+}
+
+export async function DELETE(request: Request, { params }: Params) {
+  try {
+    const { session, domain } = await requireDomainApi((await params).domain);
+    const body = (await request.json()) as DnsRecord;
+    if (!body.name || !body.type || !body.value) {
+      return jsonError("Name, type, and value are required to delete a record.");
+    }
+    await deleteDnsRecord(domain, body, session);
+    await auditLog(session.username, "delete-dns", domain, body.name);
     return jsonOk({ ok: true });
   } catch (err) {
     return handleApiError(err);

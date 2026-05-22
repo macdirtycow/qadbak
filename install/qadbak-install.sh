@@ -144,6 +144,7 @@ WEBMIN_UI_URL=https://${SERVER_FQDN}:10000
 USERMIN_UI_URL=https://${SERVER_FQDN}:20000
 VIRTUALMIN_UI_URL=https://${SERVER_FQDN}:10000
 QADBAK_PUBLIC_HOST=$PANEL_HOST
+QADBAK_ORIGIN_IP=${ORIGIN_IP:-$(curl -4 -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')}
 # HTTP panel (e.g. :11000 on Contabo) needs non-Secure cookies until HTTPS works
 QADBAK_COOKIE_SECURE=true
 if [[ -n "$PANEL_ALT_PORT" ]]; then
@@ -154,6 +155,27 @@ NODE_TLS_REJECT_UNAUTHORIZED=0
 EOF
 chmod 600 "$ENV_FILE"
 chown "$QADBAK_USER:$QADBAK_USER" "$ENV_FILE"
+
+echo "==> Native file manager (sudo helper)"
+NODE_BIN="$(command -v node)"
+chmod 755 "$QADBAK_DIR/scripts/domain-fs-helper.mjs"
+SUDOERS="/etc/sudoers.d/qadbak-domain-fs"
+cat >"$SUDOERS" <<EOF
+# Qadbak native file browser — list/read/write under /home/
+$QADBAK_USER ALL=(root) NOPASSWD: $NODE_BIN $QADBAK_DIR/scripts/domain-fs-helper.mjs
+EOF
+chmod 440 "$SUDOERS"
+visudo -cf "$SUDOERS" 2>/dev/null || true
+
+echo "==> Website repair (sudo)"
+REPAIR_SCRIPT="$QADBAK_DIR/scripts/fix-domain-website.sh"
+chmod 755 "$REPAIR_SCRIPT"
+SUDOERS_REPAIR="/etc/sudoers.d/qadbak-domain-repair"
+cat >"$SUDOERS_REPAIR" <<EOF
+$QADBAK_USER ALL=(root) NOPASSWD: /bin/bash $REPAIR_SCRIPT
+EOF
+chmod 440 "$SUDOERS_REPAIR"
+visudo -cf "$SUDOERS_REPAIR" 2>/dev/null || true
 
 echo "==> Panel admin user"
 HASH="$(sudo -u "$QADBAK_USER" node "$QADBAK_DIR/scripts/hash-password.mjs" "$QB_PASS")"

@@ -7,16 +7,19 @@ export function WebminEmbed({
   title,
   description,
   fetchUrl,
+  initialUrl,
   height = "min(70vh, 720px)",
 }: {
   title: string;
   description?: string;
   fetchUrl: string;
+  /** Pre-resolved URL from server — avoids a second create-login-link call. */
+  initialUrl?: string | null;
   height?: string;
 }) {
-  const [url, setUrl] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(initialUrl ?? null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialUrl);
 
   async function load() {
     setLoading(true);
@@ -35,8 +38,14 @@ export function WebminEmbed({
   }
 
   useEffect(() => {
+    if (initialUrl) {
+      setUrl(initialUrl);
+      setLoading(false);
+      setError("");
+      return;
+    }
     load();
-  }, [fetchUrl]);
+  }, [fetchUrl, initialUrl]);
 
   return (
     <div className="space-y-4">

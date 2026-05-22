@@ -9,16 +9,8 @@ import type {
   VirtualMinMailbox,
 } from "./types";
 
-export class VirtualMinError extends Error {
-  constructor(
-    message: string,
-    public readonly exitCode?: number,
-    public readonly raw?: string,
-  ) {
-    super(message);
-    this.name = "VirtualMinError";
-  }
-}
+export { VirtualMinError } from "./errors";
+import { VirtualMinError } from "./errors";
 
 function vmValue<T extends Record<string, unknown>>(
   row: T,
@@ -106,6 +98,52 @@ const MOCK_DATABASES: VirtualMinDatabase[] = [
   { name: "voorbeeld_wp", type: "mysql", host: "localhost" },
 ];
 
+/**
+ * Programs that break when remote.cgi adds json=1 / --multiline (older Virtualmin).
+ * Use plain-text remote.cgi output instead.
+ */
+const PLAIN_TEXT_PROGRAMS = new Set(["create-login-link"]);
+
+/** Programs that accept --multiline on the VirtualMin CLI (see json-lib.pl). */
+function virtualMinProgramUsesMultiline(program: string): boolean {
+  return program.startsWith("list-") || program === "get-dns";
+}
+
+function extractUrlFromText(text: string): string | undefined {
+  const match = text.match(/https?:\/\/[^\s"'<>]+/);
+  return match?.[0];
+}
+
+/**
+ * Build remote.cgi POST body. With json=1, remote.cgi injects --multiline unless
+ * simple-multiline is set — older servers still break on create-login-link.
+ */
+function buildVirtualMinRequestBody(
+  program: string,
+  params: Record<string, string>,
+): URLSearchParams {
+  const body = new URLSearchParams({
+    program,
+    ...params,
+  });
+  if (PLAIN_TEXT_PROGRAMS.has(program)) {
+    body.delete("multiline");
+    body.delete("simple-multiline");
+    return body;
+  }
+  body.set("json", "1");
+  if (virtualMinProgramUsesMultiline(program)) {
+    if (!body.has("multiline")) {
+      body.set("multiline", "");
+    }
+    body.delete("simple-multiline");
+  } else {
+    body.set("simple-multiline", "");
+    body.delete("multiline");
+  }
+  return body;
+}
+
 export async function virtualMinCall(
   program: string,
   params: Record<string, string>,
@@ -133,12 +171,7 @@ export async function virtualMinCall(
     );
   }
 
-  const body = new URLSearchParams({
-    program: apiProgram,
-    json: "1",
-    multiline: "",
-    ...apiParams,
-  });
+  const body = buildVirtualMinRequestBody(apiProgram, apiParams);
   const auth = Buffer.from(`${user}:${pass}`).toString("base64");
 
   const res = await fetch(url, {
@@ -152,7 +185,39 @@ export async function virtualMinCall(
 
   const text = await res.text();
   const exitCode = extractExitCode(text);
-  const parsed = parseJsonBody(text.split(/\nExit status:/i)[0] ?? text);
+  const bodyText = text.split(/\nExit status:/i)[0] ?? text;
+
+  if (PLAIN_TEXT_PROGRAMS.has(apiProgram)) {
+    if (/Unknown parameter\s+--/i.test(text)) {
+      throw new VirtualMinError(
+        text.match(/Unknown parameter[^\n]*/i)?.[0] ??
+          "VirtualMin rejected API parameters.",
+        exitCode,
+        text,
+      );
+    }
+    if (!res.ok) {
+      throw new VirtualMinError(
+        `VirtualMin HTTP ${res.status}`,
+        exitCode,
+        text,
+      );
+    }
+    if (exitCode !== undefined && exitCode !== 0) {
+      throw new VirtualMinError(
+        text.slice(0, 500) || "VirtualMin command failed.",
+        exitCode,
+        text,
+      );
+    }
+    const url = extractUrlFromText(bodyText);
+    if (url) return url;
+    const parsed = parseJsonBody(bodyText);
+    if (parsed !== null) return parsed;
+    return bodyText.trim();
+  }
+
+  const parsed = parseJsonBody(bodyText);
 
   if (!res.ok) {
     throw new VirtualMinError(
@@ -255,6 +320,8 @@ function mockCall(
         ],
       };
     case "modify-dns":
+      return { status: "ok" };
+    case "delete-dns-record":
       return { status: "ok" };
     case "list-certs":
     case "list-certs-expiry":
@@ -488,23 +555,27 @@ function resolveProgramCall(
     case "list-cron-jobs":
       return {
         program: "run-api-command",
-        params: { domain, command: "list-cron", multiline: "" },
+        params: { domain, "list-cron": "" },
       };
     case "create-cron-job":
       return {
         program: "run-api-command",
         params: {
           domain,
-          command: "create-cron",
+          "create-cron": "",
           schedule: params.schedule ?? "",
           commandline: params.commandline ?? params.command ?? "",
-          user: params.user ?? "",
+          ...(params.user ? { user: params.user } : {}),
         },
       };
     case "delete-cron-job":
       return {
         program: "run-api-command",
-        params: { domain, command: "delete-cron", id: params.id ?? "" },
+        params: {
+          domain,
+          "delete-cron": "",
+          id: params.id ?? "",
+        },
       };
     default:
       return { program, params };
@@ -595,7 +666,12 @@ export async function createMailbox(
   real: string | undefined,
   actor: { role: Role; domains: string[] },
 ): Promise<void> {
-  const params: Record<string, string> = { domain, user, pass };
+  const params: Record<string, string> = {
+    domain,
+    user,
+    pass,
+    mail: "1",
+  };
   if (real) params.real = real;
   await virtualMinCall("create-user", params, actor);
 }
@@ -665,19 +741,24 @@ export async function getDns(
   domain: string,
   actor: { role: Role; domains: string[] },
 ): Promise<{ records: DnsRecord[]; raw: unknown }> {
-  const data = await virtualMinCall("get-dns", { domain }, actor);
+  const { parseDnsRecords } = await import("./virtualmin-api-parse");
+  const data = await virtualMinCall("get-dns", { domain, multiline: "" }, actor);
   if (data && typeof data === "object" && "records" in data) {
     const recs = (data as { records: DnsRecord[] }).records;
-    return { records: recs, raw: data };
+    if (recs.length > 0) return { records: recs, raw: data };
   }
-  const rows = normalizeList(data);
-  const records = rows.map((row) => ({
-    name: vmValue(row, "name") ?? "@",
-    type: vmValue(row, "type") ?? "A",
-    value: vmValue(row, "value") ?? vmValue(row, "addr") ?? "",
-    ttl: vmValue(row, "ttl"),
-    priority: vmValue(row, "priority"),
-  }));
+  const records = parseDnsRecords(data);
+  if (records.length === 0) {
+    const rows = normalizeList(data);
+    const fallback = rows.map((row) => ({
+      name: vmValue(row, "name") ?? "@",
+      type: vmValue(row, "type") ?? "A",
+      value: vmValue(row, "value") ?? vmValue(row, "addr") ?? "",
+      ttl: vmValue(row, "ttl"),
+      priority: vmValue(row, "priority"),
+    }));
+    return { records: fallback.filter((r) => r.value), raw: data };
+  }
   return { records, raw: data };
 }
 
@@ -686,15 +767,22 @@ export async function addDnsRecord(
   record: DnsRecord,
   actor: { role: Role; domains: string[] },
 ): Promise<void> {
-  await virtualMinCall("modify-dns", {
-    domain,
-    "add-record": `${record.name} ${record.type} ${record.value}`,
-    name: record.name,
-    type: record.type,
-    value: record.value,
-    ...(record.ttl ? { ttl: record.ttl } : {}),
-    ...(record.priority ? { priority: record.priority } : {}),
-  }, actor);
+  const { formatDnsRecordArg } = await import("./virtualmin-api-parse");
+  const { param, value } = formatDnsRecordArg(record);
+  await virtualMinCall("modify-dns", { domain, [param]: value }, actor);
+}
+
+export async function deleteDnsRecord(
+  domain: string,
+  record: DnsRecord,
+  actor: { role: Role; domains: string[] },
+): Promise<void> {
+  const { formatDnsRemoveArg } = await import("./virtualmin-api-parse");
+  await virtualMinCall(
+    "modify-dns",
+    { domain, "remove-record": formatDnsRemoveArg(record) },
+    actor,
+  );
 }
 
 export interface SslCert {
@@ -1463,26 +1551,43 @@ export async function listCronJobs(
   domain: string,
   actor: { role: Role; domains: string[] },
 ): Promise<CronJob[]> {
+  const { parseCronJobs } = await import("./virtualmin-api-parse");
   try {
     const data = await virtualMinCall("list-cron-jobs", { domain }, actor);
-    return normalizeList(data).map((row, i) => ({
-      id: vmValue(row, "id") ?? String(i),
-      schedule: vmValue(row, "schedule") ?? vmValue(row, "when") ?? "",
-      command: vmValue(row, "command") ?? vmValue(row, "commandline") ?? "",
-      user: vmValue(row, "user"),
-      active: vmValue(row, "active") !== "0",
-    })).filter((j) => j.schedule || j.command);
+    const jobs = parseCronJobs(data);
+    if (jobs.length > 0) return jobs;
+    const rows = normalizeList(data);
+    const legacy = rows
+      .map((row, i) => ({
+        id: vmValue(row, "id") ?? String(i),
+        schedule: vmValue(row, "schedule") ?? vmValue(row, "when") ?? "",
+        command: vmValue(row, "command") ?? vmValue(row, "commandline") ?? "",
+        user: vmValue(row, "user"),
+        active: vmValue(row, "active") !== "0",
+      }))
+      .filter((j) => j.schedule || j.command);
+    if (legacy.length > 0) return legacy;
   } catch (err) {
     if (process.env.VIRTUALMIN_MOCK === "true") throw err;
-    const mock = mockCall("list-cron-jobs", { domain }, actor);
-    return normalizeList(mock).map((row, i) => ({
-      id: vmValue(row, "id") ?? String(i),
-      schedule: vmValue(row, "schedule") ?? "",
-      command: vmValue(row, "command") ?? "",
-      user: vmValue(row, "user"),
-      active: vmValue(row, "active") !== "0",
-    }));
   }
+  const mock = mockCall("list-cron-jobs", { domain }, actor);
+  return parseCronJobs(mock);
+}
+
+/** Server-only cron fallback (crontab -l). Call from API routes, not client bundles. */
+export async function listCronJobsWithFallback(
+  domain: string,
+  actor: { role: Role; domains: string[] },
+): Promise<CronJob[]> {
+  try {
+    const jobs = await listCronJobs(domain, actor);
+    if (jobs.length > 0) return jobs;
+  } catch {
+    /* try live */
+  }
+  if (process.env.VIRTUALMIN_MOCK === "true") return [];
+  const { listCronJobsLive } = await import("./domain-cron-live");
+  return listCronJobsLive(domain, actor);
 }
 
 export async function createCronJob(

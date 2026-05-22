@@ -4,7 +4,7 @@ import { requireDomainApi } from "@/lib/domain-api";
 import {
   createCronJob,
   deleteCronJob,
-  listCronJobs,
+  listCronJobsWithFallback,
 } from "@/lib/virtualmin";
 
 type Params = { params: Promise<{ domain: string }> };
@@ -12,7 +12,7 @@ type Params = { params: Promise<{ domain: string }> };
 export async function GET(_req: Request, { params }: Params) {
   try {
     const { session, domain } = await requireDomainApi((await params).domain);
-    const jobs = await listCronJobs(domain, session);
+    const jobs = await listCronJobsWithFallback(domain, session);
     return jsonOk({ jobs, canEdit: session.role === "admin" });
   } catch (err) {
     return handleApiError(err);
