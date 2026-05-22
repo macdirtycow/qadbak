@@ -68,7 +68,7 @@ function emit(obj) {
 async function assertHomePath(target) {
   if (!target || typeof target !== "string") fail("Path required.");
   const resolved = await fs.realpath(target).catch(() => null);
-  if (!resolved || !resolved.startsWith("/home/")) {
+  if (!resolved || (resolved !== "/home" && !resolved.startsWith("/home/"))) {
     fail("Path must be under /home/.");
   }
   return resolved;

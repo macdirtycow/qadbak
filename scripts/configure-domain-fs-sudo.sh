@@ -46,7 +46,8 @@ chmod 440 "$SUDOERS"
 visudo -cf "$SUDOERS"
 
 echo "==> Verify file helper sudo (must return ok JSON)"
-TEST_HOME="/home"
+TEST_HOME="$(getent passwd | awk -F: '$6 ~ /^\/home\/[^/]+$/ {print $6; exit}')"
+TEST_HOME="${TEST_HOME:-/home}"
 if ! sudo -u "$QADBAK_USER" sudo -n "$WRAPPER" list "$TEST_HOME" 2>/dev/null | grep -q '"ok"'; then
   echo "FAILED: sudo rule not active. Check:" >&2
   echo "  cat $SUDOERS" >&2

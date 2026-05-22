@@ -63,7 +63,9 @@ for helper in \
   configure-host-services-sudo.sh \
   configure-stack-helper-sudo.sh; do
   echo "    $helper"
-  bash "$QADBAK_DIR/scripts/$helper"
+  if ! bash "$QADBAK_DIR/scripts/$helper"; then
+    echo "    WARN: $helper failed — continuing" >&2
+  fi
 done
 
 echo "==> .env.local markers (phase 6 hybrid test server)"
