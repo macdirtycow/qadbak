@@ -7,11 +7,32 @@ ROOT="${QADBAK_DIR:-/opt/qadbak}"
 bash "$ROOT/scripts/audit-vm-dependency.sh"
 
 echo ""
-echo "Panel tabs — native when feature enabled:"
-echo "  [x] ssl,dns,mail,db,backup,cron — core"
-echo "  [ ] aliases,redirects,features,logs — enable: sudo bash scripts/apply-phase8-native-v1-panel.sh"
+echo "Enabled native features in .env:"
+if [[ -n "${QADBAK_NATIVE_FEATURES:-}" ]]; then
+  echo "$QADBAK_NATIVE_FEATURES" | tr ',' '\n' | sed 's/^/  - /'
+else
+  echo "  (none)"
+fi
+
 echo ""
-echo "Still needs native module or hybrid fallback:"
-echo "  php, ftp, proxies, protected, scripts, limits, lifecycle, mail-settings, …"
+echo "Panel tabs (v1) — native when flag enabled above:"
+for f in ssl dns mail db backup cron aliases redirects features logs; do
+  if echo ",${QADBAK_NATIVE_FEATURES:-}," | grep -q ",$f,"; then
+    echo "  [x] $f"
+  else
+    echo "  [ ] $f"
+  fi
+done
+
 echo ""
-echo "Before apt remove webmin: panel test + VPS snapshot"
+echo "Still needs hybrid fallback or future native module:"
+echo "  php, ftp, proxies, protected, scripts, limits, lifecycle, mail-settings, domain-create, …"
+
+if [[ "${QADBAK_PROVISIONER:-}" == "native" && "${QADBAK_VIRTUALMIN_FALLBACK:-}" == "false" ]]; then
+  echo ""
+  echo "Mode: INDEPENDENT — no remote.cgi."
+else
+  echo ""
+  echo "Tip: terug naar onafhankelijk:"
+  echo "  sudo bash scripts/apply-phase8-independent.sh"
+fi

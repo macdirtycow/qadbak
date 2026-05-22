@@ -54,6 +54,22 @@ if has cron; then
   echo "==> cron-list $DOMAIN"
   check cron-list "$DOMAIN"
 fi
+if has aliases; then
+  echo "==> alias-list $DOMAIN"
+  check alias-list "$DOMAIN"
+fi
+if has redirects; then
+  echo "==> redirect-list $DOMAIN"
+  check redirect-list "$DOMAIN"
+fi
+if has features; then
+  echo "==> feature-list $DOMAIN"
+  check feature-list "$DOMAIN"
+fi
+if has logs; then
+  echo "==> logs-tail $DOMAIN"
+  check logs-tail "$DOMAIN" error
+fi
 
 if [[ "$FAILED" -ne 0 ]]; then
   echo "Some native checks failed." >&2
