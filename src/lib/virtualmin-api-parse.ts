@@ -16,6 +16,7 @@ function asStringArray(v: unknown): string[] {
 
 /** Unwrap run-api-command / nested VirtualMin JSON envelopes. */
 export function unwrapVirtualminPayload(data: unknown): unknown {
+  if (Array.isArray(data)) return data;
   if (!data || typeof data !== "object") return data;
   const obj = data as Record<string, unknown>;
   if (obj.data !== undefined) return unwrapVirtualminPayload(obj.data);

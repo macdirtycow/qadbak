@@ -45,7 +45,7 @@ sudo -u "$QADBAK_USER" sudo -n "$REPAIR" __probe__ || {
 
 echo "==> Build + restart"
 sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && npm run build"
-sudo -u "$QADBAK_USER" pm2 restart qadbak
+bash "$QADBAK_DIR/scripts/pm2-restart-qadbak.sh"
 
 echo "==> Website repair (Cloudflare 523)"
 bash "$QADBAK_DIR/scripts/fix-domain-website.sh" siccamanagement.nl || true
