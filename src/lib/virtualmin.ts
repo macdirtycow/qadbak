@@ -54,8 +54,28 @@ function normalizeList(data: unknown): Record<string, unknown>[] {
     if (Array.isArray(obj.domains)) return obj.domains as Record<string, unknown>[];
     if (Array.isArray(obj.users)) return obj.users as Record<string, unknown>[];
     if (Array.isArray(obj.databases)) return obj.databases as Record<string, unknown>[];
+    // VirtualMin sometimes returns { data: { "example.com": { ... } } }
+    if (obj.data && typeof obj.data === "object" && !Array.isArray(obj.data)) {
+      return Object.entries(obj.data as Record<string, unknown>).map(
+        ([name, meta]) => ({
+          name,
+          ...(typeof meta === "object" && meta !== null
+            ? (meta as Record<string, unknown>)
+            : {}),
+        }),
+      );
+    }
   }
   return [];
+}
+
+/** Resolve domain name from a list-domains row (VirtualMin field names vary). */
+function rowDomainName(row: Record<string, unknown>): string {
+  for (const key of ["name", "dom", "domain", "domain name", "Domain name"]) {
+    const v = vmValue(row, key);
+    if (v?.trim()) return v.trim();
+  }
+  return "";
 }
 
 const MOCK_DOMAINS: VirtualMinDomain[] = [
@@ -483,7 +503,7 @@ export async function listDomains(actor: {
   const data = await virtualMinCall("list-domains", {}, actor);
   const rows = normalizeList(data);
   const mapped = rows.map((row) => ({
-    name: vmValue(row, "name") ?? vmValue(row, "dom") ?? "",
+    name: rowDomainName(row),
     disabled: vmValue(row, "disabled"),
     plan: vmValue(row, "plan"),
     user: vmValue(row, "user"),
