@@ -1,7 +1,7 @@
 import { handleApiError, jsonError } from "@/lib/api";
 import { getDomainFileDownload, isPanelFilesMode, mimeForFile } from "@/lib/domain-files";
 import {
-  liveFilesActive,
+  liveFilesEnabled,
   readDomainFileLive,
 } from "@/lib/domain-files-service";
 import { requireDomainApi } from "@/lib/domain-api";
@@ -12,7 +12,7 @@ type Params = { params: Promise<{ domain: string }> };
 export async function GET(request: Request, { params }: Params) {
   try {
     const { session, domain } = await requireDomainApi((await params).domain);
-    const live = await liveFilesActive();
+    const live = liveFilesEnabled();
     if (!isPanelFilesMode() && !live) {
       return jsonError("Download requires native file access on the server.", 501);
     }

@@ -2,7 +2,7 @@ import { auditLog } from "@/lib/audit";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
 import { isPanelFilesMode, normalizeDir, uploadDomainFile } from "@/lib/domain-files";
 import {
-  liveFilesActive,
+  liveFilesEnabled,
   uploadDomainFileLive,
 } from "@/lib/domain-files-service";
 import { requireDomainApi } from "@/lib/domain-api";
@@ -15,7 +15,7 @@ const MAX_BYTES = 10 * 1024 * 1024;
 export async function POST(request: Request, { params }: Params) {
   try {
     const { session, domain } = await requireDomainApi((await params).domain);
-    const live = await liveFilesActive();
+    const live = liveFilesEnabled();
     if (!isPanelFilesMode() && !live) {
       return jsonError("Upload requires native file access on the server.", 501);
     }
