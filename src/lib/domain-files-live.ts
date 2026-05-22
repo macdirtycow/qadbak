@@ -1,6 +1,5 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 import type { DomainFileEntry, DomainFileContent } from "./domain-files";
+import { probeDomainFsSudo, runDomainFsSudo } from "./domain-fs-sudo";
 import {
   domainHomePath,
   enrichEntry,
@@ -14,14 +13,6 @@ import { VirtualMinError } from "./errors";
 import type { VirtualMinDomain } from "./types";
 import { listDomains } from "./virtualmin";
 import type { Role } from "./types";
-
-const execFileAsync = promisify(execFile);
-
-const HELPER_SCRIPT =
-  process.env.QADBAK_DOMAIN_FS_HELPER ??
-  "/opt/qadbak/scripts/domain-fs-helper.mjs";
-const NODE_BIN = process.env.QADBAK_NODE_PATH ?? "node";
-const USE_SUDO = process.env.QADBAK_DOMAIN_FS_SUDO !== "false";
 
 let liveFsProbe: boolean | null = null;
 
@@ -40,15 +31,10 @@ async function runHelper(
   const args = [cmd, absPath];
   if (payload) args.push(JSON.stringify(payload));
 
-  const { stdout } = USE_SUDO
-    ? await execFileAsync("sudo", ["-n", NODE_BIN, HELPER_SCRIPT, ...args], {
-        timeout: 30_000,
-        maxBuffer: 8 * 1024 * 1024,
-      })
-    : await execFileAsync(NODE_BIN, [HELPER_SCRIPT, ...args], {
-        timeout: 30_000,
-        maxBuffer: 8 * 1024 * 1024,
-      });
+  const stdout = await runDomainFsSudo(args, {
+    timeout: 30_000,
+    maxBuffer: 8 * 1024 * 1024,
+  });
 
   const line = stdout.trim().split("\n").pop() ?? "";
   const parsed = JSON.parse(line) as Record<string, unknown>;
@@ -61,12 +47,7 @@ async function runHelper(
 export async function probeLiveFilesystem(): Promise<boolean> {
   if (!liveFilesEnabled()) return false;
   if (liveFsProbe !== null) return liveFsProbe;
-  try {
-    await runHelper("list", "/home");
-    liveFsProbe = true;
-  } catch {
-    liveFsProbe = false;
-  }
+  liveFsProbe = await probeDomainFsSudo();
   return liveFsProbe;
 }
 

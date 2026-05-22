@@ -19,7 +19,14 @@ bash "$QADBAK_DIR/scripts/apply-hosting-nginx.sh"
 
 echo "==> Sudo helpers"
 bash "$QADBAK_DIR/scripts/configure-domain-fs-sudo.sh"
-bash "$QADBAK_DIR/scripts/configure-domain-repair-sudo.sh" 2>/dev/null || true
+bash "$QADBAK_DIR/scripts/configure-domain-repair-sudo.sh"
+
+echo "==> Verify file helper sudo"
+FS_WRAP="$(readlink -f "$QADBAK_DIR/scripts/run-domain-fs-helper.sh")"
+sudo -u "$QADBAK_USER" sudo -n "$FS_WRAP" list /home 2>/dev/null | grep -q '"ok"' || {
+  echo "File helper sudo failed — check configure-domain-fs-sudo.sh" >&2
+  exit 1
+}
 
 echo "==> Test VirtualMin login link"
 sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && bash scripts/test-login-link.sh siccamanagement.nl" || true

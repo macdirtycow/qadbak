@@ -157,15 +157,7 @@ chmod 600 "$ENV_FILE"
 chown "$QADBAK_USER:$QADBAK_USER" "$ENV_FILE"
 
 echo "==> Native file manager (sudo helper)"
-NODE_BIN="$(command -v node)"
-chmod 755 "$QADBAK_DIR/scripts/domain-fs-helper.mjs"
-SUDOERS="/etc/sudoers.d/qadbak-domain-fs"
-cat >"$SUDOERS" <<EOF
-# Qadbak native file browser — list/read/write under /home/
-$QADBAK_USER ALL=(root) NOPASSWD: $NODE_BIN $QADBAK_DIR/scripts/domain-fs-helper.mjs *
-EOF
-chmod 440 "$SUDOERS"
-visudo -cf "$SUDOERS" 2>/dev/null || true
+bash "$QADBAK_DIR/scripts/configure-domain-fs-sudo.sh"
 
 echo "==> Website repair (sudo)"
 REPAIR_SCRIPT="$QADBAK_DIR/scripts/fix-domain-website.sh"
