@@ -6,16 +6,29 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ENV_FILE="$ROOT/.env.local"
 PANEL_PORT="${QADBAK_PANEL_PORT:-11000}"
 
+is_bare_ip() {
+  [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
+}
+
 detect_panel_url() {
-  local ip fqdn scheme url
+  local ip fqdn scheme url host_for_port
   ip="$(curl -fsS --max-time 3 ifconfig.me 2>/dev/null || true)"
   fqdn="$(hostname -f 2>/dev/null || hostname)"
   if [[ -f "$ENV_FILE" ]]; then
     # shellcheck disable=SC1091
     source <(grep -E '^(QADBAK_PANEL_URL|QADBAK_PUBLIC_HOST)=' "$ENV_FILE" 2>/dev/null | sed 's/^/export /') || true
   fi
+  host_for_port="${QADBAK_PUBLIC_HOST:-}"
+  if [[ -z "$host_for_port" ]] || is_bare_ip "$host_for_port"; then
+    host_for_port="$fqdn"
+  fi
   if [[ -n "${QADBAK_PANEL_URL:-}" ]]; then
-    echo "${QADBAK_PANEL_URL%/}"
+    url="${QADBAK_PANEL_URL%/}"
+    if [[ "$url" =~ ^https?://([0-9.]+):([0-9]+)$ ]] && [[ -n "$host_for_port" ]] && ! is_bare_ip "$host_for_port"; then
+      echo "http://${host_for_port}:${BASH_REMATCH[2]}"
+      return
+    fi
+    echo "$url"
     return
   fi
   if ss -tln 2>/dev/null | grep -q ":${PANEL_PORT} "; then

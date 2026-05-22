@@ -50,6 +50,9 @@ call_api() {
   else
     extra=(--data-urlencode "json=1" --data-urlencode "simple-multiline=")
   fi
+  local tmp
+  tmp="$(mktemp)"
+  # Do not pipe curl to head — pipefail treats SIGPIPE as failure even when data arrived.
   if ! curl -sk \
     -u "${VIRTUALMIN_USER}:${VIRTUALMIN_PASS}" \
     -X POST \
@@ -57,14 +60,22 @@ call_api() {
     "${extra[@]}" \
     "$@" \
     "${VIRTUALMIN_URL}" \
-    | head -c 4000; then
-    echo ""
-    echo "FAILED: $program" >&2
+    -o "$tmp"; then
+    rm -f "$tmp"
+    echo "FAILED: $program (curl error)" >&2
     FAILED=1
     return 1
   fi
+  head -c 4000 "$tmp"
   echo ""
   echo ""
+  if [[ "$program" == "list-domains" ]] && ! grep -qE '"(domain|name)"' "$tmp"; then
+    rm -f "$tmp"
+    echo "FAILED: $program (no domain data in response)" >&2
+    FAILED=1
+    return 1
+  fi
+  rm -f "$tmp"
   return 0
 }
 
