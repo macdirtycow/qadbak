@@ -14,19 +14,21 @@ if [[ -z "$APACHE_SVC" ]]; then
   exit 1
 fi
 
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/fix-apache-nginx-ports.sh
+source "$ROOT/scripts/lib/fix-apache-nginx-ports.sh" 2>/dev/null || true
+
 PORTS_CONF=""
 [[ -f /etc/apache2/ports.conf ]] && PORTS_CONF="/etc/apache2/ports.conf"
 [[ -f /etc/httpd/conf/ports.conf ]] && PORTS_CONF="/etc/httpd/conf/ports.conf"
 
 fix_apache_ports_if_needed() {
   [[ -n "$PORTS_CONF" ]] || return 0
-  systemctl is-active --quiet "$APACHE_SVC" && return 0
-  grep -qE '^Listen[[:space:]]+80[[:space:]]*$' "$PORTS_CONF" || return 0
-  ss -ltn 2>/dev/null | grep -qE ':80[[:space:]]' || return 0
-  echo "==> nginx uses port 80 — Apache must listen on 127.0.0.1:8080 only"
-  cp -a "$PORTS_CONF" "${PORTS_CONF}.bak.qadbak.$(date +%s)"
-  sed -i 's/^Listen 80$/#Listen 80 # qadbak: nginx front/' "$PORTS_CONF"
-  if ! grep -q '127.0.0.1:8080' "$PORTS_CONF"; then
+  if ss -ltn 2>/dev/null | grep -qE ':(80|443)[[:space:]]' && \
+     grep -qE '^[[:space:]]*Listen[[:space:]]+(80|443|\[::\]:80|\[::\]:443)' "$PORTS_CONF" 2>/dev/null; then
+    echo "==> nginx uses :80/:443 — Apache backend on 127.0.0.1:8080 only"
+    fix_apache_listen_nginx_front
+  elif ! grep -q '127.0.0.1:8080' "$PORTS_CONF" 2>/dev/null; then
     echo 'Listen 127.0.0.1:8080' >>"$PORTS_CONF"
   fi
 }

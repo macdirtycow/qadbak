@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
-# Repair Apache after install-native-stack.sh on an existing VirtualMin VPS.
-# Restores mpm_event + php-fpm (undoes harmful mpm_prefork switch) and backend :8080.
+# Repair Apache after phase 6 on VirtualMin + nginx front (ports 80/443 owned by nginx).
 set -euo pipefail
 
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Run as root: sudo bash scripts/fix-apache-phase6.sh" >&2
   exit 1
 fi
 
-echo "==> Apache repair (phase 6 / VirtualMin)"
+# shellcheck source=lib/fix-apache-nginx-ports.sh
+source "$ROOT/scripts/lib/fix-apache-nginx-ports.sh"
+
+echo "==> Apache repair (phase 6 / VirtualMin / nginx front)"
 
 if a2query -M 2>/dev/null | grep -q mpm_prefork; then
   echo "    Reverting mpm_prefork → mpm_event (VirtualMin uses php-fpm)"
@@ -20,22 +23,13 @@ if a2query -M 2>/dev/null | grep -q mpm_prefork; then
   a2enconf php8.1-fpm 2>/dev/null || true
 fi
 
-if [[ -f /etc/apache2/ports.conf ]]; then
-  if grep -qE '^Listen[[:space:]]+80[[:space:]]*$' /etc/apache2/ports.conf; then
-    if ss -ltn 2>/dev/null | grep -qE ':80[[:space:]]'; then
-      echo "    ports.conf: disable Listen 80 (nginx owns :80)"
-      cp -a /etc/apache2/ports.conf "/etc/apache2/ports.conf.bak.qadbak.$(date +%s)"
-      sed -i 's/^Listen 80$/#Listen 80 # qadbak: nginx front/' /etc/apache2/ports.conf
-    fi
-  fi
-  if ! grep -q '127.0.0.1:8080' /etc/apache2/ports.conf; then
-    echo 'Listen 127.0.0.1:8080' >>/etc/apache2/ports.conf
-  fi
-fi
+echo "==> ports.conf: only 127.0.0.1:8080 (nginx keeps :80 :443)"
+fix_apache_listen_nginx_front
 
 bash "$QADBAK_DIR/scripts/ensure-apache-backend.sh"
 
 echo "==> Reload nginx"
 nginx -t && systemctl reload nginx
 
-echo "OK — Apache backend repaired. Re-run: sudo bash scripts/apply-phase6-test-server.sh (or update-qadbak.sh)"
+echo "OK — Apache should listen only on 127.0.0.1:8080"
+echo "    Test: curl -sI -H 'Host: siccamanagement.nl' http://127.0.0.1/ | head -5"
