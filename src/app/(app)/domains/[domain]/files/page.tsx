@@ -1,26 +1,12 @@
 import { FileManager } from "@/components/FileManager";
-import { listDomainFiles } from "@/lib/domain-files";
 import { requireDomainAccess } from "@/lib/domain-api";
-import { createVirtualMinLoginLink } from "@/lib/virtualmin";
+import { resolveDomainFilesListing } from "@/lib/domain-files-service";
 
 type Props = { params: Promise<{ domain: string }> };
 
 export default async function DomainFilesPage({ params }: Props) {
   const { session, domain } = await requireDomainAccess((await params).domain);
-  let listing = listDomainFiles(domain, "");
-  let error = "";
-  try {
-    if (listing.mode === "virtualmin") {
-      listing = {
-        ...listing,
-        fileManagerUrl: await createVirtualMinLoginLink(domain, session, {
-          redirectUrl: "/filemin/index.cgi",
-        }),
-      };
-    }
-  } catch (e) {
-    error = e instanceof Error ? e.message : "Could not load file manager.";
-  }
+  const { listing, error } = await resolveDomainFilesListing(domain, "", session);
   return (
     <FileManager domain={domain} initialListing={listing} initialError={error} />
   );

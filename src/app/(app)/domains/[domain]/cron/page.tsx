@@ -1,15 +1,15 @@
 import { CronManager } from "@/components/CronManager";
 import { requireDomainAccess } from "@/lib/domain-api";
-import { listCronJobs } from "@/lib/virtualmin";
+import { listCronJobsWithFallback } from "@/lib/virtualmin";
 
 type Props = { params: Promise<{ domain: string }> };
 
 export default async function CronPage({ params }: Props) {
   const { session, domain } = await requireDomainAccess((await params).domain);
-  let jobs: Awaited<ReturnType<typeof listCronJobs>> = [];
+  let jobs: Awaited<ReturnType<typeof listCronJobsWithFallback>> = [];
   let error = "";
   try {
-    jobs = await listCronJobs(domain, session);
+    jobs = await listCronJobsWithFallback(domain, session);
   } catch (e) {
     error = e instanceof Error ? e.message : "Could not load cron jobs.";
   }

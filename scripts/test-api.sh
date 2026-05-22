@@ -27,12 +27,17 @@ call_api() {
   local program="$1"
   shift
   echo "=== $program ==="
+  local -a extra=(--data-urlencode "json=1")
+  if [[ "$program" == list-* ]]; then
+    extra+=(--data-urlencode "multiline=")
+  else
+    extra+=(--data-urlencode "simple-multiline=")
+  fi
   curl -sk \
     -u "${VIRTUALMIN_USER}:${VIRTUALMIN_PASS}" \
     -X POST \
     --data-urlencode "program=${program}" \
-    --data-urlencode "json=1" \
-    --data-urlencode "multiline=" \
+    "${extra[@]}" \
     "$@" \
     "${VIRTUALMIN_URL}" \
     | head -c 4000
@@ -41,6 +46,7 @@ call_api() {
 }
 
 call_api "list-domains"
+call_api "create-login-link" --data-urlencode "domain=${TEST_DOMAIN:-example.com}"
 call_api "list-users" --data-urlencode "domain=${TEST_DOMAIN:-}"
 call_api "list-databases" --data-urlencode "domain=${TEST_DOMAIN:-}"
 

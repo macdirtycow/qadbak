@@ -297,13 +297,23 @@ export function FileManager({
         </Button>
       </div>
 
-      {!isQadbak && (
+      {!isQadbak && listing.fileManagerUrl && (
         <WebminEmbed
           title="File manager"
           description="Webmin file manager for this domain (public_html and home)."
           fetchUrl={`/api/domains/${enc}/virtualmin-link?dest=fileman`}
+          initialUrl={listing.fileManagerUrl}
           height="min(70vh, 720px)"
         />
+      )}
+      {!isQadbak && !listing.fileManagerUrl && (
+        <Alert>
+          File manager link unavailable. Run on the server:{" "}
+          <code className="text-white">
+            sudo bash /opt/qadbak/scripts/configure-domain-fs-sudo.sh
+          </code>{" "}
+          then rebuild and restart Qadbak — or fix VirtualMin create-login-link.
+        </Alert>
       )}
 
       {isQadbak && (

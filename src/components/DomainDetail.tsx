@@ -1,6 +1,7 @@
 "use client";
 
 import { DomainQuickLinks } from "@/components/DomainQuickLinks";
+import { WebsiteHealthCard } from "@/components/WebsiteHealthCard";
 import { Badge, Button, Card } from "@/components/ui";
 import type { VirtualMinDomain } from "@/lib/types";
 import Link from "next/link";
@@ -90,6 +91,8 @@ export function DomainDetail({
       </div>
 
       {error && <p className="text-sm text-red-300">{error}</p>}
+
+      <WebsiteHealthCard domain={domain.name} isAdmin={isAdmin} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>

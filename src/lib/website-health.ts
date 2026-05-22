@@ -1,0 +1,91 @@
+import { validateDomain } from "./virtualmin";
+import type { Role } from "./types";
+
+export interface WebsiteHealthReport {
+  domain: string;
+  originIp: string;
+  validation: { valid: boolean; messages: string[] };
+  localProbe: { ok: boolean; status?: number; error?: string };
+  cloudflare: {
+    error523LikelyCauses: string[];
+    dnsChecklist: string[];
+  };
+}
+
+function serverOriginIp(): string {
+  return (
+    process.env.QADBAK_ORIGIN_IP?.trim() ||
+    process.env.QADBAK_SERVER_IP?.trim() ||
+    ""
+  );
+}
+
+async function probeLocalWebsite(domain: string): Promise<WebsiteHealthReport["localProbe"]> {
+  try {
+    const res = await fetch(`http://127.0.0.1/`, {
+      headers: { Host: domain },
+      signal: AbortSignal.timeout(8000),
+      redirect: "manual",
+    });
+    return {
+      ok: res.status > 0 && res.status < 500,
+      status: res.status,
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "No local HTTP response",
+    };
+  }
+}
+
+export async function getWebsiteHealth(
+  domain: string,
+  actor: { role: Role; domains: string[] },
+): Promise<WebsiteHealthReport> {
+  let validation = { valid: true, messages: [] as string[] };
+  try {
+    validation = await validateDomain(domain, actor);
+  } catch {
+    validation = {
+      valid: true,
+      messages: ["VirtualMin validation is only available for administrators."],
+    };
+  }
+  const localProbe = await probeLocalWebsite(domain);
+  const originIp = serverOriginIp();
+
+  const error523LikelyCauses: string[] = [];
+  if (!localProbe.ok) {
+    error523LikelyCauses.push(
+      "Apache/Nginx is not responding on this server for this domain (run repair on the VPS).",
+    );
+  }
+  if (!validation.valid) {
+    error523LikelyCauses.push(
+      "VirtualMin reports configuration problems for this domain.",
+    );
+  }
+  if (localProbe.ok) {
+    error523LikelyCauses.push(
+      "Website works locally — Cloudflare 523 usually means wrong origin IP in Cloudflare or provider firewall blocking ports 80/443.",
+    );
+  }
+
+  const dnsChecklist = [
+    originIp
+      ? `Cloudflare A record @ → ${originIp} (and www → ${originIp} or CNAME www)`
+      : "Set QADBAK_ORIGIN_IP in .env.local to your VPS public IP (Contabo panel).",
+    "Contabo cloud firewall: inbound TCP 80 and 443 Accept (before block-all).",
+    "Orange cloud (proxy) OK — origin must still be reachable on 80/443.",
+    "SSL/TLS: Flexible if origin is HTTP only; Full after Let's Encrypt on the server.",
+  ];
+
+  return {
+    domain,
+    originIp,
+    validation,
+    localProbe,
+    cloudflare: { error523LikelyCauses, dnsChecklist },
+  };
+}

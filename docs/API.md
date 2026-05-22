@@ -6,7 +6,7 @@ Qadbak calls go through `src/lib/virtualmin.ts` with RBAC. Direct `remote.cgi` a
 
 | Action | program | Key parameters |
 |--------|---------|----------------|
-| List | `list-domains` | `multiline=` |
+| List | `list-domains` | `multiline=` (only on `list-*`; other programs use `simple-multiline=` with `json=1`) |
 | Detail | `list-domains` | filter client-side on `name` |
 | Disable | `disable-domain` | `domain` |
 | Enable | `enable-domain` | `domain` |
