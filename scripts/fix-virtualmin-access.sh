@@ -80,7 +80,7 @@ sudo -u qadbak bash -c "cd '$ROOT' && npm run test-api" 2>&1 | tail -30 || true
 
 echo ""
 echo "==> Restart Qadbak"
-sudo -u qadbak bash -c "cd '$ROOT' && pm2 restart qadbak"
+sudo -u qadbak bash -c "cd '$ROOT' && pm2 restart qadbak --update-env"
 
 echo ""
 echo "============================================"

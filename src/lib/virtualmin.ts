@@ -83,6 +83,12 @@ function normalizeList(data: unknown): Record<string, unknown>[] {
 const DOMAIN_LIKE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/i;
 
 function domainNameFromRowHints(row: Record<string, unknown>): string {
+  const hosts =
+    vmValue(row, "website_hostnames") ?? vmValue(row, "Website hostnames");
+  if (hosts) {
+    const first = hosts.trim().split(/\s+/).find((h) => DOMAIN_LIKE.test(h));
+    if (first) return first.toLowerCase();
+  }
   for (const key of ["error_log", "access_log", "ssl_cert_used_by"]) {
     const v = vmValue(row, key);
     if (!v) continue;
