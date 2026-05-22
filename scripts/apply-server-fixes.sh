@@ -32,7 +32,9 @@ bash "$QADBAK_DIR/scripts/install-hosting-stack.sh"
 
 echo "==> Verify file helper sudo"
 FS_WRAP="$(readlink -f "$QADBAK_DIR/scripts/run-domain-fs-helper.sh")"
-sudo -u "$QADBAK_USER" sudo -n "$FS_WRAP" list /home 2>/dev/null | grep -q '"ok"' || {
+FS_TEST_HOME="$(getent passwd | awk -F: '$6 ~ /^\/home\/[^/]+$/ {print $6; exit}')"
+FS_TEST_HOME="${FS_TEST_HOME:-/home}"
+sudo -u "$QADBAK_USER" sudo -n "$FS_WRAP" list "$FS_TEST_HOME" 2>/dev/null | grep -q '"ok"' || {
   echo "File helper sudo failed — check configure-domain-fs-sudo.sh" >&2
   exit 1
 }
