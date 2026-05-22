@@ -32,13 +32,20 @@ ln -sf "/etc/nginx/sites-available/qadbak-port-$PORT" \
 nginx -t
 systemctl reload nginx
 
-bash "$ROOT/scripts/open-host-firewall-port.sh" "$PORT"
+if [[ "${QADBAK_NGINX_ONLY:-}" != "1" ]]; then
+  bash "$ROOT/scripts/open-host-firewall-port.sh" "$PORT"
+fi
 
 PUBLIC_IP="$(curl -fsS --max-time 3 ifconfig.me 2>/dev/null || true)"
 if [[ -n "$PUBLIC_IP" ]]; then
   export QADBAK_PANEL_URL="http://${PUBLIC_IP}:${PORT}"
   export QADBAK_PANEL_PORT="$PORT"
   bash "$ROOT/scripts/sync-webmin-embed-env.sh" 2>/dev/null || true
+fi
+
+if [[ "${QADBAK_NGINX_ONLY:-}" == "1" ]]; then
+  echo "    Panel port :$PORT nginx refreshed (embed/webmin proxy included)"
+  exit 0
 fi
 
 echo ""

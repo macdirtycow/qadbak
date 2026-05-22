@@ -10,6 +10,8 @@ On the VPS after `git pull`:
 
 ```bash
 sudo bash scripts/install-hosting-stack.sh
+# If you use the panel on :11000, refresh that vhost too:
+sudo bash scripts/enable-panel-port.sh 11000
 sudo bash scripts/sync-webmin-embed-env.sh
 sudo -u qadbak bash -c 'cd /opt/qadbak && npm run build'
 sudo bash scripts/pm2-restart-qadbak.sh

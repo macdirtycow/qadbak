@@ -43,9 +43,6 @@ echo "==> Webmin embed proxy (Terminal / iframe modules)"
 if [[ -f "$QADBAK_DIR/scripts/configure-webmin-embed.sh" ]]; then
   bash "$QADBAK_DIR/scripts/configure-webmin-embed.sh" || true
 fi
-if command -v virtualmin &>/dev/null; then
-  bash "$QADBAK_DIR/scripts/apply-customer-nginx-vhosts.sh" || true
-fi
 
 if command -v virtualmin &>/dev/null; then
   echo "==> Webmin login for all VirtualMin domains (Terminal, Webmin embeds)"

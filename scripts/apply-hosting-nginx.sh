@@ -74,6 +74,13 @@ rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
 nginx -t
 systemctl reload nginx
 
+for panel_conf in /etc/nginx/sites-available/qadbak-port-*; do
+  [[ -f "$panel_conf" ]] || continue
+  panel_port="${panel_conf##*qadbak-port-}"
+  echo "==> Refresh panel port :$panel_port (Qadbak + /embed/webmin/)"
+  QADBAK_NGINX_ONLY=1 bash "$QADBAK_DIR/scripts/enable-panel-port.sh" "$panel_port"
+done
+
 if [[ -f "$QADBAK_DIR/scripts/apply-customer-nginx-vhosts.sh" ]] && command -v virtualmin &>/dev/null; then
   echo ""
   APACHE_BACKEND="$APACHE_BACKEND" bash "$QADBAK_DIR/scripts/apply-customer-nginx-vhosts.sh"
