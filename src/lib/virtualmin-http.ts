@@ -1,12 +1,25 @@
+import http from "node:http";
 import https from "node:https";
 import { Readable } from "node:stream";
 
+function virtualMinUrlIsLocal(): boolean {
+  const url = process.env.VIRTUALMIN_URL?.trim();
+  if (!url) return false;
+  try {
+    const host = new URL(url).hostname;
+    return host === "127.0.0.1" || host === "localhost";
+  } catch {
+    return false;
+  }
+}
+
 /**
- * When true, VirtualMin fetch uses a dedicated HTTPS agent instead of
- * NODE_TLS_REJECT_UNAUTHORIZED=0 (which disables TLS verification process-wide).
+ * When true, VirtualMin fetch skips TLS verification (localhost self-signed Webmin only).
+ * Auto-enabled for VIRTUALMIN_URL on 127.0.0.1/localhost unless VIRTUALMIN_TLS_INSECURE=false.
  */
 export function virtualMinTlsInsecureEnabled(): boolean {
   const flag = process.env.VIRTUALMIN_TLS_INSECURE?.trim().toLowerCase();
+  if (flag === "false" || flag === "0" || flag === "no") return false;
   if (flag === "true" || flag === "1" || flag === "yes") return true;
 
   if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === "0") {
@@ -16,10 +29,11 @@ export function virtualMinTlsInsecureEnabled(): boolean {
     );
     return true;
   }
-  return false;
+
+  return virtualMinUrlIsLocal();
 }
 
-const insecureAgent = new https.Agent({ rejectUnauthorized: false });
+const insecureHttpsAgent = new https.Agent({ rejectUnauthorized: false });
 
 function headersToRecord(headers: HeadersInit | undefined): Record<string, string> {
   if (!headers) return {};
@@ -36,28 +50,32 @@ function headersToRecord(headers: HeadersInit | undefined): Record<string, strin
   return { ...headers };
 }
 
-/** POST to remote.cgi with optional self-signed TLS (localhost Webmin only). */
-function virtualMinFetchInsecure(url: string, init: RequestInit): Promise<Response> {
+function requestBody(init: RequestInit): string | undefined {
+  if (typeof init.body === "string") return init.body;
+  if (init.body instanceof URLSearchParams) return init.body.toString();
+  if (init.body) return String(init.body);
+  return undefined;
+}
+
+function nodeRequest(
+  mod: typeof http | typeof https,
+  url: string,
+  init: RequestInit,
+  agent?: https.Agent,
+): Promise<Response> {
   const target = new URL(url);
-  const body =
-    typeof init.body === "string"
-      ? init.body
-      : init.body instanceof URLSearchParams
-        ? init.body.toString()
-        : init.body
-          ? String(init.body)
-          : undefined;
+  const body = requestBody(init);
 
   return new Promise((resolve, reject) => {
-    const req = https.request(
+    const req = mod.request(
       {
         protocol: target.protocol,
         hostname: target.hostname,
-        port: target.port || 443,
+        port: target.port || (target.protocol === "https:" ? 443 : 80),
         path: `${target.pathname}${target.search}`,
         method: init.method ?? "GET",
         headers: headersToRecord(init.headers),
-        agent: insecureAgent,
+        agent,
       },
       (res) => {
         const chunks: Buffer[] = [];
@@ -88,12 +106,20 @@ function virtualMinFetchInsecure(url: string, init: RequestInit): Promise<Respon
   });
 }
 
+/** POST to remote.cgi — strict TLS by default; opt-in insecure for localhost self-signed. */
 export async function virtualMinFetch(
   url: string,
   init: RequestInit,
 ): Promise<Response> {
-  if (!virtualMinTlsInsecureEnabled()) {
+  const target = new URL(url);
+  const insecure = virtualMinTlsInsecureEnabled();
+
+  if (!insecure) {
     return fetch(url, init);
   }
-  return virtualMinFetchInsecure(url, init);
+
+  if (target.protocol === "http:") {
+    return nodeRequest(http, url, init);
+  }
+  return nodeRequest(https, url, init, insecureHttpsAgent);
 }

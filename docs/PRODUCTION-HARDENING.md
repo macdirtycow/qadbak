@@ -53,6 +53,7 @@ Qadbak uses a **scoped** opt-in:
 
 ```env
 # Only for self-signed Webmin on 127.0.0.1:10000 — not global TLS disable
+# (auto-enabled when VIRTUALMIN_URL uses localhost / 127.0.0.1)
 VIRTUALMIN_TLS_INSECURE=true
 ```
 

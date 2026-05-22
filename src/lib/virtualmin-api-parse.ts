@@ -214,3 +214,26 @@ function parseCronLine(line: string): Omit<CronJob, "id"> | null {
     active: true,
   };
 }
+
+/** Normalize list-domains JSON (map, array, or nested data). */
+export function parseDomainsListRows(data: unknown): Record<string, unknown>[] {
+  const payload = unwrapVirtualminPayload(data);
+  if (Array.isArray(payload)) return payload as Record<string, unknown>[];
+
+  if (payload && typeof payload === "object") {
+    const obj = payload as Record<string, unknown>;
+    if (Array.isArray(obj.data)) return obj.data as Record<string, unknown>[];
+    if (Array.isArray(obj.domains)) return obj.domains as Record<string, unknown>[];
+    if (obj.data && typeof obj.data === "object" && !Array.isArray(obj.data)) {
+      return Object.entries(obj.data as Record<string, unknown>).map(
+        ([name, meta]) => ({
+          name,
+          ...(typeof meta === "object" && meta !== null
+            ? (meta as Record<string, unknown>)
+            : {}),
+        }),
+      );
+    }
+  }
+  return [];
+}
