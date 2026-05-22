@@ -75,13 +75,17 @@ export async function POST(request: Request) {
 
     if (!created) {
       const listed = await listDomains(session).catch(() => []);
+      const known = listed.some((d) => d.name.toLowerCase() === domainName);
+      if (known) {
+        return jsonOk({ ok: true, domain: domainName });
+      }
       const hint =
         listed.length === 0
-          ? "list-domains returned no domains. Check VIRTUALMIN_TLS_INSECURE and VIRTUALMIN_URL in .env.local, then npm run test-api. "
-          : `VirtualMin lists ${listed.length} other domain(s), not ${domainName}. `;
+          ? "Qadbak cannot read domains from VirtualMin (pm2 may not load .env.local). On the server run: cd /opt/qadbak && git pull && sudo bash scripts/pm2-restart-qadbak.sh && npm run test-api. "
+          : `VirtualMin has ${listed.length} domain(s) but not "${domainName}". `;
       return jsonError(
         hint +
-          "Open Webmin on port 10000 or run virtualmin list-domains on the server.",
+          "If the domain already exists, open Domains in the menu instead of creating it again.",
         502,
       );
     }

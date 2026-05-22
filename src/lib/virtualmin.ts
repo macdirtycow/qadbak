@@ -666,6 +666,24 @@ function resolveProgramCall(
   }
 }
 
+/** Last-resort: extract FQDNs from VirtualMin multiline JSON blobs (error_log paths, etc.). */
+function domainNamesFromVmPayload(data: unknown): string[] {
+  const rows = parseDomainsListRows(data);
+  const fallbackRows = rows.length > 0 ? rows : normalizeList(data);
+  const names = new Set<string>();
+  for (const row of fallbackRows) {
+    const n = rowDomainName(row);
+    if (n) names.add(n.toLowerCase());
+  }
+  if (names.size > 0) return [...names];
+
+  const blob = JSON.stringify(data);
+  for (const m of blob.matchAll(/virtualmin\/([\w.-]+\.[a-z]{2,})_error_log/gi)) {
+    names.add(m[1].toLowerCase());
+  }
+  return [...names];
+}
+
 export async function listDomains(actor: {
   role: Role;
   domains: string[];
@@ -674,13 +692,26 @@ export async function listDomains(actor: {
   const data = await virtualMinCall("list-domains", { multiline: "" }, actor);
   const rows = parseDomainsListRows(data);
   const fallbackRows = rows.length > 0 ? rows : normalizeList(data);
-  const mapped = fallbackRows.map((row) => mapDomainRow(row));
+  const mapped = fallbackRows
+    .map((row) => mapDomainRow(row))
+    .filter((d) => d.name.length > 0);
+
+  if (mapped.length === 0) {
+    for (const name of domainNamesFromVmPayload(data)) {
+      mapped.push({
+        name,
+        disabled: "0",
+        plan: "Default Plan",
+        user: name.split(".")[0],
+      } as VirtualMinDomain);
+    }
+  }
 
   if (actor.role === "client") {
     const allowed = new Set(actor.domains.map((d) => d.toLowerCase()));
     return mapped.filter((d) => allowed.has(d.name.toLowerCase()));
   }
-  return mapped.filter((d) => d.name);
+  return mapped;
 }
 
 /** Find one domain after create-domain (tolerates slow VirtualMin / parse quirks). */
