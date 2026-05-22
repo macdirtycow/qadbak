@@ -38,7 +38,9 @@ echo "==> Export domains → $OUT"
     [[ "$first" -eq 1 ]] || echo ","
     first=0
     zone_file=""
-    if [[ -f "/var/lib/bind/${domain}.host" ]]; then
+    if [[ -f "/var/lib/bind/${domain}.hosts" ]]; then
+      zone_file="/var/lib/bind/${domain}.hosts"
+    elif [[ -f "/var/lib/bind/${domain}.host" ]]; then
       zone_file="/var/lib/bind/${domain}.host"
     elif [[ -f "/var/lib/bind/${domain}" ]]; then
       zone_file="/var/lib/bind/${domain}"

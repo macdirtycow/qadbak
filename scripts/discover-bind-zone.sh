@@ -9,6 +9,7 @@ echo "==> Discover BIND zone for $DOMAIN"
 
 ZONE=""
 for p in \
+  "/var/lib/bind/${DOMAIN}.hosts" \
   "/var/lib/bind/${DOMAIN}.host" \
   "/var/lib/bind/${DOMAIN}" \
   "/etc/bind/${DOMAIN}.zone" \
@@ -26,7 +27,7 @@ fi
 
 if [[ -z "$ZONE" ]]; then
   ZONE="$(find /var/lib/bind /etc/bind -maxdepth 4 -type f \
-    \( -name "${DOMAIN}.host" -o -name "${DOMAIN}.zone" -o -name "${DOMAIN}" \) 2>/dev/null | head -1)"
+    \( -name "${DOMAIN}.hosts" -o -name "${DOMAIN}.host" -o -name "${DOMAIN}.zone" -o -name "${DOMAIN}" \) 2>/dev/null | head -1)"
 fi
 
 if [[ -z "$ZONE" || ! -f "$ZONE" ]]; then
