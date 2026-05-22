@@ -1245,6 +1245,13 @@ export interface CreateDomainInput {
   subdom?: boolean;
 }
 
+/** Unix username derived from domain (VirtualMin convention). */
+export function defaultDomainUnixUser(domain: string): string {
+  const base = domain.split(".")[0] ?? "site";
+  const safe = base.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  return (safe || "site").slice(0, 32);
+}
+
 export async function createDomain(
   input: CreateDomainInput,
   actor: { role: Role; domains: string[] },
@@ -1252,8 +1259,10 @@ export async function createDomain(
   const params: Record<string, string> = {
     domain: input.domain,
     pass: input.pass,
+    user: input.user?.trim() || defaultDomainUnixUser(input.domain),
+    desc: input.domain,
+    "default-features": "1",
   };
-  if (input.user) params.user = input.user;
   if (input.plan) params.plan = input.plan;
   if (input.parent) params.parent = input.parent;
   if (input.alias) params.alias = "1";

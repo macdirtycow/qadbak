@@ -58,7 +58,8 @@ export function CreateDomainForm({
     <Card>
       <h1 className="text-2xl font-semibold text-white">New virtual server</h1>
       <p className="mt-1 text-sm text-panel-muted">
-        Creates a domain via VirtualMin create-domain
+        Creates the virtual server in VirtualMin immediately (same as Webmin).
+        Qadbak has no separate domain list — after success it appears under Domains.
       </p>
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
         {error && <Alert>{error}</Alert>}
@@ -102,8 +103,13 @@ export function CreateDomainForm({
           />
         </div>
         <div>
-          <Label htmlFor="user">Owner (Unix user, optional)</Label>
-          <Input id="user" value={user} onChange={(e) => setUser(e.target.value)} />
+          <Label htmlFor="user">Unix user (optional)</Label>
+          <Input
+            id="user"
+            value={user}
+            onChange={(e) => setUser(e.target.value)}
+            placeholder="Auto from domain name if empty"
+          />
         </div>
         <div>
           <Label htmlFor="pass">Owner password</Label>

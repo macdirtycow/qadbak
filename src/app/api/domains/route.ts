@@ -29,9 +29,10 @@ export async function POST(request: Request) {
     if (!body.domain || !body.pass) {
       return jsonError("Domain name and password are required.");
     }
+    const domainName = body.domain.trim().toLowerCase();
     await createDomain(
       {
-        domain: body.domain,
+        domain: domainName,
         pass: body.pass,
         user: body.user,
         plan: body.plan,
@@ -41,8 +42,18 @@ export async function POST(request: Request) {
       },
       session,
     );
-    await auditLog(session.username, "create-domain", body.domain);
-    return jsonOk({ ok: true, domain: body.domain });
+    const domains = await listDomains(session);
+    const created = domains.find(
+      (d) => d.name.toLowerCase() === domainName,
+    );
+    if (!created) {
+      return jsonError(
+        "VirtualMin processed the request but the domain is not listed yet. Check Webmin (:10000) or server logs.",
+        502,
+      );
+    }
+    await auditLog(session.username, "create-domain", domainName);
+    return jsonOk({ ok: true, domain: created.name });
   } catch (err) {
     return handleApiError(err);
   }
