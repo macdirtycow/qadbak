@@ -3,19 +3,23 @@
 import { Alert, Button, Card } from "@/components/ui";
 import { useCallback, useEffect, useState } from "react";
 
+type Probe = {
+  ok: boolean;
+  status?: number;
+  error?: string;
+  servingPanelLanding?: boolean;
+  cloudflare523?: boolean;
+};
+
 type Health = {
   domain: string;
   originIp: string;
   repairAvailable?: boolean;
   validation: { valid: boolean; messages: string[] };
-  localProbe: {
-    ok: boolean;
-    status?: number;
-    error?: string;
-    servingPanelLanding?: boolean;
-  };
+  localProbe: Probe;
+  publicProbe: Probe;
   cloudflare: {
-    error523LikelyCauses: string[];
+    issues: string[];
     dnsChecklist: string[];
   };
 };
@@ -72,27 +76,37 @@ export function WebsiteHealthCard({
     }
   }
 
-  const localOk = health?.localProbe.ok;
-  const panelHijack = health?.localProbe.servingPanelLanding;
+  const panelHijack =
+    health?.localProbe.servingPanelLanding || health?.publicProbe.servingPanelLanding;
+  const cf523 =
+    health?.publicProbe.cloudflare523 && !health?.publicProbe.ok;
+  const siteOk = health?.publicProbe.ok && health?.localProbe.ok;
   const repairOk = health?.repairAvailable !== false;
-  const showCloudflareHelp = health && (localOk || !localOk);
+
+  const subtitle = panelHijack
+    ? "This domain shows the Qadbak landing page instead of your site in public_html."
+    : cf523
+      ? "Cloudflare error 523 — the proxy cannot reach your origin on ports 80/443."
+      : siteOk
+        ? "Website responds on this server and on the internet."
+        : "Checks origin routing, public reachability, and Cloudflare DNS.";
 
   return (
     <Card
       className={
         panelHijack
           ? "border-rose-500/40"
-          : localOk
+          : siteOk
             ? "border-emerald-500/30"
-            : "border-amber-500/40"
+            : cf523
+              ? "border-amber-500/40"
+              : "border-amber-500/40"
       }
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-medium text-white">Website & Cloudflare</h2>
-          <p className="mt-1 text-sm text-panel-muted">
-            Error 523 = Cloudflare cannot reach your server. Check origin IP and ports 80/443.
-          </p>
+          <h2 className="text-lg font-medium text-white">Website status</h2>
+          <p className="mt-1 text-sm text-panel-muted">{subtitle}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="ghost" disabled={loading} onClick={load}>
@@ -126,12 +140,7 @@ export function WebsiteHealthCard({
             Repair-sudo werkt nog niet. Op de server (als root):{" "}
             <code className="text-white">
               cd /opt/qadbak && git pull && sudo bash scripts/configure-domain-repair-sudo.sh
-            </code>{" "}
-            Test:{" "}
-            <code className="text-white">
-              sudo -u qadbak sudo -n /opt/qadbak/scripts/fix-domain-website.sh __probe__
-            </code>{" "}
-            (moet OK geven). Daarna pm2 restart qadbak.
+            </code>
           </Alert>
         </div>
       )}
@@ -140,29 +149,52 @@ export function WebsiteHealthCard({
         <div className="mt-4 space-y-4 text-sm">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <p className="text-panel-muted">Local web server (this VPS)</p>
+              <p className="text-panel-muted">On this VPS (Host header)</p>
               <p
                 className={
-                  panelHijack
+                  panelHijack && health.localProbe.servingPanelLanding
                     ? "text-rose-300"
-                    : localOk
+                    : health.localProbe.ok
                       ? "text-emerald-400"
                       : "text-amber-300"
                 }
               >
-                {panelHijack
-                  ? "Shows Qadbak landing — not your site in public_html"
-                  : localOk
+                {health.localProbe.servingPanelLanding
+                  ? "Qadbak landing — not public_html"
+                  : health.localProbe.ok
                     ? `OK — HTTP ${health.localProbe.status ?? ""}`
-                    : `Not reachable — ${health.localProbe.error ?? "no response"}`}
+                    : health.localProbe.error ?? "No response"}
               </p>
             </div>
             <div>
-              <p className="text-panel-muted">Origin IP (for Cloudflare A record)</p>
-              <p className="font-mono text-white">
-                {health.originIp || "Set QADBAK_ORIGIN_IP in server .env.local"}
+              <p className="text-panel-muted">Public (https://{domain})</p>
+              <p
+                className={
+                  health.publicProbe.cloudflare523
+                    ? "text-amber-300"
+                    : health.publicProbe.servingPanelLanding
+                      ? "text-rose-300"
+                      : health.publicProbe.ok
+                        ? "text-emerald-400"
+                        : "text-amber-300"
+                }
+              >
+                {health.publicProbe.cloudflare523
+                  ? `Cloudflare 523 — HTTP ${health.publicProbe.status ?? ""}`
+                  : health.publicProbe.servingPanelLanding
+                    ? "Qadbak landing — not your site"
+                    : health.publicProbe.ok
+                      ? `OK — HTTP ${health.publicProbe.status ?? ""}`
+                      : health.publicProbe.error ?? "Not reachable"}
               </p>
             </div>
+          </div>
+
+          <div>
+            <p className="text-panel-muted">Origin IP (Cloudflare A record)</p>
+            <p className="font-mono text-white">
+              {health.originIp || "Set QADBAK_ORIGIN_IP in server .env.local"}
+            </p>
           </div>
 
           {!health.validation.valid && health.validation.messages.length > 0 && (
@@ -175,15 +207,11 @@ export function WebsiteHealthCard({
             </Alert>
           )}
 
-          {showCloudflareHelp && health.cloudflare.error523LikelyCauses.length > 0 && (
-            <Alert variant={localOk ? "info" : undefined}>
-              <p className="font-medium text-white">
-                {localOk
-                  ? "Server OK — Cloudflare 523 is a DNS/firewall issue"
-                  : "Likely cause of Cloudflare 523"}
-              </p>
+          {health.cloudflare.issues.length > 0 && (
+            <Alert variant={siteOk ? "info" : undefined}>
+              <p className="font-medium text-white">Diagnosis</p>
               <ul className="mt-2 list-inside list-disc text-panel-muted">
-                {health.cloudflare.error523LikelyCauses.map((c, i) => (
+                {health.cloudflare.issues.map((c, i) => (
                   <li key={i}>{c}</li>
                 ))}
               </ul>

@@ -2,20 +2,23 @@ import { repairAvailable } from "./domain-repair";
 import { validateDomain } from "./virtualmin";
 import type { Role } from "./types";
 
+export interface WebsiteProbeResult {
+  ok: boolean;
+  status?: number;
+  error?: string;
+  servingPanelLanding?: boolean;
+  cloudflare523?: boolean;
+}
+
 export interface WebsiteHealthReport {
   domain: string;
   originIp: string;
   repairAvailable: boolean;
   validation: { valid: boolean; messages: string[] };
-  localProbe: {
-    ok: boolean;
-    status?: number;
-    error?: string;
-    /** True when nginx serves the Qadbak marketing app instead of Apache/public_html */
-    servingPanelLanding?: boolean;
-  };
+  localProbe: WebsiteProbeResult;
+  publicProbe: WebsiteProbeResult;
   cloudflare: {
-    error523LikelyCauses: string[];
+    issues: string[];
     dnsChecklist: string[];
   };
 }
@@ -40,29 +43,103 @@ function looksLikeQadbakLanding(body: string, headers: Headers): boolean {
   );
 }
 
-async function probeLocalWebsite(domain: string): Promise<WebsiteHealthReport["localProbe"]> {
+function looksLikeCloudflare523(body: string, status: number): boolean {
+  if (status === 523) return true;
+  const sample = body.slice(0, 8000).toLowerCase();
+  return sample.includes("error code: 523") || sample.includes("origin is unreachable");
+}
+
+async function probeHttp(
+  url: string,
+  host: string,
+): Promise<WebsiteProbeResult> {
   try {
-    const res = await fetch(`http://127.0.0.1/`, {
-      headers: { Host: domain },
-      signal: AbortSignal.timeout(8000),
+    const res = await fetch(url, {
+      headers: { Host: host },
+      signal: AbortSignal.timeout(12_000),
       redirect: "manual",
     });
     const body = await res.text().catch(() => "");
     const servingPanelLanding = looksLikeQadbakLanding(body, res.headers);
+    const cloudflare523 = looksLikeCloudflare523(body, res.status);
+    const ok =
+      res.status > 0 &&
+      res.status < 500 &&
+      !cloudflare523 &&
+      !servingPanelLanding;
     return {
-      ok: res.status > 0 && res.status < 500 && !servingPanelLanding,
+      ok,
       status: res.status,
       servingPanelLanding,
+      cloudflare523,
       error: servingPanelLanding
-        ? "Nginx still routes this domain to the Qadbak landing page — run apply-hosting-nginx on the server."
-        : undefined,
+        ? "This hostname serves the Qadbak marketing page, not public_html."
+        : cloudflare523
+          ? "Cloudflare error 523 — origin unreachable from the internet."
+          : !ok
+            ? `HTTP ${res.status}`
+            : undefined,
     };
   } catch (e) {
     return {
       ok: false,
-      error: e instanceof Error ? e.message : "No local HTTP response",
+      error: e instanceof Error ? e.message : "No HTTP response",
     };
   }
+}
+
+async function probeLocalWebsite(domain: string): Promise<WebsiteProbeResult> {
+  return probeHttp("http://127.0.0.1/", domain);
+}
+
+async function probePublicWebsite(domain: string): Promise<WebsiteProbeResult> {
+  const https = await probeHttp(`https://${domain}/`, domain);
+  if (https.ok || https.status || https.servingPanelLanding || https.cloudflare523) {
+    return https;
+  }
+  return probeHttp(`http://${domain}/`, domain);
+}
+
+function buildIssues(
+  localProbe: WebsiteProbeResult,
+  publicProbe: WebsiteProbeResult,
+  validation: { valid: boolean; messages: string[] },
+): string[] {
+  const issues: string[] = [];
+
+  if (localProbe.servingPanelLanding || publicProbe.servingPanelLanding) {
+    issues.push(
+      "Nginx routes this domain to the Qadbak landing page — on the VPS: sudo bash scripts/apply-hosting-nginx.sh",
+    );
+  }
+
+  if (publicProbe.cloudflare523 && localProbe.ok) {
+    issues.push(
+      "Cloudflare returns 523 but the origin answers locally — check A record / Contabo firewall (ports 80/443).",
+    );
+  } else if (publicProbe.cloudflare523) {
+    issues.push("Cloudflare cannot reach your server (error 523).");
+  }
+
+  if (!localProbe.ok && !localProbe.servingPanelLanding && !publicProbe.cloudflare523) {
+    issues.push(
+      "Web server on this VPS does not answer for this domain — use Repair on server.",
+    );
+  }
+
+  if (!validation.valid) {
+    issues.push("VirtualMin reports configuration problems for this domain.");
+  }
+
+  if (publicProbe.ok && localProbe.ok) {
+    issues.push("Website is reachable locally and on the internet.");
+  } else if (localProbe.ok && !publicProbe.cloudflare523 && !publicProbe.servingPanelLanding) {
+    issues.push(
+      "Origin responds on this server — if visitors still see errors, check Cloudflare DNS and SSL mode.",
+    );
+  }
+
+  return issues;
 }
 
 export async function getWebsiteHealth(
@@ -78,29 +155,11 @@ export async function getWebsiteHealth(
       messages: ["VirtualMin validation is only available for administrators."],
     };
   }
-  const localProbe = await probeLocalWebsite(domain);
+  const [localProbe, publicProbe] = await Promise.all([
+    probeLocalWebsite(domain),
+    probePublicWebsite(domain),
+  ]);
   const originIp = serverOriginIp();
-
-  const error523LikelyCauses: string[] = [];
-  if (localProbe.servingPanelLanding) {
-    error523LikelyCauses.push(
-      "This domain hits the Qadbak marketing page instead of public_html — on the VPS run: sudo bash scripts/apply-hosting-nginx.sh",
-    );
-  } else if (!localProbe.ok) {
-    error523LikelyCauses.push(
-      "Apache/Nginx is not responding on this server for this domain (run repair on the VPS).",
-    );
-  }
-  if (!validation.valid) {
-    error523LikelyCauses.push(
-      "VirtualMin reports configuration problems for this domain.",
-    );
-  }
-  if (localProbe.ok) {
-    error523LikelyCauses.push(
-      "Website works locally — Cloudflare 523 usually means wrong origin IP in Cloudflare or provider firewall blocking ports 80/443.",
-    );
-  }
 
   const dnsChecklist = [
     originIp
@@ -117,6 +176,10 @@ export async function getWebsiteHealth(
     repairAvailable: await repairAvailable(),
     validation,
     localProbe,
-    cloudflare: { error523LikelyCauses, dnsChecklist },
+    publicProbe,
+    cloudflare: {
+      issues: buildIssues(localProbe, publicProbe, validation),
+      dnsChecklist,
+    },
   };
 }

@@ -54,7 +54,7 @@ export async function resolveDomainFilesListing(
       } catch {
         return {
           listing: { ...base, mode: "virtualmin" },
-          error: `${hint}. Run on the server: sudo bash /opt/qadbak/scripts/configure-domain-fs-sudo.sh then pm2 restart qadbak.`,
+          error: `${hint}. Run on the server: sudo bash /opt/qadbak/scripts/configure-domain-fs-sudo.sh then pm2 restart qadbak. Test: sudo -u qadbak sudo -n /opt/qadbak/scripts/run-domain-fs-helper.sh list /home/siccamanagement`,
         };
       }
       return {
