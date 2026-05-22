@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Fix website unreachable (Cloudflare 523 / origin down) for one VirtualMin domain.
 # Run on VPS: sudo bash scripts/fix-domain-website.sh siccamanagement.nl
 set -euo pipefail

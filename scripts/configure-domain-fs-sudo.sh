@@ -11,7 +11,7 @@ if [[ "$(id -u)" -ne 0 ]]; then
 fi
 
 NODE_BIN="$(command -v node)"
-HELPER="$QADBAK_DIR/scripts/domain-fs-helper.mjs"
+HELPER="$(readlink -f "$QADBAK_DIR/scripts/domain-fs-helper.mjs")"
 if [[ ! -f "$HELPER" ]]; then
   echo "Missing $HELPER — git pull in $QADBAK_DIR first." >&2
   exit 1
@@ -21,8 +21,16 @@ chmod 755 "$HELPER"
 SUDOERS="/etc/sudoers.d/qadbak-domain-fs"
 cat >"$SUDOERS" <<EOF
 # Qadbak native file browser — list/read/write under /home/
-$QADBAK_USER ALL=(root) NOPASSWD: $NODE_BIN $HELPER
+$QADBAK_USER ALL=(root) NOPASSWD: $NODE_BIN $HELPER *
 EOF
 chmod 440 "$SUDOERS"
 visudo -cf "$SUDOERS"
-echo "OK — $QADBAK_USER can run domain-fs-helper.mjs via sudo."
+
+echo "==> Verify file helper sudo"
+if ! sudo -u "$QADBAK_USER" sudo -n "$NODE_BIN" "$HELPER" list /home 2>/dev/null | grep -q '"ok"'; then
+  echo "WARN: file helper sudo test did not return ok JSON (may still work for domain paths)." >&2
+else
+  echo "OK — file helper sudo works."
+fi
+
+echo "Configured: $SUDOERS"

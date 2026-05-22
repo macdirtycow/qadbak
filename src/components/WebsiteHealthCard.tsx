@@ -109,11 +109,15 @@ export function WebsiteHealthCard({
       {health && !repairOk && !loading && (
         <div className="mt-4">
           <Alert>
-            Repair-knop niet beschikbaar voor de qadbak-gebruiker. Op de server:{" "}
+            Repair-sudo werkt nog niet. Op de server (als root):{" "}
             <code className="text-white">
-              sudo bash /opt/qadbak/scripts/configure-domain-repair-sudo.sh
+              cd /opt/qadbak && git pull && sudo bash scripts/configure-domain-repair-sudo.sh
             </code>{" "}
-            daarna <code className="text-white">pm2 restart qadbak</code>.
+            Test:{" "}
+            <code className="text-white">
+              sudo -u qadbak sudo -n /opt/qadbak/scripts/fix-domain-website.sh __probe__
+            </code>{" "}
+            (moet OK geven). Daarna pm2 restart qadbak.
           </Alert>
         </div>
       )}
