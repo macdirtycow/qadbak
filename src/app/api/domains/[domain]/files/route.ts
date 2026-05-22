@@ -10,7 +10,7 @@ import {
 } from "@/lib/domain-files";
 import {
   deleteDomainFileLive,
-  liveFilesActive,
+  liveFilesEnabled,
   mkdirDomainLive,
   resolveDomainFilesListing,
   writeDomainFileLive,
@@ -34,7 +34,7 @@ export async function GET(request: Request, { params }: Params) {
 export async function POST(request: Request, { params }: Params) {
   try {
     const { session, domain } = await requireDomainApi((await params).domain);
-    const live = await liveFilesActive();
+    const live = liveFilesEnabled();
     if (!isPanelFilesMode() && !live) {
       return jsonError(
         "File actions on the server are done via the VirtualMin file manager. Open Files in Qadbak.",
@@ -100,7 +100,7 @@ export async function POST(request: Request, { params }: Params) {
 export async function DELETE(request: Request, { params }: Params) {
   try {
     const { session, domain } = await requireDomainApi((await params).domain);
-    const live = await liveFilesActive();
+    const live = liveFilesEnabled();
     if (!isPanelFilesMode() && !live) {
       return jsonError("Deleting in Qadbak is not available on the live server.", 501);
     }

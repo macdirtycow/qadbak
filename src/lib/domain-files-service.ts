@@ -84,9 +84,13 @@ export async function resolveDomainFilesListing(
   };
 }
 
+/** True when live native files are configured and responding (never caches a failed probe). */
 export async function liveFilesActive(): Promise<boolean> {
-  return liveFilesEnabled() && (await probeLiveFilesystem());
+  if (!liveFilesEnabled()) return false;
+  return probeLiveFilesystem();
 }
+
+export { liveFilesEnabled } from "./domain-files-live";
 
 export {
   readDomainFileLive,

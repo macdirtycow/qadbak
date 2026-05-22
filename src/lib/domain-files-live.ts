@@ -41,14 +41,21 @@ async function runHelper(
   if (!parsed.ok) {
     throw new VirtualMinError(String(parsed.error ?? "Filesystem command failed."));
   }
+  markLiveFilesystemReady();
   return parsed;
+}
+
+/** Mark native FS as working after any successful helper call. */
+export function markLiveFilesystemReady(): void {
+  liveFsProbe = true;
 }
 
 export async function probeLiveFilesystem(): Promise<boolean> {
   if (!liveFilesEnabled()) return false;
-  if (liveFsProbe !== null) return liveFsProbe;
-  liveFsProbe = await probeDomainFsSudo();
-  return liveFsProbe;
+  if (liveFsProbe === true) return true;
+  const ok = await probeDomainFsSudo();
+  if (ok) liveFsProbe = true;
+  return ok;
 }
 
 async function resolveUnixUser(

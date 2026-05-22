@@ -1,5 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { VirtualMinError } from "./errors";
 
 const execFileAsync = promisify(execFile);
 
@@ -15,19 +16,29 @@ export async function runDomainFsSudo(
 ): Promise<string> {
   const timeout = options?.timeout ?? 30_000;
   const maxBuffer = options?.maxBuffer ?? 8 * 1024 * 1024;
-  if (USE_SUDO) {
-    const { stdout } = await execFileAsync("sudo", ["-n", DOMAIN_FS_SUDO_WRAPPER, ...args], {
-      timeout,
-      maxBuffer,
-    });
+  try {
+    if (USE_SUDO) {
+      const { stdout } = await execFileAsync("sudo", ["-n", DOMAIN_FS_SUDO_WRAPPER, ...args], {
+        timeout,
+        maxBuffer,
+      });
+      return stdout;
+    }
+    const node = process.env.QADBAK_NODE_PATH ?? "node";
+    const helper =
+      process.env.QADBAK_DOMAIN_FS_HELPER ??
+      "/opt/qadbak/scripts/domain-fs-helper.mjs";
+    const { stdout } = await execFileAsync(node, [helper, ...args], { timeout, maxBuffer });
     return stdout;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/password is required|a password is required/i.test(msg)) {
+      throw new VirtualMinError(
+        "Native file access needs sudo. On the server run: sudo bash /opt/qadbak/scripts/configure-domain-fs-sudo.sh then pm2 restart qadbak.",
+      );
+    }
+    throw err;
   }
-  const node = process.env.QADBAK_NODE_PATH ?? "node";
-  const helper =
-    process.env.QADBAK_DOMAIN_FS_HELPER ??
-    "/opt/qadbak/scripts/domain-fs-helper.mjs";
-  const { stdout } = await execFileAsync(node, [helper, ...args], { timeout, maxBuffer });
-  return stdout;
 }
 
 export async function probeDomainFsSudo(): Promise<boolean> {
