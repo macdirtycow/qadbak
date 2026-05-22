@@ -44,8 +44,36 @@ export function DomainsList({
 
   if (error && domains.length === 0) {
     return (
-      <Card>
+      <Card className="space-y-4">
         <p className="text-red-300">{error}</p>
+        {isAdmin && (
+          <p className="text-sm text-panel-muted">
+            Check VirtualMin API (<code className="text-slate-400">npm run test-api</code> on
+            the server) or create a domain below.
+          </p>
+        )}
+        {isAdmin && (
+          <Link href="/domains/new">
+            <Button>New domain</Button>
+          </Link>
+        )}
+      </Card>
+    );
+  }
+
+  if (domains.length === 0) {
+    return (
+      <Card className="space-y-4">
+        <p className="text-panel-muted">No virtual servers yet.</p>
+        {isAdmin ? (
+          <Link href="/domains/new">
+            <Button>Create your first domain</Button>
+          </Link>
+        ) : (
+          <p className="text-sm text-panel-muted">
+            Ask an admin to assign a domain to your account.
+          </p>
+        )}
       </Card>
     );
   }
