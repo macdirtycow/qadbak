@@ -3,6 +3,11 @@
 # Run on VPS: sudo bash scripts/fix-domain-website.sh siccamanagement.nl
 set -euo pipefail
 
+if [[ "${1:-}" == "__probe__" ]]; then
+  echo "OK"
+  exit 0
+fi
+
 DOMAIN="${1:-}"
 if [[ -z "$DOMAIN" ]]; then
   echo "Usage: sudo bash scripts/fix-domain-website.sh DOMAIN" >&2

@@ -12,6 +12,10 @@ import type {
 export { VirtualMinError } from "./errors";
 import { VirtualMinError } from "./errors";
 
+function normalizeFieldKey(key: string): string {
+  return key.toLowerCase().replace(/\s+/g, "_");
+}
+
 function vmValue<T extends Record<string, unknown>>(
   row: T,
   key: string,
@@ -20,6 +24,16 @@ function vmValue<T extends Record<string, unknown>>(
   if (dotted !== undefined && dotted !== null) return String(dotted);
   const direct = row[key];
   if (direct !== undefined && direct !== null) return String(direct);
+
+  const values = row.values;
+  if (values && typeof values === "object" && !Array.isArray(values)) {
+    const want = normalizeFieldKey(key);
+    for (const [k, val] of Object.entries(values as Record<string, unknown>)) {
+      if (normalizeFieldKey(k) !== want) continue;
+      if (Array.isArray(val) && val.length > 0) return String(val[0]);
+      if (val !== undefined && val !== null) return String(val);
+    }
+  }
   return undefined;
 }
 
@@ -592,10 +606,24 @@ export async function listDomains(actor: {
   const mapped = rows.map((row) => ({
     name: rowDomainName(row),
     disabled: vmValue(row, "disabled"),
-    plan: vmValue(row, "plan"),
-    user: vmValue(row, "user"),
-    disk_used: vmValue(row, "disk_used") ?? vmValue(row, "disk"),
-    disk_limit: vmValue(row, "disk_limit") ?? vmValue(row, "quota"),
+    plan:
+      vmValue(row, "plan") ??
+      vmValue(row, "plan name") ??
+      vmValue(row, "Plan name"),
+    user:
+      vmValue(row, "user") ??
+      vmValue(row, "username") ??
+      vmValue(row, "Username"),
+    disk_used:
+      vmValue(row, "disk_used") ??
+      vmValue(row, "disk") ??
+      vmValue(row, "disk space used") ??
+      vmValue(row, "Disk space used"),
+    disk_limit:
+      vmValue(row, "disk_limit") ??
+      vmValue(row, "quota") ??
+      vmValue(row, "disk space total") ??
+      vmValue(row, "Disk space total available"),
     ...row,
   })) as VirtualMinDomain[];
 

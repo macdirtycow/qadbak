@@ -1,9 +1,11 @@
+import { repairAvailable } from "./domain-repair";
 import { validateDomain } from "./virtualmin";
 import type { Role } from "./types";
 
 export interface WebsiteHealthReport {
   domain: string;
   originIp: string;
+  repairAvailable: boolean;
   validation: { valid: boolean; messages: string[] };
   localProbe: { ok: boolean; status?: number; error?: string };
   cloudflare: {
@@ -84,6 +86,7 @@ export async function getWebsiteHealth(
   return {
     domain,
     originIp,
+    repairAvailable: await repairAvailable(),
     validation,
     localProbe,
     cloudflare: { error523LikelyCauses, dnsChecklist },

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 type Health = {
   domain: string;
   originIp: string;
+  repairAvailable?: boolean;
   validation: { valid: boolean; messages: string[] };
   localProbe: { ok: boolean; status?: number; error?: string };
   cloudflare: {
@@ -67,10 +68,11 @@ export function WebsiteHealthCard({
   }
 
   const localOk = health?.localProbe.ok;
-  const cf523 = health && !localOk;
+  const repairOk = health?.repairAvailable !== false;
+  const showCloudflareHelp = health && (localOk || !localOk);
 
   return (
-    <Card className={cf523 ? "border-amber-500/40" : undefined}>
+    <Card className={localOk ? "border-emerald-500/30" : "border-amber-500/40"}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-medium text-white">Website & Cloudflare</h2>
@@ -82,7 +84,7 @@ export function WebsiteHealthCard({
           <Button variant="ghost" disabled={loading} onClick={load}>
             Refresh
           </Button>
-          {isAdmin && (
+          {isAdmin && repairOk && (
             <Button variant="secondary" disabled={repairing} onClick={repair}>
               {repairing ? "Repairing…" : "Repair on server"}
             </Button>
@@ -102,6 +104,18 @@ export function WebsiteHealthCard({
         <pre className="mt-4 max-h-40 overflow-auto rounded-lg bg-panel-bg p-3 text-xs text-panel-muted">
           {repairLog}
         </pre>
+      )}
+
+      {health && !repairOk && !loading && (
+        <div className="mt-4">
+          <Alert>
+            Repair-knop niet beschikbaar voor de qadbak-gebruiker. Op de server:{" "}
+            <code className="text-white">
+              sudo bash /opt/qadbak/scripts/configure-domain-repair-sudo.sh
+            </code>{" "}
+            daarna <code className="text-white">pm2 restart qadbak</code>.
+          </Alert>
+        </div>
       )}
 
       {health && !loading && (
@@ -133,9 +147,13 @@ export function WebsiteHealthCard({
             </Alert>
           )}
 
-          {cf523 && (
-            <Alert>
-              <p className="font-medium text-white">Likely cause of Cloudflare 523</p>
+          {showCloudflareHelp && health.cloudflare.error523LikelyCauses.length > 0 && (
+            <Alert variant={localOk ? "info" : undefined}>
+              <p className="font-medium text-white">
+                {localOk
+                  ? "Server OK — Cloudflare 523 is a DNS/firewall issue"
+                  : "Likely cause of Cloudflare 523"}
+              </p>
               <ul className="mt-2 list-inside list-disc text-panel-muted">
                 {health.cloudflare.error523LikelyCauses.map((c, i) => (
                   <li key={i}>{c}</li>
