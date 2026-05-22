@@ -10,6 +10,7 @@ import type {
 } from "./types";
 
 export { VirtualMinError } from "./errors";
+import { parseDomainsListRows } from "./virtualmin-api-parse";
 import { VirtualMinError } from "./errors";
 import { virtualMinFetch } from "./virtualmin-http";
 
@@ -78,11 +79,48 @@ function normalizeList(data: unknown): Record<string, unknown>[] {
 
 /** Resolve domain name from a list-domains row (VirtualMin field names vary). */
 function rowDomainName(row: Record<string, unknown>): string {
-  for (const key of ["name", "dom", "domain", "domain name", "Domain name"]) {
+  if (typeof row.name === "string" && row.name.trim()) return row.name.trim();
+  for (const key of [
+    "name",
+    "dom",
+    "domain",
+    "domain name",
+    "Domain name",
+    "domainname",
+    "server name",
+    "Server name",
+  ]) {
     const v = vmValue(row, key);
     if (v?.trim()) return v.trim();
   }
   return "";
+}
+
+function mapDomainRow(row: Record<string, unknown>): VirtualMinDomain {
+  const name = rowDomainName(row);
+  return {
+    name,
+    disabled: vmValue(row, "disabled"),
+    plan:
+      vmValue(row, "plan") ??
+      vmValue(row, "plan name") ??
+      vmValue(row, "Plan name"),
+    user:
+      vmValue(row, "user") ??
+      vmValue(row, "username") ??
+      vmValue(row, "Username"),
+    disk_used:
+      vmValue(row, "disk_used") ??
+      vmValue(row, "disk") ??
+      vmValue(row, "disk space used") ??
+      vmValue(row, "Disk space used"),
+    disk_limit:
+      vmValue(row, "disk_limit") ??
+      vmValue(row, "quota") ??
+      vmValue(row, "disk space total") ??
+      vmValue(row, "Disk space total available"),
+    ...row,
+  } as VirtualMinDomain;
 }
 
 const MOCK_DOMAINS: VirtualMinDomain[] = [
@@ -603,36 +641,57 @@ export async function listDomains(actor: {
 }): Promise<VirtualMinDomain[]> {
   // Remote API: empty value = flag only (--multiline), not --multiline 1
   const data = await virtualMinCall("list-domains", { multiline: "" }, actor);
-  const rows = normalizeList(data);
-  const mapped = rows.map((row) => ({
-    name: rowDomainName(row),
-    disabled: vmValue(row, "disabled"),
-    plan:
-      vmValue(row, "plan") ??
-      vmValue(row, "plan name") ??
-      vmValue(row, "Plan name"),
-    user:
-      vmValue(row, "user") ??
-      vmValue(row, "username") ??
-      vmValue(row, "Username"),
-    disk_used:
-      vmValue(row, "disk_used") ??
-      vmValue(row, "disk") ??
-      vmValue(row, "disk space used") ??
-      vmValue(row, "Disk space used"),
-    disk_limit:
-      vmValue(row, "disk_limit") ??
-      vmValue(row, "quota") ??
-      vmValue(row, "disk space total") ??
-      vmValue(row, "Disk space total available"),
-    ...row,
-  })) as VirtualMinDomain[];
+  const rows = parseDomainsListRows(data);
+  const fallbackRows = rows.length > 0 ? rows : normalizeList(data);
+  const mapped = fallbackRows.map((row) => mapDomainRow(row));
 
   if (actor.role === "client") {
     const allowed = new Set(actor.domains.map((d) => d.toLowerCase()));
     return mapped.filter((d) => allowed.has(d.name.toLowerCase()));
   }
   return mapped.filter((d) => d.name);
+}
+
+/** Find one domain after create-domain (tolerates slow VirtualMin / parse quirks). */
+export async function findDomainByName(
+  domainName: string,
+  actor: { role: Role; domains: string[] },
+): Promise<VirtualMinDomain | undefined> {
+  const want = domainName.trim().toLowerCase();
+  const domains = await listDomains(actor);
+  const hit = domains.find((d) => d.name.toLowerCase() === want);
+  if (hit) return hit;
+
+  const data = await virtualMinCall("list-domains", { multiline: "" }, actor);
+  const rows = parseDomainsListRows(data);
+  for (const row of rows) {
+    const name = rowDomainName(row);
+    if (name.toLowerCase() === want) return mapDomainRow(row);
+  }
+  if (data && typeof data === "object") {
+    const obj = data as Record<string, unknown>;
+    const bucket = obj.data;
+    if (bucket && typeof bucket === "object" && !Array.isArray(bucket)) {
+      for (const key of Object.keys(bucket as Record<string, unknown>)) {
+        if (key.toLowerCase() === want) {
+          const meta = (bucket as Record<string, unknown>)[key];
+          return mapDomainRow({
+            name: key,
+            ...(typeof meta === "object" && meta !== null
+              ? (meta as Record<string, unknown>)
+              : {}),
+          });
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
+function isDomainAlreadyExistsError(message: string): boolean {
+  return /already exists|already been created|already in use|duplicate domain/i.test(
+    message,
+  );
 }
 
 export async function setDomainEnabled(
@@ -1405,7 +1464,18 @@ export async function createDomain(
   if (input.parent) params.parent = input.parent;
   if (input.alias) params.alias = "1";
   if (input.subdom) params.subdom = "1";
-  await virtualMinCall("create-domain", params, actor);
+  try {
+    await virtualMinCall("create-domain", params, actor);
+  } catch (err) {
+    if (
+      err instanceof VirtualMinError &&
+      isDomainAlreadyExistsError(err.message)
+    ) {
+      const existing = await findDomainByName(input.domain, actor);
+      if (existing) return;
+    }
+    throw err;
+  }
 }
 
 export async function cloneDomain(
