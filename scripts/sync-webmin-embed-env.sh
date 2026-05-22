@@ -20,6 +20,14 @@ detect_panel_url() {
   fi
   if ss -tln 2>/dev/null | grep -q ":${PANEL_PORT} "; then
     scheme="http"
+    if [[ -n "${QADBAK_PUBLIC_HOST:-}" && "${QADBAK_PUBLIC_HOST}" != "$ip" ]]; then
+      echo "${scheme}://${QADBAK_PUBLIC_HOST}:${PANEL_PORT}"
+      return
+    fi
+    if [[ -n "$fqdn" && "$fqdn" != "$ip" ]]; then
+      echo "${scheme}://${fqdn}:${PANEL_PORT}"
+      return
+    fi
     if [[ -n "$ip" ]]; then
       echo "${scheme}://${ip}:${PANEL_PORT}"
       return

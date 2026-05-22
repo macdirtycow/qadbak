@@ -36,13 +36,20 @@ echo "==> Build (as $USER — never npm install as root)"
 run_as_qadbak "cd '$ROOT' && npm install && npm run build"
 
 if [[ "$(id -u)" -eq 0 ]]; then
-  echo "==> Hosting stack + sudo helpers"
-  bash "$ROOT/scripts/configure-domain-fs-sudo.sh" 2>/dev/null || true
-  bash "$ROOT/scripts/configure-domain-repair-sudo.sh" 2>/dev/null || true
-  bash "$ROOT/scripts/configure-domain-terminal-sudo.sh" 2>/dev/null || true
-  bash "$ROOT/scripts/configure-host-services-sudo.sh" 2>/dev/null || true
-  bash "$ROOT/scripts/configure-stack-helper-sudo.sh" 2>/dev/null || true
-  bash "$ROOT/scripts/install-hosting-stack.sh" || true
+  echo "==> Sudo helpers"
+  for helper in \
+    configure-domain-fs-sudo.sh \
+    configure-domain-repair-sudo.sh \
+    configure-domain-terminal-sudo.sh \
+    configure-host-services-sudo.sh \
+    configure-stack-helper-sudo.sh; do
+    echo "    $helper"
+    if ! bash "$ROOT/scripts/$helper"; then
+      echo "    WARN: $helper failed (see above)" >&2
+    fi
+  done
+  echo "==> Hosting stack (nginx, Apache, Webmin embed)"
+  bash "$ROOT/scripts/install-hosting-stack.sh" || echo "    WARN: install-hosting-stack.sh failed" >&2
 fi
 
 echo "==> Restart (load .env.local into pm2)"

@@ -36,6 +36,8 @@ if [[ -z "$TEST_DOMAIN" ]]; then
 fi
 echo "Using TEST_DOMAIN=$TEST_DOMAIN"
 
+FAILED=0
+
 call_api() {
   local program="$1"
   shift
@@ -48,21 +50,35 @@ call_api() {
   else
     extra=(--data-urlencode "json=1" --data-urlencode "simple-multiline=")
   fi
-  curl -sk \
+  if ! curl -sk \
     -u "${VIRTUALMIN_USER}:${VIRTUALMIN_PASS}" \
     -X POST \
     --data-urlencode "program=${program}" \
     "${extra[@]}" \
     "$@" \
     "${VIRTUALMIN_URL}" \
-    | head -c 4000
+    | head -c 4000; then
+    echo ""
+    echo "FAILED: $program" >&2
+    FAILED=1
+    return 1
+  fi
   echo ""
   echo ""
+  return 0
 }
 
-call_api "list-domains"
-call_api "create-login-link" --data-urlencode "domain=${TEST_DOMAIN}"
-call_api "list-users" --data-urlencode "domain=${TEST_DOMAIN}"
-call_api "list-databases" --data-urlencode "domain=${TEST_DOMAIN}"
+# Preflight only requires list-domains; other calls are informational.
+if ! call_api "list-domains"; then
+  exit 1
+fi
 
-echo "OK — list-domains should show domain data; create-login-link should not mention simple-multiline."
+call_api "create-login-link" --data-urlencode "domain=${TEST_DOMAIN}" || true
+call_api "list-users" --data-urlencode "domain=${TEST_DOMAIN}" || true
+call_api "list-databases" --data-urlencode "domain=${TEST_DOMAIN}" || true
+
+if [[ "$FAILED" -ne 0 ]]; then
+  echo "Some optional API calls failed (see above)." >&2
+fi
+
+echo "OK — list-domains succeeded (required for preflight)."

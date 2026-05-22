@@ -62,14 +62,28 @@ else
   NGX_SRC="$QADBAK_DIR/deploy/nginx-qadbak-http.conf"
 fi
 
+if [[ "$PANEL_HOST" == "$SERVER_FQDN" ]]; then
+  PANEL_HTTP_NAMES="${PANEL_HOST} www.${PANEL_HOST}"
+  PANEL_TLS_NAMES="$PANEL_HOST"
+else
+  PANEL_HTTP_NAMES="${PANEL_HOST} www.${PANEL_HOST} ${SERVER_FQDN}"
+  PANEL_TLS_NAMES="${PANEL_HOST} ${SERVER_FQDN}"
+fi
+
 NGX="/etc/nginx/sites-available/qadbak"
 sed -e "s/__PANEL_HOST__/$PANEL_HOST/g" \
   -e "s/__SERVER_FQDN__/$SERVER_FQDN/g" \
+  -e "s/__PANEL_HTTP_NAMES__/$PANEL_HTTP_NAMES/g" \
+  -e "s/__PANEL_TLS_NAMES__/$PANEL_TLS_NAMES/g" \
   -e "s/__SSL_CERT_HOST__/${SSL_CERT_HOST:-$SERVER_FQDN}/g" \
   -e "s|__APACHE_BACKEND__|$APACHE_BACKEND|g" \
   "$NGX_SRC" >"$NGX"
 ln -sf "$NGX" /etc/nginx/sites-enabled/qadbak
 rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+
+if [[ -f "$QADBAK_DIR/scripts/dedupe-nginx-panel-vhosts.sh" ]]; then
+  bash "$QADBAK_DIR/scripts/dedupe-nginx-panel-vhosts.sh" "$PANEL_HOST"
+fi
 
 nginx -t
 systemctl reload nginx
