@@ -23,6 +23,8 @@ sudo bash scripts/apply-hosting-nginx.sh
 sudo bash scripts/fix-domain-website.sh siccamanagement.nl
 ```
 
+`QADBAK_PUBLIC_HOST` must be a **hostname** (e.g. `vmi3317912.contaboserver.net`), not a bare IP. If Let's Encrypt is not installed for the panel host, the script uses HTTP-only nginx (panel stays on `:11000` or port 80 without TLS).
+
 Check:
 
 ```bash
