@@ -17,9 +17,6 @@ run() {
   echo "$out" | grep -q '"ok":true'
 }
 
-echo "==> provisioning-helper ping"
-run ping | grep -q '"ok"' && echo "OK ping"
-
 FAILED=0
 check() {
   if run "$@"; then
@@ -29,6 +26,9 @@ check() {
     FAILED=1
   fi
 }
+
+echo "==> provisioning-helper ping"
+check ping
 
 if has ssl; then
   echo "==> ssl-list $DOMAIN"

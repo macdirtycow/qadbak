@@ -42,6 +42,10 @@ echo "==> Export domains → $OUT"
       zone_file="/var/lib/bind/${domain}.host"
     elif [[ -f "/var/lib/bind/${domain}" ]]; then
       zone_file="/var/lib/bind/${domain}"
+    else
+      zone_file="$(virtualmin list-domains --domain "$domain" --multiline 2>/dev/null \
+        | awk -F': *' '/^(DNS zone file|Zone file|Master file):/ {print $2; exit}')"
+      [[ -n "$zone_file" && -f "$zone_file" ]] || zone_file=""
     fi
     if [[ -n "$zone_file" ]]; then
       printf '  {"name":"%s","user":"%s","disabled":%s,"plan":"Default","zoneFile":"%s"}' \
