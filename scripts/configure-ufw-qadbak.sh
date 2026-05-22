@@ -21,6 +21,11 @@ ufw default allow outgoing
 ufw allow OpenSSH
 ufw allow 80/tcp
 ufw allow 443/tcp
+# Optional alt panel port (enable-panel-port.sh); set PANEL_ALT_PORT=11000 to open here
+if [[ -n "${PANEL_ALT_PORT:-}" ]]; then
+  ufw allow "${PANEL_ALT_PORT}/tcp"
+  echo "Panel alt port ${PANEL_ALT_PORT}/tcp allowed."
+fi
 if [[ "$OPEN_WEBMIN" =~ ^[Yy]$ ]]; then
   ufw allow 10000/tcp
   echo "Webmin :10000 opened (prefer locking to your IP in production)."
