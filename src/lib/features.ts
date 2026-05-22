@@ -471,9 +471,15 @@ export function programsForRole(role: Role): readonly string[] {
   return [...new Set([...GLOBAL_PROGRAMS[role], ...fromFeatures])];
 }
 
+function webminUiDisabled(): boolean {
+  const v = process.env.QADBAK_DISABLE_WEBMIN?.trim().toLowerCase();
+  return v === "true" || v === "1" || v === "yes";
+}
+
 export function featuresForDomain(role: Role, isAdmin: boolean): DomainFeature[] {
   return DOMAIN_FEATURES.filter((f) => {
     if (f.phase > IMPLEMENTED_PHASE) return false;
+    if (f.id === "webmin" && webminUiDisabled()) return false;
     if (f.adminOnly && !isAdmin) return false;
     const progs = isAdmin ? f.programs.admin : f.programs.client;
     return progs.length > 0;

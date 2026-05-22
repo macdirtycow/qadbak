@@ -10,6 +10,10 @@ E2E_ADMIN_PASS=""
 E2E_CLIENT_USER=""
 E2E_CLIENT_PASS=""
 
+if [[ -f "$ROOT/data/e2e-admin.pass" ]]; then
+  E2E_ADMIN_PASS="$(head -1 "$ROOT/data/e2e-admin.pass" | tr -d '\r')"
+fi
+
 for cred_file in "$ROOT/.install-test.env" "$ROOT/.env.local"; do
   if [[ -f "$cred_file" ]]; then
     set -a
@@ -24,7 +28,8 @@ E2E_ADMIN_PASS="${E2E_ADMIN_PASS:-${QADBAK_E2E_ADMIN_PASS:-}}"
 E2E_ADMIN_PASS="${E2E_ADMIN_PASS//$'\r'/}"
 
 if [[ -z "$E2E_ADMIN_PASS" ]] && [[ "$(id -u)" -eq 0 ]]; then
-  bash "$ROOT/scripts/ensure-install-test-env.sh" 2>/dev/null || true
+  bash "$ROOT/scripts/sync-e2e-credentials.sh" 2>/dev/null || \
+    bash "$ROOT/scripts/ensure-install-test-env.sh" 2>/dev/null || true
   if [[ -f "$ROOT/.install-test.env" ]]; then
     set -a
     # shellcheck disable=SC1091

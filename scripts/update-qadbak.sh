@@ -53,14 +53,17 @@ curl -sf "http://127.0.0.1:${PORT:-3000}/api/health" | head -c 200
 echo ""
 
 if [[ "$(id -u)" -eq 0 ]]; then
-  if bash "$ROOT/scripts/ensure-install-test-env.sh" 2>/dev/null; then
+  if bash "$ROOT/scripts/sync-e2e-credentials.sh" 2>/dev/null; then
     echo "==> Install E2E (Playwright on live panel)"
     bash "$ROOT/scripts/run-install-e2e.sh" || echo "    WARN: install E2E failed (see above)" >&2
   else
-    echo "==> Install E2E skipped (set QADBAK_E2E_ADMIN_PASS in .env.local or keep .install-test.env)" >&2
+    echo "==> Install E2E skipped — set QADBAK_E2E_ADMIN_PASS in .env.local, then:" >&2
+    echo "    sudo bash $ROOT/scripts/sync-e2e-credentials.sh" >&2
   fi
 fi
-if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/apply-phase7-test-server.sh" ]]; then
+if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/apply-phase8-test-server.sh" ]]; then
+  echo "Test VPS phase 8 (no Webmin UI): sudo bash $ROOT/scripts/apply-phase8-test-server.sh"
+elif [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/apply-phase7-test-server.sh" ]]; then
   echo "Test VPS phase 7: sudo bash $ROOT/scripts/apply-phase7-test-server.sh"
 elif [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/apply-phase6-test-server.sh" ]]; then
   echo "Test VPS (hybrid phase 6): sudo bash $ROOT/scripts/apply-phase6-test-server.sh"

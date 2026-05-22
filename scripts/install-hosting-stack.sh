@@ -39,6 +39,10 @@ fi
 echo "==> nginx (panel → Qadbak; all VirtualMin domains → public_html)"
 bash "$QADBAK_DIR/scripts/apply-hosting-nginx.sh"
 
+if [[ "${QADBAK_DISABLE_WEBMIN:-}" == "1" || "${QADBAK_DISABLE_WEBMIN:-}" == "true" ]]; then
+  export QADBAK_NATIVE_INSTALL=1
+fi
+
 if [[ "${QADBAK_NATIVE_INSTALL:-}" != "1" ]]; then
   echo "==> Webmin embed proxy (Terminal / iframe modules)"
   if [[ -f "$QADBAK_DIR/scripts/configure-webmin-embed.sh" ]]; then

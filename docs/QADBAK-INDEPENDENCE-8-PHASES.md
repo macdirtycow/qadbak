@@ -195,17 +195,22 @@ sudo -u qadbak pm2 logs qadbak-terminal --lines 20
 
 ---
 
-## Fase 8 — VirtualMin verwijderen (eigen engine)
+## Fase 8 — VirtualMin verwijderen (eigen engine) 🚧 hybrid in repo
 
 **Doel:** `QADBAK_PROVISIONER=native` — geen Perl/Webmin pakketten.
 
-- Eigen domein-model in SQLite/Postgres
-- Provisioning = scripts uit fase 5, getest per OS-release
-- Upgrade-pad voor bestaande klanten (export/import)
+| Stap | Status |
+|------|--------|
+| Geen Webmin UI (`QADBAK_DISABLE_WEBMIN`) | ✅ |
+| Domeinlijst zonder VM API (`data/native-domains.json`) | ✅ hybrid |
+| Mail/DNS/create via VM fallback | ✅ optioneel `QADBAK_VIRTUALMIN_FALLBACK` |
+| Volledig zonder `remote.cgi` | 🔜 per feature native scripts |
+
+**Test VPS:** `sudo bash scripts/apply-phase8-test-server.sh` — [PHASE-8-NATIVE.md](./PHASE-8-NATIVE.md).
 
 **Exit:** `dpkg -l webmin` niet meer nodig; Qadbak is de enige control plane.
 
-**Risico:** Hoog — alleen starten als fase 3–6 stabiel zijn op productie-klanten.
+**Risico:** Hoog voor package removal — hybrid eerst op test-VPS.
 
 ---
 

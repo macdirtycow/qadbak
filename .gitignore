@@ -6,6 +6,8 @@ dist/
 .env.local
 data/users.json
 data/servers.json
+data/native-domains.json
+data/e2e-admin.pass
 .install-test.env
 data/audit.log
 *.log

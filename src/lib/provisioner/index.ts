@@ -8,6 +8,7 @@ export {
   resetProvisioner,
 } from "./resolve";
 export { createVirtualminProvisioner } from "./virtualmin-adapter";
+export { createHybridProvisioner } from "./hybrid-adapter";
 export type { Provisioner, ProvisionerActor, ProvisionerId } from "./types";
 
 /** @deprecated Import types from @/lib/provisioner or @/lib/virtualmin during migration */

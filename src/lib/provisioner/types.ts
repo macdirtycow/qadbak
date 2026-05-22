@@ -8,7 +8,7 @@ export type ProvisionerActor = {
 };
 
 /** Which backend implements hosting operations. */
-export type ProvisionerId = "virtualmin" | "mock" | "native";
+export type ProvisionerId = "virtualmin" | "mock" | "native" | "hybrid";
 
 export type ProvisionerCore = {
   readonly id: ProvisionerId;

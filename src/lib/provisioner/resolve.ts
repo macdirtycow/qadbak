@@ -1,9 +1,12 @@
+import { createHybridProvisioner } from "./hybrid-adapter";
 import { createVirtualminProvisioner } from "./virtualmin-adapter";
 import type { Provisioner, ProvisionerId } from "./types";
 
 function normalizeProvisionerId(raw: string | undefined): ProvisionerId {
   const id = (raw ?? "virtualmin").trim().toLowerCase();
-  if (id === "virtualmin" || id === "mock" || id === "native") return id;
+  if (id === "virtualmin" || id === "mock" || id === "native" || id === "hybrid") {
+    return id;
+  }
   console.warn(
     `[Qadbak] Unknown QADBAK_PROVISIONER="${raw}" — using virtualmin`,
   );
@@ -11,11 +14,8 @@ function normalizeProvisionerId(raw: string | undefined): ProvisionerId {
 }
 
 function createProvisioner(id: ProvisionerId): Provisioner {
-  if (id === "native") {
-    throw new Error(
-      "QADBAK_PROVISIONER=native is not implemented yet (see docs/QADBAK-INDEPENDENCE-8-PHASES.md phase 8).",
-    );
-  }
+  if (id === "hybrid") return createHybridProvisioner(false);
+  if (id === "native") return createHybridProvisioner(true);
   // mock: virtualmin.ts handles VIRTUALMIN_MOCK inside virtualMinCall
   return createVirtualminProvisioner();
 }

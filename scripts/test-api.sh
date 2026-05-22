@@ -19,6 +19,12 @@ elif [[ -f "$ROOT/.env" ]]; then
   set +a
 fi
 
+PROVISIONER="${QADBAK_PROVISIONER:-virtualmin}"
+if [[ "$PROVISIONER" == "hybrid" || "$PROVISIONER" == "native" ]]; then
+  echo "Provisioner=$PROVISIONER — testing native domain registry"
+  exec bash "$ROOT/scripts/test-native-domains.sh"
+fi
+
 : "${VIRTUALMIN_URL:?Set VIRTUALMIN_URL in .env.local}"
 : "${VIRTUALMIN_USER:?Set VIRTUALMIN_USER}"
 : "${VIRTUALMIN_PASS:?Set VIRTUALMIN_PASS}"
