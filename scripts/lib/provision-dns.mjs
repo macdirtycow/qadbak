@@ -2,66 +2,151 @@ import { readFile, writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
-import { emit, fail, resolveDomainUser, fileExists } from "./provisioning-common.mjs";
+import {
+  emit,
+  fail,
+  resolveDomainUser,
+  fileExists,
+  loadRegistry,
+  QADBAK_DIR,
+} from "./provisioning-common.mjs";
 
 const exec = promisify(execFile);
 
+async function zoneFromRegistry(domain) {
+  const rows = await loadRegistry();
+  const hit = rows.find((r) => String(r.name).toLowerCase() === domain.toLowerCase());
+  return hit?.zoneFile || hit?.zonePath || null;
+}
+
+async function zoneFromVirtualminCli(domain) {
+  try {
+    const { stdout } = await exec(
+      "virtualmin",
+      ["list-domains", "--domain", domain, "--multiline"],
+      { maxBuffer: 2 * 1024 * 1024 },
+    );
+    for (const line of stdout.split("\n")) {
+      const m = line.match(/^(?:DNS zone file|Zone file|Master file):\s*(.+)$/i);
+      if (m?.[1]) {
+        const p = m[1].trim();
+        if (await fileExists(p)) return p;
+      }
+    }
+  } catch {
+    /* no CLI */
+  }
+  return null;
+}
+
+async function zoneFromNamedConf(domain) {
+  const confs = [
+    "/etc/bind/named.conf.local",
+    "/etc/bind/named.conf",
+    "/etc/named.conf",
+  ];
+  for (const conf of confs) {
+    if (!(await fileExists(conf))) continue;
+    const text = await readFile(conf, "utf8");
+    const re = new RegExp(
+      `zone\\s+"${domain.replace(/\./g, "\\.")}"[\\s\\S]*?file\\s+"([^"]+)"`,
+      "i",
+    );
+    const m = text.match(re);
+    if (m?.[1]) {
+      let p = m[1].trim();
+      if (!p.startsWith("/")) p = path.join("/etc/bind", p);
+      if (await fileExists(p)) return p;
+    }
+  }
+  return null;
+}
+
+async function zoneFromFind(domain) {
+  try {
+    const { stdout } = await exec(
+      "bash",
+      [
+        "-c",
+        `find /var/lib/bind /etc/bind -maxdepth 4 -type f \\( -name '${domain}.host' -o -name '${domain}.zone' -o -name '${domain}' -o -name 'db.${domain}' \\) 2>/dev/null | head -1`,
+      ],
+      { maxBuffer: 1024 * 1024 },
+    );
+    const p = stdout.trim().split("\n")[0];
+    if (p && (await fileExists(p))) return p;
+  } catch {
+    /* */
+  }
+  return null;
+}
+
 async function findZonePath(domain) {
+  const cached = await zoneFromRegistry(domain);
+  if (cached) return cached;
+
   const candidates = [
-    `/etc/bind/${domain}.zone`,
-    `/etc/bind/zones/${domain}`,
     `/var/lib/bind/${domain}.host`,
     `/var/lib/bind/${domain}`,
+    `/var/lib/bind/db.${domain}`,
+    `/etc/bind/${domain}.zone`,
+    `/etc/bind/zones/${domain}`,
     `/etc/bind/domains/${domain}`,
+    `/etc/bind/db.${domain}`,
   ];
   for (const p of candidates) {
     if (await fileExists(p)) return p;
   }
-  try {
-    const { stdout } = await exec("grep", ["-l", `zone "${domain}"`, "/etc/bind/named.conf.local", "/etc/bind/named.conf"], {
-      maxBuffer: 1024 * 1024,
-    });
-    const conf = stdout.trim().split("\n")[0];
-    if (conf) {
-      const text = await readFile(conf, "utf8");
-      const m = text.match(new RegExp(`zone\\s+"${domain}"[^{]*file\\s+"([^"]+)"`));
-      if (m) return m[1].replace(/^\//, "/");
-    }
-  } catch {
-    /* */
-  }
-  fail(`No BIND zone file found for ${domain}`);
+
+  const vm = await zoneFromVirtualminCli(domain);
+  if (vm) return vm;
+
+  const named = await zoneFromNamedConf(domain);
+  if (named) return named;
+
+  const found = await zoneFromFind(domain);
+  if (found) return found;
+
+  fail(
+    `No BIND zone file for ${domain}. Run: sudo bash ${QADBAK_DIR}/scripts/discover-bind-zone.sh ${domain}`,
+  );
 }
 
 function parseZone(text, origin) {
   const records = [];
-  let owner = origin;
   for (const raw of text.split("\n")) {
     const line = raw.split(";")[0].trim();
     if (!line || line.startsWith("$")) continue;
-    const parts = line.split(/\s+/);
-    if (parts.length < 4) continue;
-    let idx = 0;
-    if (!/^(IN|\d+)$/i.test(parts[1]) && !/^(IN|\d+)$/i.test(parts[2])) {
-      if (parts[0] === "@") owner = origin;
-      else if (parts[0].endsWith(".")) owner = parts[0].replace(/\.$/, "");
-      else owner = `${parts[0]}.${origin}`.replace(/^\./, "");
-      idx = 1;
+    const parts = line.split(/\s+/).filter(Boolean);
+    if (parts.length < 3) continue;
+    let i = 0;
+    let name = "@";
+    if (parts[0] === "@") {
+      i = 1;
+    } else if (!/^\d+$/.test(parts[0]) && !/^IN$/i.test(parts[0])) {
+      name = parts[0].replace(/\.$/, "");
+      if (name === origin) name = "@";
+      else if (name.endsWith(`.${origin}`)) name = name.slice(0, -(origin.length + 1)) || "@";
+      i = 1;
     }
-    const ttl = /^\d+$/.test(parts[idx]) ? parts[idx++] : undefined;
-    if (parts[idx]?.toUpperCase() === "IN") idx++;
-    const type = parts[idx++]?.toUpperCase();
-    const value = parts.slice(idx).join(" ").replace(/\.$/, "");
-    const name =
-      owner === origin
-        ? "@"
-        : owner.replace(new RegExp(`\\.?${origin.replace(/\./g, "\\.")}$`), "") || "@";
-    records.push({ name, type, value, ttl });
+    if (/^\d+$/.test(parts[i])) i++;
+    if (/^IN$/i.test(parts[i])) i++;
+    const type = parts[i++]?.toUpperCase();
+    if (!type) continue;
+    let value = parts.slice(i).join(" ").replace(/\.$/, "");
+    let priority;
+    if (type === "MX" || type === "SRV") {
+      const m = value.match(/^(\d+)\s+(.+)$/);
+      if (m) {
+        priority = m[1];
+        value = m[2];
+      }
+    }
+    records.push({ name, type, value, ttl: undefined, priority });
   }
   return records;
 }
 
-function formatRecordLine(origin, rec) {
+function formatRecordLine(_origin, rec) {
   const name = rec.name === "@" ? "@" : rec.name;
   const ttl = rec.ttl ? `${rec.ttl} ` : "";
   const pri =
@@ -88,7 +173,7 @@ export async function dnsAdd(domain, record) {
   } catch {
     await exec("systemctl", ["reload", "named"], { timeout: 30_000 }).catch(() => {});
   }
-  emit({ ok: true });
+  emit({ ok: true, zonePath });
 }
 
 export async function dnsDel(domain, record) {

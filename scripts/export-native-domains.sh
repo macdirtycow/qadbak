@@ -37,8 +37,19 @@ echo "==> Export domains → $OUT"
     fi
     [[ "$first" -eq 1 ]] || echo ","
     first=0
-    printf '  {"name":"%s","user":"%s","disabled":%s,"plan":"Default"}' \
-      "$domain" "$user" "$disabled"
+    zone_file=""
+    if [[ -f "/var/lib/bind/${domain}.host" ]]; then
+      zone_file="/var/lib/bind/${domain}.host"
+    elif [[ -f "/var/lib/bind/${domain}" ]]; then
+      zone_file="/var/lib/bind/${domain}"
+    fi
+    if [[ -n "$zone_file" ]]; then
+      printf '  {"name":"%s","user":"%s","disabled":%s,"plan":"Default","zoneFile":"%s"}' \
+        "$domain" "$user" "$disabled" "$zone_file"
+    else
+      printf '  {"name":"%s","user":"%s","disabled":%s,"plan":"Default"}' \
+        "$domain" "$user" "$disabled"
+    fi
     # Hint file for scanHomeDomains fallback
     if [[ -n "$user" && -d "/home/$user" ]]; then
       echo "$domain" >"/home/$user/.qadbak-domain"

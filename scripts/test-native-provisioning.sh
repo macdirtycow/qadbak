@@ -11,35 +11,53 @@ has() { echo "$FEATURES" | tr ',' '\n' | grep -qx "$1"; }
 
 run() {
   echo "  → $*"
-  sudo -u qadbak sudo -n "$WRAPPER" "$@" | tail -1
+  local out
+  out="$(sudo -u qadbak sudo -n "$WRAPPER" "$@" 2>&1 | tail -1)"
+  echo "$out"
+  echo "$out" | grep -q '"ok":true'
 }
 
 echo "==> provisioning-helper ping"
 run ping | grep -q '"ok"' && echo "OK ping"
 
+FAILED=0
+check() {
+  if run "$@"; then
+    echo "OK $1"
+  else
+    echo "FAIL $1" >&2
+    FAILED=1
+  fi
+}
+
 if has ssl; then
   echo "==> ssl-list $DOMAIN"
-  run ssl-list "$DOMAIN" | grep -q '"ok"' && echo "OK ssl-list"
+  check ssl-list "$DOMAIN"
 fi
 if has dns; then
   echo "==> dns-get $DOMAIN"
-  run dns-get "$DOMAIN" | grep -q '"ok"' && echo "OK dns-get"
+  check dns-get "$DOMAIN"
 fi
 if has mail; then
   echo "==> mail-list $DOMAIN"
-  run mail-list "$DOMAIN" | grep -q '"ok"' && echo "OK mail-list"
+  check mail-list "$DOMAIN"
 fi
 if has db; then
   echo "==> db-list $DOMAIN"
-  run db-list "$DOMAIN" | grep -q '"ok"' && echo "OK db-list"
+  check db-list "$DOMAIN"
 fi
 if has backup; then
   echo "==> backup-list $DOMAIN"
-  run backup-list "$DOMAIN" | grep -q '"ok"' && echo "OK backup-list"
+  check backup-list "$DOMAIN"
 fi
 if has cron; then
   echo "==> cron-list $DOMAIN"
-  run cron-list "$DOMAIN" | grep -q '"ok"' && echo "OK cron-list"
+  check cron-list "$DOMAIN"
+fi
+
+if [[ "$FAILED" -ne 0 ]]; then
+  echo "Some native checks failed." >&2
+  exit 1
 fi
 
 echo "Done native provisioning smoke tests."

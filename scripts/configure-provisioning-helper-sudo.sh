@@ -11,8 +11,9 @@ NODE_BIN="$(sudo -u "$QADBAK_USER" -H bash -lc 'command -v node' | head -1)"
 NODE_BIN="$(readlink -f "$NODE_BIN")"
 
 chmod 755 "$HELPER" "$WRAPPER"
-grep -q '^QADBAK_NODE_BIN=' "$WRAPPER" && \
-  sed -i "s|^QADBAK_NODE_BIN=.*|QADBAK_NODE_BIN=$NODE_BIN|" "$WRAPPER" || true
+if grep -q '^QADBAK_NODE_BIN=' "$WRAPPER"; then
+  sed -i "s|^QADBAK_NODE_BIN=.*|QADBAK_NODE_BIN=$NODE_BIN|" "$WRAPPER"
+fi
 
 cat >"/etc/sudoers.d/qadbak-provisioning-helper" <<EOF
 # Qadbak native provisioning (phase 8)

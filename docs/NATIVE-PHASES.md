@@ -46,6 +46,13 @@ sudo -u qadbak sudo -n /opt/qadbak/scripts/run-provisioning-helper.sh ssl-list s
 sudo -u qadbak sudo -n /opt/qadbak/scripts/run-provisioning-helper.sh dns-get siccamanagement.nl
 ```
 
+### DNS: zone file niet gevonden?
+
+```bash
+sudo bash scripts/discover-bind-zone.sh siccamanagement.nl
+sudo bash scripts/export-native-domains.sh
+```
+
 ## Mail (8d) — tussenstap
 
 `mail` gebruikt **`virtualmin` CLI** als root (geen `remote.cgi`). Dat laat toe Webmin **API** te verwijderen terwijl het `virtualmin` Debian-pakket nog geïnstalleerd is. Volledige verwijdering vereist directe Postfix/Dovecot-bestanden (toekomstig).
