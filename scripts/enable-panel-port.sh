@@ -22,6 +22,9 @@ if [[ "$PORT" == "10000" ]]; then
 fi
 
 echo "==> nginx listen $PORT → 127.0.0.1:3000"
+# Remove legacy manual configs (avoid duplicate default_server on same port)
+rm -f "/etc/nginx/sites-enabled/qadbak-${PORT}" \
+  "/etc/nginx/sites-available/qadbak-${PORT}" 2>/dev/null || true
 sed "s/__PANEL_PORT__/$PORT/g" "$ROOT/deploy/nginx-qadbak-port.conf" \
   >"/etc/nginx/sites-available/qadbak-port-$PORT"
 ln -sf "/etc/nginx/sites-available/qadbak-port-$PORT" \
