@@ -11,6 +11,17 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 
+echo "==> Session cookies for HTTP panel (non-TLS port $PORT)"
+ENV_FILE="/opt/qadbak/.env.local"
+if [[ -f "$ENV_FILE" ]]; then
+  if grep -q '^QADBAK_COOKIE_SECURE=' "$ENV_FILE"; then
+    sed -i 's/^QADBAK_COOKIE_SECURE=.*/QADBAK_COOKIE_SECURE=false/' "$ENV_FILE"
+  else
+    echo "QADBAK_COOKIE_SECURE=false" >>"$ENV_FILE"
+  fi
+  echo "    Set QADBAK_COOKIE_SECURE=false in .env.local (required for http://IP:$PORT)"
+fi
+
 echo "==> Ensure Qadbak is running"
 sudo -u qadbak bash -c "cd /opt/qadbak && pm2 restart qadbak" 2>/dev/null || true
 
