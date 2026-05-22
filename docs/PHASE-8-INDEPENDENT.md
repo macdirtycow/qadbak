@@ -18,7 +18,7 @@ Webmin UI blijft uit (`QADBAK_DISABLE_WEBMIN=true`) in beide modi.
 
 ## Wat nog níet onafhankelijk is
 
-- **`virtualmin` Debian-pakket** — mail-native gebruikt `virtualmin list-users` CLI
+- **Postfix/Dovecot configs** — mail via `QADBAK_MAIL_BACKEND=direct` (geen `virtualmin` CLI); pakketten `postfix` + `dovecot` blijven nodig
 - **FTP, PHP, aliases, redirects, proxies, scripts, limits, …** — nog geen native module
 - **`apt remove webmin`** — pas na pure Postfix/Dovecot-scripts en volledige parity-test
 

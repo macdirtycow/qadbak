@@ -8,6 +8,7 @@ echo "QADBAK_PROVISIONER=${QADBAK_PROVISIONER:-virtualmin}"
 echo "QADBAK_NATIVE_FEATURES=${QADBAK_NATIVE_FEATURES:-<none>}"
 echo "QADBAK_VIRTUALMIN_FALLBACK=${QADBAK_VIRTUALMIN_FALLBACK:-true}"
 echo "QADBAK_DISABLE_WEBMIN=${QADBAK_DISABLE_WEBMIN:-false}"
+echo "QADBAK_MAIL_BACKEND=${QADBAK_MAIL_BACKEND:-auto}"
 echo ""
 echo "Native modules (no remote.cgi when enabled):"
 for f in ssl dns mail db domain backup cron; do

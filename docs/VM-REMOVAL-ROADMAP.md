@@ -47,7 +47,7 @@ Prioriteit voor **één testdomein** (`siccamanagement.nl`) — daarna pas `apt 
 | Terminal | `qadbak-terminal` WS | ✅ klaar | — |
 | SSL Let's Encrypt | native `ssl` flag | 🟡 | `certbot` — test op VPS |
 | DNS records | native `dns` flag | 🟡 | `.hosts` zone files — test panel |
-| Mail mailboxen | native `mail` (VM CLI) | 🟡 | `virtualmin list-users` — geen API |
+| Mail mailboxen | native `mail` direct | 🟡 | Postfix `virtual` + Maildir — test create/list |
 | Databases | native `db` flag | 🟡 | `mysql` root — test panel |
 | Cron | native `cron` flag | 🟡 | `crontab -u` |
 | Backups | native `backup` flag | 🟡 | `~/backups/*.tar.gz` |

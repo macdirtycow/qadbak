@@ -56,9 +56,16 @@ sudo bash scripts/discover-bind-zone.sh siccamanagement.nl
 sudo bash scripts/export-native-domains.sh
 ```
 
-## Mail (8d) — tussenstap
+## Mail (8d) — Postfix/Dovecot direct
 
-`mail` gebruikt **`virtualmin` CLI** als root (geen `remote.cgi`). Dat laat toe Webmin **API** te verwijderen terwijl het `virtualmin` Debian-pakket nog geïnstalleerd is. Volledige verwijdering vereist directe Postfix/Dovecot-bestanden (toekomstig).
+`mail` gebruikt **Postfix maps** (`/etc/postfix/virtual`, …) + **Maildir** onder `/home/<owner>/` en optioneel `/home/<owner>/homes/<user>/`.
+
+| Env | Gedrag |
+|-----|--------|
+| `QADBAK_MAIL_BACKEND=direct` | Geen `virtualmin` CLI (standaard bij `native` / fallback uit) |
+| `QADBAK_MAIL_BACKEND=virtualmin` | Oude CLI (alleen hybrid + fallback) |
+
+Debug: `sudo bash scripts/discover-mail-layout.sh siccamanagement.nl`
 
 ## Klaar voor `apt remove webmin`
 

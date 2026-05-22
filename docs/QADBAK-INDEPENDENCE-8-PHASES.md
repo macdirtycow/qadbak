@@ -211,7 +211,7 @@ sudo -u qadbak pm2 logs qadbak-terminal --lines 20
 | Domeinlijst zonder VM API (`native-domains.json`) | ✅ |
 | Native provisioning (8a–8g) | ✅ scripts + helper |
 | Geen `remote.cgi` (onafhankelijk) | ✅ test-VPS via `apply-phase8-independent.sh` |
-| Geen `virtualmin` CLI (mail direct) | 🔜 |
+| Geen `virtualmin` CLI (mail direct) | ✅ `QADBAK_MAIL_BACKEND=direct` |
 | `dpkg -l webmin` niet meer nodig | 🔜 |
 
 **Docs:** [PHASE-8-NATIVE.md](./PHASE-8-NATIVE.md) · [PHASE-8-INDEPENDENT.md](./PHASE-8-INDEPENDENT.md) · [NATIVE-PHASES.md](./NATIVE-PHASES.md)

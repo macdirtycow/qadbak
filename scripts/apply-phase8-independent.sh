@@ -41,6 +41,7 @@ set_env() {
 set_env QADBAK_PROVISIONER native
 set_env QADBAK_VIRTUALMIN_FALLBACK false
 set_env QADBAK_DISABLE_WEBMIN true
+set_env QADBAK_MAIL_BACKEND direct
 set_env QADBAK_INDEPENDENCE_PHASE 8-independent
 
 chown "$QADBAK_USER:$QADBAK_USER" "$QADBAK_DIR/.env.local"
@@ -59,4 +60,5 @@ echo "  Werkt zonder remote.cgi: ssl, dns, mail, db, backup, cron (+ files/termi
 echo "  FTP, PHP, aliases, redirects, … geven een duidelijke fout tot native bestaat"
 echo ""
 echo "  Terug naar hybrid: set QADBAK_PROVISIONER=hybrid + QADBAK_VIRTUALMIN_FALLBACK=true, pm2 restart"
-echo "  apt remove webmin: NOG NIET — mail gebruikt nog virtualmin CLI"
+echo "  Mail: Postfix/Dovecot direct (QADBAK_MAIL_BACKEND=direct)"
+echo "  apt remove webmin: pas na panel-test mail create/list/pass"
