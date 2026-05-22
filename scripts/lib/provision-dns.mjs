@@ -68,7 +68,7 @@ async function zoneFromFind(domain) {
       "bash",
       [
         "-c",
-        `find /var/lib/bind /etc/bind -maxdepth 4 -type f \\( -name '${domain}.host' -o -name '${domain}.zone' -o -name '${domain}' -o -name 'db.${domain}' \\) 2>/dev/null | head -1`,
+        `find /var/lib/bind /etc/bind -maxdepth 4 -type f \\( -name '${domain}.hosts' -o -name '${domain}.host' -o -name '${domain}.zone' -o -name '${domain}' -o -name 'db.${domain}' \\) 2>/dev/null | head -1`,
       ],
       { maxBuffer: 1024 * 1024 },
     );
@@ -85,6 +85,7 @@ async function findZonePath(domain) {
   if (cached) return cached;
 
   const candidates = [
+    `/var/lib/bind/${domain}.hosts`,
     `/var/lib/bind/${domain}.host`,
     `/var/lib/bind/${domain}`,
     `/var/lib/bind/db.${domain}`,
