@@ -205,6 +205,51 @@ function isUnknownParamLoginLinkError(err: unknown): boolean {
   );
 }
 
+function isNoWebminLoginError(err: unknown): boolean {
+  return (
+    err instanceof VirtualMinError &&
+    /no Webmin login/i.test(err.message)
+  );
+}
+
+function summarizePlainVirtualminError(text: string): string {
+  const line = text
+    .split("\n")
+    .map((l) => l.trim())
+    .find(
+      (l) =>
+        l &&
+        !/^virtualmin /i.test(l) &&
+        !/^Generates a link/i.test(l) &&
+        !/^Exit status:/i.test(l) &&
+        !/^--\[/i.test(l),
+    );
+  return (line ?? text).slice(0, 400);
+}
+
+export async function resolveDomainUnixUser(
+  domain: string,
+  actor: { role: Role; domains: string[] },
+): Promise<string> {
+  const rows = await listDomains(actor);
+  const row = rows.find((d) => d.name.toLowerCase() === domain.toLowerCase());
+  if (row?.user) return row.user;
+  return defaultDomainUnixUser(domain);
+}
+
+/** Enable domain-owner Webmin login (required for create-login-link --domain). */
+export async function ensureDomainWebminLogin(
+  domain: string,
+  actor: { role: Role; domains: string[] },
+): Promise<void> {
+  if (actor.role !== "admin") return;
+  try {
+    await virtualMinCall("enable-feature", { domain, webmin: "" }, actor);
+  } catch {
+    /* already enabled or server does not support --webmin */
+  }
+}
+
 /** Older VirtualMin builds reject redirect-url on create-login-link — append path to returned URL. */
 export function appendLoginRedirectPath(
   loginUrl: string,
@@ -364,7 +409,7 @@ export async function virtualMinCall(
     }
     if (exitCode !== undefined && exitCode !== 0) {
       throw new VirtualMinError(
-        text.slice(0, 500) || "VirtualMin command failed.",
+        summarizePlainVirtualminError(text) || "VirtualMin command failed.",
         exitCode,
         text,
       );
@@ -842,15 +887,32 @@ export async function setDomainEnabled(
 export async function createVirtualMinLoginLink(
   domain: string,
   actor: { role: Role; domains: string[] },
-  options?: { redirectUrl?: string },
+  options?: { redirectUrl?: string; preferUsermin?: boolean },
 ): Promise<string> {
-  const params: Record<string, string> = { domain };
-  if (options?.redirectUrl) {
-    params["redirect-url"] = options.redirectUrl.startsWith("/")
+  const redirect = options?.redirectUrl
+    ? options.redirectUrl.startsWith("/")
       ? options.redirectUrl
-      : `/${options.redirectUrl}`;
+      : `/${options.redirectUrl}`
+    : undefined;
+  const unixUser = await resolveDomainUnixUser(domain, actor);
+
+  if (!options?.preferUsermin) {
+    await ensureDomainWebminLogin(domain, actor);
+    const domainParams: Record<string, string> = { domain };
+    if (redirect) domainParams["redirect-url"] = redirect;
+    try {
+      return await callCreateLoginLink(domainParams, actor);
+    } catch (err) {
+      if (!isNoWebminLoginError(err)) throw err;
+    }
   }
-  return callCreateLoginLink(params, actor);
+
+  const userminParams: Record<string, string> = {
+    domain,
+    "usermin-user": unixUser,
+  };
+  if (redirect) userminParams["redirect-url"] = redirect;
+  return callCreateLoginLink(userminParams, actor);
 }
 
 export async function listMailboxes(
@@ -1574,6 +1636,7 @@ export async function createDomain(
     desc: input.domain,
     unix: "1",
     dir: "1",
+    webmin: "1",
     web: "1",
     dns: "1",
     mail: "1",

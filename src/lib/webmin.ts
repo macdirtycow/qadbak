@@ -1,6 +1,7 @@
 import type { Role } from "./types";
 import {
   callCreateLoginLink,
+  createVirtualMinLoginLink,
   VirtualMinError,
 } from "./virtualmin";
 
@@ -350,6 +351,19 @@ export async function createWebminLoginLink(
       throw new VirtualMinError("Domain is missing.");
     }
     params.domain = options.domain.trim();
+  }
+
+  if (options.target === "domain" && options.domain?.trim()) {
+    const url = await createVirtualMinLoginLink(options.domain.trim(), actor, {
+      redirectUrl: options.redirectPath,
+    });
+    return parseLoginUrl(
+      url,
+      fallbackLoginUrl(options.target, {
+        domain: options.domain,
+        redirectPath: options.redirectPath,
+      }),
+    );
   }
 
   const redirect = normalizeRedirect(options.redirectPath);

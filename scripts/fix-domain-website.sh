@@ -52,7 +52,8 @@ fi
 
 if command -v virtualmin &>/dev/null; then
   echo ""
-  echo "==> VirtualMin: enable web + validate $DOMAIN"
+  echo "==> VirtualMin: Webmin login + web for $DOMAIN (Terminal / embeds)"
+  virtualmin enable-feature --domain "$DOMAIN" --webmin 2>/dev/null || true
   virtualmin enable-feature --domain "$DOMAIN" --web 2>/dev/null || true
   virtualmin validate-domains --domain "$DOMAIN" --all-features 2>&1 || true
   virtualmin modify-web --domain "$DOMAIN" --document-dir public_html --fix-document-dir --fix-options 2>&1 || true

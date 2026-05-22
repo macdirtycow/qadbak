@@ -15,6 +15,7 @@ export default async function DomainTerminalPage({ params }: Props) {
   try {
     initialUrl = await createVirtualMinLoginLink(domain, session, {
       redirectUrl: VIRTUALMIN_EMBED_PATHS.terminal,
+      preferUsermin: false,
     });
   } catch (e) {
     initialError =

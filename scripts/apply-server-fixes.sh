@@ -53,6 +53,14 @@ echo "==> Build + restart"
 sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && npm run build"
 bash "$QADBAK_DIR/scripts/pm2-restart-qadbak.sh"
 
+echo "==> Webmin login for all domains (Terminal / embeds)"
+if command -v virtualmin &>/dev/null; then
+  while read -r d; do
+    [[ -z "$d" ]] && continue
+    virtualmin enable-feature --domain "$d" --webmin 2>/dev/null || true
+  done < <(virtualmin list-domains --name-only 2>/dev/null | sed '/^$/d')
+fi
+
 echo "==> Website repair (all VirtualMin domains)"
 if command -v virtualmin &>/dev/null; then
   while read -r d; do

@@ -4,6 +4,18 @@
 
 Embeds use `create-login-link` for **every** domain — no hardcoded hostname. The panel passes `domain=…` and an optional redirect path (`/xterm/`, `/filemin/index.cgi`, etc.).
 
+## Error: `Virtual server … has no Webmin login`
+
+The domain was created without the **Webmin** feature. On the VPS:
+
+```bash
+sudo bash scripts/enable-domain-webmin-login.sh jouwdomein.nl
+```
+
+Or **Repair on server** on Overview (runs `enable-feature --webmin`). New domains get `webmin` automatically.
+
+Qadbak falls back to **Usermin** (domain unix user) for Terminal if Webmin login is still missing.
+
 ## Error: `Unknown parameter --redirect-url`
 
 Some VirtualMin versions do not accept `redirect-url` on `create-login-link`. Qadbak then:
