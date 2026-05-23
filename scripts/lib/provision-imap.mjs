@@ -25,7 +25,7 @@ async function imapSession(domain, localUser) {
     owner,
     domainUsers.map((u) => ({ user: u.user })),
   );
-  const maildirRoot = resolveMaildirRoot(layout, local, owner, home);
+  const maildirRoot = await resolveMaildirRoot(layout, local, owner, home);
   let authUser = local || owner;
   if (await doveadmAvailable()) {
     const resolved = await resolveDovecotAuthUser(candidates);
@@ -66,7 +66,7 @@ export async function imapList(domain, localUser) {
   let mailboxes = [];
   let source = "maildir";
 
-  const maildirRoot = resolveMaildirRoot(layout, local, owner, home);
+  const maildirRoot = await resolveMaildirRoot(layout, local, owner, home);
 
   if (useDoveadm) {
     authUser = await resolveDovecotAuthUser(candidates);
@@ -123,7 +123,7 @@ export async function imapCopy(domain, fromBox, toBox, localUser) {
     }
   }
 
-  const maildirRoot = resolveMaildirRoot(layout, local, owner, home);
+  const maildirRoot = await resolveMaildirRoot(layout, local, owner, home);
   const src = path.join(maildirRoot, fromBox.replace(/^INBOX\/?/, "").replace(/^\//, ""));
   const dst = path.join(maildirRoot, toBox.replace(/^INBOX\/?/, "").replace(/^\//, ""));
   await cp(src, dst, { recursive: true, force: false });

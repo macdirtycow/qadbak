@@ -6,7 +6,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import { readFile, readdir, stat } from "node:fs/promises";
-import { discoverMailLayout, listMailboxesFromLayout } from "./mail-layout.mjs";
+import { discoverMailLayout, listMailboxesFromLayout, resolveMailboxMaildir } from "./mail-layout.mjs";
 import { fileExists } from "./provisioning-common.mjs";
 import { doveadmAvailable } from "./doveadm-util.mjs";
 import { bodyPreview, parseMailHeaders, splitHeadersAndBody } from "./mail-parse.mjs";
@@ -247,13 +247,8 @@ export async function listMailboxesMaildir(maildirRoot, authUser) {
   return mailboxes;
 }
 
-export function resolveMaildirRoot(layout, localPart, owner, home) {
-  const local = String(localPart || owner).trim().toLowerCase();
-  if (local === owner || !local) {
-    return layout.primaryMaildir || path.join(home, "Maildir");
-  }
-  const homes = layout.homesDir || path.join(home, "homes");
-  return path.join(homes, local, "Maildir");
+export async function resolveMaildirRoot(layout, localPart, owner, home) {
+  return resolveMailboxMaildir(layout, localPart, owner, home);
 }
 
 export async function listDomainMailUsers(layout) {

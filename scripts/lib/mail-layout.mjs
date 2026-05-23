@@ -205,3 +205,30 @@ export async function ensureMaildir(dir) {
     await mkdir(p, { recursive: true });
   }
 }
+
+/** Real home directory from /etc/passwd (VirtualMin and Qadbak layouts differ). */
+export async function resolveUnixHome(username) {
+  const u = String(username || "").trim();
+  if (!u) return null;
+  try {
+    const { stdout } = await exec("getent", ["passwd", u], { timeout: 5000 });
+    const home = stdout.trim().split(":")[5];
+    return home || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Maildir path for a mailbox — prefers passwd home over ~/homes/ guess. */
+export async function resolveMailboxMaildir(layout, localPart, owner, ownerHome) {
+  const local = String(localPart || owner).trim().toLowerCase();
+  const home = ownerHome || layout.home || `/home/${owner}`;
+  if (!local || local === owner) {
+    const ownerUnixHome = (await resolveUnixHome(owner)) || home;
+    return layout.primaryMaildir || path.join(ownerUnixHome, "Maildir");
+  }
+  const unixHome = await resolveUnixHome(local);
+  if (unixHome) return path.join(unixHome, "Maildir");
+  const homes = layout.homesDir || path.join(home, "homes");
+  return path.join(homes, local, "Maildir");
+}

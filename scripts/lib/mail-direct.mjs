@@ -11,6 +11,8 @@ import {
   postmapReloadAll,
   ensureMaildir,
   QADBAK_POSTFIX_VIRTUAL,
+  resolveMailboxMaildir,
+  resolveUnixHome,
 } from "./mail-layout.mjs";
 import { ensureNativeMailStack, syncVirtualDomainsFile, rebuildVirtualAliasMap } from "./mail-sync.mjs";
 import { ensureInboundMailDns } from "./mail-dns.mjs";
@@ -77,8 +79,10 @@ export async function mailCreateDirect(domain, localUser, pass, real) {
     } else {
       await mkdir(userHome, { recursive: true });
     }
-    await ensureMaildir(path.join(userHome, "Maildir"));
-    await exec("chown", ["-R", `${local}:${owner}`, userHome], { timeout: 60_000 });
+    const maildir = await resolveMailboxMaildir(layout, local, owner, home);
+    await ensureMaildir(maildir);
+    const actualHome = (await resolveUnixHome(local)) || userHome;
+    await exec("chown", ["-R", `${local}:${owner}`, actualHome], { timeout: 60_000 });
   }
 
   const mapPath = layout.aliasMap || QADBAK_POSTFIX_VIRTUAL;

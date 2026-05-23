@@ -15,6 +15,8 @@ import {
   writeVirtualMapFile,
   writeVirtualDomainsFile,
   postmapReloadAll,
+  resolveMailboxMaildir,
+  resolveUnixHome,
   QADBAK_POSTFIX_VIRTUAL,
   QADBAK_POSTFIX_DOMAINS,
 } from "./mail-layout.mjs";
@@ -127,7 +129,7 @@ export async function mailSyncAll() {
         const isOwner = local === row.user;
         const maildir = isOwner
           ? path.join(home, "Maildir")
-          : path.join(layout.homesDir || path.join(home, "homes"), local, "Maildir");
+          : await resolveMailboxMaildir(layout, local, row.user, home);
         await ensureMaildir(maildir);
       }
     } catch {
@@ -169,10 +171,8 @@ export async function mailReceiveTest(domain, localUser) {
   }
 
   const to = `${local}@${domain}`;
-  const maildirNew =
-    local === owner
-      ? path.join(home, "Maildir", "new")
-      : path.join(layout.homesDir || path.join(home, "homes"), local, "Maildir", "new");
+  const maildirRoot = await resolveMailboxMaildir(layout, local, owner, home);
+  const maildirNew = path.join(maildirRoot, "new");
 
   const before = await countNewMessages(maildirNew);
   const msg = [
@@ -199,7 +199,8 @@ export async function mailReceiveTest(domain, localUser) {
   const delivered = after > before;
   return {
     to,
-    maildir: maildirNew,
+    maildir: maildirRoot,
+    maildirNew,
     newMessages: Math.max(0, after - before),
     delivered,
   };

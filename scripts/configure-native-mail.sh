@@ -110,6 +110,15 @@ postconf -e 'myorigin = $myhostname'
 postconf -e 'append_at_myorigin = no'
 postconf -e 'mydestination = localhost, localhost.localdomain'
 
+# Keep .env.local in sync when mail host was wrongly set to the panel IP.
+if [[ -f "$QADBAK_DIR/.env.local" ]]; then
+  ENV_MAIL="$(grep -E '^QADBAK_MAIL_HOST=' "$QADBAK_DIR/.env.local" 2>/dev/null | cut -d= -f2- | tr -d '"' || true)"
+  if is_ipv4 "$ENV_MAIL" && is_mail_fqdn "$HOST"; then
+    sed -i "s/^QADBAK_MAIL_HOST=.*/QADBAK_MAIL_HOST=${HOST}/" "$QADBAK_DIR/.env.local"
+    echo "    Updated QADBAK_MAIL_HOST in .env.local → ${HOST}"
+  fi
+fi
+
 echo "    Postfix myhostname = ${HOST}"
 
 DOVECOT_SNIPPET="/etc/dovecot/conf.d/99-qadbak-native.conf"
