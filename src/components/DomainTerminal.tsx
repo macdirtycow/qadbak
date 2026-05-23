@@ -11,26 +11,32 @@ type SessionInfo = {
   token?: string;
   wsUrl?: string;
   unixUser?: string;
+  shellUser?: string;
   domain?: string;
   error?: string;
 };
 
-/** Always build an absolute WS URL in the browser (never use server wsUrl — avoids /domains/…/ws//host paths). */
-function resolveWsUrl(session: SessionInfo): string | null {
+function resolveWsUrl(session: SessionInfo, wsPath: string): string | null {
   if (typeof window === "undefined") return session.wsUrl ?? null;
   if (!session.token) return null;
-  const url = new URL("/ws/domain-terminal", window.location.origin);
+  const url = new URL(wsPath, window.location.origin);
   url.protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   url.searchParams.set("token", session.token);
   return url.toString();
 }
 
 export function DomainTerminal({
-  domain,
+  domain = "",
   fetchUrl,
+  wsPath = "/ws/domain-terminal",
+  title = "Domain shell",
+  subtitle,
 }: {
-  domain: string;
+  domain?: string;
   fetchUrl: string;
+  wsPath?: string;
+  title?: string;
+  subtitle?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
@@ -49,7 +55,7 @@ export function DomainTerminal({
 
   const connect = useCallback(
     async (session: SessionInfo) => {
-      const wsUrl = resolveWsUrl(session);
+      const wsUrl = resolveWsUrl(session, wsPath);
       if (!wsUrl || !containerRef.current) return;
       disconnect();
 
@@ -104,7 +110,7 @@ export function DomainTerminal({
 
       ws.onerror = () => {
         setError(
-          `WebSocket failed (${wsUrl.replace(/token=[^&]+/, "token=…")}). On the VPS: sudo -u qadbak pm2 list (qadbak-terminal online?), curl -sI http://127.0.0.1:11000/ws/domain-terminal, then sudo bash scripts/install-node-build-deps.sh && sudo -u qadbak bash -c 'cd /opt/qadbak && npm install && npm run build' && sudo bash scripts/pm2-restart-qadbak.sh`,
+          `WebSocket failed (${wsUrl.replace(/token=[^&]+/, "token=…")}). Check: sudo bash scripts/check-terminal-ws.sh`,
         );
       };
 
@@ -118,7 +124,7 @@ export function DomainTerminal({
         term.writeln("\r\n\r\n[session ended]");
       };
     },
-    [disconnect],
+    [disconnect, wsPath],
   );
 
   const load = useCallback(async () => {
@@ -134,10 +140,7 @@ export function DomainTerminal({
       if (!res.ok) throw new Error(data.error ?? "Could not start terminal.");
       setInfo(data);
       if (!data.available) {
-        setError(
-          data.error ??
-            "Native terminal not available on this server.",
-        );
+        setError(data.error ?? "Native terminal not available on this server.");
         return;
       }
       await connect(data);
@@ -156,8 +159,8 @@ export function DomainTerminal({
       termRef.current = null;
       fitRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reconnect only when domain changes
-  }, [domain, fetchUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [domain, fetchUrl, wsPath]);
 
   useEffect(() => {
     const onResize = () => fitRef.current?.fit();
@@ -165,18 +168,20 @@ export function DomainTerminal({
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const userLabel = info?.unixUser?.trim() || domain;
+  const shellLabel =
+    (info?.shellUser ?? info?.unixUser?.trim() ?? domain) || "server";
+  const description =
+    subtitle ??
+    (wsPath.includes("admin")
+      ? `Full server shell as ${shellLabel} — for Qadbak administrators only.`
+      : `Commands run as domain user ${shellLabel} (not root). For server admin use Server terminal.`);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-medium text-white">Domain shell</h2>
-          <p className="mt-1 text-sm text-panel-muted">
-            Run commands on the server as{" "}
-            <code className="text-white">{userLabel}</code> (domain unix user) —
-            no separate SSH or Webmin login.
-          </p>
+          <h2 className="text-lg font-medium text-white">{title}</h2>
+          <p className="mt-1 text-sm text-panel-muted">{description}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={load} disabled={loading}>
@@ -194,7 +199,7 @@ export function DomainTerminal({
         <div
           ref={containerRef}
           className="min-h-[min(75vh,800px)] w-full bg-[#0f1419] p-2"
-          aria-label={`Terminal for ${domain}`}
+          aria-label={title}
         />
       </Card>
     </div>

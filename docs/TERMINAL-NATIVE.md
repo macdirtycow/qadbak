@@ -14,6 +14,15 @@ Browser (xterm.js) ←WebSocket→ nginx /ws/domain-terminal → qadbak-terminal
 
 The unix user comes from `data/native-domains.json` (or `/home/*/.qadbak-domain`) via `resolveDomainUnixUser` — works in **independent** mode without VirtualMin.
 
+## Two terminals
+
+| Where | Who | WebSocket |
+|-------|-----|-----------|
+| **Server admin → Terminal** | `root` bash (admins only) | `/ws/admin-terminal` |
+| **Domains → … → Terminal** | Domain unix user (e.g. `siccamanagement`) | `/ws/domain-terminal` |
+
+Domain terminal starts in `/tmp` then `run-domain-terminal.sh` cds to the user home (avoids permission denied on private `/home/user` dirs).
+
 ## Server setup (after `git pull`)
 
 ```bash
@@ -22,6 +31,7 @@ sudo bash scripts/install-node-build-deps.sh   # make/g++ for node-pty (once)
 sudo bash scripts/fix-qadbak-ownership.sh     # if you ran npm install as root before
 sudo -u qadbak bash -c 'cd /opt/qadbak && npm install && npm run build'
 sudo bash scripts/configure-domain-terminal-sudo.sh
+sudo bash scripts/configure-admin-terminal-sudo.sh
 sudo bash scripts/enable-panel-port.sh 11000   # if you use :11000
 sudo bash scripts/apply-hosting-nginx.sh       # WebSocket proxy in nginx
 sudo bash scripts/pm2-restart-qadbak.sh

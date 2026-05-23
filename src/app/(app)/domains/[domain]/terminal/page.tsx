@@ -14,6 +14,7 @@ export default async function DomainTerminalPage({ params }: Props) {
       <DomainTerminal
         domain={domain}
         fetchUrl={`/api/domains/${enc}/terminal/ws-token`}
+        subtitle={`Commands run as the domain unix user (not root). Server-wide shell: Server admin → Terminal.`}
       />
     </div>
   );
