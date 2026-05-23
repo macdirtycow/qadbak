@@ -99,7 +99,7 @@ export function AdminSystemView({
       <Card>
         <h2 className="text-lg font-medium text-white">Systeemconfiguratie</h2>
         <p className="mt-2 text-sm text-panel-muted">
-          Runs VirtualMin <code className="text-white">config-system</code> with a bundle.
+          Applies a server bundle via the native provisioning helper.
           Only during a maintenance window — may reconfigure services.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">

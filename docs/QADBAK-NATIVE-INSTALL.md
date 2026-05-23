@@ -6,7 +6,7 @@ Fresh Ubuntu VPS **without** running `virtualmin-install.sh` on the same machine
 
 | Scenario | Installer |
 |----------|-----------|
-| New VPS, Qadbak-first | `sudo bash install/qadbak-install-native.sh` |
+| New VPS, Qadbak-first | `sudo bash install/qadbak-install.sh` |
 | Existing VPS with VirtualMin (your Contabo server) | Keep current setup — **no reinstall needed** |
 | Import domains from another VirtualMin host | Set `VIRTUALMIN_URL` in `.env.local` to remote `remote.cgi` |
 

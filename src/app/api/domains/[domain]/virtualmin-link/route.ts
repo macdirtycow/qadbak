@@ -10,7 +10,7 @@ type Params = { params: Promise<{ domain: string }> };
 export async function GET(request: Request, { params }: Params) {
   try {
     if (!webminUiEnabled()) {
-      return jsonError("VirtualMin/Webmin login links are disabled in this panel.", 410);
+      return jsonError("Legacy panel login links are disabled.", 410);
     }
     const session = await requireSession();
     const { domain: encoded } = await params;

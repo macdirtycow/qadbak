@@ -31,8 +31,8 @@ export default async function AdminLicensePage() {
           </div>
         </dl>
         <p className="mt-6 text-sm text-panel-muted">
-          Independent Qadbak does not use a VirtualMin license. Domain limits follow your
-          server capacity and panel configuration.
+          Qadbak manages licensing metadata on this server. Domain limits follow your
+          capacity and panel configuration.
         </p>
       </Card>
     </div>

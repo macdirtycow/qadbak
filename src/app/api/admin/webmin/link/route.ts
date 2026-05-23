@@ -12,7 +12,7 @@ import { webminUiEnabled } from "@/lib/independent-mode";
 export async function GET(request: Request) {
   try {
     if (!webminUiEnabled()) {
-      return jsonError("Webmin is disabled in this panel.", 410);
+      return jsonError("Legacy panel login links are disabled.", 410);
     }
     const session = await requireAdmin();
     const url = new URL(request.url);

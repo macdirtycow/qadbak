@@ -78,7 +78,7 @@ export function AdminStackView() {
           </Button>
         </div>
         <p className="mt-1 text-sm text-panel-muted">
-          nginx, Apache, mail, MariaDB, BIND, firewall — without Webmin server modules.
+          nginx, Apache, mail, MariaDB, BIND, firewall — native stack actions only.
         </p>
         <ul className="mt-4 divide-y divide-panel-border">
           {checks.map((c) => (

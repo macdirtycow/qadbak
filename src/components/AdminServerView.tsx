@@ -51,7 +51,7 @@ export function AdminServerView({
         <p className="mt-1 text-sm text-panel-muted">
           {servicesSource === "native"
             ? "nginx, Apache, Postfix, Dovecot, BIND, MariaDB, PHP-FPM — systemctl (Qadbak host-services helper)."
-            : "nginx, Apache, mail, DNS, database — via VirtualMin API."}
+            : "nginx, Apache, mail, DNS, database — remote API."}
         </p>
         {services.length === 0 && !error && (
           <p className="mt-3 text-sm text-amber-200/90">
@@ -105,7 +105,7 @@ export function AdminServerView({
         <p className="px-6 pb-2 text-sm text-panel-muted">
           {bandwidthSource === "native"
             ? "Home directory size (MB) from du — limits from Qadbak registry / limits.json."
-            : "VirtualMin bandwidth reporting."}
+            : "Remote API bandwidth reporting."}
         </p>
         <table className="mt-2 w-full text-left text-sm">
           <thead className="border-t border-panel-border text-panel-muted">

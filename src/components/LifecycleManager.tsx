@@ -136,7 +136,7 @@ export function LifecycleManager({
         <h2 className="text-lg font-medium text-white">Migrate</h2>
         {independentMode && (
           <p className="mt-1 text-sm text-panel-muted">
-            Creates a backup tarball and shows steps for the target host (no VirtualMin
+            Creates a backup tarball and shows steps for the target host (native
             migrate-domain).
           </p>
         )}
@@ -184,7 +184,7 @@ export function LifecycleManager({
         <p className="mt-1 text-sm text-panel-muted">
           {independentMode
             ? "Removes nginx vhost, registry entry, and unix user when marked by Qadbak."
-            : "Permanently removes the virtual server from VirtualMin."}
+            : "Permanently removes the domain from this server."}
         </p>
         <Button
           className="mt-4"

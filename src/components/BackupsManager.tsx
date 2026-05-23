@@ -70,7 +70,7 @@ export function BackupsManager({
       setSuccess(
         nativeMode
           ? `Backup created: ${r?.file ?? "OK"}${parts}`
-          : "Backup started. Check VirtualMin for progress.",
+          : "Backup started. Progress appears in the panel when complete.",
       );
       await refreshList();
       router.refresh();
@@ -189,7 +189,7 @@ export function BackupsManager({
             ? "Test restore completed."
             : nativeMode
               ? "Restore completed."
-              : "Restore started. Check VirtualMin for progress.",
+              : "Restore started. Progress appears in the panel when complete.",
         );
       }
       setShowRestoreConfirm(false);

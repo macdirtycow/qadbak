@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata = {
   title: `About ${APP_NAME}`,
-  description: `Why ${APP_NAME} — from a 2009 headline to a VirtualMin control panel.`,
+  description: `Why ${APP_NAME} — from a 2009 headline to an independent hosting panel.`,
 };
 
 export default function AboutPage() {
@@ -50,8 +50,8 @@ export default function AboutPage() {
       <h2 style={{ fontSize: "1.125rem" }}>Today: code on a VPS</h2>
       <p style={{ color: "#94a3b8" }}>
         This project reuses an abandoned brand for something concrete: the{" "}
-        <strong>front door</strong> to VirtualMin — domains, mail, DNS, SSL —
-        instead of another empty pitch. Open the panel at{" "}
+        <strong>front door</strong> to your VPS — domains, mail, DNS, SSL —
+        without a separate legacy control panel. Open the panel at{" "}
         <Link href="/login" style={{ color: "#5eead4" }}>
           /login
         </Link>

@@ -76,7 +76,7 @@ if [[ "$INDEPENDENT" -eq 1 ]]; then
   echo "  [x] Panel nginx templates — no /embed/webmin/ (see deploy/nginx-webmin-embed-snippet.conf)"
   echo ""
   echo "Mode: INDEPENDENT — VirtualMin API not used."
-  echo "  Uninstall (after tests): sudo bash scripts/uninstall-virtualmin.sh"
+  echo "  Uninstall (after tests): sudo bash scripts/uninstall-legacy-panel.sh"
   echo "  Revert API: QADBAK_PROVISIONER=hybrid + QADBAK_VIRTUALMIN_FALLBACK=true + pm2 restart"
 else
   echo "Hybrid mode — disabled native flags above may still call remote.cgi."

@@ -50,8 +50,8 @@ curl -s http://127.0.0.1:3000/api/health
 Pas na panel-tests + backup:
 
 ```bash
-sudo bash scripts/uninstall-virtualmin.sh --dry-run
-sudo bash scripts/uninstall-virtualmin.sh
+sudo bash scripts/uninstall-legacy-panel.sh --dry-run
+sudo bash scripts/uninstall-legacy-panel.sh
 ```
 
 Zie [VM-REMOVAL-ROADMAP.md](./VM-REMOVAL-ROADMAP.md).

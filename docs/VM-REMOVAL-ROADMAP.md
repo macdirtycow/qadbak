@@ -11,7 +11,7 @@ Je VPS na **phase 8 independent** (`provisioner: native`, `virtualminFallback: f
 | **Nginx panel** | Geen `/embed/webmin/` in standaard templates |
 | **Linux-stack** | nginx, Postfix, Dovecot, BIND, MariaDB — **blijft** |
 
-**`apt remove webmin`** is geen functionele blocker meer als `bash scripts/audit-vm-dependency.sh` groen is en je panel-tests slagen. Gebruik `scripts/uninstall-virtualmin.sh`.
+**`apt remove webmin`** is geen functionele blocker meer als `bash scripts/audit-vm-dependency.sh` groen is en je panel-tests slagen. Gebruik `scripts/uninstall-legacy-panel.sh`.
 
 ---
 
@@ -124,8 +124,8 @@ bash scripts/audit-vm-dependency.sh
 ### Pas daarna: pakketten eraf (irreversibel zonder backup)
 
 ```bash
-sudo bash scripts/uninstall-virtualmin.sh --dry-run
-sudo bash scripts/uninstall-virtualmin.sh
+sudo bash scripts/uninstall-legacy-panel.sh --dry-run
+sudo bash scripts/uninstall-legacy-panel.sh
 sudo bash scripts/export-native-domains.sh   # registry backup
 ```
 

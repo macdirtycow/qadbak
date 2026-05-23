@@ -28,7 +28,7 @@ export async function GET() {
         mock: false,
         probeStatus: 0,
         probeBytes: 0,
-        probePreview: "VirtualMin API not used (independent mode)",
+        probePreview: "Native provisioner (no remote hosting API)",
         domainCount: domains.length,
         domains: domains.map((d) => d.name),
         services: status.services,

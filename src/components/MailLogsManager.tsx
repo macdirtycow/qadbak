@@ -60,7 +60,7 @@ export function MailLogsManager({
       </Card>
       {isAdmin && (
         <Alert variant="info">
-          Resend requires a message id from the logs — use VirtualMin for
+          Resend requires a message id from the logs — use your mail queue on the server for
           advanced mail queue actions.
         </Alert>
       )}

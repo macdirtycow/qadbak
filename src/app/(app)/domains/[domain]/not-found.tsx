@@ -6,8 +6,7 @@ export default function DomainNotFound() {
     <Card className="max-w-lg">
       <h1 className="text-xl font-semibold text-white">Domain not found</h1>
       <p className="mt-3 text-sm text-panel-muted">
-        This name is not a virtual server on the host yet (or VirtualMin did not
-        return it). Create it in Qadbak or in VirtualMin, then open it from the
+        This domain is not registered on the host yet. Create it in Qadbak, then open it from the
         domains list.
       </p>
       <div className="mt-6 flex flex-wrap gap-3">

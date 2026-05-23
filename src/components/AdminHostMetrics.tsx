@@ -45,7 +45,7 @@ export function AdminHostMetrics({
       {error && <Alert>{error}</Alert>}
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-panel-muted">
-          Live host metrics ({metrics.hostname}) — no Webmin embed
+          Live host metrics ({metrics.hostname})
         </p>
         <Button variant="secondary" disabled={loading} onClick={() => refresh()}>
           {loading ? "Refreshing…" : "Refresh"}

@@ -66,8 +66,8 @@ export function AdminNodesView() {
         <h2 className="font-medium text-white">Hosting nodes</h2>
         <p className="mt-1 text-sm text-panel-muted">
           {provisioner === "native"
-            ? "Independent mode: provisioning runs on this server via native helpers (no VirtualMin URL per node)."
-            : "Hybrid mode: remote nodes can expose a VirtualMin API URL. Each node runs qadbak-node-agent (port 9100)."}
+            ? "Provisioning runs on this server via native helpers."
+            : "Remote nodes can expose a legacy API URL. Each node runs qadbak-node-agent (port 9100)."}
         </p>
         {loading ? (
           <p className="mt-4 text-sm text-panel-muted">Loading…</p>

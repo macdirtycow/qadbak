@@ -15,7 +15,7 @@ type Params = { params: Promise<{ domain: string }> };
 export async function GET(request: Request, { params }: Params) {
   try {
     if (!webminUiEnabled()) {
-      return jsonError("Webmin is disabled in this panel.", 410);
+      return jsonError("Legacy panel login links are disabled.", 410);
     }
     const { session, domain } = await requireDomainApi((await params).domain);
     const url = new URL(request.url);

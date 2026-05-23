@@ -5,6 +5,7 @@ import { requireSession } from "@/lib/session";
 import { repairAvailable, repairDomainWebsite } from "@/lib/domain-repair";
 import { VirtualMinError } from "@/lib/errors";
 import { getProvisioner } from "@/lib/provisioner";
+import { isIndependentMode } from "@/lib/provisioner/native-stub";
 
 export async function GET() {
   try {
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
           return jsonOk({
             ok: true,
             domain: existing.name,
-            note: "Domain already existed in VirtualMin.",
+            note: "Domain already existed on this server.",
           });
         }
       }
@@ -81,8 +82,10 @@ export async function POST(request: Request) {
       }
       const hint =
         listed.length === 0
-          ? "Qadbak cannot read domains from VirtualMin (pm2 may not load .env.local). On the server run: cd /opt/qadbak && git pull && sudo bash scripts/pm2-restart-qadbak.sh && npm run test-api. "
-          : `VirtualMin has ${listed.length} domain(s) but not "${domainName}". `;
+          ? isIndependentMode()
+            ? "Qadbak cannot read domains (check data/native-domains.json and pm2 env). Run: cd /opt/qadbak && git pull && sudo bash scripts/pm2-restart-qadbak.sh "
+            : "Qadbak cannot read domains (pm2 may not load .env.local). Run: cd /opt/qadbak && git pull && sudo bash scripts/pm2-restart-qadbak.sh && npm run test-api. "
+          : `This server has ${listed.length} domain(s) but not "${domainName}". `;
       return jsonError(
         hint +
           "If the domain already exists, open Domains in the menu instead of creating it again.",
