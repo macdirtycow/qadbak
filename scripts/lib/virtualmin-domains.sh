@@ -29,3 +29,17 @@ first_virtualmin_domain() {
   done < <(_virtualmin_list_domains | sed '/^$/d')
   return 1
 }
+
+# First domain for nginx probes: native registry, then legacy CLI.
+first_panel_domain() {
+  local reg="${QADBAK_DIR:-/opt/qadbak}/data/native-domains.json"
+  local d
+  if [[ -f "$reg" ]]; then
+    d="$(grep -o '"name":"[^"]*"' "$reg" 2>/dev/null | head -1 | sed 's/"name":"//;s/"//')"
+    if _is_valid_domain "$d"; then
+      echo "$d"
+      return 0
+    fi
+  fi
+  first_virtualmin_domain
+}

@@ -64,11 +64,7 @@ if [[ "$(id -u)" -eq 0 ]]; then
     echo "    sudo bash $ROOT/scripts/sync-e2e-credentials.sh" >&2
   fi
 fi
-if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/apply-phase8-test-server.sh" ]]; then
-  echo "Test VPS phase 8 (no Webmin UI): sudo bash $ROOT/scripts/apply-phase8-test-server.sh"
-elif [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/apply-phase7-test-server.sh" ]]; then
-  echo "Test VPS phase 7: sudo bash $ROOT/scripts/apply-phase7-test-server.sh"
-elif [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/apply-phase6-test-server.sh" ]]; then
-  echo "Test VPS (hybrid phase 6): sudo bash $ROOT/scripts/apply-phase6-test-server.sh"
+if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/apply-phase8-independent.sh" ]]; then
+  echo "Re-apply native flags: sudo bash $ROOT/scripts/apply-phase8-independent.sh"
 fi
 echo "Done."
