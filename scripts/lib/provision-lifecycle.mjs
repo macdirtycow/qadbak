@@ -1,3 +1,5 @@
+import { access } from "node:fs/promises";
+import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import {
@@ -5,6 +7,7 @@ import {
   resolveDomainUser,
   loadRegistry,
   saveRegistry,
+  fileExists,
 } from "./provisioning-common.mjs";
 
 const exec = promisify(execFile);
@@ -46,4 +49,35 @@ export async function domainDisable(domain) {
   }
   await setRegistryDisabled(domain, true);
   emit({ ok: true, enabled: false });
+}
+
+export async function domainValidate(domain) {
+  const { user, home } = await resolveDomainUser(domain);
+  const messages = [];
+  let valid = true;
+  try {
+    await access(home);
+    messages.push(`Home directory exists: ${home}`);
+  } catch {
+    valid = false;
+    messages.push(`Missing home: ${home}`);
+  }
+  const pub = path.join(home, "public_html");
+  if (await fileExists(pub)) {
+    messages.push(`public_html present`);
+  } else {
+    messages.push(`public_html missing (optional)`);
+  }
+  const nginxSite = `/etc/nginx/sites-enabled/qadbak-customer-${domain}.conf`;
+  if (await fileExists(nginxSite)) {
+    messages.push(`Nginx vhost enabled`);
+  } else if (await fileExists(`/etc/apache2/sites-enabled/${domain}.conf`)) {
+    messages.push(`Apache vhost present`);
+  }
+  const rows = await loadRegistry();
+  const hit = rows.find((r) => String(r.name).toLowerCase() === domain.toLowerCase());
+  if (hit?.disabled) {
+    messages.push(`Domain marked disabled in registry`);
+  }
+  emit({ ok: true, valid, messages });
 }

@@ -1,33 +1,56 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { readFile, access } from "node:fs/promises";
+import { readFile, access, readdir } from "node:fs/promises";
 import path from "node:path";
 import { emit, fail, resolveDomainUser } from "./provisioning-common.mjs";
 
 const exec = promisify(execFile);
 
+async function readCertFile(fullchain, host) {
+  const pem = await readFile(fullchain, "utf8");
+  const notAfter = await exec("openssl", [
+    "x509",
+    "-enddate",
+    "-noout",
+    "-in",
+    fullchain,
+  ]);
+  return {
+    host,
+    issuer: pem.includes("Let's Encrypt")
+      ? "Let's Encrypt"
+      : pem.includes("R3") || pem.includes("E1")
+        ? "Let's Encrypt"
+        : "installed",
+    expiry: notAfter.stdout.replace("notAfter=", "").trim(),
+    type: "letsencrypt",
+  };
+}
+
 async function certbotList(domain) {
   const certs = [];
+  const seen = new Set();
   const live = "/etc/letsencrypt/live";
-  for (const host of [domain, `www.${domain}`]) {
+  const hosts = new Set([domain, `www.${domain}`]);
+  try {
+    for (const name of await readdir(live)) {
+      if (name.includes(domain) || domain.includes(name.replace(/^www\./, ""))) {
+        hosts.add(name);
+      }
+    }
+  } catch {
+    /* */
+  }
+  for (const host of hosts) {
     const dir = path.join(live, host);
     try {
       await access(dir);
       const fullchain = path.join(dir, "fullchain.pem");
-      const pem = await readFile(fullchain, "utf8");
-      const notAfter = await exec("openssl", [
-        "x509",
-        "-enddate",
-        "-noout",
-        "-in",
-        fullchain,
-      ]);
-      certs.push({
-        host,
-        issuer: pem.includes("Let's Encrypt") ? "Let's Encrypt" : "unknown",
-        expiry: notAfter.stdout.replace("notAfter=", "").trim(),
-        type: "letsencrypt",
-      });
+      const row = await readCertFile(fullchain, host);
+      if (!seen.has(row.host)) {
+        seen.add(row.host);
+        certs.push(row);
+      }
     } catch {
       /* no cert */
     }
