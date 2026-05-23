@@ -1,11 +1,9 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
+import { spawn } from "node:child_process";
 import { writeFile, mkdir } from "node:fs/promises";
 import { emit, fail, resolveDomainUser, fileExists } from "./provisioning-common.mjs";
 import { listMailboxesFromLayout, discoverMailLayout } from "./mail-layout.mjs";
 
-const exec = promisify(execFile);
-
+const SENDMAIL = "/usr/sbin/sendmail";
 const MAIL_CONFIGURED_STAMP = "/var/lib/qadbak/native-mail-configured";
 const DOVECOT_NATIVE_CONF = "/etc/dovecot/conf.d/99-qadbak-native.conf";
 
@@ -36,8 +34,41 @@ function buildMessage(from, to, subject, body) {
   ].join("\r\n");
 }
 
+/** Queue mail via Postfix sendmail (provisioning helper runs as root). */
+function queueSendmail(from, message, timeoutMs = 25_000) {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(SENDMAIL, ["-f", from, "-t", "-i"], {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    let stderr = "";
+    const timer = setTimeout(() => {
+      proc.kill("SIGTERM");
+      reject(new Error("sendmail timed out — check Postfix logs (mail.log)"));
+    }, timeoutMs);
+
+    proc.stderr.on("data", (chunk) => {
+      stderr += String(chunk);
+    });
+    proc.on("error", (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
+    proc.on("close", (code) => {
+      clearTimeout(timer);
+      if (code === 0) resolve();
+      else reject(new Error(stderr.trim() || `sendmail exited with code ${code}`));
+    });
+    proc.stdin.write(message);
+    proc.stdin.end();
+  });
+}
+
 export async function mailSendDirect(domain, localUser, payloadJson) {
   await ensureMailReady();
+  if (!(await fileExists(SENDMAIL))) {
+    fail("sendmail not found — install postfix");
+  }
+
   const { user: owner, home } = await resolveDomainUser(domain);
   const layout = await discoverMailLayout(domain, owner, home);
   const mailboxes = await listMailboxesFromLayout(layout);
@@ -50,7 +81,7 @@ export async function mailSendDirect(domain, localUser, payloadJson) {
   try {
     payload = typeof payloadJson === "string" ? JSON.parse(payloadJson) : payloadJson;
   } catch {
-    fail("Invalid send payload JSON");
+    fail("Invalid send payload JSON — wrap payload in single quotes on the CLI");
   }
 
   const to = String(payload.to || "").trim();
@@ -59,23 +90,13 @@ export async function mailSendDirect(domain, localUser, payloadJson) {
   if (!to || !to.includes("@")) fail("Valid recipient address (to) required");
 
   const from = `${local}@${domain}`;
-  const unixUser = local === owner ? owner : local;
   const message = buildMessage(from, to, subject, body);
 
   try {
-    await exec(
-      "runuser",
-      ["-u", unixUser, "--", "sendmail", "-f", from, "-t", "-i"],
-      { input: message, timeout: 25_000, maxBuffer: 4 * 1024 * 1024 },
-    );
+    await queueSendmail(from, message);
   } catch (e) {
-    const err = e;
-    const detail =
-      err && typeof err === "object" && "stderr" in err
-        ? String(err.stderr || "").trim()
-        : "";
     const msg = e instanceof Error ? e.message : String(e);
-    fail(detail ? `Send failed: ${detail}` : `Send failed: ${msg}`);
+    fail(`Send failed: ${msg}`);
   }
 
   emit({ ok: true, from, to, source: "sendmail" });

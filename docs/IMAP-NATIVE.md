@@ -45,8 +45,10 @@ sudo bash scripts/run-provisioning-helper.sh mail-sync
 sudo bash scripts/check-native-mail.sh YOUR-DOMAIN info
 sudo bash scripts/check-imap-dovecot.sh YOUR-DOMAIN info
 
-# Send test (JSON payload)
-sudo node scripts/provisioning-helper.mjs mail-send YOUR-DOMAIN info \
+# Send test (JSON payload — must be one quoted argument)
+sudo bash scripts/test-mail-send.sh YOUR-DOMAIN info you@gmail.com
+# or:
+sudo -u qadbak sudo -n scripts/run-provisioning-helper.sh mail-send YOUR-DOMAIN info \
   '{"to":"you@gmail.com","subject":"test","body":"hello"}'
 ```
 

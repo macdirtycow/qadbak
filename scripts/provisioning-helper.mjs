@@ -146,7 +146,7 @@ async function main() {
       await mailPass(args[0], args[1], args[2]);
       break;
     case "mail-send":
-      await mailSend(args[0], args[1], args[2]);
+      await mailSend(args[0], args[1], args.length > 2 ? args.slice(2).join(" ") : "{}");
       break;
     case "mail-sync":
       await mailSync();

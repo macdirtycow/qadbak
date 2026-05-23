@@ -13,7 +13,7 @@ export type HelperResult = {
   [key: string]: unknown;
 };
 
-function parseHelperStdout(stdout: string): HelperResult {
+function parseHelperStdout(stdout: string): HelperResult | null {
   const lines = stdout.trim().split("\n").filter(Boolean);
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i].trim();
@@ -24,9 +24,7 @@ function parseHelperStdout(stdout: string): HelperResult {
       /* try previous line */
     }
   }
-  throw new Error(
-    `Provisioning helper returned non-JSON output: ${stdout.slice(0, 200).replace(/\s+/g, " ")}`,
-  );
+  return null;
 }
 
 export async function runProvisioningHelper(
@@ -39,6 +37,11 @@ export async function runProvisioningHelper(
       { timeout: 600_000, maxBuffer: 8 * 1024 * 1024 },
     );
     const parsed = parseHelperStdout(stdout);
+    if (!parsed) {
+      throw new Error(
+        `Provisioning helper returned non-JSON output: ${stdout.slice(0, 200).replace(/\s+/g, " ")}`,
+      );
+    }
     if (parsed.ok === false) {
       throw new Error(parsed.error ?? "Provisioning helper failed");
     }
@@ -46,14 +49,13 @@ export async function runProvisioningHelper(
   } catch (e) {
     const err = e as { stdout?: string; stderr?: string; message?: string };
     if (err.stdout) {
-      try {
-        const parsed = parseHelperStdout(err.stdout);
-        if (parsed.ok === false) {
-          throw new Error(parsed.error ?? "Provisioning helper failed");
-        }
-      } catch {
-        /* fall through */
+      const parsed = parseHelperStdout(err.stdout);
+      if (parsed?.ok === false) {
+        throw new Error(parsed.error ?? "Provisioning helper failed");
       }
+    }
+    if (err.message && !err.message.startsWith("Command failed:")) {
+      throw e instanceof Error ? e : new Error(String(e));
     }
     const detail = err.stderr?.trim() || err.message || "Provisioning helper failed";
     throw new Error(detail);
