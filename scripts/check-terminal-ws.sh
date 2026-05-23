@@ -33,7 +33,18 @@ echo "==> nginx /ws/domain-terminal on :$PANEL_PORT"
 CODE="$(curl -sS -o /dev/null -w "%{http_code}" --max-time 3 "http://127.0.0.1:${PANEL_PORT}/ws/domain-terminal" 2>/dev/null || echo 000)"
 echo "    HTTP $CODE (426 Upgrade Required = OK)"
 
-echo "==> sudo terminal runner"
+echo "==> nginx /ws/admin-terminal on :$PANEL_PORT"
+ACODE="$(curl -sS -o /dev/null -w "%{http_code}" --max-time 3 "http://127.0.0.1:${PANEL_PORT}/ws/admin-terminal" 2>/dev/null || echo 000)"
+echo "    HTTP $ACODE (426 Upgrade Required = OK)"
+
+echo "==> sudo admin terminal"
+if sudo -u "$USER" sudo -n -l 2>/dev/null | grep -q "run-admin-terminal.sh"; then
+  echo "    OK (run-admin-terminal.sh)"
+else
+  echo "    FAIL — run: sudo bash scripts/configure-admin-terminal-sudo.sh" >&2
+fi
+
+echo "==> sudo domain terminal runner"
 FIRST="$(virtualmin list-domains --name-only 2>/dev/null | head -1 || true)"
 if [[ -n "$FIRST" ]]; then
   U="$(virtualmin list-domains --domain "$FIRST" --multiline 2>/dev/null | awk -F= '/^user=/{print $2; exit}')"

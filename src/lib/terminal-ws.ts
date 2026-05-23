@@ -27,6 +27,24 @@ export async function createTerminalWsToken(
     .sign(secretKey());
 }
 
+/** Admin-only root shell (Server admin → Terminal). */
+export async function createAdminTerminalWsToken(
+  session: SessionPayload,
+): Promise<string> {
+  if (session.role !== "admin") {
+    throw new Error("Only administrators may use the server terminal.");
+  }
+  return new SignJWT({
+    purpose: "admin-terminal-ws",
+    sub: session.userId,
+    username: session.username,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("120s")
+    .sign(secretKey());
+}
+
 /** Build WebSocket URL from the incoming API request (prefer client-side builder in browser). */
 export function terminalWsUrl(request: Request, token: string): string {
   const reqUrl = new URL(request.url);

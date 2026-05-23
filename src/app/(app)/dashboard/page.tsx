@@ -79,6 +79,21 @@ export default async function DashboardPage() {
         </Link>
       </Card>
 
+      {session.role === "admin" && (
+        <Card>
+          <h2 className="text-lg font-medium text-white">Server tools</h2>
+          <p className="mt-2 text-sm text-panel-muted">
+            Root shell on this VPS without SSH — same session as your Qadbak login.
+          </p>
+          <Link
+            href="/admin/terminal"
+            className="mt-4 inline-block text-sm text-panel-accent hover:underline"
+          >
+            Open server terminal →
+          </Link>
+        </Card>
+      )}
+
       {session.role === "admin" && <ServerConfigButton />}
     </div>
   );

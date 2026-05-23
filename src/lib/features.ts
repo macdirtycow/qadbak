@@ -410,6 +410,7 @@ export const IMPLEMENTED_PHASE: FeaturePhase = 8;
 /** Primary server admin — no Webmin embed menus (phase 4). */
 export const ADMIN_NAV = [
   { path: "/admin", label: "Overview" },
+  { path: "/admin/terminal", label: "Terminal" },
   { path: "/admin/status", label: "Status" },
   { path: "/admin/nodes", label: "Nodes" },
   { path: "/admin/server", label: "Services" },

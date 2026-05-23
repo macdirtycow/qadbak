@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * WebSocket terminal for Qadbak — domain-scoped bash via sudo (no Webmin).
- * Listens on 127.0.0.1:QADBAK_TERMINAL_WS_PORT (default 3001).
- * nginx should proxy /ws/domain-terminal → this server.
+ * WebSocket terminals for Qadbak:
+ *   /ws/domain-terminal — domain unix user (customer scope)
+ *   /ws/admin-terminal  — root bash for panel admins only
  */
 import http from "node:http";
 import { readFileSync, existsSync } from "node:fs";
@@ -39,9 +39,12 @@ loadEnvLocal();
 
 const PORT = Number(process.env.QADBAK_TERMINAL_WS_PORT || "3001");
 const HOST = process.env.QADBAK_TERMINAL_WS_HOST || "127.0.0.1";
-const RUNNER =
+const DOMAIN_RUNNER =
   process.env.QADBAK_TERMINAL_RUNNER ||
   path.join(ROOT, "scripts/run-domain-terminal.sh");
+const ADMIN_RUNNER =
+  process.env.QADBAK_ADMIN_TERMINAL_RUNNER ||
+  path.join(ROOT, "scripts/run-admin-terminal.sh");
 const MOCK = process.env.VIRTUALMIN_MOCK === "true";
 
 function secretKey() {
@@ -52,7 +55,7 @@ function secretKey() {
   return new TextEncoder().encode(secret);
 }
 
-async function verifyTerminalToken(token) {
+async function verifyDomainToken(token) {
   const { payload } = await jwtVerify(token, secretKey(), {
     algorithms: ["HS256"],
   });
@@ -62,10 +65,20 @@ async function verifyTerminalToken(token) {
   const domain = String(payload.domain || "");
   const unixUser = String(payload.unixUser || "");
   if (!domain || !unixUser) throw new Error("Invalid token payload.");
-  return { domain, unixUser };
+  return unixUser;
 }
 
-function spawnShell(unixUser) {
+async function verifyAdminToken(token) {
+  const { payload } = await jwtVerify(token, secretKey(), {
+    algorithms: ["HS256"],
+  });
+  if (payload.purpose !== "admin-terminal-ws") {
+    throw new Error("Invalid token purpose.");
+  }
+  return true;
+}
+
+function spawnDomainShell(unixUser) {
   if (MOCK) {
     return pty.spawn("/bin/bash", ["-l"], {
       name: "xterm-256color",
@@ -79,11 +92,11 @@ function spawnShell(unixUser) {
       },
     });
   }
-  return pty.spawn("sudo", ["-n", RUNNER, unixUser], {
+  return pty.spawn("sudo", ["-n", DOMAIN_RUNNER, unixUser], {
     name: "xterm-256color",
     cols: 80,
     rows: 24,
-    cwd: `/home/${unixUser}`,
+    cwd: "/tmp",
     env: {
       ...process.env,
       TERM: "xterm-256color",
@@ -91,37 +104,33 @@ function spawnShell(unixUser) {
   });
 }
 
-const server = http.createServer((_req, res) => {
-  res.writeHead(426, { "Content-Type": "text/plain" });
-  res.end("WebSocket upgrade required.");
-});
-
-const wss = new WebSocketServer({ server, path: "/ws/domain-terminal" });
-
-wss.on("connection", async (ws, req) => {
-  const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
-  const token = url.searchParams.get("token");
-  if (!token) {
-    ws.close(4401, "Missing token");
-    return;
+function spawnAdminShell() {
+  if (MOCK) {
+    return pty.spawn("/bin/bash", ["-l"], {
+      name: "xterm-256color",
+      cols: 80,
+      rows: 24,
+      cwd: process.env.HOME || "/tmp",
+      env: {
+        ...process.env,
+        TERM: "xterm-256color",
+        PS1: "\\u@mock-root:\\w\\$ ",
+      },
+    });
   }
+  return pty.spawn("sudo", ["-n", ADMIN_RUNNER], {
+    name: "xterm-256color",
+    cols: 80,
+    rows: 24,
+    cwd: "/tmp",
+    env: {
+      ...process.env,
+      TERM: "xterm-256color",
+    },
+  });
+}
 
-  let unixUser;
-  try {
-    ({ unixUser } = await verifyTerminalToken(token));
-  } catch (err) {
-    ws.close(4403, err instanceof Error ? err.message : "Invalid token");
-    return;
-  }
-
-  let term;
-  try {
-    term = spawnShell(unixUser);
-  } catch (err) {
-    ws.close(4500, err instanceof Error ? err.message : "Spawn failed");
-    return;
-  }
-
+function attachPty(ws, term) {
   term.onData((data) => {
     if (ws.readyState === ws.OPEN) ws.send(data);
   });
@@ -156,10 +165,49 @@ wss.on("connection", async (ws, req) => {
       /* ignore */
     }
   });
+}
+
+function bindTerminalWss(wss, openSession) {
+  wss.on("connection", async (ws, req) => {
+    const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+    const token = url.searchParams.get("token");
+    if (!token) {
+      ws.close(4401, "Missing token");
+      return;
+    }
+
+    let term;
+    try {
+      term = await openSession(token);
+    } catch (err) {
+      ws.close(4403, err instanceof Error ? err.message : "Session failed");
+      return;
+    }
+
+    attachPty(ws, term);
+  });
+}
+
+const server = http.createServer((_req, res) => {
+  res.writeHead(426, { "Content-Type": "text/plain" });
+  res.end("WebSocket upgrade required.");
+});
+
+const wssDomain = new WebSocketServer({ server, path: "/ws/domain-terminal" });
+const wssAdmin = new WebSocketServer({ server, path: "/ws/admin-terminal" });
+
+bindTerminalWss(wssDomain, async (token) => {
+  const unixUser = await verifyDomainToken(token);
+  return spawnDomainShell(unixUser);
+});
+
+bindTerminalWss(wssAdmin, async (token) => {
+  await verifyAdminToken(token);
+  return spawnAdminShell();
 });
 
 server.listen(PORT, HOST, () => {
   process.stdout.write(
-    `Qadbak terminal WS listening on ${HOST}:${PORT}/ws/domain-terminal (mock=${MOCK})\n`,
+    `Qadbak terminal WS on ${HOST}:${PORT} — /ws/domain-terminal + /ws/admin-terminal (mock=${MOCK})\n`,
   );
 });
