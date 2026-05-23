@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Qadbak — Control panel for VirtualMin</title>
+    <title>Qadbak — Independent hosting control panel</title>
     <meta
       name="description"
-      content="Qadbak is the premium English control panel for VirtualMin and Webmin. Domains, mail, DNS, SSL, files, and server admin — with separate admin and client access."
+      content="Qadbak is a self-hosted hosting control panel. Domains, mail, DNS, SSL, files, databases, and server admin — with separate admin and client access."
     />
     <meta name="theme-color" content="#06090f" />
     <meta name="application-name" content="Qadbak" />
@@ -19,10 +19,10 @@
     />
     <link rel="stylesheet" href="/landing.css" />
     <meta property="og:site_name" content="Qadbak" />
-    <meta property="og:title" content="Qadbak — Control panel for VirtualMin" />
+    <meta property="og:title" content="Qadbak — Independent hosting control panel" />
     <meta
       property="og:description"
-      content="A modern panel layer on VirtualMin. Not a fork — full hosting workflows for admins and clients."
+      content="Run your own VPS panel. Domains, mail, DNS, SSL, and server tools in one modern UI."
     />
     <meta property="og:url" content="https://qadbak.com" />
     <meta property="og:type" content="website" />
@@ -42,9 +42,9 @@
             <a href="#features">Features</a>
             <a href="#deploy">Deploy</a>
             <a href="#access">Access</a>
-          <a href="#faq">FAQ</a>
-          <a href="#about-name">Name</a>
-        </nav>
+            <a href="#faq">FAQ</a>
+            <a href="#about-name">Name</a>
+          </nav>
           <div class="nav-actions">
             <a href="https://github.com/macdirtycow/qadbak" class="btn btn-ghost" rel="noopener">GitHub</a>
             <a href="/login" class="btn btn-primary">Sign in to panel</a>
@@ -59,9 +59,9 @@
           <a href="#features">Features</a>
           <a href="#deploy">Deploy</a>
           <a href="#access">Access</a>
-        <a href="#faq">FAQ</a>
-        <a href="#about-name">Name</a>
-        <a href="/login">Sign in to panel</a>
+          <a href="#faq">FAQ</a>
+          <a href="#about-name">Name</a>
+          <a href="/login">Sign in to panel</a>
         </div>
       </div>
     </header>
@@ -70,20 +70,20 @@
       <section class="hero">
         <div class="container hero-grid">
           <div>
-            <p class="eyebrow"><span class="eyebrow-dot"></span> Built for VirtualMin 8</p>
+            <p class="eyebrow"><span class="eyebrow-dot"></span> Self-hosted on your VPS</p>
             <h1>Your hosting panel, <span>called Qadbak</span></h1>
             <p class="hero-lead">
-              Qadbak wraps VirtualMin and Webmin in a clean English interface. Admins run the server;
-              clients manage only their domains — without sharing root passwords.
+              One English interface for domains, mail, DNS, SSL, files, databases, and server admin.
+              Admins run the host; clients manage only their domains — without sharing root passwords.
             </p>
             <div class="hero-cta">
               <a href="/login" class="btn btn-primary btn-lg">Sign in at qadbak.com</a>
               <a href="#features" class="btn btn-secondary btn-lg">See features</a>
             </div>
             <div class="hero-stats">
-              <div><strong>Native UI</strong> domains, mail, DNS</div>
-              <div><strong>Embed</strong> full Webmin when needed</div>
-              <div><strong>Secure</strong> API only server-side</div>
+              <div><strong>Native</strong> provisioning on the host</div>
+              <div><strong>Stack</strong> nginx, mail, MariaDB</div>
+              <div><strong>Secure</strong> API stays server-side</div>
             </div>
           </div>
 
@@ -104,7 +104,7 @@
               </aside>
               <div class="panel-main">
                 <h3>Welcome back</h3>
-                <p>Virtual servers on this host</p>
+                <p>Domains on this host</p>
                 <div class="panel-metrics">
                   <div class="metric"><span>Domains</span><strong>24</strong></div>
                   <div class="metric"><span>Active</span><strong>22</strong></div>
@@ -125,10 +125,10 @@
       <section id="features">
         <div class="container">
           <p class="section-label">Features</p>
-          <h2 class="section-title">Everything in VirtualMin — easier in Qadbak</h2>
+          <h2 class="section-title">Hosting workflows in one panel</h2>
           <p class="section-lead">
-            Qadbak is the product name for the panel at qadbak.com. Under the hood your data stays in VirtualMin;
-            the UI is rebuilt for clarity and role-based access.
+            Qadbak is the product at qadbak.com — a complete control panel you run on your own server,
+            with role-based access for administrators and customers.
           </p>
           <div class="grid-3">
             <article class="card">
@@ -138,7 +138,7 @@
                 </svg>
               </div>
               <h3>Domains</h3>
-              <p>Create virtual servers, subdomains, aliases, and lifecycle actions from one list.</p>
+              <p>Create sites, subdomains, aliases, and lifecycle actions from one list.</p>
             </article>
             <article class="card">
               <div class="card-icon" aria-hidden="true">
@@ -147,7 +147,7 @@
                 </svg>
               </div>
               <h3>Email</h3>
-              <p>Mailboxes, forwarding, spam tools, and logs — scoped per domain for clients.</p>
+              <p>Mailboxes, forwarding, IMAP, and logs — scoped per domain for clients.</p>
             </article>
             <article class="card">
               <div class="card-icon" aria-hidden="true">
@@ -165,7 +165,7 @@
                 </svg>
               </div>
               <h3>Databases</h3>
-              <p>MySQL and PostgreSQL databases and users without opening classic Webmin.</p>
+              <p>MariaDB databases and users managed from the panel.</p>
             </article>
             <article class="card">
               <div class="card-icon" aria-hidden="true">
@@ -174,7 +174,7 @@
                 </svg>
               </div>
               <h3>Files &amp; terminal</h3>
-              <p>File manager and SSH terminal via secure Webmin login links.</p>
+              <p>Native file manager and in-browser shell as the domain unix user.</p>
             </article>
             <article class="card">
               <div class="card-icon" aria-hidden="true">
@@ -183,7 +183,7 @@
                 </svg>
               </div>
               <h3>Server admin</h3>
-              <p>Status, services, backups, resellers, and Webmin modules embedded when native UI is not ready yet.</p>
+              <p>Service control, stack reload, backups, resellers, and host metrics.</p>
             </article>
           </div>
         </div>
@@ -194,23 +194,24 @@
           <p class="section-label">Deploy</p>
           <h2 class="section-title">Run Qadbak on your own VPS</h2>
           <p class="section-lead">
-            Point <strong>qadbak.com</strong> to your server, install the Qadbak app next to VirtualMin, and proxy HTTPS to the Node process.
+            Point your panel hostname to the server, run the installer, and open
+            <strong>https://your-host/login</strong>.
           </p>
           <div class="steps">
             <div class="step">
               <div class="step-num">01</div>
-              <h3>Install VirtualMin</h3>
-              <p>Ubuntu 22.04 with Remote API enabled. Qadbak uses <code>remote.cgi</code> on localhost.</p>
+              <h3>Ubuntu 22.04 VPS</h3>
+              <p>Root access and DNS for your panel hostname. The installer sets up nginx, mail, and the web stack.</p>
             </div>
             <div class="step">
               <div class="step-num">02</div>
-              <h3>Deploy Qadbak</h3>
-              <p>Clone <a href="https://github.com/macdirtycow/qadbak" style="color:#5eead4">github.com/macdirtycow/qadbak</a>, configure <code>.env.local</code>, build with pm2.</p>
+              <h3>Install Qadbak</h3>
+              <p><code>sudo bash install/qadbak-install.sh</code> from <a href="https://github.com/macdirtycow/qadbak" style="color:#5eead4">github.com/macdirtycow/qadbak</a>.</p>
             </div>
             <div class="step">
               <div class="step-num">03</div>
-              <h3>TLS at qadbak.com</h3>
-              <p>Nginx reverse proxy and Let’s Encrypt. Users open the panel at <strong>https://qadbak.com/login</strong>.</p>
+              <h3>TLS &amp; sign in</h3>
+              <p>Optional Let’s Encrypt. Users open the panel at your hostname — ports 80/443 (or :11000).</p>
             </div>
           </div>
         </div>
@@ -224,7 +225,7 @@
           <div class="grid-3" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr))">
             <article class="card">
               <h3>Administrator</h3>
-              <p>All domains, server settings, Webmin embeds, cloud backups, resellers, and plans.</p>
+              <p>All domains, server settings, services, backups, resellers, and host tools.</p>
             </article>
             <article class="card">
               <h3>Client</h3>
@@ -239,13 +240,13 @@
           <p class="section-label">The name</p>
           <h2 class="section-title">From 2009 headlines to a real panel</h2>
           <p class="origin-blurb">
-            Named after a infamous 2009 shell — rebuilt as the front door to VirtualMin.
+            Named after an infamous 2009 shell — rebuilt as a self-hosted hosting panel.
             This product is <strong>not</strong> affiliated with Qadbak Investments.
           </p>
           <p class="section-lead" style="margin-bottom: 1.5rem">
             Around 2009, <a href="https://en.wikipedia.org/wiki/Qadbak_Investments" rel="noopener" style="color:#5eead4">Qadbak Investments</a>
-            made noise in football and Formula&nbsp;1 press — Notts County, Sven-Göran Eriksson, talks of buying BMW Sauber.
-            It became a story about buzz without backing. The brand was left behind in finance; it fits hosting control far better.
+            made noise in football and Formula&nbsp;1 press. It became a story about buzz without backing.
+            The brand was left behind in finance; it fits hosting control far better.
           </p>
           <div class="origin-grid">
             <div class="origin-card then">
@@ -261,15 +262,15 @@
               <h3>Today · Qadbak panel</h3>
               <ul>
                 <li>Open code you run on <strong>your</strong> VPS</li>
-                <li>Domains, mail, DNS, SSL via VirtualMin API</li>
-                <li>Port 80/443 = Qadbak — not Webmin :10000</li>
+                <li>Domains, mail, DNS, SSL in one UI</li>
+                <li>Ports 80/443 = your panel</li>
                 <li>Same word — opposite substance</li>
               </ul>
             </div>
           </div>
           <p class="origin-links">
             Read more:
-            <a href="/about">About the name</a> (full panel deploy) ·
+            <a href="/about">About the name</a> ·
             <a href="https://github.com/macdirtycow/qadbak/blob/main/docs/ABOUT-THE-NAME.md" rel="noopener">docs on GitHub</a> ·
             <a href="https://www.reuters.com/article/sports/bmw-sell-f1-team-to-swiss-based-qadbak-idUSTRE58E675/" rel="noopener">Reuters (2009)</a>
           </p>
@@ -281,7 +282,7 @@
           <div class="cta-block">
             <h2>Open your Qadbak panel</h2>
             <p>
-              Production panel lives at qadbak.com. Sign in with your Qadbak user — VirtualMin root password stays on the server.
+              Deploy on your VPS and sign in with your Qadbak user — hosting credentials stay on the server.
             </p>
             <div class="cta-buttons">
               <a href="/login" class="btn btn-primary btn-lg">https://qadbak.com/login</a>
@@ -302,16 +303,16 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" /></svg>
               </button>
               <div class="faq-a">
-                Qadbak is a control panel product by Omiiba. It provides a modern UI on top of VirtualMin — hosted at qadbak.com for your users, while VirtualMin remains the engine on your VPS.
+                Qadbak is a hosting control panel by Omiiba. You install it on your VPS; admins and clients use the web UI at your panel hostname.
               </div>
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
-                Does Qadbak replace VirtualMin?
+                Do I need another control panel?
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" /></svg>
               </button>
               <div class="faq-a">
-                No. You still need VirtualMin and Webmin. Qadbak is the front door; complex tasks can open embedded Webmin modules inside the panel.
+                No. The default installer sets up the hosting stack and native provisioning. Qadbak is the only panel UI you need for day-to-day work.
               </div>
             </div>
             <div class="faq-item">
@@ -320,7 +321,7 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" /></svg>
               </button>
               <div class="faq-a">
-                This marketing page can be static HTML. A working login requires the full Qadbak Next.js deployment from the main repository on the same hostname.
+                This marketing page can be static HTML. Sign-in requires the full Qadbak app from the repository on your server.
               </div>
             </div>
             <div class="faq-item" id="about-name">
@@ -329,8 +330,9 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" /></svg>
               </button>
               <div class="faq-a">
-                The name once belonged to a 2009 investment story (Notts County, F1 press) that turned into a cautionary tale about empty promises.
-                This project is unrelated: same word, different job — a real <a href="https://en.wikipedia.org/wiki/Qadbak_Investments" rel="noopener" style="color:#5eead4">hosting panel</a> on your server.
+                The name once belonged to a 2009 investment story that turned into a cautionary tale about empty promises.
+                This project is unrelated: same word, different job — a real
+                <a href="https://en.wikipedia.org/wiki/Qadbak_Investments" rel="noopener" style="color:#5eead4">hosting panel</a> on your server.
                 <a href="/about" style="color:#5eead4">Read more</a>
               </div>
             </div>
@@ -356,7 +358,7 @@
             Qadbak
           </a>
           <p class="footer-tagline">
-            Control panel for VirtualMin at qadbak.com — a product by Omiiba.
+            Independent hosting control panel — a product by Omiiba.
             <em style="display:block;margin-top:0.5rem;font-size:0.85rem">2009 vapor → 2020s infrastructure.</em>
           </p>
         </div>
@@ -365,8 +367,7 @@
           <ul>
             <li><a href="#features">Features</a></li>
             <li><a href="/login">Panel login</a></li>
-            <li><a href="https://github.com/macdirtycow/qadbak" rel="noopener">Panel repo</a></li>
-            <li><a href="https://github.com/macdirtycow/qadbak-site" rel="noopener">Marketing repo</a></li>
+            <li><a href="https://github.com/macdirtycow/qadbak" rel="noopener">Source</a></li>
             <li><a href="/about">About the name</a></li>
           </ul>
         </div>

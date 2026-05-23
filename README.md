@@ -1,23 +1,45 @@
 # Qadbak
 
-**Qadbak (this product):** [qadbak.com](https://qadbak.com)  
-**Omiiba (official):** [omiiba.dev](https://omiiba.dev) · [omiiba.com](https://omiiba.com)
+**Panel:** [qadbak.com](https://qadbak.com)  
+**Omiiba:** [omiiba.dev](https://omiiba.dev) · [omiiba.com](https://omiiba.com)
 
-**Qadbak** is a modern English UI layer **on top of** [VirtualMin](https://virtualmin.com) / Webmin — not a fork. Domains, email, databases, DNS, SSL, server management, and Webmin login links with role-based access (admin / client).
+**Qadbak** is an independent **hosting control panel** for your VPS — domains, email, databases, DNS, SSL, files, backups, cron, and server admin in one English UI. Native provisioning on the host (nginx, Apache, Postfix, Dovecot, MariaDB, BIND). No separate GPL control-panel install required.
 
 ### About the name
 
-In 2009, [Qadbak Investments](https://en.wikipedia.org/wiki/Qadbak_Investments) made headlines around Notts County and BMW Sauber F1 — later remembered as hype without substance. This panel **reuses the name** for the opposite: working code on your VPS, as the **front door** to VirtualMin (not affiliated with that entity). Story: [docs/ABOUT-THE-NAME.md](docs/ABOUT-THE-NAME.md) · in-app: `/about`.
+In 2009, [Qadbak Investments](https://en.wikipedia.org/wiki/Qadbak_Investments) made headlines around Notts County and BMW Sauber F1 — later remembered as hype without substance. This panel **reuses the name** for the opposite: working code on **your** server (not affiliated with that entity). Story: [docs/ABOUT-THE-NAME.md](docs/ABOUT-THE-NAME.md) · in-app: `/about`.
 
-> **Status:** v1 code complete — validate on a **dedicated test VPS** ([docs/V1-TEST-SERVER.md](docs/V1-TEST-SERVER.md)). Do not install on production hosts (e.g. mareades).
+> **Status:** Production-ready on a **dedicated VPS**. Use [docs/V1-TEST-SERVER.md](docs/V1-TEST-SERVER.md) for a full test run. Do not experiment on servers with live customer sites.
 
 ## Requirements
 
+- **Ubuntu 22.04** VPS (recommended)
 - Node.js 20+
-- VirtualMin with Remote API (`remote.cgi`) for production
-- **Testing:** dedicated VPS only — [docs/V1-TEST-SERVER.md](docs/V1-TEST-SERVER.md) (not production hosts like mareades)
+- Root access for install scripts
 
-## Quick start (local, mock)
+## Install on a VPS
+
+```bash
+git clone https://github.com/macdirtycow/qadbak.git
+cd qadbak
+sudo bash install/qadbak-install.sh
+```
+
+This installs the hosting stack, Qadbak (`/opt/qadbak`), native provisioning, pm2, and nginx. See [install/README.md](install/README.md) and [docs/QADBAK-NATIVE-INSTALL.md](docs/QADBAK-NATIVE-INSTALL.md).
+
+After the panel works, you can remove old GPL panel packages if they were on the box:
+
+```bash
+sudo bash /opt/qadbak/scripts/uninstall-legacy-panel.sh
+```
+
+## Update on the server
+
+```bash
+cd /opt/qadbak && sudo bash scripts/update-qadbak.sh
+```
+
+## Quick start (local development)
 
 ```bash
 git clone https://github.com/macdirtycow/qadbak.git
@@ -30,6 +52,7 @@ In `.env.local`:
 ```env
 SESSION_SECRET=a-long-random-string-at-least-16-characters
 VIRTUALMIN_MOCK=true
+QADBAK_COOKIE_SECURE=false
 ```
 
 ```bash
@@ -44,94 +67,101 @@ Open http://localhost:3000 — on first start, `data/users.json` is created from
 | `admin` | `changeme` | administrator |
 | `client` | `changeme` | client (mock: `example.com`) |
 
-**Change these passwords** before you share or deploy anything:
+Change passwords before sharing:
 
 ```bash
 node scripts/hash-password.mjs your-password
 ```
 
-## Production (real VirtualMin)
+## Production configuration
 
-Deploy the panel at **https://qadbak.com** (see [deploy/nginx-qadbak.conf](deploy/nginx-qadbak.conf)).
+On the server, `.env.local` (not in git) should include:
 
-1. `.env.local` on the server (do not commit) — see [.env.example](.env.example).
-2. `VIRTUALMIN_MOCK=false`
-3. `VIRTUALMIN_URL`, `VIRTUALMIN_USER`, `VIRTUALMIN_PASS` (often `127.0.0.1:10000` when Qadbak and VirtualMin share a VPS)
-4. `WEBMIN_UI_URL` / `USERMIN_UI_URL` — public URLs of Webmin/Usermin on your host (server hostname, not necessarily qadbak.com)
-5. API test: `npm run test-api`
-6. Build: `npm run build && npm run start`
-7. Nginx + TLS for `qadbak.com`: [deploy/nginx-qadbak.conf](deploy/nginx-qadbak.conf)
+```env
+QADBAK_PROVISIONER=native
+QADBAK_VIRTUALMIN_FALLBACK=false
+QADBAK_DISABLE_WEBMIN=true
+QADBAK_PUBLIC_HOST=panel.example.com
+SESSION_SECRET=...
+PORT=3000
+```
 
-For self-signed TLS on port 10000: prefer a valid certificate; otherwise `VIRTUALMIN_TLS_INSECURE=true` in `.env.local` (VirtualMin API only — see `docs/PRODUCTION-HARDENING.md`).
+See [.env.example](.env.example). Verify:
+
+```bash
+curl -s http://127.0.0.1:3000/api/health
+npm run test-api
+bash scripts/v1-test-preflight.sh
+```
+
+Deploy behind nginx: [deploy/nginx-qadbak.conf](deploy/nginx-qadbak.conf).
 
 ## Marketing site (qadbak.com)
 
-Static landing page matching the Qadbak panel UI — upload to your web root:
+Static landing page matching the panel UI:
 
 ```bash
 bash scripts/build-marketing-zip.sh
 ```
 
-Output: **`dist/qadbak-site-upload.zip`** (extract and upload; see `marketing-site/README-UPLOAD.txt`).
+Output: **`dist/qadbak-site-upload.zip`** — see `marketing-site/README-UPLOAD.txt`.
+
+The live homepage at `/` uses the same content from `marketing-site/index.html`.
 
 ## Documentation
 
 | File | Contents |
 |------|----------|
-| [docs/COMPLETENESS.md](docs/COMPLETENESS.md) | Done in repo vs on your test VPS |
-| [docs/STATUS.md](docs/STATUS.md) | Current phase — what’s done vs test VPS |
-| [docs/V1-TEST-SERVER.md](docs/V1-TEST-SERVER.md) | **Start here:** step-by-step v1 test server |
-| [docs/E2E-CHECKLIST.md](docs/E2E-CHECKLIST.md) | v1 sign-off after install |
-| [docs/PHASES.md](docs/PHASES.md) | Integration phases and API routes |
-| [docs/API.md](docs/API.md) | MVP VirtualMin commands |
-| [docs/TEST-VPS.md](docs/TEST-VPS.md) | Short test VPS notes |
-| [docs/FRONT-DOOR.md](docs/FRONT-DOOR.md) | IP/443 → Qadbak, not :10000 |
-| [docs/HOSTING-MULTI-TENANT.md](docs/HOSTING-MULTI-TENANT.md) | All customer domains → `public_html` (no per-domain hardcoding) |
-| [docs/HOSTING-NGINX.md](docs/HOSTING-NGINX.md) | nginx + Apache backend for hosted sites |
-| [docs/TERMINAL-NATIVE.md](docs/TERMINAL-NATIVE.md) | In-panel bash terminal (no Webmin) |
-| [docs/QADBAK-INDEPENDENCE-8-PHASES.md](docs/QADBAK-INDEPENDENCE-8-PHASES.md) | **8 fasen** los van VirtualMin/Webmin |
-| [docs/ABOUT-THE-NAME.md](docs/ABOUT-THE-NAME.md) | Why “Qadbak” (2009 → panel) |
+| [docs/QADBAK-NATIVE-INSTALL.md](docs/QADBAK-NATIVE-INSTALL.md) | Native VPS install |
+| [docs/V1-TEST-SERVER.md](docs/V1-TEST-SERVER.md) | Step-by-step test server |
+| [docs/PHASE-8-INDEPENDENT.md](docs/PHASE-8-INDEPENDENT.md) | Independent native mode |
+| [docs/E2E-CHECKLIST.md](docs/E2E-CHECKLIST.md) | Sign-off checklist |
+| [docs/PHASES.md](docs/PHASES.md) | Feature phases |
+| [docs/HOSTING-NGINX.md](docs/HOSTING-NGINX.md) | nginx + Apache for sites |
+| [docs/TERMINAL-NATIVE.md](docs/TERMINAL-NATIVE.md) | In-panel terminal |
+| [docs/ABOUT-THE-NAME.md](docs/ABOUT-THE-NAME.md) | Why “Qadbak” |
 
-## Integration phases (overview)
+## Features (overview)
 
-| Phase | Scope |
-|-------|--------|
-| 1–2 | Domains, email, DB, DNS, SSL, aliases, redirects, backups |
-| 3 | Files (Qadbak mock / Webmin live), logs, PHP, protected directories |
-| 4–6 | Lifecycle, scripts, cron, extended mail, FTP |
-| 7–8 | Server/reseller admin, cloud S3, system config |
+| Area | Capabilities |
+|------|----------------|
+| Domains | Create, enable/disable, lifecycle, limits |
+| Web | Files, PHP, SSL, redirects, proxies, scripts |
+| Mail | Mailboxes, IMAP, logs, settings |
+| DNS | Records via native BIND integration |
+| Data | MySQL/MariaDB databases, backups, cron |
+| Server | Services, stack reload, metrics, terminal |
 
-Active phase: `IMPLEMENTED_PHASE` in `src/lib/features.ts`. In-app overview: `/fases`.
+In-app phase map: `/fases`.
 
 ## Architecture
 
 ```
-Browser → https://your-server or http://SERVER_IP  (ports 80/443)
+Browser → https://your-panel-host (80/443 or :11000)
               ↓ nginx
-         Qadbak (Next.js, auth, RBAC, English UI)
-              ↓ server-side only
-         virtualmin.ts → remote.cgi
+         Qadbak (Next.js — auth, RBAC, English UI)
+              ↓ server-side
+         Native provisioner (scripts/provisioning-helper.mjs)
               ↓
-         VirtualMin / Webmin on 127.0.0.1:10000 (not the public homepage)
+         nginx, Apache, Postfix, Dovecot, MariaDB, BIND on the VPS
 ```
 
-End users should **not** land on `:10000` first — that is the classic Webmin UI. Qadbak is the front door. Details: [docs/FRONT-DOOR.md](docs/FRONT-DOOR.md).
-
-- **Auth:** JWT (httpOnly), users in `data/users.json` (local, not in git)
+- **Auth:** JWT (httpOnly), users in `data/users.json`
 - **RBAC:** `src/lib/rbac.ts` + `src/lib/features.ts`
-- **Webmin:** `src/lib/webmin.ts` — `create-login-link` (root / domain / Usermin)
+- **Domains:** `data/native-domains.json` + host helpers
 - **Audit:** `data/audit.log`
 
 ## Project structure
 
 ```
 src/app/          Next.js routes (UI + API)
-src/lib/          virtualmin, webmin, rbac, auth
+src/lib/          provisioner, auth, rbac, domain helpers
 src/components/   UI per domain / admin
-data/             users.example.json (template), users.json (local)
-deploy/           nginx example
-docs/             phases, API, test VPS
-scripts/          test-api, hash-password
+scripts/          install, native helpers, update, tests
+install/          qadbak-install.sh
+deploy/           nginx examples
+docs/             guides and checklists
+data/             users.example.json (template)
 ```
 
 ## Scripts
@@ -140,12 +170,11 @@ scripts/          test-api, hash-password
 |---------|---------|
 | `npm run dev` | Development server |
 | `npm run build` | Production build |
-| `npm run test-api` | Remote API connectivity (Phase 0) |
-| `npm run preflight` | VPS checks before E2E |
-| `npm run post-install` | After installer on server |
+| `npm run test-api` | API / domain registry check |
+| `npm run preflight` | VPS checks |
 | `bash scripts/update-qadbak.sh` | Pull, build, restart on server |
-| `npm run test:e2e` | Playwright smoke tests (mock, stable) |
+| `sudo bash install/qadbak-install.sh` | Fresh VPS install |
 
 ## License
 
-**All Rights Reserved.** This repository is public for transparency and reference only. You may not use, copy, modify, or distribute the code without written permission from the copyright holder. See [LICENSE](LICENSE).
+**All Rights Reserved.** Public for transparency; no use without permission from the copyright holder. See [LICENSE](LICENSE).

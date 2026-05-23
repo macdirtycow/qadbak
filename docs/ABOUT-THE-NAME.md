@@ -12,15 +12,15 @@ In finance and sport, the name became associated with **vapourware** — big ann
 
 | Then (2009) | Now (Qadbak panel) |
 |-------------|-------------------|
-| “Investment” with unclear backers | Open-source-style panel code you can run on **your** VPS |
-| Promised clubs and F1 teams | Delivers **VirtualMin** workflows: domains, mail, DNS, SSL |
-| Name avoided in serious finance | Name reclaimed for **hosting control** — domain + product, literally |
+| “Investment” with unclear backers | Panel code you run on **your** VPS |
+| Promised clubs and F1 teams | Delivers **hosting**: domains, mail, DNS, SSL |
+| Name avoided in serious finance | Name reclaimed for **hosting control** |
 
-**Qadbak** here means: the **front door** on ports 80/443 for a server that still runs VirtualMin/Webmin underneath — not a fork, not a takeover bid.
+**Qadbak** here means: the **front door** on ports 80/443 for your server — a self-contained control panel, not a fork of anything else.
 
 ## Easter eggs (optional)
 
-- Mock marketing preview may use fictional hostnames (e.g. `meadow-lane.host`) — a nod to Meadow Lane, not an endorsement of any past entity.
+- Mock data may use fictional hostnames (e.g. `meadow-lane.host`) — a nod to Meadow Lane, not an endorsement of any past entity.
 - Panel route: `/about` — short in-product version of this story.
 
 ## Further reading
