@@ -142,7 +142,6 @@ export async function mailReceiveTestDomain(domain, localUser) {
   const { emit } = await import("./provisioning-common.mjs");
   emit({ ok: result.delivered, ...result, source: "local-delivery" });
 }
-}
 
 export async function mailDnsHintsDomain(domain) {
   const hints = await mailDnsHints(domain);
