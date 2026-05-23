@@ -1,13 +1,15 @@
 import { AdminHostMetrics } from "@/components/AdminHostMetrics";
 import { AdminServerView } from "@/components/AdminServerView";
 import { requireAdminPage } from "@/lib/admin-api";
-import { listAdminServerServices } from "@/lib/admin-server-services";
+import {
+  listAdminBandwidth,
+  listAdminServerServices,
+} from "@/lib/admin-server-services";
 import { getHostMetrics } from "@/lib/host-metrics";
-import { getProvisioner } from "@/lib/provisioner";
 
 export default async function AdminStatusPage() {
   const session = await requireAdminPage();
-  let bandwidth: Awaited<ReturnType<ReturnType<typeof getProvisioner>["listBandwidth"]>> = [];
+  let bandwidth: Awaited<ReturnType<typeof listAdminBandwidth>>["rows"] = [];
   let services: Awaited<ReturnType<typeof listAdminServerServices>>["services"] = [];
   let metrics: Awaited<ReturnType<typeof getHostMetrics>> | null = null;
   let metricsError = "";
@@ -21,10 +23,10 @@ export default async function AdminStatusPage() {
 
   try {
     const [bw, svc] = await Promise.all([
-      getProvisioner().listBandwidth(session),
+      listAdminBandwidth(session),
       listAdminServerServices(session),
     ]);
-    bandwidth = bw;
+    bandwidth = bw.rows;
     services = svc.services;
   } catch (e) {
     servicesError = e instanceof Error ? e.message : "Could not load server data.";

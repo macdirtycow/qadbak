@@ -14,6 +14,8 @@ Webmin UI uit (`QADBAK_DISABLE_WEBMIN=true`) in beide modi. Panel-nginx bevat **
 - Domeinlijst: `data/native-domains.json`
 - Hosting: SSL, DNS, mail, DB, backup, cron, aliases, redirects, features, logs, php, ftp, limits, lifecycle, mail-settings, mail-logs, imap, protected, shared, proxies, scripts, security, resellers (`provisioning-helper`)
 - Files, terminal, website repair, stack, host metrics (eigen helpers)
+- **Admin → Services:** systemctl start/stop/restart via `host-services-helper`
+- **Admin → disk/bandwidth:** `du` per domain home (geen VirtualMin `list-bandwidth`)
 - **Backups:** full archive in `~/backups` (public_html, Maildir, MySQL dumps, Qadbak config), restore, cron schedule (`scripts/run-domain-backup.sh`)
 - **Lifecycle:** clone (rsync), transfer (panel user), migrate (backup + stappen)
 - **Admin:** license, templates, admins, global features, check-config, S3 (AWS CLI), vm-status (native probe)

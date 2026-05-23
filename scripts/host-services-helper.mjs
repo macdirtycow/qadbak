@@ -4,9 +4,13 @@
  * Usage: host-services-helper.mjs list|status|start|stop|restart <unit>
  */
 import { execFile } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { promisify } from "node:util";
 
 const exec = promisify(execFile);
+const QADBAK_DIR = process.env.QADBAK_DIR || "/opt/qadbak";
+const REGISTRY = path.join(QADBAK_DIR, "data", "native-domains.json");
 
 /** Unit names without .service suffix */
 const ALLOWED = [
@@ -67,11 +71,61 @@ async function cmdControl(action, name) {
   return { ok: true, service: name.replace(/\.service$/i, ""), status, action };
 }
 
+async function cmdBandwidth() {
+  let rows = [];
+  try {
+    const raw = await readFile(REGISTRY, "utf8");
+    const parsed = JSON.parse(raw);
+    rows = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return { ok: true, bandwidth: [] };
+  }
+  const bandwidth = [];
+  for (const row of rows) {
+    const name = String(row.name || "").trim();
+    const user = String(row.user || "").trim();
+    if (!name || !user) continue;
+    const home = `/home/${user}`;
+    let used = "0";
+    try {
+      const { stdout } = await exec("du", ["-sm", home], { timeout: 120_000 });
+      used = stdout.split("\t")[0]?.trim() || "0";
+    } catch {
+      /* */
+    }
+    let limit = row.disk_limit ? String(row.disk_limit) : "";
+    if (!limit) {
+      try {
+        const cfgPath = path.join(
+          QADBAK_DIR,
+          "data",
+          "domain-config",
+          name.toLowerCase(),
+          "limits.json",
+        );
+        const cfg = JSON.parse(await readFile(cfgPath, "utf8"));
+        limit = cfg.disk ? String(cfg.disk) : "";
+      } catch {
+        /* */
+      }
+    }
+    bandwidth.push({
+      domain: name,
+      used,
+      limit: limit || "—",
+    });
+  }
+  bandwidth.sort((a, b) => a.domain.localeCompare(b.domain));
+  return { ok: true, bandwidth };
+}
+
 async function main() {
   const [action, arg] = process.argv.slice(2);
   let result;
   if (action === "list") {
     result = await cmdList();
+  } else if (action === "bandwidth") {
+    result = await cmdBandwidth();
   } else if (["start", "stop", "restart", "status"].includes(action) && arg) {
     if (action === "status") {
       const unit = unitName(arg);
@@ -84,7 +138,12 @@ async function main() {
       result = await cmdControl(action, arg);
     }
   } else {
-    console.error(JSON.stringify({ ok: false, error: "Usage: list | start|stop|restart|status <unit>" }));
+    console.error(
+      JSON.stringify({
+        ok: false,
+        error: "Usage: list | bandwidth | start|stop|restart|status <unit>",
+      }),
+    );
     process.exit(1);
   }
   console.log(JSON.stringify(result));

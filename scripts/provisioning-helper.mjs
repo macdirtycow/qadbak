@@ -61,6 +61,9 @@ import {
   protectedList,
   protectedCreate,
   protectedDelete,
+  protectedUsersList,
+  protectedUserCreate,
+  protectedUserDelete,
 } from "./lib/provision-protected.mjs";
 import {
   sharedList,
@@ -314,6 +317,15 @@ async function main() {
       break;
     case "protected-delete":
       await protectedDelete(args[0], args[1]);
+      break;
+    case "protected-users-list":
+      await protectedUsersList(args[0], args[1]);
+      break;
+    case "protected-user-create":
+      await protectedUserCreate(args[0], args[1], args[2], args[3]);
+      break;
+    case "protected-user-delete":
+      await protectedUserDelete(args[0], args[1], args[2]);
       break;
     case "shared-list":
       await sharedList(args[0]);

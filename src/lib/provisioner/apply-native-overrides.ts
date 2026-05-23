@@ -84,6 +84,7 @@ export function applyNativeOverrides<T extends Provisioner>(base: T): T {
   }
   if (nativeFeatureEnabled("mail-logs")) {
     out.searchMailLogs = native.searchMailLogsNative;
+    out.resendEmail = native.resendEmailNative;
   }
   if (nativeFeatureEnabled("imap")) {
     out.listImapMailboxes = native.listImapMailboxesNative;
@@ -93,6 +94,9 @@ export function applyNativeOverrides<T extends Provisioner>(base: T): T {
     out.listProtectedDirectories = native.listProtectedDirectoriesNative;
     out.createProtectedDirectory = native.createProtectedDirectoryNative;
     out.deleteProtectedDirectory = native.deleteProtectedDirectoryNative;
+    out.listProtectedUsers = native.listProtectedUsersNative;
+    out.createProtectedUser = native.createProtectedUserNative;
+    out.deleteProtectedUser = native.deleteProtectedUserNative;
   }
   if (nativeFeatureEnabled("shared")) {
     out.listSharedAddresses = native.listSharedAddressesNative;
@@ -144,6 +148,9 @@ export function applyNativeOverrides<T extends Provisioner>(base: T): T {
     out.listS3Buckets = indep.listS3BucketsIndependent;
     out.listS3Files = indep.listS3FilesIndependent;
     out.uploadS3File = indep.uploadS3FileIndependent;
+    out.listBandwidth = indep.listBandwidthIndependent;
+    out.listServerStatuses = indep.listServerStatusesIndependent;
+    out.restartServer = indep.restartServerIndependent;
   }
 
   return out;

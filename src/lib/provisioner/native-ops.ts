@@ -536,6 +536,44 @@ export async function deleteProtectedDirectoryNative(
   await runProvisioningHelper("protected-delete", domain, dirPath);
 }
 
+export async function listProtectedUsersNative(
+  domain: string,
+  dirPath: string,
+  _actor: Actor,
+): Promise<{ user: string; path?: string }[]> {
+  const r = await runProvisioningHelper("protected-users-list", domain, dirPath);
+  return (r.users as { user: string }[]) ?? [];
+}
+
+export async function createProtectedUserNative(
+  domain: string,
+  dirPath: string,
+  user: string,
+  pass: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("protected-user-create", domain, dirPath, user, pass);
+}
+
+export async function deleteProtectedUserNative(
+  domain: string,
+  dirPath: string,
+  user: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("protected-user-delete", domain, dirPath, user);
+}
+
+export async function resendEmailNative(
+  _domain: string,
+  _messageId: string,
+  _actor: Actor,
+): Promise<void> {
+  throw new Error(
+    "Resend is not available in native mode. Resend from your mail client or use the server mail queue.",
+  );
+}
+
 export async function listSharedAddressesNative(
   domain: string,
   _actor: Actor,

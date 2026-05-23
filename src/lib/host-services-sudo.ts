@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import type { ServerService } from "./virtualmin";
+import type { BandwidthRow, ServerService } from "./virtualmin";
 
 const execFileAsync = promisify(execFile);
 
@@ -13,6 +13,7 @@ const USE_SUDO = process.env.QADBAK_HOST_SERVICES_SUDO !== "false";
 type HelperResult = {
   ok?: boolean;
   services?: ServerService[];
+  bandwidth?: BandwidthRow[];
   service?: string;
   status?: string;
   error?: string;
@@ -62,4 +63,12 @@ export async function controlNativeServerService(
 ): Promise<void> {
   const r = await runHostServices([action, service]);
   if (!r.ok) throw new Error(r.error ?? `${action} failed for ${service}`);
+}
+
+export async function listNativeBandwidth(): Promise<BandwidthRow[]> {
+  const r = await runHostServices(["bandwidth"]);
+  if (!r.ok || !r.bandwidth) {
+    throw new Error(r.error ?? "Host bandwidth helper failed.");
+  }
+  return r.bandwidth;
 }

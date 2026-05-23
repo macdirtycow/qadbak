@@ -2,19 +2,24 @@ import { auditLog } from "@/lib/audit";
 import { requireAdmin } from "@/lib/admin-api";
 import {
   controlAdminServerService,
+  listAdminBandwidth,
   listAdminServerServices,
 } from "@/lib/admin-server-services";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
-import { getProvisioner } from "@/lib/provisioner";
 
 export async function GET() {
   try {
     const session = await requireAdmin();
-    const [bandwidth, { services, source }] = await Promise.all([
-      getProvisioner().listBandwidth(session),
+    const [bw, { services, source }] = await Promise.all([
+      listAdminBandwidth(session),
       listAdminServerServices(session),
     ]);
-    return jsonOk({ bandwidth, services, servicesSource: source });
+    return jsonOk({
+      bandwidth: bw.rows,
+      bandwidthSource: bw.source,
+      services,
+      servicesSource: source,
+    });
   } catch (err) {
     return handleApiError(err);
   }

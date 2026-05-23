@@ -1,11 +1,19 @@
 import type { Role } from "../types";
 import type {
+  BandwidthRow,
   ExtraAdmin,
   GlobalFeature,
   ServerTemplate,
   S3Bucket,
   S3File,
+  ServerService,
 } from "../virtualmin";
+import {
+  controlNativeServerService,
+  listNativeBandwidth,
+  listNativeServerServices,
+  probeHostServicesSudo,
+} from "../host-services-sudo";
 import { runProvisioningHelper } from "./native-exec";
 
 type Actor = { role: Role; domains: string[] };
@@ -155,6 +163,37 @@ export type NativeServerStatus = {
   services: { name: string; status: string }[];
   nginxTest: string;
 };
+
+const HOST_HINT =
+  "sudo bash /opt/qadbak/scripts/configure-host-services-sudo.sh";
+
+async function requireHostServices(): Promise<void> {
+  if (!(await probeHostServicesSudo())) {
+    throw new Error(`Host services sudo not configured. Run: ${HOST_HINT}`);
+  }
+}
+
+export async function listBandwidthIndependent(
+  _actor: Actor,
+): Promise<BandwidthRow[]> {
+  await requireHostServices();
+  return listNativeBandwidth();
+}
+
+export async function listServerStatusesIndependent(
+  _actor: Actor,
+): Promise<ServerService[]> {
+  await requireHostServices();
+  return listNativeServerServices();
+}
+
+export async function restartServerIndependent(
+  service: string,
+  _actor: Actor,
+): Promise<void> {
+  await requireHostServices();
+  await controlNativeServerService(service, "restart");
+}
 
 export async function getNativeServerStatus(): Promise<NativeServerStatus> {
   const r = await runProvisioningHelper("admin-server-status");

@@ -25,8 +25,12 @@ for f in ssl dns mail db backup cron aliases redirects features logs; do
 done
 
 echo ""
-echo "Still needs hybrid fallback or future native module:"
-echo "  php, ftp, proxies, protected, scripts, limits, lifecycle, mail-settings, domain-create, …"
+echo "Admin (independent):"
+echo "  [x] services + bandwidth — host-services-helper (configure-host-services-sudo.sh)"
+echo "  [x] host metrics — /api/admin/host-metrics"
+echo ""
+echo "Enable in QADBAK_NATIVE_FEATURES when not using apply-phase8-independent.sh:"
+echo "  php, ftp, proxies, protected, scripts, limits, lifecycle, mail-settings, …"
 
 if [[ "${QADBAK_PROVISIONER:-}" == "native" && "${QADBAK_VIRTUALMIN_FALLBACK:-}" == "false" ]]; then
   echo ""

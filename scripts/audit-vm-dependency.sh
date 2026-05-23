@@ -66,6 +66,7 @@ if [[ "$INDEPENDENT" -eq 1 ]]; then
   echo "  [x] check-config / config-system — nginx -t + systemctl"
   echo "  [x] list-s3-buckets / files / upload — AWS CLI (aws on PATH)"
   echo "  [x] vm-status API — native service probe (no VIRTUALMIN_URL)"
+  echo "  [x] listBandwidth / listServerStatuses / restartServer — host-services-helper"
   echo ""
   echo "UI / nginx:"
   echo "  [x] Webmin tab hidden (QADBAK_DISABLE_WEBMIN or independent)"

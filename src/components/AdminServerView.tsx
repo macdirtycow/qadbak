@@ -8,10 +8,14 @@ export function AdminServerView({
   initialBandwidth,
   initialServices,
   initialError,
+  servicesSource = "native",
+  bandwidthSource = "native",
 }: {
   initialBandwidth: BandwidthRow[];
   initialServices: ServerService[];
   initialError: string;
+  servicesSource?: "native" | "virtualmin";
+  bandwidthSource?: "native" | "virtualmin";
 }) {
   const [bandwidth] = useState(initialBandwidth);
   const [services, setServices] = useState(initialServices);
@@ -45,8 +49,16 @@ export function AdminServerView({
       <Card>
         <h2 className="text-lg font-medium text-white">Services</h2>
         <p className="mt-1 text-sm text-panel-muted">
-          nginx, Apache, mail, DNS, database — via systemctl when configured, else VirtualMin API.
+          {servicesSource === "native"
+            ? "nginx, Apache, Postfix, Dovecot, BIND, MariaDB, PHP-FPM — systemctl (Qadbak host-services helper)."
+            : "nginx, Apache, mail, DNS, database — via VirtualMin API."}
         </p>
+        {services.length === 0 && !error && (
+          <p className="mt-3 text-sm text-amber-200/90">
+            No stack units detected. Install services or run{" "}
+            <code className="text-xs">sudo bash scripts/configure-host-services-sudo.sh</code>.
+          </p>
+        )}
         <ul className="mt-4 divide-y divide-panel-border">
           {services.map((s) => (
             <li
@@ -89,8 +101,13 @@ export function AdminServerView({
         </ul>
       </Card>
       <Card className="overflow-hidden p-0">
-        <h2 className="px-6 pt-6 text-lg font-medium text-white">Bandwidth</h2>
-        <table className="mt-4 w-full text-left text-sm">
+        <h2 className="px-6 pt-6 text-lg font-medium text-white">Disk per domain</h2>
+        <p className="px-6 pb-2 text-sm text-panel-muted">
+          {bandwidthSource === "native"
+            ? "Home directory size (MB) from du — limits from Qadbak registry / limits.json."
+            : "VirtualMin bandwidth reporting."}
+        </p>
+        <table className="mt-2 w-full text-left text-sm">
           <thead className="border-t border-panel-border text-panel-muted">
             <tr>
               <th className="px-6 py-3">Domain</th>
