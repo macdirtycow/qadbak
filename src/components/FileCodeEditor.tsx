@@ -83,7 +83,7 @@ export function FileCodeEditor({
             </Button>
           )}
           <Button variant="ghost" onClick={onClose}>
-            Sluiten
+            Close
           </Button>
         </div>
       </div>

@@ -1,15 +1,15 @@
 # Qadbak installer
 
-One-shot setup for **Ubuntu 22.04**: VirtualMin GPL + Qadbak panel + nginx + TLS.
+One-shot setup for **Ubuntu 22.04**: native hosting stack + Qadbak panel (no VirtualMin/Webmin on the server).
 
 ## Requirements
 
 - Fresh or existing Ubuntu 22.04 VPS
 - Root access
 - DNS **A record** for panel hostname → server IP
-- 2+ GB RAM recommended for VirtualMin
+- 1+ GB RAM (2+ GB recommended)
 
-## Run
+## Run (default — native)
 
 ```bash
 git clone https://github.com/macdirtycow/qadbak.git
@@ -17,62 +17,57 @@ cd qadbak
 sudo bash install/qadbak-install.sh
 ```
 
-**Without VirtualMin on the same machine (phase 6):**
-
-```bash
-sudo bash install/qadbak-install-native.sh
-```
-
-See [docs/QADBAK-NATIVE-INSTALL.md](../docs/QADBAK-NATIVE-INSTALL.md). Existing VirtualMin VPS: no reinstall — [docs/MIGRATE-FROM-VIRTUALMIN.md](../docs/MIGRATE-FROM-VIRTUALMIN.md).
+This installs nginx, Apache, MariaDB, Postfix, Dovecot, BIND, and configures **independent native** provisioning (`QADBAK_PROVISIONER=native`). See [docs/QADBAK-NATIVE-INSTALL.md](../docs/QADBAK-NATIVE-INSTALL.md).
 
 You will be prompted for:
 
 1. **Panel hostname** — where users open Qadbak (e.g. `panel.example.com`)
-2. **Webmin root password** — existing or new VirtualMin root password
-3. **Qadbak admin** username and password
-4. **Certbot email** for Let's Encrypt
-5. **Optional demo client user** (RBAC testing)
-6. **Optional UFW** (SSH + 80 + 443)
+2. **Qadbak admin** username and password
+3. **Certbot email** (optional)
+4. **Optional demo client user** (RBAC testing)
+5. **Optional remote VirtualMin API** (hybrid only — leave blank for fully independent)
 
-Runs **post-install verification** at the end: preflight, VirtualMin API, **Playwright E2E** on the live panel (same run, not a separate step).
+Runs **post-install verification** at the end (preflight, health, Playwright E2E).
 
-## What it installs
+## Legacy: VirtualMin + Webmin on the same machine
+
+Only if you need the old GPL stack:
+
+```bash
+sudo bash install/qadbak-install.sh
+# answer y to "legacy VirtualMin installer"
+# or:
+sudo bash install/qadbak-install-virtualmin.sh
+```
+
+Migrating from an existing VirtualMin server: [docs/MIGRATE-FROM-VIRTUALMIN.md](../docs/MIGRATE-FROM-VIRTUALMIN.md).
+
+## What the native installer installs
 
 | Component | Location |
 |-----------|----------|
-| **Node.js 20 + npm** | NodeSource apt repo (automatic — nothing to install by hand) |
-| **pm2** | `npm install -g pm2` if not present |
-| VirtualMin | Official `virtualmin-install.sh` (includes Webmin) |
-| Qadbak app | `/opt/qadbak` — `npm install` + `npm run build` |
-| Process manager | `pm2` as user `qadbak` |
-| Reverse proxy | nginx from `deploy/nginx-qadbak.conf` |
+| **Node.js 20 + npm** | NodeSource apt repo |
+| **pm2** | global npm |
+| **Hosting stack** | `scripts/install-native-stack.sh` |
+| **Qadbak app** | `/opt/qadbak` — `npm install` + `npm run build` |
+| **Process manager** | `pm2` as user `qadbak` |
+| **Reverse proxy** | nginx from `deploy/nginx-qadbak.conf` |
+
+Does **not** install VirtualMin or Webmin.
 
 ## After install
 
 ```bash
 sudo -u qadbak pm2 logs qadbak
-curl -sI "https://YOUR_PANEL_HOST/login"
+curl -s "http://127.0.0.1:3000/api/health"
 ```
 
 ## Re-run / update
 
-Safe to run `git pull` in `/opt/qadbak` then:
-
 ```bash
-sudo -u qadbak bash -c 'cd /opt/qadbak && npm install && npm run build && pm2 restart qadbak'
+sudo bash /opt/qadbak/scripts/update-qadbak.sh
 ```
-
-## Test on clean VM
-
-Use a separate Ubuntu 22.04 VPS (not production). Verify:
-
-- [ ] `https://PANEL_HOST/login` loads
-- [ ] `npm run test-api` as `qadbak` user succeeds
-- [ ] Domain list matches VirtualMin
-- [ ] `/admin/status` embed loads
 
 ## Environment
 
-Installer writes `/opt/qadbak/.env.local` including `QADBAK_PUBLIC_HOST` for branding metadata.
-
-`VIRTUALMIN_TLS_INSECURE=true` is set when VirtualMin uses a self-signed certificate on localhost (scoped to API calls only). Prefer a valid Webmin certificate in production — see `docs/PRODUCTION-HARDENING.md`.
+Installer writes `/opt/qadbak/.env.local` with `QADBAK_PUBLIC_HOST`, `QADBAK_PROVISIONER=native`, and `QADBAK_NATIVE_FEATURES=…` for independent mode.

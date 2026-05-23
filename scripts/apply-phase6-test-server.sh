@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Phase 6 on an EXISTING VirtualMin test VPS (e.g. siccamanagement.nl on Contabo).
+# Phase 6 on an EXISTING VirtualMin VPS (hybrid: keep VM, add native stack + helpers).
 # Keeps VirtualMin as provisioning engine; adds native stack packages + all helpers.
 # Does NOT run virtualmin-install.sh or remove Webmin.
 #
@@ -24,7 +24,7 @@ if [[ -f "$QADBAK_DIR/.env.local" ]]; then
 fi
 export PANEL_HOST="${PANEL_HOST:-${QADBAK_PUBLIC_HOST:-$(hostname -f)}}"
 export SERVER_FQDN="${SERVER_FQDN:-$(hostname -f)}"
-export DETECT_DOMAIN="${DETECT_DOMAIN:-siccamanagement.nl}"
+export DETECT_DOMAIN="${DETECT_DOMAIN:-}"
 
 set_env_key() {
   local key="$1" val="$2" file="$QADBAK_DIR/.env.local"
@@ -70,7 +70,9 @@ done
 
 echo "==> .env.local markers (phase 6 hybrid test server)"
 set_env_key "QADBAK_INSTALL_MODE" "hybrid"
-set_env_key "QADBAK_TEST_SERVER" "siccamanagement.nl"
+if [[ -n "$DETECT_DOMAIN" ]]; then
+  set_env_key "QADBAK_TEST_SERVER" "$DETECT_DOMAIN"
+fi
 if [[ -n "$DETECT_DOMAIN" && "$DETECT_DOMAIN" =~ \. ]]; then
   set_env_key "TEST_DOMAIN" "$DETECT_DOMAIN"
 fi
@@ -100,5 +102,5 @@ sudo -u "$QADBAK_USER" bash "$QADBAK_DIR/scripts/v1-test-preflight.sh" || true
 echo ""
 echo "Done — phase 6 applied on this test VPS (VirtualMin + native helpers)."
 echo "  Panel: check Server admin → Stack config, Status, Services"
-echo "  Domain: https://your-panel/domains/siccamanagement.nl (or first VM domain)"
+echo "  Domain: open Domains in the panel (first VirtualMin or native domain)"
 echo "  Webmin :10000 remains break-glass only — daily work in Qadbak."

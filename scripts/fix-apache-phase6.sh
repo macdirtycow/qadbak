@@ -32,4 +32,4 @@ echo "==> Reload nginx"
 nginx -t && systemctl reload nginx
 
 echo "OK — Apache should listen only on 127.0.0.1:8080"
-echo "    Test: curl -sI -H 'Host: siccamanagement.nl' http://127.0.0.1/ | head -5"
+echo "    Test: curl -sI -H 'Host: YOUR_DOMAIN' http://127.0.0.1/ | head -5"

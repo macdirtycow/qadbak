@@ -81,7 +81,7 @@ export default function LoginPage() {
           </Button>
         </form>
         <p className="mt-6 text-xs text-panel-muted">
-          Default: <strong className="text-slate-300">admin</strong> / <strong className="text-slate-300">changeme</strong> (or klant / changeme).
+          Default: <strong className="text-slate-300">admin</strong> / <strong className="text-slate-300">changeme</strong> (or client / changeme).
           Local: <code className="text-slate-400">VIRTUALMIN_MOCK=true</code> and{" "}
           <code className="text-slate-400">QADBAK_COOKIE_SECURE=false</code> in .env.local, then restart the server.
         </p>

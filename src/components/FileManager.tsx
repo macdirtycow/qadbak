@@ -343,7 +343,7 @@ export function FileManager({
                     New directory
                   </Button>
                   <Button variant="ghost" disabled={loading} onClick={() => refresh()}>
-                    Vernieuwen
+                    Refresh
                   </Button>
                 </div>
               </div>
@@ -440,7 +440,7 @@ export function FileManager({
                               )
                             }
                           >
-                            {entry.editable === false ? "Bekijken" : "Bewerken"}
+                            {entry.editable === false ? "View" : "Edit"}
                           </Button>
                         )}
                         {entry.type === "file" &&
@@ -480,7 +480,7 @@ export function FileManager({
                   Create
                 </Button>
                 <Button type="button" variant="ghost" onClick={() => setShowNewDir(false)}>
-                  Annuleren
+                  Cancel
                 </Button>
               </form>
             </Card>
@@ -500,7 +500,7 @@ export function FileManager({
                   Create and edit
                 </Button>
                 <Button type="button" variant="ghost" onClick={() => setShowNewFile(false)}>
-                  Annuleren
+                  Cancel
                 </Button>
               </form>
             </Card>

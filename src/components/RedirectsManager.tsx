@@ -94,7 +94,7 @@ export function RedirectsManager({
         <h2 className="text-lg font-medium text-white">Add redirect</h2>
         <form onSubmit={create} className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <Label htmlFor="path">Pad</Label>
+            <Label htmlFor="path">Path</Label>
             <Input id="path" value={path} onChange={(e) => setPath(e.target.value)} required />
           </div>
           <div>
@@ -110,7 +110,7 @@ export function RedirectsManager({
               onChange={(e) => setRtype(e.target.value)}
             >
               <option value="301">301 permanent</option>
-              <option value="302">302 tijdelijk</option>
+              <option value="302">302 temporary</option>
             </select>
           </div>
           <div className="flex items-end">
@@ -123,7 +123,7 @@ export function RedirectsManager({
         <table className="w-full text-left text-sm">
           <thead className="border-b border-panel-border bg-panel-bg/50 text-panel-muted">
             <tr>
-              <th className="px-6 py-3">Pad</th>
+              <th className="px-6 py-3">Path</th>
               <th className="px-6 py-3">Destination</th>
               <th className="px-6 py-3">Type</th>
               <th className="px-6 py-3 text-right">Actions</th>

@@ -8,9 +8,9 @@
   },
   {
     "id": "client-1",
-    "username": "klant",
+    "username": "client",
     "passwordHash": "$2b$10$pPmFCHsj/Cpttg2LpVWv6uxGGWu.kapqp42WpuH5QArnGJhe/Ecc2",
     "role": "client",
-    "domains": ["voorbeeld.nl"]
+    "domains": ["example.com"]
   }
 ]

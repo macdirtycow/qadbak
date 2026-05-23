@@ -248,7 +248,7 @@ export function EmailManager({
               Save
             </Button>
             <Button variant="ghost" onClick={() => setResetUser(null)}>
-              Annuleren
+              Cancel
             </Button>
           </div>
         </Card>

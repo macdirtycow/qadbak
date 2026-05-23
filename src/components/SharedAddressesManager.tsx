@@ -111,7 +111,7 @@ export function SharedAddressesManager({
         <table className="w-full text-left text-sm">
           <thead className="border-b border-panel-border bg-panel-bg/50 text-panel-muted">
             <tr>
-              <th className="px-6 py-3">Adres</th>
+              <th className="px-6 py-3">Address</th>
               <th className="px-6 py-3">Users</th>
               {isAdmin && <th className="px-6 py-3 text-right">Actions</th>}
             </tr>

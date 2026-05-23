@@ -162,7 +162,7 @@ export function ConfirmDialog({
         />
         <div className="mt-6 flex justify-end gap-2">
           <Button variant="ghost" onClick={onCancel} disabled={loading}>
-            Annuleren
+            Cancel
           </Button>
           <Button
             variant="danger"

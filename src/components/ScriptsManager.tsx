@@ -148,7 +148,7 @@ export function ScriptsManager({
                 onChange={(e) => setInstallScript(e.target.value)}
                 required
               >
-                <option value="">Kies…</option>
+                <option value="">Choose…</option>
                 {available.map((s) => (
                   <option key={s.name} value={s.name}>
                     {s.name} {s.version ? `(${s.version})` : ""}
@@ -157,7 +157,7 @@ export function ScriptsManager({
               </select>
             </div>
             <div>
-              <Label>Map</Label>
+              <Label>Directory</Label>
               <Input
                 value={installPath}
                 onChange={(e) => setInstallPath(e.target.value)}

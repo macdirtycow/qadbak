@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const ADMIN = { user: "admin", pass: "changeme" };
-const CLIENT = { user: "klant", pass: "changeme" };
+const CLIENT = { user: "client", pass: "changeme" };
 
 async function login(
   page: import("@playwright/test").Page,
@@ -49,7 +49,7 @@ test.describe("admin", () => {
   test("login and see mock domains on dashboard", async ({ page }) => {
     await login(page, ADMIN.user, ADMIN.pass);
     await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "voorbeeld.nl" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "example.com" })).toBeVisible();
     await expect(page.getByRole("link", { name: "demo.test" })).toBeVisible();
   });
 
@@ -57,7 +57,7 @@ test.describe("admin", () => {
     await login(page, ADMIN.user, ADMIN.pass);
     await page.goto("/domains");
     await expect(page.getByRole("heading", { name: "Domains" })).toBeVisible();
-    await expect(page.getByText("voorbeeld.nl")).toBeVisible();
+    await expect(page.getByText("example.com")).toBeVisible();
   });
 
   test("server admin area loads", async ({ page }) => {
@@ -70,7 +70,7 @@ test.describe("admin", () => {
 test.describe("client RBAC", () => {
   test("sees only assigned domain", async ({ page }) => {
     await login(page, CLIENT.user, CLIENT.pass);
-    await expect(page.getByRole("link", { name: "voorbeeld.nl" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "example.com" })).toBeVisible();
     await expect(page.getByRole("link", { name: "demo.test" })).toHaveCount(0);
   });
 

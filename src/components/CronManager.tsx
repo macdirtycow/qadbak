@@ -88,7 +88,7 @@ export function CronManager({
     <div className="space-y-6">
       <DomainPageHeader
         domain={domain}
-        title="Cron-taken"
+        title="Cron jobs"
         description="Scheduled commands (cron syntax: min hour day month weekday)"
       />
       {error && <Alert>{error}</Alert>}

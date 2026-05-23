@@ -80,7 +80,7 @@ export function AdminResellersView({
       <Card>
         <h2 className="text-lg font-medium text-white">Create reseller</h2>
         <form onSubmit={create} className="mt-4 flex flex-wrap gap-2">
-          <Input placeholder="naam" value={name} onChange={(e) => setName(e.target.value)} required />
+          <Input placeholder="name" value={name} onChange={(e) => setName(e.target.value)} required />
           <Input type="password" placeholder="password" value={pass} onChange={(e) => setPass(e.target.value)} required />
           <Button type="submit" disabled={loading}>Create</Button>
         </form>

@@ -19,7 +19,7 @@ export default function PhasesPage() {
       <div>
         <h1 className="text-2xl font-semibold text-white">Integration phases</h1>
         <p className="mt-1 text-panel-muted">
-          Full VirtualMin coverage in successive releases. Currently active: phase{" "}
+          Native panel features shipped in successive releases. Currently active: phase{" "}
           {IMPLEMENTED_PHASE}.
         </p>
         <p className="mt-2 text-sm text-panel-muted">

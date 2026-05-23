@@ -124,7 +124,7 @@ export const WEBMIN_ADMIN_MODULES: WebminModule[] = [
   {
     id: "dovecot",
     label: "Dovecot",
-    description: "IMAP/POP3-server",
+    description: "IMAP/POP3 server",
     path: "/dovecot/",
     category: "Email",
     adminOnly: true,
@@ -140,7 +140,7 @@ export const WEBMIN_ADMIN_MODULES: WebminModule[] = [
   {
     id: "postgresql",
     label: "PostgreSQL",
-    description: "PostgreSQL-databases",
+    description: "PostgreSQL databases",
     path: "/postgresql/",
     category: "Databases",
     adminOnly: true,
@@ -187,7 +187,7 @@ export const WEBMIN_ADMIN_MODULES: WebminModule[] = [
   },
   {
     id: "sshd",
-    label: "SSH-server",
+    label: "SSH server",
     description: "SSH configuration",
     path: "/sshd/",
     category: "Security",

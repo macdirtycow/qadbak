@@ -344,7 +344,7 @@ export function BackupsManager({
                 id="restore-source"
                 className="mt-1"
                 placeholder={
-                  nativeMode ? "example.nl-manual-2026-05-20.tar.gz" : "/backup/voorbeeld.nl.tgz"
+                  nativeMode ? "example.com-manual-2026-05-20.tar.gz" : "/backup/example.com.tgz"
                 }
                 value={restoreSource}
                 onChange={(e) => setRestoreSource(e.target.value)}

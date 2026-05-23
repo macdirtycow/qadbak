@@ -98,7 +98,7 @@ export function CreateDomainForm({
             id="domain"
             value={domain}
             onChange={(e) => setDomain(e.target.value)}
-            placeholder={type === "sub" ? "shop.voorbeeld.nl" : "voorbeeld.nl"}
+            placeholder={type === "sub" ? "shop.example.com" : "example.com"}
             required
           />
         </div>

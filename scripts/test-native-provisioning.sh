@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="${QADBAK_DIR:-/opt/qadbak}"
-DOMAIN="${TEST_DOMAIN:-siccamanagement.nl}"
+DOMAIN="${TEST_DOMAIN:?Set TEST_DOMAIN=your-domain.example.com}"
 WRAPPER="$ROOT/scripts/run-provisioning-helper.sh"
 
 [[ -f "$ROOT/.env.local" ]] && source "$ROOT/.env.local"

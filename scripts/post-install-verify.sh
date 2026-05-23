@@ -27,11 +27,15 @@ else
   echo "  FAIL /api/health"
   exit 1
 fi
-if echo "$HEALTH" | grep -q '"mock":true'; then
+PROV="$(echo "$HEALTH" | python3 -c "import sys,json; print(json.load(sys.stdin).get('provisioner',''))" 2>/dev/null || true)"
+if [[ "$PROV" == "native" ]]; then
+  echo "  OK   provisioner=native"
+elif echo "$HEALTH" | grep -q '"mock":true'; then
   echo "  FAIL health still in mock mode on server" >&2
   exit 1
+else
+  echo "  OK   live mode (not mock)"
 fi
-echo "  OK   live mode (not mock)"
 
 if [[ -f "$ROOT/.env.local" ]]; then
   # shellcheck disable=SC1091
@@ -54,5 +58,5 @@ echo ""
 echo "============================================"
 echo " Post-install + E2E: PASSED"
 echo " Optional manual checks: docs/E2E-CHECKLIST.md"
-echo "   (create test domain, mail, DNS — after VirtualMin setup)"
+echo "   (create test domain, mail, DNS in the panel)"
 echo "============================================"

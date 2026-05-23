@@ -30,10 +30,10 @@ async function ensureUsersFile(): Promise<void> {
       },
       {
         id: "client-1",
-        username: "klant",
+        username: "client",
         passwordHash: hash,
         role: "client",
-        domains: ["voorbeeld.nl"],
+        domains: ["example.com"],
       },
     ];
     await writeFile(USERS_PATH, JSON.stringify(seed, null, 2), "utf8");

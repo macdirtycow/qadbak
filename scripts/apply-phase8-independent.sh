@@ -12,7 +12,7 @@ QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
 
 FEATURES="${1:-ssl,dns,mail,db,domain,backup,cron,aliases,redirects,features,logs,php,ftp,limits,lifecycle,mail-settings,mail-logs,imap,protected,shared,proxies,scripts,security,resellers}"
 
-echo "==> Phase 8 INDEPENDENT (geen VirtualMin API fallback)"
+echo "==> Phase 8 INDEPENDENT (no VirtualMin API fallback)"
 bash "$QADBAK_DIR/scripts/apply-phase8-native-phase.sh" "$FEATURES" independent
 
 echo "==> Panel nginx + terminals"
@@ -29,5 +29,5 @@ echo ""
 echo "OK — Phase 8 INDEPENDENT"
 echo "  provisioner=native, virtualminFallback=false"
 echo "  native: ssl,dns,mail,db,domain,backup,cron,aliases,redirects,features,logs,php,ftp,limits,lifecycle,mail-settings,mail-logs,imap,protected,shared,proxies,scripts,security,resellers"
-echo "  Webmin embeds uit (QADBAK_DISABLE_WEBMIN=true)"
-echo "  apt remove webmin: pas na panel-tests + snapshot"
+echo "  Webmin embeds off (QADBAK_DISABLE_WEBMIN=true)"
+echo "  apt remove webmin: only after panel tests + snapshot"

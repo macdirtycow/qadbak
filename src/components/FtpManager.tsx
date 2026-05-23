@@ -155,7 +155,7 @@ export function FtpManager({
           <div className="mt-2 flex gap-2">
             <Input type="password" value={resetPass} onChange={(e) => setResetPass(e.target.value)} />
             <Button onClick={savePassword} disabled={!resetPass}>Save</Button>
-            <Button variant="ghost" onClick={() => setResetUser(null)}>Annuleren</Button>
+            <Button variant="ghost" onClick={() => setResetUser(null)}>Cancel</Button>
           </div>
         </Card>
       )}

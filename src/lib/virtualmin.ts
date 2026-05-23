@@ -157,17 +157,17 @@ function mapDomainRow(row: Record<string, unknown>): VirtualMinDomain {
 
 const MOCK_DOMAINS: VirtualMinDomain[] = [
   {
-    name: "voorbeeld.nl",
+    name: "example.com",
     disabled: "0",
     plan: "Standard",
-    user: "voorbeeld",
+    user: "example",
     disk_used: "120",
     disk_limit: "1000",
   },
   {
     name: "demo.test",
     disabled: "1",
-    plan: "Basis",
+    plan: "Basic",
     user: "demo",
     disk_used: "45",
     disk_limit: "500",
@@ -180,7 +180,7 @@ const MOCK_USERS: VirtualMinMailbox[] = [
 ];
 
 const MOCK_DATABASES: VirtualMinDatabase[] = [
-  { name: "voorbeeld_wp", type: "mysql", host: "localhost" },
+  { name: "example_wp", type: "mysql", host: "localhost" },
 ];
 
 /**
@@ -478,16 +478,16 @@ function mockCall(
       return { status: "ok", domain: params.domain };
     case "list-users":
       if (params.ftp === "1") {
-        return [{ user: "ftpuser", ftp: "1", dir: `/home/${(params.domain ?? "voorbeeld").split(".")[0]}`, quota: "500" }];
+        return [{ user: "ftpuser", ftp: "1", dir: `/home/${(params.domain ?? "example").split(".")[0]}`, quota: "500" }];
       }
-      if (domain && domain !== "voorbeeld.nl") return [];
+      if (domain && domain !== "example.com") return [];
       return MOCK_USERS;
     case "create-user":
     case "modify-user":
     case "delete-user":
       return { status: "ok" };
     case "list-databases":
-      if (domain && domain !== "voorbeeld.nl") return [];
+      if (domain && domain !== "example.com") return [];
       return MOCK_DATABASES;
     case "create-database":
     case "modify-database-pass":
@@ -521,8 +521,8 @@ function mockCall(
       return {
         records: [
           { name: "@", type: "A", value: "192.0.2.1", ttl: "3600" },
-          { name: "www", type: "CNAME", value: params.domain ?? "voorbeeld.nl", ttl: "3600" },
-          { name: "@", type: "MX", value: "mail." + (params.domain ?? "voorbeeld.nl"), ttl: "3600", priority: "10" },
+          { name: "www", type: "CNAME", value: params.domain ?? "example.com", ttl: "3600" },
+          { name: "@", type: "MX", value: "mail." + (params.domain ?? "example.com"), ttl: "3600", priority: "10" },
         ],
       };
     case "modify-dns":
@@ -540,8 +540,8 @@ function mockCall(
     case "list-simple-aliases":
     case "list-aliases":
       return [
-        { from: "info", to: "admin@" + (params.domain ?? "voorbeeld.nl") },
-        { from: "sales", to: "support@" + (params.domain ?? "voorbeeld.nl") },
+        { from: "info", to: "admin@" + (params.domain ?? "example.com") },
+        { from: "sales", to: "support@" + (params.domain ?? "example.com") },
       ];
     case "create-simple-alias":
     case "create-alias":
@@ -549,7 +549,7 @@ function mockCall(
       return { status: "ok" };
     case "list-redirects":
       return [
-        { path: "/old", dest: "https://" + (params.domain ?? "voorbeeld.nl") + "/new", type: "301" },
+        { path: "/old", dest: "https://" + (params.domain ?? "example.com") + "/new", type: "301" },
       ];
     case "create-redirect":
     case "delete-redirect":
@@ -671,13 +671,13 @@ function mockCall(
       return { status: "ok" };
     case "list-shared-addresses":
       return [
-        { address: "team@" + (params.domain ?? "voorbeeld.nl"), users: "info,support" },
+        { address: "team@" + (params.domain ?? "example.com"), users: "info,support" },
       ];
     case "create-shared-address":
     case "delete-shared-address":
       return { status: "ok" };
     case "list-bandwidth":
-      return [{ domain: "voorbeeld.nl", used: "1200", limit: "10000" }];
+      return [{ domain: "example.com", used: "1200", limit: "10000" }];
     case "list-server-statuses":
       return [
         { service: "apache", status: "running" },
@@ -695,7 +695,7 @@ function mockCall(
     case "list-plans":
       return [
         { name: "Standard", id: "0", quota: "1000" },
-        { name: "Basis", id: "1", quota: "500" },
+        { name: "Basic", id: "1", quota: "500" },
       ];
     case "create-plan":
     case "modify-plan":
@@ -731,7 +731,7 @@ function mockCall(
       ];
     case "list-s3-files":
       return [
-        { name: "voorbeeld.nl.tgz", size: "1200000000", modified: "2026-05-01" },
+        { name: "example.com.tgz", size: "1200000000", modified: "2026-05-01" },
         { name: "shop.nl.tgz", size: "450000000", modified: "2026-04-15" },
       ];
     case "upload-s3-file":

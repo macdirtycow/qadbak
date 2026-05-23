@@ -42,7 +42,7 @@ Open http://localhost:3000 — on first start, `data/users.json` is created from
 | User | Default password | Role |
 |------|------------------|------|
 | `admin` | `changeme` | administrator |
-| `klant` | `changeme` | client (mock: `voorbeeld.nl`) |
+| `client` | `changeme` | client (mock: `example.com`) |
 
 **Change these passwords** before you share or deploy anything:
 

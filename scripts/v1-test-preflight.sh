@@ -25,8 +25,10 @@ else
   fail ".env.local missing (copy from .env.test-server.example)"
 fi
 
-if [[ "${VIRTUALMIN_MOCK:-true}" == "true" ]]; then
-  fail "VIRTUALMIN_MOCK=true — set false on test server"
+if [[ "${QADBAK_PROVISIONER:-}" == "native" ]]; then
+  pass "QADBAK_PROVISIONER=native (no VirtualMin mock check)"
+elif [[ "${VIRTUALMIN_MOCK:-true}" == "true" ]]; then
+  fail "VIRTUALMIN_MOCK=true — set false on test server or use QADBAK_PROVISIONER=native"
 else
   pass "VIRTUALMIN_MOCK=false"
 fi

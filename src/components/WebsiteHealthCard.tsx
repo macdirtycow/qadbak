@@ -191,7 +191,7 @@ export function WebsiteHealthCard({
       {health && !repairOk && !loading && (
         <div className="mt-4">
           <Alert>
-            Repair-sudo werkt nog niet. Op de server (als root):{" "}
+            Repair sudo is not configured yet. On the server (as root):{" "}
             <code className="text-white">
               cd /opt/qadbak && git pull && sudo bash scripts/configure-domain-repair-sudo.sh
             </code>

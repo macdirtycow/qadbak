@@ -95,7 +95,7 @@ export function ProxiesManager({
           <h2 className="text-lg font-medium text-white">Add proxy</h2>
           <form onSubmit={create} className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
-              <Label>Pad</Label>
+              <Label>Path</Label>
               <Input value={path} onChange={(e) => setPath(e.target.value)} />
             </div>
             <div>
@@ -113,7 +113,7 @@ export function ProxiesManager({
         <table className="w-full text-left text-sm">
           <thead className="border-b border-panel-border bg-panel-bg/50 text-panel-muted">
             <tr>
-              <th className="px-6 py-3">Pad</th>
+              <th className="px-6 py-3">Path</th>
               <th className="px-6 py-3">Destination</th>
               {isAdmin && <th className="px-6 py-3 text-right">Actions</th>}
             </tr>
