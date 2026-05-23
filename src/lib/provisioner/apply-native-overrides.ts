@@ -66,6 +66,8 @@ export function applyNativeOverrides<T extends Provisioner>(base: T): T {
     out.listPhpDirectories = native.listPhpDirectoriesNative;
     out.listPhpIni = native.listPhpIniNative;
     out.setPhpDirectory = native.setPhpDirectoryNative;
+    out.modifyPhpIni = native.modifyPhpIniNative;
+    out.deletePhpDirectory = native.deletePhpDirectoryNative;
   }
   if (nativeFeatureEnabled("ftp")) {
     out.listFtpAccounts = native.listFtpAccountsSafeNative;

@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { isIndependentMode } from "./provisioner/native-stub";
 
 export type NodeRole = "panel" | "provisioner";
 
@@ -17,28 +18,39 @@ const SERVERS_FILE = path.join(process.cwd(), "data", "servers.json");
 function defaultLocalNode(): QadbakNode {
   const host = process.env.QADBAK_PUBLIC_HOST?.trim() || "local";
   const agentPort = process.env.QADBAK_NODE_AGENT_PORT?.trim() || "9100";
-  const vmUrl =
-    process.env.VIRTUALMIN_URL?.trim() ||
-    "https://127.0.0.1:10000/virtual-server/remote.cgi";
-  return {
+  const node: QadbakNode = {
     id: "local",
     name: host,
     roles: ["panel", "provisioner"],
     agentUrl: `http://127.0.0.1:${agentPort}`,
-    virtualminUrl: vmUrl,
     isDefault: true,
   };
+  if (!isIndependentMode()) {
+    node.virtualminUrl =
+      process.env.VIRTUALMIN_URL?.trim() ||
+      "https://127.0.0.1:10000/virtual-server/remote.cgi";
+  }
+  return node;
+}
+
+/** Hide legacy VirtualMin URL when running without VM API. */
+export function sanitizeNodeForDisplay(node: QadbakNode): QadbakNode {
+  if (!isIndependentMode() || !node.virtualminUrl) return node;
+  const { virtualminUrl: _removed, ...rest } = node;
+  return rest;
 }
 
 export async function loadNodes(): Promise<QadbakNode[]> {
   try {
     const raw = await fs.readFile(SERVERS_FILE, "utf8");
     const parsed = JSON.parse(raw) as QadbakNode[];
-    if (!Array.isArray(parsed) || parsed.length === 0) return [defaultLocalNode()];
-    return parsed;
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return [sanitizeNodeForDisplay(defaultLocalNode())];
+    }
+    return parsed.map(sanitizeNodeForDisplay);
   } catch (e) {
     const code = (e as NodeJS.ErrnoException).code;
-    if (code === "ENOENT") return [defaultLocalNode()];
+    if (code === "ENOENT") return [sanitizeNodeForDisplay(defaultLocalNode())];
     throw e;
   }
 }
