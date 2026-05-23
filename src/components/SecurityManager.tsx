@@ -37,7 +37,7 @@ export function SecurityManager({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Save failed.");
-      setSuccess("Settings saved in VirtualMin.");
+      setSuccess("Settings saved on the server.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error.");
     } finally {
@@ -90,9 +90,9 @@ export function SecurityManager({
       </Card>
 
       <Alert variant="info">
-        Current status is estimated on first load. After saving, VirtualMin
-        applies this on the server. For advanced web settings use
-        &quot;Open in VirtualMin&quot; on the domain overview.
+        Spam uses SpamAssassin when installed; DKIM uses OpenDKIM keys under
+        /etc/opendkim/keys/. Settings are stored per domain and applied by Qadbak
+        native helpers.
       </Alert>
     </div>
   );

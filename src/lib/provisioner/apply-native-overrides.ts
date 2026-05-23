@@ -99,6 +99,30 @@ export function applyNativeOverrides<T extends Provisioner>(base: T): T {
     out.getMailSettings = native.getMailSettingsNative;
     out.updateMailSettings = native.updateMailSettingsNative;
   }
+  if (nativeFeatureEnabled("proxies")) {
+    out.listProxies = native.listProxiesNative;
+    out.createProxy = native.createProxyNative;
+    out.deleteProxy = native.deleteProxyNative;
+  }
+  if (nativeFeatureEnabled("scripts")) {
+    out.listAvailableScripts = native.listAvailableScriptsNative;
+    out.listInstalledScripts = native.listInstalledScriptsNative;
+    out.installScript = native.installScriptNative;
+    out.deleteInstalledScript = native.deleteInstalledScriptNative;
+  }
+  if (nativeFeatureEnabled("security")) {
+    out.getMailSecurity = native.getMailSecurityNative;
+    out.setSpamFilter = native.setSpamFilterNative;
+    out.setDkim = native.setDkimNative;
+  }
+  if (nativeFeatureEnabled("resellers")) {
+    out.listResellers = native.listResellersNative;
+    out.createReseller = native.createResellerNative;
+    out.deleteReseller = native.deleteResellerNative;
+    out.listPlans = native.listPlansNative;
+    out.createPlan = native.createPlanNative;
+    out.deletePlan = native.deletePlanNative;
+  }
 
   return out;
 }

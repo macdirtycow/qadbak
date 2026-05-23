@@ -110,6 +110,20 @@ fi
 if has shared; then
   check shared-list "$DOMAIN"
 fi
+if has proxies; then
+  check proxy-list "$DOMAIN"
+fi
+if has scripts; then
+  check script-available "$DOMAIN"
+  check script-list "$DOMAIN"
+fi
+if has security; then
+  check security-get "$DOMAIN"
+fi
+if has resellers; then
+  check reseller-list
+  check plan-list
+fi
 
 if [[ "$FAILED" -ne 0 ]]; then
   echo "Some native checks failed." >&2

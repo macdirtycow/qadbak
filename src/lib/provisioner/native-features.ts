@@ -20,6 +20,10 @@ const ALL = [
   "imap",
   "protected",
   "shared",
+  "proxies",
+  "scripts",
+  "security",
+  "resellers",
 ] as const;
 
 export type NativeFeature = (typeof ALL)[number];

@@ -10,7 +10,7 @@ set -euo pipefail
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
 [[ "$(id -u)" -eq 0 ]] || { echo "Run as root" >&2; exit 1; }
 
-FEATURES="${1:-ssl,dns,mail,db,backup,cron,aliases,redirects,features,logs,php,ftp,limits,lifecycle,mail-settings,mail-logs,imap,protected,shared}"
+FEATURES="${1:-ssl,dns,mail,db,domain,backup,cron,aliases,redirects,features,logs,php,ftp,limits,lifecycle,mail-settings,mail-logs,imap,protected,shared,proxies,scripts,security,resellers}"
 
 echo "==> Phase 8 INDEPENDENT (geen VirtualMin API fallback)"
 bash "$QADBAK_DIR/scripts/apply-phase8-native-phase.sh" "$FEATURES" independent
@@ -27,6 +27,6 @@ echo "$HEALTH" | python3 -m json.tool 2>/dev/null || echo "$HEALTH"
 echo ""
 echo "OK — Phase 8 INDEPENDENT"
 echo "  provisioner=native, virtualminFallback=false"
-echo "  native: ssl,dns,mail,db,backup,cron,aliases,redirects,features,logs,php,ftp,limits,lifecycle,mail-settings,mail-logs,imap,protected,shared"
-echo "  proxies/scripts/spam-dkim/… nog VM of toekomstige native fase"
+echo "  native: ssl,dns,mail,db,domain,backup,cron,aliases,redirects,features,logs,php,ftp,limits,lifecycle,mail-settings,mail-logs,imap,protected,shared,proxies,scripts,security,resellers"
+echo "  Webmin embeds uit (QADBAK_DISABLE_WEBMIN=true)"
 echo "  apt remove webmin: pas na panel-tests + snapshot"

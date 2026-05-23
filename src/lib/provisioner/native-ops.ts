@@ -126,11 +126,17 @@ export async function createDomainNative(
   input: CreateDomainInput,
   _actor: Actor,
 ): Promise<void> {
+  const extra = JSON.stringify({
+    type: input.type ?? "top",
+    parent: input.parent,
+    plan: input.plan,
+  });
   await runProvisioningHelper(
     "domain-create",
     input.domain,
     input.pass,
     input.user?.trim() || "",
+    extra,
   );
 }
 
@@ -496,4 +502,133 @@ export async function updateMailSettingsNative(
   _actor: Actor,
 ): Promise<void> {
   await runProvisioningHelper("mail-settings-set", domain, JSON.stringify(settings));
+}
+
+export async function listProxiesNative(
+  domain: string,
+  _actor: Actor,
+): Promise<{ path: string; dest: string; type?: string }[]> {
+  const r = await runProvisioningHelper("proxy-list", domain);
+  return (r.proxies as { path: string; dest: string; type?: string }[]) ?? [];
+}
+
+export async function createProxyNative(
+  domain: string,
+  path: string,
+  dest: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("proxy-create", domain, path, dest, "proxy");
+}
+
+export async function deleteProxyNative(
+  domain: string,
+  path: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("proxy-delete", domain, path);
+}
+
+export async function listAvailableScriptsNative(
+  domain: string,
+  _actor: Actor,
+): Promise<{ name: string; desc?: string; version?: string }[]> {
+  const r = await runProvisioningHelper("script-available", domain);
+  return (r.available as { name: string; desc?: string; version?: string }[]) ?? [];
+}
+
+export async function listInstalledScriptsNative(
+  domain: string,
+  _actor: Actor,
+): Promise<{ name: string; version?: string; path?: string; url?: string }[]> {
+  const r = await runProvisioningHelper("script-list", domain);
+  return ((r.installed as { name: string; path?: string }[]) ?? []).map((s) => ({
+    name: s.name,
+    path: s.path,
+    version: "native",
+  }));
+}
+
+export async function installScriptNative(
+  domain: string,
+  script: string,
+  installPath: string | undefined,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("script-install", domain, script, installPath ?? "public_html");
+}
+
+export async function deleteInstalledScriptNative(
+  domain: string,
+  script: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("script-delete", domain, script);
+}
+
+export async function getMailSecurityNative(
+  domain: string,
+  _actor: Actor,
+): Promise<{ spamEnabled?: boolean; dkimEnabled?: boolean }> {
+  const r = await runProvisioningHelper("security-get", domain);
+  return (r.settings as { spamEnabled?: boolean; dkimEnabled?: boolean }) ?? {};
+}
+
+export async function setSpamFilterNative(
+  domain: string,
+  enabled: boolean,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("security-spam", domain, enabled ? "true" : "false");
+}
+
+export async function setDkimNative(
+  domain: string,
+  enabled: boolean,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("security-dkim", domain, enabled ? "true" : "false");
+}
+
+export async function listResellersNative(
+  _actor: Actor,
+): Promise<{ name: string; domains?: string; limit?: string }[]> {
+  const r = await runProvisioningHelper("reseller-list");
+  return (r.resellers as { name: string; domains?: string; limit?: string }[]) ?? [];
+}
+
+export async function createResellerNative(
+  name: string,
+  pass: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("reseller-create", name, pass);
+}
+
+export async function deleteResellerNative(
+  name: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("reseller-delete", name);
+}
+
+export async function listPlansNative(
+  _actor: Actor,
+): Promise<{ name: string; id?: string; quota?: string }[]> {
+  const r = await runProvisioningHelper("plan-list");
+  return (r.plans as { name: string; id?: string; quota?: string }[]) ?? [];
+}
+
+export async function createPlanNative(
+  name: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("plan-create", name);
+}
+
+export async function deletePlanNative(
+  name: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("plan-delete", name);
 }

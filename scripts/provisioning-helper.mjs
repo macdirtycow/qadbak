@@ -41,6 +41,26 @@ import {
   sharedCreate,
   sharedDelete,
 } from "./lib/provision-shared.mjs";
+import { proxyList, proxyCreate, proxyDelete } from "./lib/provision-proxies.mjs";
+import {
+  scriptAvailable,
+  scriptList,
+  scriptInstall,
+  scriptDelete,
+} from "./lib/provision-scripts.mjs";
+import {
+  securityGet,
+  securitySetSpam,
+  securitySetDkim,
+} from "./lib/provision-security.mjs";
+import {
+  resellerList,
+  resellerCreate,
+  resellerDelete,
+  planList,
+  planCreate,
+  planDelete,
+} from "./lib/provision-resellers.mjs";
 
 const cmd = process.argv[2];
 const args = process.argv.slice(3);
@@ -96,7 +116,7 @@ async function main() {
       await dbPass(args[0], args[1], args[2]);
       break;
     case "domain-create":
-      await domainCreate(args[0], args[1], args[2]);
+      await domainCreate(args[0], args[1], args[2], args[3]);
       break;
     case "domain-delete":
       await domainDelete(args[0]);
@@ -220,6 +240,54 @@ async function main() {
       break;
     case "mail-settings-set":
       await mailSettingsSet(args[0], args[1]);
+      break;
+    case "proxy-list":
+      await proxyList(args[0]);
+      break;
+    case "proxy-create":
+      await proxyCreate(args[0], args[1], args[2], args[3]);
+      break;
+    case "proxy-delete":
+      await proxyDelete(args[0], args[1]);
+      break;
+    case "script-available":
+      await scriptAvailable(args[0]);
+      break;
+    case "script-list":
+      await scriptList(args[0]);
+      break;
+    case "script-install":
+      await scriptInstall(args[0], args[1], args[2]);
+      break;
+    case "script-delete":
+      await scriptDelete(args[0], args[1]);
+      break;
+    case "security-get":
+      await securityGet(args[0]);
+      break;
+    case "security-spam":
+      await securitySetSpam(args[0], args[1] === "true" || args[1] === "1");
+      break;
+    case "security-dkim":
+      await securitySetDkim(args[0], args[1] === "true" || args[1] === "1");
+      break;
+    case "reseller-list":
+      await resellerList();
+      break;
+    case "reseller-create":
+      await resellerCreate(args[0], args[1]);
+      break;
+    case "reseller-delete":
+      await resellerDelete(args[0]);
+      break;
+    case "plan-list":
+      await planList();
+      break;
+    case "plan-create":
+      await planCreate(args[0]);
+      break;
+    case "plan-delete":
+      await planDelete(args[0]);
       break;
     default:
       emit({ ok: false, error: `Unknown command: ${cmd}` });

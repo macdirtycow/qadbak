@@ -1,0 +1,17 @@
+[
+  {
+    "name": "wordpress",
+    "desc": "WordPress CMS (latest from wordpress.org)",
+    "version": "latest"
+  },
+  {
+    "name": "phpmyadmin",
+    "desc": "phpMyAdmin database admin (static files)",
+    "version": "5.2"
+  },
+  {
+    "name": "nextcloud",
+    "desc": "Nextcloud ZIP install",
+    "version": "latest"
+  }
+]

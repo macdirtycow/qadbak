@@ -26,6 +26,10 @@ Elke sub-fase voegt scripts + `QADBAK_NATIVE_FEATURES` toe. Hybrid blijft VM-fal
 | 8r | `mail-logs` | mail-logs-search | Postfix/Dovecot mail.log grep |
 | 8s | `protected` | protected-* | HTTP basic auth dirs (JSON + .htaccess) |
 | 8t | `shared` | shared-* | Shared addresses (JSON) |
+| 8u | `proxies` | proxy-list, proxy-create, proxy-delete | Reverse proxy paths in nginx |
+| 8v | `scripts` | script-available, script-list, script-install, script-delete | WordPress / phpMyAdmin / Nextcloud ZIP |
+| 8w | `security` | security-get, security-spam, security-dkim | SpamAssassin + OpenDKIM per domain |
+| 8x | `resellers` | reseller-*, plan-* | Plans/resellers JSON (`data/native-plans-resellers.json`) |
 
 ## Alles inschakelen (test VPS)
 

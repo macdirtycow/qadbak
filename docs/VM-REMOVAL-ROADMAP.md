@@ -51,10 +51,13 @@ Prioriteit voor **één testdomein** (`siccamanagement.nl`) — daarna pas `apt 
 | Databases | native `db` flag | 🟡 | `mysql` root — test panel |
 | Cron | native `cron` flag | 🟡 | `crontab -u` |
 | Backups | native `backup` flag | 🟡 | `~/backups/*.tar.gz` |
-| Nieuw/verwijder domein | VM API | 🔴 | Hestia-achtige `qadbak-add-domain.sh` |
-| PHP versie / pool | VM API | 🔴 | php-fpm pool templates |
-| FTP accounts | VM API | 🔴 | pure-ftpd / proftpd scripts |
-| Resellers/plannen | VM API | 🟢 laag prio | eigen DB-model |
+| Nieuw/verwijder domein | native `domain` | ✅ | `domain-create` / `domain-delete` (+ sub/alias) |
+| Proxies | native `proxies` | ✅ | nginx `proxies.json` |
+| Scripts (WP, …) | native `scripts` | ✅ | ZIP installers onder `public_html` |
+| Spam/DKIM | native `security` | 🟡 | OpenDKIM + SpamAssassin (host packages) |
+| Resellers/plannen | native `resellers` | 🟡 | JSON registry (metadata) |
+| PHP versie / pool | native `php` | 🟡 | host PHP layout |
+| FTP accounts | native `ftp` | 🟡 | proftpd-oriented |
 | Admin server status | Qadbak + systemctl | ✅ grotendeels | `host-services-helper` |
 
 🔴 = blokkeert package removal voor dagelijks gebruik  

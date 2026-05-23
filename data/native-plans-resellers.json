@@ -1,0 +1,11 @@
+{
+  "plans": [
+    {
+      "name": "Default",
+      "quota": "unlimited",
+      "mailboxes": "50",
+      "databases": "10"
+    }
+  ],
+  "resellers": []
+}

@@ -58,8 +58,8 @@ export function CreateDomainForm({
     <Card>
       <h1 className="text-2xl font-semibold text-white">New virtual server</h1>
       <p className="mt-1 text-sm text-panel-muted">
-        Creates the virtual server in VirtualMin immediately (same as Webmin).
-        Qadbak has no separate domain list — after success it appears under Domains.
+        Creates a unix account, web root, and nginx vhost on this server (native
+        provisioning). Subdomains and aliases share the parent account when selected.
       </p>
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
         {error && <Alert>{error}</Alert>}
