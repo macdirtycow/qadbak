@@ -53,9 +53,13 @@ chown root:postfix /etc/postfix/virtual /etc/postfix/virtual_domains 2>/dev/null
 postconf -e 'home_mailbox = Maildir/'
 postconf -e 'virtual_alias_maps = hash:/etc/postfix/virtual'
 postconf -e 'virtual_mailbox_domains = /etc/postfix/virtual_domains'
-# Clear stale virtual_mailbox_maps from VirtualMin (we deliver to unix users via home_mailbox).
+postconf -X virtual_alias_domains 2>/dev/null || true
 postconf -X virtual_mailbox_maps 2>/dev/null || true
 postconf -X virtual_mailbox_base 2>/dev/null || true
+postconf -X mailbox_command 2>/dev/null || true
+postconf -X virtual_transport 2>/dev/null || true
+postconf -e 'inet_interfaces = all'
+postconf -e 'local_recipient_maps = unix:passwd.byname, $virtual_alias_maps'
 
 # Accept mail for virtual domains; allow SASL-authenticated senders.
 postconf -e 'smtpd_recipient_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination'
@@ -67,6 +71,10 @@ postconf -e 'smtpd_tls_security_level = may'
 postconf -e 'smtp_tls_security_level = may'
 
 HOST="$(hostname -f 2>/dev/null || hostname)"
+if [[ -f "$QADBAK_DIR/.env.local" ]]; then
+  MAIL_HOST="$(grep -E '^QADBAK_MAIL_HOST=' "$QADBAK_DIR/.env.local" 2>/dev/null | cut -d= -f2- | tr -d '"' || true)"
+  [[ -n "$MAIL_HOST" ]] && HOST="$MAIL_HOST"
+fi
 postconf -e "myhostname = ${HOST}"
 if postconf mydestination | grep -q 'mydestination ='; then
   postconf -e 'mydestination = localhost, localhost.localdomain'
@@ -147,9 +155,13 @@ systemctl restart dovecot 2>/dev/null || systemctl restart dovecot-core 2>/dev/n
 systemctl reload postfix 2>/dev/null || systemctl restart postfix 2>/dev/null || true
 
 if command -v ufw &>/dev/null && ufw status 2>/dev/null | grep -q 'Status: active'; then
-  ufw allow 25/tcp comment 'SMTP' 2>/dev/null || true
+  ufw allow 25/tcp comment 'SMTP inbound' 2>/dev/null || true
   ufw allow 587/tcp comment 'SMTP submission' 2>/dev/null || true
   ufw allow 993/tcp comment 'IMAPS' 2>/dev/null || true
+fi
+
+if [[ -x "$QADBAK_DIR/scripts/open-host-firewall-port.sh" ]]; then
+  bash "$QADBAK_DIR/scripts/open-host-firewall-port.sh" 25 2>/dev/null || true
 fi
 
 sync_domains() {

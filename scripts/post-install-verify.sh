@@ -63,6 +63,16 @@ else
   echo "  WARN run-install-e2e.sh missing" >&2
 fi
 
+if [[ -f "$ROOT/scripts/check-native-mail.sh" ]]; then
+  FIRST_DOMAIN="$(grep -o '"name":"[^"]*"' "$ROOT/data/native-domains.json" 2>/dev/null | head -1 | sed 's/"name":"//;s/"//')"
+  if [[ -n "$FIRST_DOMAIN" ]]; then
+    echo ""
+    echo "==> Mail ($FIRST_DOMAIN)"
+    bash "$ROOT/scripts/check-native-mail.sh" "$FIRST_DOMAIN" info 2>/dev/null || true
+    bash "$ROOT/scripts/test-mail-receive.sh" "$FIRST_DOMAIN" info 2>/dev/null || echo "  WARN receive test — create mailbox info first"
+  fi
+fi
+
 echo ""
 echo "============================================"
 if [[ "$E2E_OK" -eq 1 ]]; then

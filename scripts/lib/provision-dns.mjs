@@ -80,7 +80,7 @@ async function zoneFromFind(domain) {
   return null;
 }
 
-async function findZonePath(domain) {
+export async function findZonePath(domain) {
   const cached = await zoneFromRegistry(domain);
   if (cached) return cached;
 

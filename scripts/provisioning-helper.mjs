@@ -14,6 +14,8 @@ import {
   mailSend,
   mailSync,
   mailDiagnoseDomain,
+  mailReceiveTestDomain,
+  mailDnsHintsDomain,
 } from "./lib/provision-mail.mjs";
 import { dbList, dbCreate, dbPass } from "./lib/provision-db.mjs";
 import { domainCreate, domainDelete } from "./lib/provision-domain.mjs";
@@ -153,6 +155,12 @@ async function main() {
       break;
     case "mail-diagnose":
       await mailDiagnoseDomain(args[0]);
+      break;
+    case "mail-receive-test":
+      await mailReceiveTestDomain(args[0], args[1]);
+      break;
+    case "mail-dns-hints":
+      await mailDnsHintsDomain(args[0]);
       break;
     case "db-list":
       await dbList(args[0]);

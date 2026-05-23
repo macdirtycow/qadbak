@@ -12,6 +12,7 @@ import {
   ensureMaildir,
 } from "./mail-layout.mjs";
 import { ensureNativeMailStack, syncVirtualDomainsFile } from "./mail-sync.mjs";
+import { ensureInboundMailDns } from "./mail-dns.mjs";
 
 const exec = promisify(execFile);
 
@@ -83,6 +84,7 @@ export async function mailCreateDirect(domain, localUser, pass, real) {
   await appendMapEntry(mapPath, email, isOwner ? owner : local);
   await syncVirtualDomainsFile();
   await postmapReload(mapPath);
+  await ensureInboundMailDns(domain).catch(() => {});
 
   if (pass) {
     const target = isOwner ? owner : local;

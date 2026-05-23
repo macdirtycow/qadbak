@@ -75,7 +75,11 @@ bash "$QADBAK_DIR/scripts/install-node-build-deps.sh"
 sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && npm install && npm run build"
 
 SECRET="$(openssl rand -base64 32)"
-ORIGIN_IP="$(curl -4 -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')"
+DEFAULT_ORIGIN_IP="$(curl -4 -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')"
+read -rp "Mail hostname for MX/IMAP (FQDN) [$PANEL_HOST]: " MAIL_HOST
+MAIL_HOST="${MAIL_HOST:-$PANEL_HOST}"
+read -rp "Public server IP (for DNS hints) [$DEFAULT_ORIGIN_IP]: " ORIGIN_IP_IN
+ORIGIN_IP="${ORIGIN_IP_IN:-$DEFAULT_ORIGIN_IP}"
 
 ENV_FILE="$QADBAK_DIR/.env.local"
 cat >"$ENV_FILE" <<EOF
@@ -85,6 +89,9 @@ QADBAK_NATIVE_INSTALL=1
 QADBAK_DISABLE_WEBMIN=true
 QADBAK_PROVISIONER=native
 QADBAK_VIRTUALMIN_FALLBACK=false
+QADBAK_MAIL_BACKEND=direct
+QADBAK_MAIL_HOST=$MAIL_HOST
+QADBAK_MAIL_AUTODNS=true
 QADBAK_NATIVE_FEATURES=$NATIVE_FEATURES
 QADBAK_PUBLIC_HOST=$PANEL_HOST
 QADBAK_ORIGIN_IP=$ORIGIN_IP
@@ -143,6 +150,10 @@ echo "==> Domain registry"
 bash "$QADBAK_DIR/scripts/export-native-domains.sh" 2>/dev/null || true
 echo "==> Native provisioning"
 bash "$QADBAK_DIR/scripts/apply-phase8-independent.sh" || true
+
+echo "==> Inbound mail (Postfix receive + Dovecot + maps)"
+bash "$QADBAK_DIR/scripts/configure-native-mail.sh"
+sudo -u "$QADBAK_USER" sudo -n "$QADBAK_DIR/scripts/run-provisioning-helper.sh" mail-sync 2>/dev/null || true
 
 bash "$QADBAK_DIR/scripts/ensure-terminal-deps.sh"
 bash "$QADBAK_DIR/scripts/pm2-restart-qadbak.sh"

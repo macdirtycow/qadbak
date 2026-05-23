@@ -8,7 +8,8 @@ import {
   mailPassDirect,
 } from "./mail-direct.mjs";
 import { mailSendDirect } from "./mail-send.mjs";
-import { mailSyncAll, mailDiagnose } from "./mail-sync.mjs";
+import { mailSyncAll, mailDiagnose, mailReceiveTest } from "./mail-sync.mjs";
+import { mailDnsHints } from "./mail-dns.mjs";
 
 const exec = promisify(execFile);
 
@@ -131,6 +132,19 @@ export async function mailSync() {
 
 export async function mailDiagnoseDomain(domain) {
   const checks = await mailDiagnose(domain);
+  const hints = await mailDnsHints(domain);
   const { emit } = await import("./provisioning-common.mjs");
-  emit({ ok: true, checks });
+  emit({ ok: true, checks, dnsHints: hints });
+}
+
+export async function mailReceiveTestDomain(domain, localUser) {
+  const result = await mailReceiveTest(domain, localUser);
+  const { emit } = await import("./provisioning-common.mjs");
+  emit({ ok: true, ...result, source: "local-delivery" });
+}
+
+export async function mailDnsHintsDomain(domain) {
+  const hints = await mailDnsHints(domain);
+  const { emit } = await import("./provisioning-common.mjs");
+  emit({ ok: true, hints });
 }

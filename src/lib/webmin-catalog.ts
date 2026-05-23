@@ -1,4 +1,4 @@
-/** Full Webmin module catalog (parity with mareades screenshots). */
+/** Full Webmin module catalog (legacy hybrid parity reference). */
 
 export type WebminCatalogCategory =
   | "dashboard"

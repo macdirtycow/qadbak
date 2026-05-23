@@ -17,7 +17,7 @@ Qadbak panel → provisioning-helper → doveadm + Maildir scan
 | Read one message | `imap-fetch` |
 | Copy folder (admin) | `imap-copy` |
 | Send message | `mail-send` |
-| Sync maps / diagnose | `mail-sync`, `mail-diagnose` |
+| Sync maps / diagnose | `mail-sync`, `mail-diagnose`, `mail-receive-test` |
 
 Folder **messages** and **size** use `doveadm mailbox status` per folder (Dovecot 2.3-friendly), with Maildir counts when doveadm returns empty values.
 
@@ -45,11 +45,8 @@ sudo bash scripts/run-provisioning-helper.sh mail-sync
 sudo bash scripts/check-native-mail.sh YOUR-DOMAIN info
 sudo bash scripts/check-imap-dovecot.sh YOUR-DOMAIN info
 
-# Send test (JSON payload — must be one quoted argument)
 sudo bash scripts/test-mail-send.sh YOUR-DOMAIN info you@gmail.com
-# or:
-sudo -u qadbak sudo -n scripts/run-provisioning-helper.sh mail-send YOUR-DOMAIN info \
-  '{"to":"you@gmail.com","subject":"test","body":"hello"}'
+sudo bash scripts/test-mail-receive.sh YOUR-DOMAIN info
 ```
 
 **Incoming mail** requires an **MX record** for the domain pointing to this server, and port **25** open in the firewall.

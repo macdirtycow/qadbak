@@ -131,6 +131,14 @@ export async function listMailboxesFromLayout(layout) {
   return mailboxes;
 }
 
+export async function writeVirtualMapFile(mapPath, rows) {
+  const body = rows
+    .map(({ address, destination }) => `${address}\t${destination}\n`)
+    .join("");
+  const { writeFile } = await import("node:fs/promises");
+  await writeFile(mapPath, body, "utf8");
+}
+
 export async function appendMapEntry(mapPath, address, destination) {
   const rows = await readMapFile(mapPath);
   const needle = address.toLowerCase();
