@@ -155,7 +155,18 @@ export function ImapMailboxesManager({
           body: sendBody,
         }),
       });
-      const data = await res.json();
+      const raw = await res.text();
+      let data: { error?: string; ok?: boolean } = {};
+      try {
+        data = raw ? (JSON.parse(raw) as { error?: string; ok?: boolean }) : {};
+      } catch {
+        const preview = raw.replace(/\s+/g, " ").slice(0, 120);
+        throw new Error(
+          res.ok
+            ? "Invalid server response."
+            : `Send failed (${res.status}): ${preview || res.statusText}`,
+        );
+      }
       if (!res.ok) throw new Error(data.error ?? "Send failed.");
       setSendSuccess(`Message sent to ${sendTo}.`);
       setSendTo("");

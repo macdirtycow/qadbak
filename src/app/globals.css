@@ -5,3 +5,16 @@
 body {
   @apply bg-panel-bg text-slate-100 antialiased;
 }
+
+/* Keep autofill readable on dark inputs (Chrome white/yellow fill) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f1f5f9;
+  caret-color: #f1f5f9;
+  box-shadow: 0 0 0 1000px #0f1419 inset;
+  transition: background-color 99999s ease-out 0s;
+}
