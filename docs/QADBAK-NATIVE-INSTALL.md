@@ -15,7 +15,7 @@ Fresh Ubuntu VPS **without** running `virtualmin-install.sh` on the same machine
 ```bash
 git clone https://github.com/macdirtycow/qadbak.git /opt/qadbak
 cd /opt/qadbak
-sudo bash install/qadbak-install-native.sh
+sudo bash install/qadbak-install.sh
 ```
 
 Or from the standard installer: answer **n** to “Install VirtualMin on this server?”
