@@ -5,10 +5,11 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
-import { readdir, stat } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import { discoverMailLayout, listMailboxesFromLayout } from "./mail-layout.mjs";
 import { fileExists } from "./provisioning-common.mjs";
 import { doveadmAvailable } from "./doveadm-util.mjs";
+import { bodyPreview, parseMailHeaders, splitHeadersAndBody } from "./mail-parse.mjs";
 
 export { doveadmAvailable };
 
@@ -116,66 +117,58 @@ async function listMailboxNames(authUser) {
   return names.length ? names : ["INBOX"];
 }
 
-/** List IMAP folders with message count and size (doveadm). */
-export async function listMailboxesDoveadm(authUser) {
-  const names = await listMailboxNames(authUser);
+export function folderMaildirPath(maildirRoot, folder) {
+  const f = String(folder || "INBOX").trim();
+  if (!f || f === "INBOX" || f === ".") return maildirRoot;
+  return path.join(maildirRoot, f);
+}
 
-  const mailboxes = [];
-  try {
-    const { stdout: statusOut } = await exec(
-      "doveadm",
-      [
-        "-f",
-        "tab",
-        "mailbox",
-        "status",
-        "-u",
-        authUser,
-        "messages",
-        "vsize",
-        "ALL",
-      ],
-      { timeout: 60_000, maxBuffer: 4 * 1024 * 1024 },
-    );
-    const rows = parseTabTable(statusOut);
-    const byName = new Map(rows.map((r) => [r.mailbox ?? r.Mailbox ?? "", r]));
-    for (const folder of names) {
-      const row = byName.get(folder) ?? {};
-      mailboxes.push({
-        user: authUser,
-        folder,
-        messages: row.messages ?? "",
-        size: row.vsize ? formatBytes(row.vsize) : "",
-      });
-    }
-  } catch {
-    for (const folder of names) {
-      let messages = "";
-      let size = "";
-      for (const args of [
-        ["-f", "tab", "mailbox", "status", "-u", authUser, "messages", "vsize", folder],
-        ["mailbox", "status", "-u", authUser, "messages", "vsize", folder],
-      ]) {
-        try {
-          const { stdout } = await exec("doveadm", args, { timeout: 20_000 });
-          const row = parseTabTable(stdout)[0] ?? {};
-          if (row.messages !== undefined && row.messages !== "") {
-            messages = row.messages;
-            size = row.vsize ? formatBytes(row.vsize) : "";
-            break;
-          }
-          const parts = stdout.trim().split(/\s+/);
-          if (parts.length >= 2) {
-            messages = parts[parts.length - 2] ?? "";
-            size = formatBytes(parts[parts.length - 1]);
-            break;
-          }
-        } catch {
-          /* */
-        }
+async function statsForFolder(authUser, folder, maildirRoot) {
+  let messages = "";
+  let size = "";
+  const statusAttempts = [
+    ["-f", "tab", "mailbox", "status", "-u", authUser, "messages", "vsize", folder],
+    ["mailbox", "status", "-u", authUser, "messages", "vsize", folder],
+  ];
+  for (const args of statusAttempts) {
+    try {
+      const { stdout } = await exec("doveadm", args, { timeout: 20_000 });
+      const row = parseTabTable(stdout)[0] ?? {};
+      if (row.messages !== undefined && row.messages !== "") {
+        messages = row.messages;
+        size = row.vsize ? formatBytes(row.vsize) : "";
+        break;
       }
-      mailboxes.push({ user: authUser, folder, messages, size });
+      const parts = stdout.trim().split(/\s+/);
+      if (parts.length >= 2 && /^\d+$/.test(parts[0])) {
+        messages = parts[0];
+        size = formatBytes(parts[1]);
+        break;
+      }
+    } catch {
+      /* */
     }
+  }
+  if (maildirRoot) {
+    const fp = folderMaildirPath(maildirRoot, folder);
+    const n = await countMaildirMessages(fp);
+    const mdCount = String(n);
+    if (!messages || messages === "0") messages = mdCount;
+    if (!size || size === "0 B") {
+      const bytes = n > 0 ? await maildirFolderSize(fp) : 0;
+      if (bytes > 0) size = formatBytes(bytes);
+    }
+  }
+  return { messages, size };
+}
+
+/** List IMAP folders with message count and size (doveadm + Maildir enrichment). */
+export async function listMailboxesDoveadm(authUser, maildirRoot = null) {
+  const names = await listMailboxNames(authUser);
+  const mailboxes = [];
+  for (const folder of names) {
+    const { messages, size } = await statsForFolder(authUser, folder, maildirRoot);
+    mailboxes.push({ user: authUser, folder, messages, size });
   }
   return mailboxes;
 }
@@ -270,4 +263,195 @@ export async function listDomainMailUsers(layout) {
     email: u.email ?? `${u.user}@${layout.domain}`,
     label: u.real ? `${u.user} (${u.real})` : u.user,
   }));
+}
+
+async function collectMaildirFiles(folderPath) {
+  const files = [];
+  for (const sub of ["cur", "new"]) {
+    const dir = path.join(folderPath, sub);
+    if (!(await fileExists(dir))) continue;
+    for (const name of await readdir(dir)) {
+      if (name.startsWith(".")) continue;
+      const fp = path.join(dir, name);
+      try {
+        const st = await stat(fp);
+        if (!st.isFile()) continue;
+        files.push({ id: name, path: fp, mtime: st.mtimeMs, size: st.size });
+      } catch {
+        /* */
+      }
+    }
+  }
+  files.sort((a, b) => b.mtime - a.mtime);
+  return files;
+}
+
+/** List messages in a folder (Maildir — reliable on Dovecot 2.3). */
+export async function listMessagesMaildir(folderPath, limit = 80) {
+  const files = await collectMaildirFiles(folderPath);
+  const messages = [];
+  for (const f of files.slice(0, limit)) {
+    let headers = { subject: "", from: "", to: "", date: "" };
+    try {
+      const raw = await readFile(f.path, { encoding: "utf8" });
+      headers = parseMailHeaders(raw);
+    } catch {
+      /* binary */
+    }
+    messages.push({
+      id: f.id,
+      subject: headers.subject || "(no subject)",
+      from: headers.from,
+      to: headers.to,
+      date: headers.date,
+      size: formatBytes(f.size),
+    });
+  }
+  return messages;
+}
+
+/** Read one message from Maildir. */
+export async function fetchMessageMaildir(folderPath, messageId) {
+  const id = String(messageId || "").trim();
+  if (!id || id.includes("/") || id.includes("..")) {
+    throw new Error("Invalid message id");
+  }
+  for (const sub of ["cur", "new"]) {
+    const fp = path.join(folderPath, sub, id);
+    if (await fileExists(fp)) {
+      const raw = await readFile(fp, "utf8");
+      const { headers, body } = splitHeadersAndBody(raw);
+      const h = parseMailHeaders(raw);
+      return {
+        id,
+        subject: h.subject || "(no subject)",
+        from: h.from,
+        to: h.to,
+        date: h.date,
+        bodyText: bodyPreview(body),
+        rawHeaders: headers.slice(0, 32_000),
+        source: "maildir",
+      };
+    }
+  }
+  throw new Error("Message not found");
+}
+
+/** Try doveadm fetch for message list (optional). */
+export async function listMessagesDoveadm(authUser, folder, limit = 80) {
+  const box = String(folder || "INBOX").trim();
+  const attempts = [
+    ["fetch", "-u", authUser, "mailbox", box, "hdr.subject", "hdr.from", "hdr.to", "hdr.date"],
+    ["-f", "tab", "fetch", "-u", authUser, "mailbox", box, "hdr.subject", "hdr.from", "hdr.to", "hdr.date"],
+  ];
+  for (const args of attempts) {
+    try {
+      const { stdout } = await exec("doveadm", args, {
+        timeout: 120_000,
+        maxBuffer: 8 * 1024 * 1024,
+      });
+      const parsed = parseDoveadmFetch(stdout);
+      if (parsed.length) return parsed.slice(0, limit);
+    } catch {
+      /* */
+    }
+  }
+  return [];
+}
+
+function parseDoveadmFetch(stdout) {
+  const messages = [];
+  let cur = {};
+  const flush = () => {
+    if (Object.keys(cur).length) {
+      messages.push({
+        id: String(cur.uid ?? cur["uid"] ?? messages.length + 1),
+        subject: cur["hdr.subject"] ?? cur.subject ?? "(no subject)",
+        from: cur["hdr.from"] ?? cur.from ?? "",
+        to: cur["hdr.to"] ?? cur.to ?? "",
+        date: cur["hdr.date"] ?? cur.date ?? "",
+        size: "",
+      });
+      cur = {};
+    }
+  };
+  for (const line of stdout.split("\n")) {
+    const t = line.trim();
+    if (!t) {
+      flush();
+      continue;
+    }
+    const m = t.match(/^([^\s:]+):\s*(.*)$/);
+    if (m) {
+      cur[m[1]] = m[2];
+      continue;
+    }
+    const tab = t.split("\t");
+    if (tab.length >= 2) {
+      flush();
+      cur.uid = tab[0];
+      cur["hdr.subject"] = tab[1];
+      cur["hdr.from"] = tab[2] ?? "";
+      cur["hdr.date"] = tab[3] ?? "";
+      flush();
+    }
+  }
+  flush();
+  return messages;
+}
+
+export async function fetchMessageDoveadm(authUser, folder, messageId) {
+  const box = String(folder || "INBOX").trim();
+  const uid = String(messageId || "").trim();
+  const attempts = [
+    ["fetch", "-u", authUser, "mailbox", box, "uid", uid, "body"],
+    ["fetch", "-u", authUser, "mailbox", box, "uid", uid, "hdr.subject", "hdr.from", "body"],
+  ];
+  for (const args of attempts) {
+    try {
+      const { stdout } = await exec("doveadm", args, {
+        timeout: 60_000,
+        maxBuffer: 8 * 1024 * 1024,
+      });
+      const { headers, body } = splitHeadersAndBody(stdout);
+      const h = parseMailHeaders(stdout);
+      return {
+        id: uid,
+        subject: h.subject || "(no subject)",
+        from: h.from,
+        to: h.to,
+        date: h.date,
+        bodyText: bodyPreview(body || stdout),
+        rawHeaders: headers.slice(0, 32_000),
+        source: "doveadm",
+      };
+    } catch {
+      /* */
+    }
+  }
+  throw new Error("Message not found");
+}
+
+export async function listMessagesInFolder(authUser, maildirRoot, folder, limit = 80) {
+  const fp = folderMaildirPath(maildirRoot, folder);
+  let messages = await listMessagesMaildir(fp, limit);
+  let source = "maildir";
+  if (authUser && messages.length === 0) {
+    const fromDove = await listMessagesDoveadm(authUser, folder, limit);
+    if (fromDove.length) {
+      messages = fromDove;
+      source = "doveadm";
+    }
+  }
+  return { messages, source, folderPath: fp };
+}
+
+export async function fetchMessageInFolder(authUser, maildirRoot, folder, messageId) {
+  const fp = folderMaildirPath(maildirRoot, folder);
+  try {
+    return await fetchMessageMaildir(fp, messageId);
+  } catch {
+    if (authUser) return await fetchMessageDoveadm(authUser, folder, messageId);
+    throw new Error("Message not found");
+  }
 }

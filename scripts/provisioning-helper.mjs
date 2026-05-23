@@ -30,7 +30,7 @@ import {
 } from "./lib/provision-lifecycle.mjs";
 import { mailSettingsGet, mailSettingsSet } from "./lib/provision-mail-settings.mjs";
 import { mailLogsSearch } from "./lib/provision-mail-logs.mjs";
-import { imapList, imapCopy } from "./lib/provision-imap.mjs";
+import { imapList, imapCopy, imapMessages, imapFetch } from "./lib/provision-imap.mjs";
 import {
   protectedList,
   protectedCreate,
@@ -190,6 +190,12 @@ async function main() {
       break;
     case "imap-copy":
       await imapCopy(args[0], args[1], args[2], args[3]);
+      break;
+    case "imap-messages":
+      await imapMessages(args[0], args[1], args[2]);
+      break;
+    case "imap-fetch":
+      await imapFetch(args[0], args[1], args[2], args[3]);
       break;
     case "protected-list":
       await protectedList(args[0]);

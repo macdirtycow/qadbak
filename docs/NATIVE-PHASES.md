@@ -18,7 +18,7 @@ Elke sub-fase voegt scripts + `QADBAK_NATIVE_FEATURES` toe. Hybrid blijft VM-fal
 | 8j | `features` | feature-list, feature-set | Features-tab (local JSON) |
 | 8k | `logs` | logs-tail | Website logs (tail files) |
 | 8l | `php` | php-versions, php-directories, php-ini, php-set-directory | PHP-tab (versies uit `/etc/php`) |
-| 8m | `imap` | imap-list, imap-copy | IMAP folders via **Dovecot** (`doveadm`), Maildir fallback |
+| 8m | `imap` | imap-list, imap-copy, imap-messages, imap-fetch | IMAP folders + read mail via **Dovecot** / Maildir |
 | 8n | `ftp` | ftp-list, ftp-create, ftp-delete, ftp-pass | FTP-accounts (unix users onder domein) |
 | 8o | `limits` | limits-get, limits-set | Limieten (JSON + registry) |
 | 8p | `lifecycle` | domain-enable, domain-disable, domain-validate | Domein aan/uit + validatie |

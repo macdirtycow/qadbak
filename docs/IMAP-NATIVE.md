@@ -1,28 +1,31 @@
 # Native IMAP (Dovecot, no VirtualMin)
 
-The **IMAP** tab lists mail folders and message counts using **[Dovecot](https://www.dovecot.org/)** — the standard open-source IMAP server used with Postfix on this stack.
+The **IMAP** tab lists mail folders, message counts, and lets you **read mail** using **[Dovecot](https://www.dovecot.org/)** and on-disk **Maildir**.
 
 ## How it works
 
 ```
-Qadbak panel → provisioning-helper → doveadm (as root)
+Qadbak panel → provisioning-helper → doveadm + Maildir scan
                                       ↓
                               Dovecot user db / Maildir
 ```
 
-| Operation | Command |
-|-----------|---------|
-| List folders | `doveadm -f tab mailbox list -u USER` |
-| Messages + size | `doveadm -f tab mailbox status -u USER messages vsize ALL` |
-| Copy folder | `doveadm mailbox copy -u USER "INBOX" "Archive"` |
+| Operation | Helper command |
+|-----------|----------------|
+| List folders + counts | `imap-list` |
+| List messages in folder | `imap-messages` |
+| Read one message | `imap-fetch` |
+| Copy folder (admin) | `imap-copy` |
+
+Folder **messages** and **size** use `doveadm mailbox status` per folder (Dovecot 2.3-friendly), with Maildir counts when doveadm returns empty values.
+
+Message list and body are read from **Maildir** (`cur`/`new`) when possible; doveadm fetch is used as a fallback.
 
 Auth user resolution tries, in order:
 
 - `local@domain` (e.g. `info@siccamanagement.nl`)
 - Unix user `local` or domain owner
 - Accounts from Postfix virtual maps + `~/homes/*` (same as **Email** tab)
-
-If `doveadm` is missing, the helper falls back to scanning **Maildir** on disk.
 
 ## Requirements
 
@@ -35,16 +38,15 @@ If `doveadm` is missing, the helper falls back to scanning **Maildir** on disk.
 ```bash
 cd /opt/qadbak
 sudo bash scripts/pull-and-helpers.sh
-sudo bash scripts/apply-phase8-independent.sh   # ensures imap in native features
+sudo bash scripts/apply-phase8-independent.sh
 sudo bash scripts/check-imap-dovecot.sh siccamanagement.nl info
-# Version check: doveadm -V  (not --version on Dovecot 2.3)
+# Version: doveadm -V  (not --version on Dovecot 2.3)
+
+# CLI smoke (messages in INBOX)
+sudo node scripts/provisioning-helper.mjs imap-messages siccamanagement.nl info INBOX
 ```
 
-Panel: **Domains → IMAP** → pick mailbox user → **Load folders**. Source badge should show **Dovecot (doveadm)**.
-
-## Copy mailbox
-
-Admin-only: copies between **folder names** (not file paths), e.g. `INBOX` → `Archive`.
+Panel: **Domains → IMAP** → pick user → **Load folders** → click folder → click message.
 
 ## Related
 

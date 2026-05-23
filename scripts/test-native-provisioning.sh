@@ -100,6 +100,9 @@ fi
 if has imap; then
   IMAP_USER="${TEST_MAIL_USER:-}"
   check imap-list "$DOMAIN" "$IMAP_USER"
+  if [[ -n "$IMAP_USER" ]]; then
+    check imap-messages "$DOMAIN" "$IMAP_USER" INBOX
+  fi
 fi
 if has protected; then
   check protected-list "$DOMAIN"
