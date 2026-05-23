@@ -50,16 +50,16 @@ export async function imapList(domain, localUser) {
     if (authUser) {
       try {
         mailboxes = await listMailboxesDoveadm(authUser);
-        source = "doveadm";
+        if (mailboxes.length) source = "doveadm";
       } catch {
-        /* fall through to maildir */
+        authUser = null;
       }
     }
   }
 
   if (!mailboxes.length) {
-    authUser = authUser || local || owner;
     const maildirRoot = resolveMaildirRoot(layout, local, owner, home);
+    authUser = local || owner;
     mailboxes = await listMailboxesMaildir(maildirRoot, authUser);
     source = "maildir";
   }

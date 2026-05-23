@@ -8,16 +8,17 @@ import path from "node:path";
 import { readdir, stat } from "node:fs/promises";
 import { discoverMailLayout, listMailboxesFromLayout } from "./mail-layout.mjs";
 import { fileExists } from "./provisioning-common.mjs";
+import { doveadmAvailable } from "./doveadm-util.mjs";
+
+export { doveadmAvailable };
 
 const exec = promisify(execFile);
 
-export async function doveadmAvailable() {
-  try {
-    await exec("doveadm", ["--version"], { timeout: 8000 });
-    return true;
-  } catch {
-    return false;
-  }
+async function doveadmOk(args) {
+  await exec("doveadm", args, {
+    timeout: 30_000,
+    maxBuffer: 4 * 1024 * 1024,
+  });
 }
 
 function formatBytes(n) {
@@ -55,24 +56,23 @@ export function authUserCandidates(domain, localPart, owner, layoutUsers = []) {
 export async function resolveDovecotAuthUser(candidates) {
   for (const user of candidates) {
     try {
-      await exec("doveadm", ["user", user], {
-        timeout: 12_000,
-        maxBuffer: 256 * 1024,
-      });
+      await doveadmOk(["mailbox", "list", "-u", user]);
       return user;
     } catch {
       try {
-        await exec("doveadm", ["-f", "tab", "mailbox", "list", "-u", user], {
-          timeout: 12_000,
-          maxBuffer: 256 * 1024,
-        });
+        await doveadmOk(["-f", "tab", "mailbox", "list", "-u", user]);
         return user;
       } catch {
-        /* try next */
+        try {
+          await doveadmOk(["user", user]);
+          return user;
+        } catch {
+          /* try next candidate */
+        }
       }
     }
   }
-  return candidates[0] ?? null;
+  return null;
 }
 
 function parseTabTable(stdout) {
@@ -89,18 +89,36 @@ function parseTabTable(stdout) {
   });
 }
 
-/** List IMAP folders with message count and size (doveadm). */
-export async function listMailboxesDoveadm(authUser) {
-  const { stdout: listOut } = await exec(
+async function listMailboxNames(authUser) {
+  try {
+    const { stdout } = await exec(
+      "doveadm",
+      ["-f", "tab", "mailbox", "list", "-u", authUser],
+      { timeout: 30_000, maxBuffer: 2 * 1024 * 1024 },
+    );
+    const names = stdout
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l && !/^mailbox$/i.test(l));
+    if (names.length) return names;
+  } catch {
+    /* */
+  }
+  const { stdout: plain } = await exec(
     "doveadm",
-    ["-f", "tab", "mailbox", "list", "-u", authUser],
+    ["mailbox", "list", "-u", authUser],
     { timeout: 30_000, maxBuffer: 2 * 1024 * 1024 },
   );
-  const names = listOut
+  const names = plain
     .split("\n")
     .map((l) => l.trim())
-    .filter((l) => l && !l.startsWith("mailbox"));
-  if (!names.length) names.push("INBOX");
+    .filter(Boolean);
+  return names.length ? names : ["INBOX"];
+}
+
+/** List IMAP folders with message count and size (doveadm). */
+export async function listMailboxesDoveadm(authUser) {
+  const names = await listMailboxNames(authUser);
 
   const mailboxes = [];
   try {
@@ -134,17 +152,27 @@ export async function listMailboxesDoveadm(authUser) {
     for (const folder of names) {
       let messages = "";
       let size = "";
-      try {
-        const { stdout } = await exec(
-          "doveadm",
-          ["-f", "tab", "mailbox", "status", "-u", authUser, "messages", "vsize", folder],
-          { timeout: 20_000 },
-        );
-        const row = parseTabTable(stdout)[0] ?? {};
-        messages = row.messages ?? "";
-        size = row.vsize ? formatBytes(row.vsize) : "";
-      } catch {
-        /* */
+      for (const args of [
+        ["-f", "tab", "mailbox", "status", "-u", authUser, "messages", "vsize", folder],
+        ["mailbox", "status", "-u", authUser, "messages", "vsize", folder],
+      ]) {
+        try {
+          const { stdout } = await exec("doveadm", args, { timeout: 20_000 });
+          const row = parseTabTable(stdout)[0] ?? {};
+          if (row.messages !== undefined && row.messages !== "") {
+            messages = row.messages;
+            size = row.vsize ? formatBytes(row.vsize) : "";
+            break;
+          }
+          const parts = stdout.trim().split(/\s+/);
+          if (parts.length >= 2) {
+            messages = parts[parts.length - 2] ?? "";
+            size = formatBytes(parts[parts.length - 1]);
+            break;
+          }
+        } catch {
+          /* */
+        }
       }
       mailboxes.push({ user: authUser, folder, messages, size });
     }

@@ -37,6 +37,7 @@ cd /opt/qadbak
 sudo bash scripts/pull-and-helpers.sh
 sudo bash scripts/apply-phase8-independent.sh   # ensures imap in native features
 sudo bash scripts/check-imap-dovecot.sh siccamanagement.nl info
+# Version check: doveadm -V  (not --version on Dovecot 2.3)
 ```
 
 Panel: **Domains → IMAP** → pick mailbox user → **Load folders**. Source badge should show **Dovecot (doveadm)**.
