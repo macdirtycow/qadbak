@@ -19,8 +19,7 @@ PANEL_PORT="$(read_env_local_key QADBAK_PANEL_PORT 11000)"
 echo "==> Build tools for node-pty"
 bash "$QADBAK_DIR/scripts/install-node-build-deps.sh"
 
-echo "==> npm install (as $QADBAK_USER — node-pty must not be root-built)"
-sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && npm install"
+bash "$QADBAK_DIR/scripts/ensure-terminal-deps.sh"
 
 echo "==> Sudo rules (domain + admin terminal)"
 bash "$QADBAK_DIR/scripts/configure-domain-terminal-sudo.sh"

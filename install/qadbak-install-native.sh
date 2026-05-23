@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Qadbak native install — hosting stack without VirtualMin/Webmin on this machine.
+# Qadbak native install — hosting stack + independent panel (no Webmin/VirtualMin packages).
 set -euo pipefail
 
 QADBAK_REPO="${QADBAK_REPO:-https://github.com/macdirtycow/qadbak.git}"
@@ -16,8 +16,8 @@ if [[ "$(id -u)" -ne 0 ]]; then
 fi
 
 echo ""
-echo "  Qadbak NATIVE install — nginx, Apache, MariaDB, Postfix, Dovecot, BIND"
-echo "  No VirtualMin/Webmin GPL installer on this machine."
+echo "  Qadbak install — nginx, Apache, MariaDB, Postfix, Dovecot, BIND"
+echo "  Independent native panel (no Webmin or VirtualMin packages)."
 echo "  Guide: docs/QADBAK-NATIVE-INSTALL.md"
 echo ""
 read -rp "Continue? [y/N]: " CONFIRM
@@ -54,13 +54,6 @@ if [[ "$ADD_CLIENT" =~ ^[Yy]$ ]]; then
   read -rsp "Client password: " CLIENT_PASS
   echo
 fi
-read -rp "Remote VirtualMin API URL (blank = fully independent native): " REMOTE_VM_URL
-REMOTE_VM_URL="${REMOTE_VM_URL:-}"
-REMOTE_VM_PASS=""
-if [[ -n "$REMOTE_VM_URL" ]]; then
-  read -rsp "Remote VirtualMin root password: " REMOTE_VM_PASS
-  echo
-fi
 
 apt-get update -qq
 bash "$(dirname "$0")/../scripts/install-native-stack.sh"
@@ -78,33 +71,14 @@ fi
 git -C "$QADBAK_DIR" pull --ff-only || true
 chown -R "$QADBAK_USER:$QADBAK_USER" "$QADBAK_DIR"
 
+bash "$QADBAK_DIR/scripts/install-node-build-deps.sh"
+sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && npm install && npm run build"
+
 SECRET="$(openssl rand -base64 32)"
 ORIGIN_IP="$(curl -4 -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')"
 
-sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && npm install && npm run build"
-
 ENV_FILE="$QADBAK_DIR/.env.local"
-if [[ -n "$REMOTE_VM_URL" ]]; then
-  cat >"$ENV_FILE" <<EOF
-SESSION_SECRET=$SECRET
-QADBAK_INSTALL_MODE=native
-QADBAK_NATIVE_INSTALL=1
-QADBAK_DISABLE_WEBMIN=true
-VIRTUALMIN_MOCK=false
-VIRTUALMIN_URL=$REMOTE_VM_URL
-VIRTUALMIN_USER=root
-VIRTUALMIN_PASS=$REMOTE_VM_PASS
-QADBAK_PROVISIONER=hybrid
-QADBAK_VIRTUALMIN_FALLBACK=true
-QADBAK_NATIVE_FEATURES=$NATIVE_FEATURES
-QADBAK_PUBLIC_HOST=$PANEL_HOST
-QADBAK_ORIGIN_IP=$ORIGIN_IP
-PORT=3000
-VIRTUALMIN_TLS_INSECURE=true
-QADBAK_COOKIE_SECURE=false
-EOF
-else
-  cat >"$ENV_FILE" <<EOF
+cat >"$ENV_FILE" <<EOF
 SESSION_SECRET=$SECRET
 QADBAK_INSTALL_MODE=native
 QADBAK_NATIVE_INSTALL=1
@@ -115,14 +89,16 @@ QADBAK_NATIVE_FEATURES=$NATIVE_FEATURES
 QADBAK_PUBLIC_HOST=$PANEL_HOST
 QADBAK_ORIGIN_IP=$ORIGIN_IP
 PORT=3000
+QADBAK_TERMINAL_WS_PORT=3001
+QADBAK_TERMINAL_WS_HOST=127.0.0.1
 QADBAK_COOKIE_SECURE=false
 EOF
-fi
 chmod 600 "$ENV_FILE"
 chown "$QADBAK_USER:$QADBAK_USER" "$ENV_FILE"
 
 for s in configure-domain-fs-sudo configure-domain-repair-sudo configure-domain-terminal-sudo \
-  configure-host-services-sudo configure-stack-helper-sudo configure-admin-terminal-sudo; do
+  configure-host-services-sudo configure-stack-helper-sudo configure-admin-terminal-sudo \
+  configure-provisioning-helper-sudo; do
   bash "$QADBAK_DIR/scripts/${s}.sh"
 done
 
@@ -163,17 +139,13 @@ bash "$QADBAK_DIR/scripts/install-hosting-stack.sh"
 [[ -n "$PANEL_ALT_PORT" ]] && bash "$QADBAK_DIR/scripts/enable-panel-port.sh" "$PANEL_ALT_PORT"
 [[ -n "$LE_EMAIL" ]] && certbot --nginx -d "$PANEL_HOST" --non-interactive --agree-tos -m "$LE_EMAIL" || true
 
-if [[ -z "$REMOTE_VM_URL" ]]; then
-  echo "==> Native domain registry"
-  bash "$QADBAK_DIR/scripts/export-native-domains.sh" 2>/dev/null || true
-  echo "==> Phase 8 independent (native provisioner)"
-  bash "$QADBAK_DIR/scripts/apply-phase8-independent.sh" || true
-else
-  echo "==> Hybrid native features (remote VirtualMin API)"
-  bash "$QADBAK_DIR/scripts/apply-phase8-native-v1-panel.sh" || true
-fi
+echo "==> Native domain registry"
+bash "$QADBAK_DIR/scripts/export-native-domains.sh" 2>/dev/null || true
+echo "==> Phase 8 independent"
+bash "$QADBAK_DIR/scripts/apply-phase8-independent.sh" || true
 
-sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && pm2 delete qadbak 2>/dev/null; pm2 start npm --name qadbak -- start && pm2 save"
+bash "$QADBAK_DIR/scripts/ensure-terminal-deps.sh"
+bash "$QADBAK_DIR/scripts/pm2-restart-qadbak.sh"
 env PATH="$PATH:/usr/bin" pm2 startup systemd -u "$QADBAK_USER" --hp "$QADBAK_DIR" | tail -1 | bash || true
 
 VERIFY_OK=0
@@ -184,11 +156,12 @@ fi
 
 echo ""
 echo "============================================"
-echo " Qadbak native install complete"
+echo " Qadbak install complete"
 echo " Panel: https://$PANEL_HOST/login"
 [[ -n "$PANEL_ALT_PORT" ]] && echo "        http://YOUR_SERVER_IP:$PANEL_ALT_PORT/login"
 echo " User:  $QB_USER"
-echo " Mode:  ${REMOTE_VM_URL:+hybrid (remote VirtualMin)}${REMOTE_VM_URL:-independent native}"
+echo " Mode:  independent native"
+echo " Remove old Webmin/VirtualMin (optional): sudo bash $QADBAK_DIR/scripts/uninstall-virtualmin.sh"
 echo " Re-verify: sudo bash $QADBAK_DIR/scripts/post-install-verify.sh"
 [[ "$ADD_CLIENT" =~ ^[Yy]$ ]] && echo " Client: $CLIENT_USER"
 [[ "$VERIFY_OK" -eq 1 ]] && echo " Post-install: PASSED" || echo " Post-install: check warnings above"

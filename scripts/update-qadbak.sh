@@ -26,6 +26,7 @@ fi
 
 echo "==> Build (as $USER — never npm install as root)"
 run_as_qadbak "cd '$ROOT' && npm install && npm run build"
+bash "$ROOT/scripts/ensure-terminal-deps.sh"
 
 if [[ "$(id -u)" -eq 0 ]]; then
   echo "==> Sudo helpers"
@@ -41,8 +42,9 @@ if [[ "$(id -u)" -eq 0 ]]; then
       echo "    WARN: $helper failed (see above)" >&2
     fi
   done
-  echo "==> Hosting stack (nginx, Apache, Webmin embed)"
-  bash "$ROOT/scripts/install-hosting-stack.sh" || echo "    WARN: install-hosting-stack.sh failed" >&2
+  echo "==> Hosting stack (nginx, Apache)"
+  QADBAK_NATIVE_INSTALL=1 QADBAK_DISABLE_WEBMIN=true \
+    bash "$ROOT/scripts/install-hosting-stack.sh" || echo "    WARN: install-hosting-stack.sh failed" >&2
 fi
 
 echo "==> Restart (load .env.local into pm2)"

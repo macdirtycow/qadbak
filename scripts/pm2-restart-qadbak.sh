@@ -23,10 +23,13 @@ if [[ ! -f "$ROOT/.next/BUILD_ID" ]]; then
   exit 1
 fi
 
-grep -q '^VIRTUALMIN_TLS_INSECURE=' "$ROOT/.env.local" || {
+PROV="$(grep -E '^QADBAK_PROVISIONER=' "$ROOT/.env.local" 2>/dev/null | cut -d= -f2- | tr -d '"' || true)"
+if [[ "$PROV" != "native" ]] && ! grep -q '^VIRTUALMIN_TLS_INSECURE=' "$ROOT/.env.local"; then
   echo 'VIRTUALMIN_TLS_INSECURE=true' >>"$ROOT/.env.local"
   chown "$USER:$USER" "$ROOT/.env.local" 2>/dev/null || true
-}
+fi
+
+bash "$ROOT/scripts/ensure-terminal-deps.sh"
 
 echo "==> pm2 restart with ecosystem (.env.local → process env)"
 run "cd '$ROOT' && pm2 delete qadbak qadbak-terminal 2>/dev/null || true"

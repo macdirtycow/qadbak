@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # LEGACY: Qadbak + VirtualMin GPL + Webmin (Ubuntu 22.04).
-# Prefer install/qadbak-install.sh (native stack, no VirtualMin/Webmin).
+# DEPRECATED — use install/qadbak-install.sh (native only).
+# Kept for rare migration scenarios only.
 set -euo pipefail
 
 QADBAK_REPO="${QADBAK_REPO:-https://github.com/macdirtycow/qadbak.git}"

@@ -3,11 +3,13 @@ const path = require("path");
 
 /** Load .env.local so pm2 always has VIRTUALMIN_* (Next.js also reads it, but pm2 env must match). */
 function loadEnvFile(filePath) {
+  const root = path.join(__dirname);
   const env = {
     NODE_ENV: "production",
     PORT: "3000",
     QADBAK_TERMINAL_WS_PORT: "3001",
     QADBAK_TERMINAL_WS_HOST: "127.0.0.1",
+    NODE_PATH: path.join(root, "node_modules"),
   };
   if (!fs.existsSync(filePath)) return env;
   for (const line of fs.readFileSync(filePath, "utf8").split("\n")) {
