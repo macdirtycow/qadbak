@@ -122,10 +122,40 @@ export async function domainClone(source, target, _pass) {
   emit({ ok: true, domain: tgt, clonedFrom: src });
 }
 
-export async function domainMigrate(_domain, destHost) {
-  fail(
-    `Native mode: migrate to ${destHost} is manual — use domain backup, rsync home + DNS to the target server, then domain-create there. VirtualMin migrate-domain is not used.`,
+export async function domainMigrate(domain, destHost) {
+  const d = String(domain).trim().toLowerCase();
+  const host = String(destHost || "").trim();
+  if (!d || !host) fail("domain and destHost required");
+
+  const { user, home } = await resolveDomainUser(d);
+  const dir = path.join(home, "backups");
+  await mkdir(dir, { recursive: true });
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const archive = `${d}-migrate-to-${host.replace(/[^a-z0-9.-]/gi, "_")}-${stamp}.tar.gz`;
+  const file = path.join(dir, archive);
+  await exec(
+    "tar",
+    ["-czf", file, "-C", home, "public_html"],
+    { timeout: 600_000, maxBuffer: 8 * 1024 * 1024 },
   );
+  await exec("chown", [`${user}:${user}`, file]);
+
+  const messages = [
+    `Backup: ${file}`,
+    `Target: ${host}`,
+    "1) Copy backup + Maildir/DNS zone to the target server",
+    "2) On target: domain-create + restore files",
+    "3) Update DNS A/AAAA to the new host",
+    "VirtualMin migrate-domain is not used in native mode.",
+  ];
+  emit({
+    ok: true,
+    domain: d,
+    destHost: host,
+    backup: archive,
+    backupPath: file,
+    messages,
+  });
 }
 
 export async function domainTransfer(domain, newOwner) {

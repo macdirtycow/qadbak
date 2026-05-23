@@ -7,20 +7,22 @@ Twee modi binnen fase 8:
 | **Hybrid** (veilig) | `hybrid` | `true` | Native voor ssl/dns/mail/…; rest via `remote.cgi` |
 | **Onafhankelijk** | `native` | `false` | Alleen native + registry; geen `remote.cgi` |
 
-Webmin UI blijft uit (`QADBAK_DISABLE_WEBMIN=true`) in beide modi.
+Webmin UI uit (`QADBAK_DISABLE_WEBMIN=true`) in beide modi. Panel-nginx bevat **geen** `/embed/webmin/` (optioneel via `deploy/nginx-webmin-embed-snippet.conf`).
 
-## Wat “onafhankelijk” wél is
+## Wat onafhankelijk wél is
 
-- Domeinlijst uit `data/native-domains.json`
-- SSL, DNS, mail, DB, backup, cron, aliases, redirects, features, logs, **php, ftp, limits, lifecycle, mail-settings** via `provisioning-helper`
-- Files, terminal, website repair via eigen sudo-helpers
-- Niet-native panel-acties **falen met duidelijke fout** (geen stille VM-call)
+- Domeinlijst: `data/native-domains.json`
+- Hosting: SSL, DNS, mail, DB, backup, cron, aliases, redirects, features, logs, php, ftp, limits, lifecycle, mail-settings, mail-logs, imap, protected, shared, proxies, scripts, security, resellers (`provisioning-helper`)
+- Files, terminal, website repair, stack, host metrics (eigen helpers)
+- **Lifecycle:** clone (rsync), transfer (panel user), migrate (backup + stappen)
+- **Admin:** license, templates, admins, global features, check-config, S3 (AWS CLI), vm-status (native probe)
+- Niet-native acties **falen met duidelijke fout** (geen stille VM-call)
 
-## Wat nog níet onafhankelijk is
+## Audit op de server
 
-- **Postfix/Dovecot configs** — mail via `QADBAK_MAIL_BACKEND=direct` (geen `virtualmin` CLI); pakketten `postfix` + `dovecot` blijven nodig
-- **proxies, protected dirs, scripts, shared IP, mail queue logs, PHP ini wijzigen** — nog geen native module
-- **`apt remove webmin`** — pas na pure Postfix/Dovecot-scripts en volledige parity-test
+```bash
+bash scripts/audit-vm-dependency.sh
+```
 
 ## Veilige volgorde (test-VPS)
 
@@ -28,29 +30,41 @@ Webmin UI blijft uit (`QADBAK_DISABLE_WEBMIN=true`) in beide modi.
 cd /opt/qadbak
 git pull
 
-# 1. Hybrid + alle native modules (al gedaan als smoke tests groen zijn)
-sudo bash scripts/apply-phase8-native-enable.sh
+sudo bash scripts/apply-phase8-native-enable.sh   # hybrid + alle flags
+# Panel testen: DNS, SSL, mail, DB, lifecycle clone, admin templates
 
-# 2. Panel handmatig testen: DNS, SSL, DB, mail, backup, cron
-
-# 3. Onafhankelijk zetten (geen remote.cgi meer)
 sudo bash scripts/preflight-phase8-independent.sh
 sudo bash scripts/apply-phase8-independent.sh
+sudo bash scripts/fix-panel-nginx-port.sh
+sudo bash scripts/pm2-restart-qadbak.sh
 
 curl -s http://127.0.0.1:3000/api/health
-# verwacht: "provisioner":"native"
+# verwacht: "provisioner":"native", "virtualminFallback":false
 ```
+
+## Webmin/VirtualMin pakketten verwijderen
+
+Pas na panel-tests + backup:
+
+```bash
+sudo bash scripts/uninstall-virtualmin.sh --dry-run
+sudo bash scripts/uninstall-virtualmin.sh
+```
+
+Zie [VM-REMOVAL-ROADMAP.md](./VM-REMOVAL-ROADMAP.md).
 
 ## Terugdraaien
 
 ```bash
-# In .env.local:
+# .env.local:
 # QADBAK_PROVISIONER=hybrid
 # QADBAK_VIRTUALMIN_FALLBACK=true
 
 sudo -u qadbak bash -c 'cd /opt/qadbak && bash scripts/pm2-restart-qadbak.sh'
 ```
 
-## 8-fasenplan
+## Verder lezen
 
-Zie [QADBAK-INDEPENDENCE-8-PHASES.md](./QADBAK-INDEPENDENCE-8-PHASES.md) — fase 8 exit = control plane is Qadbak; **onafhankelijk** = geen API-fallback; **pakketten weg** = latere sub-stap.
+- [PHASE-8-NATIVE.md](./PHASE-8-NATIVE.md)
+- [QADBAK-INDEPENDENCE-8-PHASES.md](./QADBAK-INDEPENDENCE-8-PHASES.md)
+- [VIRTUALMIN-EMBEDS.md](./VIRTUALMIN-EMBEDS.md) (alleen hybrid + break-glass)

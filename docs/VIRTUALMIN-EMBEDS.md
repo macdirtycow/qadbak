@@ -1,5 +1,7 @@
 # Webmin / VirtualMin embeds (Terminal, Files fallback, Webmin hub)
 
+> **Independent mode** (`QADBAK_PROVISIONER=native`, fallback off): embeds are disabled. Panel nginx templates omit `/embed/webmin/`. Use native Files and Terminal only. See [PHASE-8-INDEPENDENT.md](./PHASE-8-INDEPENDENT.md).
+
 ## Universal behaviour
 
 Embeds use `create-login-link` for **every** domain — no hardcoded hostname. The panel passes `domain=…` and an optional redirect path (`/xterm/index.cgi?user=…`, `/filemin/index.cgi`, etc.).

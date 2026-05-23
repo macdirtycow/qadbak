@@ -63,7 +63,11 @@ export function LifecycleManager({
         router.refresh();
         return;
       }
-      setSuccess("Action completed.");
+      if (data.messages?.length) {
+        setSuccess(data.messages.join("\n"));
+      } else {
+        setSuccess("Action completed.");
+      }
       if (data.domain) {
         router.push(`/domains/${encodeURIComponent(data.domain)}`);
       }
@@ -128,35 +132,29 @@ export function LifecycleManager({
         </div>
       </Card>
 
-      {!independentMode && (
-        <Card>
-          <h2 className="text-lg font-medium text-white">Migrate</h2>
-          <div className="mt-4 flex max-w-md gap-2">
-            <Input
-              placeholder="target-server.example.com"
-              value={destHost}
-              onChange={(e) => setDestHost(e.target.value)}
-            />
-            <Button
-              variant="secondary"
-              onClick={() => setConfirmAction("migrate")}
-              disabled={!destHost}
-            >
-              Migrate
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      {independentMode && (
-        <Card>
-          <h2 className="text-lg font-medium text-white">Migrate to another server</h2>
-          <p className="mt-2 text-sm text-panel-muted">
-            Independent mode does not call VirtualMin migrate-domain. Export a backup,
-            copy DNS and files (rsync) to the target host, then create the domain there.
+      <Card>
+        <h2 className="text-lg font-medium text-white">Migrate</h2>
+        {independentMode && (
+          <p className="mt-1 text-sm text-panel-muted">
+            Creates a backup tarball and shows steps for the target host (no VirtualMin
+            migrate-domain).
           </p>
-        </Card>
-      )}
+        )}
+        <div className="mt-4 flex max-w-md gap-2">
+          <Input
+            placeholder="target-server.example.com"
+            value={destHost}
+            onChange={(e) => setDestHost(e.target.value)}
+          />
+          <Button
+            variant="secondary"
+            onClick={() => setConfirmAction("migrate")}
+            disabled={!destHost}
+          >
+            {independentMode ? "Prepare migrate" : "Migrate"}
+          </Button>
+        </div>
+      </Card>
 
       <Card>
         <h2 className="text-lg font-medium text-white">Transfer ownership</h2>

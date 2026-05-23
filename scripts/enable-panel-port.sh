@@ -43,14 +43,32 @@ if [[ "${QADBAK_NGINX_ONLY:-}" != "1" ]]; then
 fi
 
 PUBLIC_IP="$(curl -fsS --max-time 3 ifconfig.me 2>/dev/null || true)"
-if [[ -n "$PUBLIC_IP" ]]; then
+WEBMIN_EMBED=0
+if [[ -f "$ROOT/.env.local" ]]; then
+  # shellcheck source=scripts/lib/read-env-local.sh
+  source "$ROOT/scripts/lib/read-env-local.sh"
+  DISABLE_WM="$(read_env_local_key QADBAK_DISABLE_WEBMIN false)"
+  VM_FB="$(read_env_local_key QADBAK_VIRTUALMIN_FALLBACK true)"
+  PROV="$(read_env_local_key QADBAK_PROVISIONER hybrid)"
+  if [[ "$DISABLE_WM" =~ ^(true|1|yes)$ ]] || [[ "$PROV" == "native" ]] || [[ "$VM_FB" =~ ^(false|0|no)$ ]]; then
+    WEBMIN_EMBED=0
+  else
+    WEBMIN_EMBED=1
+  fi
+fi
+
+if [[ -n "$PUBLIC_IP" ]] && [[ "$WEBMIN_EMBED" -eq 1 ]]; then
   export QADBAK_PANEL_URL="http://${PUBLIC_IP}:${PORT}"
   export QADBAK_PANEL_PORT="$PORT"
   bash "$ROOT/scripts/sync-webmin-embed-env.sh" 2>/dev/null || true
 fi
 
 if [[ "${QADBAK_NGINX_ONLY:-}" == "1" ]]; then
-  echo "    Panel port :$PORT nginx refreshed (embed/webmin proxy included)"
+  if [[ "$WEBMIN_EMBED" -eq 1 ]]; then
+    echo "    Panel port :$PORT nginx refreshed (optional Webmin: nginx-webmin-embed-snippet.conf)"
+  else
+    echo "    Panel port :$PORT nginx refreshed (no Webmin embed — independent mode)"
+  fi
   exit 0
 fi
 

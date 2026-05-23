@@ -1,15 +1,17 @@
 # VirtualMin/Webmin verwijderen — wat Qadbak nog nodig heeft
 
-Je VPS na **phase 8 hybrid** (`provisioner: hybrid`):
+Je VPS na **phase 8 independent** (`provisioner: native`, `virtualminFallback: false`):
 
 | Laag | Status |
 |------|--------|
-| **Panel UI** | Qadbak — geen Webmin-tab (`QADBAK_DISABLE_WEBMIN=true`) |
-| **Domeinlijst** | `data/native-domains.json` — geen `list-domains` API nodig |
-| **Files, terminal, website repair, stack, host metrics** | Eigen helpers — geen Webmin |
-| **Mail, DNS, SSL, DB, cron, backups, nieuw domein, …** | Nog **VirtualMin `remote.cgi`** (`QADBAK_VIRTUALMIN_FALLBACK=true`) |
+| **Panel UI** | Qadbak — geen Webmin-tab |
+| **Domeinlijst + hosting** | `native-domains.json` + `provisioning-helper` (geen `remote.cgi`) |
+| **Lifecycle** | Clone, transfer (panel), migrate (backup + handmatige stappen) — native |
+| **Admin** | License, templates, admins, global features, S3, check-config — native |
+| **Nginx panel** | Geen `/embed/webmin/` in standaard templates |
+| **Linux-stack** | nginx, Postfix, Dovecot, BIND, MariaDB — **blijft** |
 
-**VirtualMin/Webmin pakketten verwijderen** mag pas als elke functie die je in het panel gebruikt een **native implementatie** heeft. De Linux-stack (nginx, Apache, Postfix, Dovecot, BIND, MariaDB) blijft altijd.
+**`apt remove webmin`** is geen functionele blocker meer als `bash scripts/audit-vm-dependency.sh` groen is en je panel-tests slagen. Gebruik `scripts/uninstall-virtualmin.sh`.
 
 ---
 
@@ -58,11 +60,13 @@ Prioriteit voor **één testdomein** (`siccamanagement.nl`) — daarna pas `apt 
 | Resellers/plannen | native `resellers` | 🟡 | JSON registry (metadata) |
 | PHP versie / pool | native `php` | 🟡 | host PHP layout |
 | FTP accounts | native `ftp` | 🟡 | proftpd-oriented |
-| Admin server status | Qadbak + systemctl | ✅ grotendeels | `host-services-helper` |
+| Admin server status | Qadbak + systemctl | ✅ | `host-services-helper` |
+| Lifecycle clone/transfer/migrate | native lifecycle + admin | ✅ | `domain-clone`, `domain-transfer`, `domain-migrate` |
+| Admin license/templates/admins/cloud | native admin | ✅ | `provision-admin.mjs` |
 
 🔴 = blokkeert package removal voor dagelijks gebruik  
-🟡 = deels  
-🟢 = alleen als je die admin-schermen gebruikt
+🟡 = deels / handmatige stappen (migrate tussen servers)  
+🟢 = klaar in independent mode
 
 Zie [PARITY-AUDIT.md](./PARITY-AUDIT.md) voor het volledige menu.
 
@@ -110,15 +114,19 @@ bash scripts/audit-vm-dependency.sh
 sudo bash scripts/test-native-provisioning.sh
 ```
 
-Wanneer alles getest: `QADBAK_VIRTUALMIN_FALLBACK=false`, `QADBAK_PROVISIONER=native`.
+Wanneer alles getest:
+
+```bash
+sudo bash scripts/apply-phase8-independent.sh
+bash scripts/audit-vm-dependency.sh
+```
 
 ### Pas daarna: pakketten eraf (irreversibel zonder backup)
 
 ```bash
-# Alleen als mail/DNS/create-domain native getest zijn!
-sudo systemctl stop webmin
-sudo apt remove webmin webmin-virtual-server virtualmin-*   # exacte pakketnamen per OS
-sudo bash scripts/export-native-domains.sh   # laatste export vóór uninstall
+sudo bash scripts/uninstall-virtualmin.sh --dry-run
+sudo bash scripts/uninstall-virtualmin.sh
+sudo bash scripts/export-native-domains.sh   # registry backup
 ```
 
 Backup eerst: `/home`, `/etc/nginx`, `/etc/postfix`, `/etc/bind`, databases.
@@ -131,8 +139,8 @@ Backup eerst: `/home`, `/etc/nginx`, `/etc/postfix`, `/etc/bind`, databases.
 |-------|-------------------------|
 | Geen Webmin UI (fase 1–8 hybrid) | ✅ op test-VPS |
 | Mail + DNS + SSL native voor 1 domein | 2–4 maanden |
-| Volledige v1-pariteit zonder VM | 12–24 maanden |
-| `apt remove webmin` veilig op productie | na parity + migratie |
+| Volledige v1-pariteit zonder VM | grotendeels ✅ in repo |
+| `apt remove webmin` veilig op productie | na `audit-vm-dependency` + panel smoke tests |
 
 ---
 
