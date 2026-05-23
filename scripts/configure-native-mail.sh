@@ -111,7 +111,10 @@ EOF
   fi
 fi
 
-doveconf -n >/dev/null 2>&1 || { echo "WARN: doveconf check failed — review $DOVECOT_SNIPPET" >&2; }
+if ! doveconf -n >/dev/null 2>&1; then
+  echo "WARN: doveconf check failed — review $DOVECOT_SNIPPET" >&2
+  doveconf -n 2>&1 | tail -20 >&2 || true
+fi
 systemctl restart dovecot 2>/dev/null || systemctl restart dovecot-core 2>/dev/null || true
 systemctl reload postfix 2>/dev/null || systemctl restart postfix 2>/dev/null || true
 

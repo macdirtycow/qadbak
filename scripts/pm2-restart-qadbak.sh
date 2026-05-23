@@ -53,8 +53,21 @@ if ss -tln 2>/dev/null | grep -q ":${TERMINAL_PORT} "; then
 else
   echo "    FAIL — qadbak-terminal not listening on 127.0.0.1:$TERMINAL_PORT" >&2
   run "cd '$ROOT' && pm2 logs qadbak-terminal --lines 15 --nostream" 2>/dev/null || true
-  echo "    Fix: sudo bash scripts/apply-terminal-native.sh" >&2
-  exit 1
+  if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/ensure-terminal-deps.sh" ]]; then
+    echo "    Retry: ensure-terminal-deps + restart terminal only" >&2
+    bash "$ROOT/scripts/ensure-terminal-deps.sh"
+    run "cd '$ROOT' && pm2 restart qadbak-terminal"
+    sleep 2
+    if ss -tln 2>/dev/null | grep -q ":${TERMINAL_PORT} "; then
+      echo "    OK — terminal recovered after deps reinstall"
+    else
+      echo "    Fix: sudo bash scripts/apply-terminal-native.sh" >&2
+      exit 1
+    fi
+  else
+    echo "    Fix: sudo bash scripts/apply-terminal-native.sh" >&2
+    exit 1
+  fi
 fi
 
 echo ""

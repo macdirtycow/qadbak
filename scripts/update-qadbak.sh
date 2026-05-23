@@ -24,7 +24,10 @@ else
   run_as_qadbak "cd '$ROOT' && bash scripts/reset-git-drift-before-pull.sh && git pull"
 fi
 
-echo "==> Build (as $USER — never npm install as root)"
+echo "==> Build (as $USER — never npm install/build as root)"
+if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/fix-qadbak-ownership.sh" ]]; then
+  bash "$ROOT/scripts/fix-qadbak-ownership.sh"
+fi
 run_as_qadbak "cd '$ROOT' && npm install && npm run build"
 bash "$ROOT/scripts/ensure-terminal-deps.sh"
 
