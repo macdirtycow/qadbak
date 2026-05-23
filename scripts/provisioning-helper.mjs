@@ -23,8 +23,24 @@ import {
 } from "./lib/provision-php.mjs";
 import { ftpList, ftpCreate, ftpDelete, ftpPass } from "./lib/provision-ftp.mjs";
 import { limitsGet, limitsSet } from "./lib/provision-limits.mjs";
-import { domainEnable, domainDisable } from "./lib/provision-lifecycle.mjs";
+import {
+  domainEnable,
+  domainDisable,
+  domainValidate,
+} from "./lib/provision-lifecycle.mjs";
 import { mailSettingsGet, mailSettingsSet } from "./lib/provision-mail-settings.mjs";
+import { mailLogsSearch } from "./lib/provision-mail-logs.mjs";
+import { imapList, imapCopy } from "./lib/provision-imap.mjs";
+import {
+  protectedList,
+  protectedCreate,
+  protectedDelete,
+} from "./lib/provision-protected.mjs";
+import {
+  sharedList,
+  sharedCreate,
+  sharedDelete,
+} from "./lib/provision-shared.mjs";
 
 const cmd = process.argv[2];
 const args = process.argv.slice(3);
@@ -162,6 +178,36 @@ async function main() {
       break;
     case "domain-disable":
       await domainDisable(args[0]);
+      break;
+    case "domain-validate":
+      await domainValidate(args[0]);
+      break;
+    case "mail-logs-search":
+      await mailLogsSearch(args[0], args[1] || "");
+      break;
+    case "imap-list":
+      await imapList(args[0], args[1]);
+      break;
+    case "imap-copy":
+      await imapCopy(args[0], args[1], args[2]);
+      break;
+    case "protected-list":
+      await protectedList(args[0]);
+      break;
+    case "protected-create":
+      await protectedCreate(args[0], args[1]);
+      break;
+    case "protected-delete":
+      await protectedDelete(args[0], args[1]);
+      break;
+    case "shared-list":
+      await sharedList(args[0]);
+      break;
+    case "shared-create":
+      await sharedCreate(args[0], args[1], args[2]);
+      break;
+    case "shared-delete":
+      await sharedDelete(args[0], args[1]);
       break;
     case "mail-settings-get":
       await mailSettingsGet(args[0]);

@@ -15,13 +15,14 @@ type SessionInfo = {
   error?: string;
 };
 
+/** Always build an absolute WS URL in the browser (never use server wsUrl — avoids /domains/…/ws//host paths). */
 function resolveWsUrl(session: SessionInfo): string | null {
-  if (session.token && typeof window !== "undefined") {
-    const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    const q = new URLSearchParams({ token: session.token });
-    return `${proto}//${window.location.host}/ws/domain-terminal?${q.toString()}`;
-  }
-  return session.wsUrl ?? null;
+  if (typeof window === "undefined") return session.wsUrl ?? null;
+  if (!session.token) return null;
+  const url = new URL("/ws/domain-terminal", window.location.origin);
+  url.protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  url.searchParams.set("token", session.token);
+  return url.toString();
 }
 
 export function DomainTerminal({

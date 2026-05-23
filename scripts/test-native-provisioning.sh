@@ -91,6 +91,21 @@ if has mail-settings; then
   echo "==> mail-settings-get $DOMAIN"
   check mail-settings-get "$DOMAIN"
 fi
+if has lifecycle; then
+  check domain-validate "$DOMAIN"
+fi
+if has mail-logs; then
+  check mail-logs-search "$DOMAIN" "$DOMAIN"
+fi
+if has imap; then
+  check imap-list "$DOMAIN" ""
+fi
+if has protected; then
+  check protected-list "$DOMAIN"
+fi
+if has shared; then
+  check shared-list "$DOMAIN"
+fi
 
 if [[ "$FAILED" -ne 0 ]]; then
   echo "Some native checks failed." >&2

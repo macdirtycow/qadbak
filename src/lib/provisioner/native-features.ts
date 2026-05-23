@@ -16,6 +16,10 @@ const ALL = [
   "limits",
   "lifecycle",
   "mail-settings",
+  "mail-logs",
+  "imap",
+  "protected",
+  "shared",
 ] as const;
 
 export type NativeFeature = (typeof ALL)[number];

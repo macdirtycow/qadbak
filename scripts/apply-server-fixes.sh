@@ -30,6 +30,15 @@ bash "$QADBAK_DIR/scripts/configure-stack-helper-sudo.sh"
 echo "==> Hosting stack (nginx, public_html, Webmin login)"
 bash "$QADBAK_DIR/scripts/install-hosting-stack.sh"
 
+PANEL_PORT=""
+if [[ -f "$QADBAK_DIR/.env.local" ]]; then
+  PANEL_PORT="$(grep -E '^QADBAK_PANEL_PORT=' "$QADBAK_DIR/.env.local" | cut -d= -f2- | tr -d '"' || true)"
+fi
+if [[ -n "$PANEL_PORT" ]]; then
+  echo "==> Panel nginx :$PANEL_PORT (upload limit + terminal WS)"
+  bash "$QADBAK_DIR/scripts/apply-panel-nginx-fixes.sh" "$PANEL_PORT"
+fi
+
 echo "==> Verify file helper sudo"
 FS_WRAP="$(readlink -f "$QADBAK_DIR/scripts/run-domain-fs-helper.sh")"
 FS_TEST_HOME="$(getent passwd | awk -F: '$6 ~ /^\/home\/[^/]+$/ {print $6; exit}')"

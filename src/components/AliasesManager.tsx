@@ -12,6 +12,12 @@ import type { MailAlias } from "@/lib/provisioner";
 import { useState } from "react";
 import { DomainPageHeader } from "./DomainPageHeader";
 
+function formatAliasFrom(from: string, domain: string): string {
+  const f = from.trim();
+  if (!f) return domain;
+  return f.includes("@") ? f : `${f}@${domain}`;
+}
+
 export function AliasesManager({
   domain,
   initialAliases,
@@ -50,7 +56,7 @@ export function AliasesManager({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Create failed.");
-      setSuccess(`Alias ${from}@${domain} created.`);
+      setSuccess(`Alias ${formatAliasFrom(from, domain)} created.`);
       setFrom("");
       setTo("");
       await refresh();
@@ -116,7 +122,7 @@ export function AliasesManager({
           <tbody>
             {aliases.map((a) => (
               <tr key={a.from} className="border-b border-panel-border/50">
-                <td className="px-6 py-4 text-white">{a.from}@{domain}</td>
+                <td className="px-6 py-4 text-white">{formatAliasFrom(a.from, domain)}</td>
                 <td className="px-6 py-4 text-panel-muted">{a.to}</td>
                 <td className="px-6 py-4 text-right">
                   <Button variant="danger" onClick={() => setDeleteFrom(a.from)}>
@@ -135,7 +141,7 @@ export function AliasesManager({
       <ConfirmDialog
         open={!!deleteFrom}
         title="Delete alias"
-        description={`Delete alias ${deleteFrom}@${domain}?`}
+        description={`Delete alias ${deleteFrom ? formatAliasFrom(deleteFrom, domain) : ""}?`}
         confirmLabel="Delete"
         confirmValue={deleteFrom ?? ""}
         typedValue={confirmTyped}

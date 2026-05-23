@@ -382,6 +382,93 @@ export async function setDomainEnabledNative(
   );
 }
 
+export async function validateDomainNative(
+  domain: string,
+  _actor: Actor,
+): Promise<{ valid: boolean; messages: string[] }> {
+  const r = await runProvisioningHelper("domain-validate", domain);
+  return {
+    valid: Boolean(r.valid),
+    messages: (r.messages as string[]) ?? [],
+  };
+}
+
+export async function searchMailLogsNative(
+  domain: string,
+  query: string,
+  _actor: Actor,
+): Promise<string[]> {
+  const r = await runProvisioningHelper("mail-logs-search", domain, query);
+  return (r.lines as string[]) ?? [];
+}
+
+export async function listImapMailboxesNative(
+  domain: string,
+  user: string | undefined,
+  _actor: Actor,
+): Promise<{ user: string; folder: string; messages?: string; size?: string }[]> {
+  const r = await runProvisioningHelper("imap-list", domain, user ?? "");
+  return (r.mailboxes as { user: string; folder: string; messages?: string; size?: string }[]) ?? [];
+}
+
+export async function copyMailboxNative(
+  domain: string,
+  from: string,
+  to: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("imap-copy", domain, from, to);
+}
+
+export async function listProtectedDirectoriesNative(
+  domain: string,
+  _actor: Actor,
+): Promise<{ path: string; id?: string }[]> {
+  const r = await runProvisioningHelper("protected-list", domain);
+  return (r.directories as { path: string; id?: string }[]) ?? [];
+}
+
+export async function createProtectedDirectoryNative(
+  domain: string,
+  dirPath: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("protected-create", domain, dirPath);
+}
+
+export async function deleteProtectedDirectoryNative(
+  domain: string,
+  dirPath: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("protected-delete", domain, dirPath);
+}
+
+export async function listSharedAddressesNative(
+  domain: string,
+  _actor: Actor,
+): Promise<{ address: string; users: string }[]> {
+  const r = await runProvisioningHelper("shared-list", domain);
+  return (r.addresses as { address: string; users: string }[]) ?? [];
+}
+
+export async function createSharedAddressNative(
+  domain: string,
+  address: string,
+  users: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("shared-create", domain, address, users);
+}
+
+export async function deleteSharedAddressNative(
+  domain: string,
+  address: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("shared-delete", domain, address);
+}
+
 export async function getMailSettingsNative(
   domain: string,
   _actor: Actor,

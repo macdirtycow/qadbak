@@ -76,6 +76,24 @@ export function applyNativeOverrides<T extends Provisioner>(base: T): T {
   }
   if (nativeFeatureEnabled("lifecycle")) {
     out.setDomainEnabled = native.setDomainEnabledNative;
+    out.validateDomain = native.validateDomainNative;
+  }
+  if (nativeFeatureEnabled("mail-logs")) {
+    out.searchMailLogs = native.searchMailLogsNative;
+  }
+  if (nativeFeatureEnabled("imap")) {
+    out.listImapMailboxes = native.listImapMailboxesNative;
+    out.copyMailbox = native.copyMailboxNative;
+  }
+  if (nativeFeatureEnabled("protected")) {
+    out.listProtectedDirectories = native.listProtectedDirectoriesNative;
+    out.createProtectedDirectory = native.createProtectedDirectoryNative;
+    out.deleteProtectedDirectory = native.deleteProtectedDirectoryNative;
+  }
+  if (nativeFeatureEnabled("shared")) {
+    out.listSharedAddresses = native.listSharedAddressesNative;
+    out.createSharedAddress = native.createSharedAddressNative;
+    out.deleteSharedAddress = native.deleteSharedAddressNative;
   }
   if (nativeFeatureEnabled("mail-settings")) {
     out.getMailSettings = native.getMailSettingsNative;
