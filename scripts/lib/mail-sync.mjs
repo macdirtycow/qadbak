@@ -18,6 +18,7 @@ const exec = promisify(execFile);
 const VIRTUAL = "/etc/postfix/virtual";
 const VIRTUAL_DOMAINS = "/etc/postfix/virtual_domains";
 
+const MAIL_CONFIGURED_STAMP = "/var/lib/qadbak/native-mail-configured";
 let stackConfigured = false;
 
 export async function syncVirtualDomainsFile() {
@@ -52,7 +53,10 @@ export async function ensureDomainMailSetup(domain, owner) {
 }
 
 export async function ensureNativeMailStack() {
-  if (stackConfigured) return;
+  if (stackConfigured || (await fileExists(MAIL_CONFIGURED_STAMP))) {
+    stackConfigured = true;
+    return;
+  }
   const script = path.join(QADBAK_DIR, "scripts", "configure-native-mail.sh");
   if (!(await fileExists(script))) return;
   try {

@@ -8,10 +8,38 @@ set -euo pipefail
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
 [[ -d "$QADBAK_DIR" ]] || QADBAK_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 ACTION="${1:-apply}"
+STAMP="/var/lib/qadbak/native-mail-configured"
 
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Run as root: sudo bash scripts/configure-native-mail.sh" >&2
   exit 1
+fi
+
+if [[ "$ACTION" == "apply" ]] && [[ -f "$STAMP" ]]; then
+  sync_domains() {
+    REG="$QADBAK_DIR/data/native-domains.json"
+    [[ -f "$REG" ]] || return 0
+    python3 - "$REG" <<'PY'
+import json, sys
+path = sys.argv[1]
+with open(path) as f:
+    rows = json.load(f)
+domains = sorted({
+    r["name"].lower()
+    for r in rows
+    if isinstance(r, dict) and r.get("name") and not r.get("disabled")
+    and r.get("type", "top") != "alias"
+})
+with open("/etc/postfix/virtual_domains", "w") as out:
+    out.write("\n".join(domains))
+    if domains:
+        out.write("\n")
+PY
+    postmap /etc/postfix/virtual 2>/dev/null || true
+  }
+  sync_domains
+  echo "OK — native mail already configured (stamp); domains synced"
+  exit 0
 fi
 
 export DEBIAN_FRONTEND=noninteractive
@@ -158,6 +186,9 @@ if [[ "$ACTION" == "sync" ]]; then
 fi
 
 sync_domains
+
+mkdir -p /var/lib/qadbak
+touch "$STAMP"
 
 echo "OK — native mail stack configured (Postfix virtual + Dovecot Maildir)"
 echo "    Maps: /etc/postfix/virtual"

@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { emit, fail, resolveDomainUser } from "./provisioning-common.mjs";
 import { listMailboxesFromLayout, discoverMailLayout } from "./mail-layout.mjs";
-import { ensureNativeMailStack } from "./mail-sync.mjs";
+import { fileExists } from "./provisioning-common.mjs";
 
 const exec = promisify(execFile);
 
@@ -22,8 +22,13 @@ function buildMessage(from, to, subject, body) {
   ].join("\r\n");
 }
 
+const MAIL_CONFIGURED_STAMP = "/var/lib/qadbak/native-mail-configured";
+
 export async function mailSendDirect(domain, localUser, payloadJson) {
-  await ensureNativeMailStack();
+  if (!(await fileExists(MAIL_CONFIGURED_STAMP))) {
+    const { ensureNativeMailStack } = await import("./mail-sync.mjs");
+    await ensureNativeMailStack();
+  }
   const { user: owner, home } = await resolveDomainUser(domain);
   const layout = await discoverMailLayout(domain, owner, home);
   const mailboxes = await listMailboxesFromLayout(layout);

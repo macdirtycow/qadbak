@@ -62,13 +62,14 @@ export function Badge({
   );
 }
 
-export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      className="w-full rounded-lg border border-panel-border bg-panel-bg px-3 py-2 text-sm text-white placeholder:text-panel-muted focus:border-panel-accent focus:outline-none focus:ring-1 focus:ring-panel-accent"
-      {...props}
-    />
-  );
+const inputClassName =
+  "w-full rounded-lg border border-panel-border bg-panel-bg px-3 py-2 text-sm text-white placeholder:text-panel-muted focus:border-panel-accent focus:outline-none focus:ring-1 focus:ring-panel-accent";
+
+export function Input({
+  className = "",
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement>) {
+  return <input className={`${inputClassName} ${className}`.trim()} {...props} />;
 }
 
 export function Label({ children, htmlFor }: { children: ReactNode; htmlFor?: string }) {
