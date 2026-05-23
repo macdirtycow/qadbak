@@ -135,8 +135,14 @@ function attachPty(ws, term) {
     if (ws.readyState === ws.OPEN) ws.send(data);
   });
 
-  term.onExit(() => {
-    if (ws.readyState === ws.OPEN) ws.close(1000, "Shell exited");
+  term.onExit(({ exitCode, signal }) => {
+    if (ws.readyState === ws.OPEN) {
+      const reason =
+        exitCode === 0
+          ? "Shell exited"
+          : `Shell exited (code ${exitCode}${signal ? `, signal ${signal}` : ""})`;
+      ws.close(1000, reason);
+    }
   });
 
   ws.on("message", (raw) => {
@@ -193,8 +199,8 @@ const server = http.createServer((_req, res) => {
   res.end("WebSocket upgrade required.");
 });
 
-const wssDomain = new WebSocketServer({ server, path: "/ws/domain-terminal" });
-const wssAdmin = new WebSocketServer({ server, path: "/ws/admin-terminal" });
+const wssDomain = new WebSocketServer({ noServer: true });
+const wssAdmin = new WebSocketServer({ noServer: true });
 
 bindTerminalWss(wssDomain, async (token) => {
   const unixUser = await verifyDomainToken(token);
@@ -206,8 +212,34 @@ bindTerminalWss(wssAdmin, async (token) => {
   return spawnAdminShell();
 });
 
+server.on("upgrade", (request, socket, head) => {
+  const host = request.headers.host || "localhost";
+  const pathname = new URL(request.url || "/", `http://${host}`).pathname;
+
+  const route = (wss) => {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit("connection", ws, request);
+    });
+  };
+
+  if (pathname === "/ws/domain-terminal") {
+    route(wssDomain);
+    return;
+  }
+  if (pathname === "/ws/admin-terminal") {
+    route(wssAdmin);
+    return;
+  }
+  socket.destroy();
+});
+
 server.listen(PORT, HOST, () => {
   process.stdout.write(
     `Qadbak terminal WS on ${HOST}:${PORT} — /ws/domain-terminal + /ws/admin-terminal (mock=${MOCK})\n`,
   );
+});
+
+process.on("uncaughtException", (err) => {
+  process.stderr.write(`qadbak-terminal fatal: ${err.stack || err}\n`);
+  process.exit(1);
 });

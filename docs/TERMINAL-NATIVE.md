@@ -27,15 +27,10 @@ Domain terminal starts in `/tmp` then `run-domain-terminal.sh` cds to the user h
 
 ```bash
 cd /opt/qadbak
-sudo bash scripts/install-node-build-deps.sh   # make/g++ for node-pty (once)
-sudo bash scripts/fix-qadbak-ownership.sh     # if you ran npm install as root before
-sudo -u qadbak bash -c 'cd /opt/qadbak && npm install && npm run build'
-sudo bash scripts/configure-domain-terminal-sudo.sh
-sudo bash scripts/configure-admin-terminal-sudo.sh
-sudo bash scripts/enable-panel-port.sh 11000   # if you use :11000
-sudo bash scripts/apply-hosting-nginx.sh       # WebSocket proxy in nginx
-sudo bash scripts/pm2-restart-qadbak.sh
-sudo -u qadbak pm2 list
+sudo bash scripts/pull-and-helpers.sh   # pull + apply-terminal-native
+sudo -u qadbak bash -c 'cd /opt/qadbak && npm run build'
+# or one-shot without pull:
+sudo bash scripts/apply-terminal-native.sh
 ```
 
 **Do not** run `npm install` as root — `node-pty` must compile as the `qadbak` user and needs `build-essential` on Ubuntu.

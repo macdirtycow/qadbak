@@ -1,8 +1,10 @@
 import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonOk } from "@/lib/api";
 import {
+  TERMINAL_SETUP_HINT,
   createAdminTerminalWsToken,
   terminalAvailable,
+  terminalBackendReady,
 } from "@/lib/terminal-ws";
 
 export async function GET() {
@@ -15,11 +17,20 @@ export async function GET() {
       });
     }
 
+    const backendReady = await terminalBackendReady();
+    if (!backendReady) {
+      return jsonOk({
+        available: false,
+        error: `Terminal service is not running. ${TERMINAL_SETUP_HINT}`,
+      });
+    }
+
     const session = await requireAdmin();
     const token = await createAdminTerminalWsToken(session);
 
     return jsonOk({
       available: true,
+      backendReady: true,
       token,
       shellUser: "root",
       username: session.username,

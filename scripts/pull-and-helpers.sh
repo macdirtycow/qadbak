@@ -12,6 +12,9 @@ if [[ "$(id -u)" -eq 0 ]]; then
   for h in configure-provisioning-helper-sudo.sh configure-stack-helper-sudo.sh; do
     bash "$QADBAK_DIR/scripts/$h" || echo "WARN: $h" >&2
   done
+  if [[ -f "$QADBAK_DIR/scripts/apply-terminal-native.sh" ]]; then
+    bash "$QADBAK_DIR/scripts/apply-terminal-native.sh"
+  fi
 fi
 
 echo "OK — pull complete. Run: sudo bash scripts/discover-mail-layout.sh <domain>"

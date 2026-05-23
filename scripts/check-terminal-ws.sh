@@ -45,16 +45,30 @@ else
 fi
 
 echo "==> sudo domain terminal runner"
-FIRST="$(virtualmin list-domains --name-only 2>/dev/null | head -1 || true)"
-if [[ -n "$FIRST" ]]; then
-  U="$(virtualmin list-domains --domain "$FIRST" --multiline 2>/dev/null | awk -F= '/^user=/{print $2; exit}')"
-  U="${U:-$FIRST}"
-  U="${U%%.*}"
-  if sudo -u "$USER" sudo -n -l 2>/dev/null | grep -q "run-domain-terminal.sh"; then
-    echo "    OK (sudo rule for $U)"
+if sudo -u "$USER" sudo -n -l 2>/dev/null | grep -q "run-domain-terminal.sh"; then
+  TEST_USER=""
+  if [[ -f "$ROOT/data/native-domains.json" ]]; then
+    TEST_USER="$(python3 -c "
+import json
+from pathlib import Path
+p = Path('$ROOT/data/native-domains.json')
+if p.exists():
+    d = json.loads(p.read_text())
+    for row in d if isinstance(d, list) else d.get('domains', []):
+        u = row.get('user') or row.get('unixUser')
+        if u:
+            print(u)
+            break
+" 2>/dev/null || true)"
+  fi
+  if [[ -z "$TEST_USER" ]]; then
+    TEST_USER="$(getent passwd | awk -F: '$6 ~ /^\/home\/[^/]+$/ && $1 != "qadbak" {print $1; exit}')"
+  fi
+  if [[ -n "$TEST_USER" ]]; then
+    echo "    OK (sudo rule; domain user: $TEST_USER)"
   else
-    echo "    FAIL — run: sudo bash scripts/configure-domain-terminal-sudo.sh" >&2
+    echo "    OK (sudo rule present)"
   fi
 else
-  echo "    skip (no VirtualMin domains)"
+  echo "    FAIL — run: sudo bash scripts/configure-domain-terminal-sudo.sh" >&2
 fi

@@ -66,3 +66,28 @@ export function terminalAvailable(): boolean {
   if (process.env.VIRTUALMIN_MOCK === "true") return true;
   return process.env.QADBAK_TERMINAL_WS_PORT !== "off";
 }
+
+function terminalWsPort(): number {
+  const raw = process.env.QADBAK_TERMINAL_WS_PORT || "3001";
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : 3001;
+}
+
+/** True when the pm2 qadbak-terminal process is listening (HTTP 426 on /). */
+export async function terminalBackendReady(): Promise<boolean> {
+  if (!terminalAvailable()) return false;
+  if (process.env.VIRTUALMIN_MOCK === "true") return true;
+  const host = process.env.QADBAK_TERMINAL_WS_HOST || "127.0.0.1";
+  const port = terminalWsPort();
+  try {
+    const res = await fetch(`http://${host}:${port}/`, {
+      signal: AbortSignal.timeout(2500),
+    });
+    return res.status === 426;
+  } catch {
+    return false;
+  }
+}
+
+export const TERMINAL_SETUP_HINT =
+  "On the server run: sudo bash scripts/apply-terminal-native.sh";

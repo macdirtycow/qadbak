@@ -56,7 +56,14 @@ export function DomainTerminal({
   const connect = useCallback(
     async (session: SessionInfo) => {
       const wsUrl = resolveWsUrl(session, wsPath);
-      if (!wsUrl || !containerRef.current) return;
+      if (!wsUrl) return;
+      await new Promise<void>((r) => {
+        requestAnimationFrame(() => r());
+      });
+      if (!containerRef.current) {
+        setError("Terminal could not mount — try New session.");
+        return;
+      }
       disconnect();
 
       const term =
