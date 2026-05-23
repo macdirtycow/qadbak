@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { repairAvailable } from "./domain-repair";
 import { domainUnixUser } from "./domain-files";
-import { validateDomain } from "./virtualmin";
+import { getProvisioner } from "./provisioner";
 import type { Role } from "./types";
 
 export interface WebsiteProbeResult {
@@ -252,12 +252,21 @@ export async function getWebsiteHealth(
   actor: { role: Role; domains: string[] },
 ): Promise<WebsiteHealthReport> {
   let validation = { valid: true, messages: [] as string[] };
-  try {
-    validation = await validateDomain(domain, actor);
-  } catch {
+  if (actor.role === "admin") {
+    try {
+      validation = await getProvisioner().validateDomain(domain, actor);
+    } catch (e) {
+      validation = {
+        valid: false,
+        messages: [
+          e instanceof Error ? e.message : "Domain validation failed.",
+        ],
+      };
+    }
+  } else {
     validation = {
       valid: true,
-      messages: ["VirtualMin validation is only available for administrators."],
+      messages: ["Domain validation is only available for administrators."],
     };
   }
   const [localProbe, publicProbe] = await Promise.all([

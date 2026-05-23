@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
 import { probeNodeHealth } from "@/lib/node-agent-client";
+import { isIndependentMode } from "@/lib/provisioner/native-stub";
 import { getDefaultNode, loadNodes, saveNodes, type QadbakNode } from "@/lib/servers";
 
 export async function GET() {
@@ -13,6 +14,7 @@ export async function GET() {
       health,
       defaultNodeId: getDefaultNode(nodes).id,
       multiServerEnabled: process.env.QADBAK_MULTI_SERVER === "true",
+      provisioner: isIndependentMode() ? "native" : "hybrid",
     });
   } catch (err) {
     return handleApiError(err);
@@ -42,7 +44,9 @@ export async function POST(request: Request) {
       name,
       roles: ["provisioner"],
       agentUrl,
-      virtualminUrl: body.virtualminUrl?.trim() || undefined,
+      ...(isIndependentMode()
+        ? {}
+        : { virtualminUrl: body.virtualminUrl?.trim() || undefined }),
       isDefault: false,
     };
     await saveNodes([...nodes, entry]);

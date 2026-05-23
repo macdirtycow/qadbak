@@ -12,6 +12,7 @@ export function AdminNodesView() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [provisioner, setProvisioner] = useState<"native" | "hybrid">("native");
   const [form, setForm] = useState({ id: "", name: "", agentUrl: "" });
 
   const load = useCallback(async () => {
@@ -24,6 +25,7 @@ export function AdminNodesView() {
       setNodes(data.nodes ?? []);
       setHealth(data.health ?? []);
       setDefaultNodeId(data.defaultNodeId ?? "local");
+      setProvisioner(data.provisioner === "hybrid" ? "hybrid" : "native");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error.");
     } finally {
@@ -63,9 +65,9 @@ export function AdminNodesView() {
       <Card>
         <h2 className="font-medium text-white">Hosting nodes</h2>
         <p className="mt-1 text-sm text-panel-muted">
-          Phase 7: one panel can manage multiple VPS nodes. Each node runs{" "}
-          <code className="text-white">qadbak-node-agent</code> (port 9100 by default). Domain
-          provisioning still uses the default node until routing is extended.
+          {provisioner === "native"
+            ? "Independent mode: provisioning runs on this server via native helpers (no VirtualMin URL per node)."
+            : "Hybrid mode: remote nodes can expose a VirtualMin API URL. Each node runs qadbak-node-agent (port 9100)."}
         </p>
         {loading ? (
           <p className="mt-4 text-sm text-panel-muted">Loading…</p>

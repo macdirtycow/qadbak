@@ -397,6 +397,30 @@ export async function setPhpDirectoryNative(
   await runProvisioningHelper("php-set-directory", domain, dir, version);
 }
 
+export async function modifyPhpIniNative(
+  domain: string,
+  name: string,
+  value: string,
+  version: string | undefined,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper(
+    "php-modify-ini",
+    domain,
+    name,
+    value,
+    version ?? "",
+  );
+}
+
+export async function deletePhpDirectoryNative(
+  domain: string,
+  dir: string,
+  _actor: Actor,
+): Promise<void> {
+  await runProvisioningHelper("php-delete-directory", domain, dir);
+}
+
 export async function listFtpAccountsSafeNative(
   domain: string,
   _actor: Actor,
@@ -566,11 +590,11 @@ export async function deleteProtectedUserNative(
 
 export async function resendEmailNative(
   _domain: string,
-  _messageId: string,
+  messageId: string,
   _actor: Actor,
 ): Promise<void> {
   throw new Error(
-    "Resend is not available in native mode. Resend from your mail client or use the server mail queue.",
+    `Resend (${messageId}) is not available without VirtualMin. Use your mail client, or requeue from the server with postqueue/postfix.`,
   );
 }
 

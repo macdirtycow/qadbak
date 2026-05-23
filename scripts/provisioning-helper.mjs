@@ -28,6 +28,8 @@ import {
   phpDirectories,
   phpIni,
   phpSetDirectory,
+  phpModifyIni,
+  phpDeleteDirectory,
 } from "./lib/provision-php.mjs";
 import { ftpList, ftpCreate, ftpDelete, ftpPass } from "./lib/provision-ftp.mjs";
 import { limitsGet, limitsSet } from "./lib/provision-limits.mjs";
@@ -218,6 +220,12 @@ async function main() {
       break;
     case "php-set-directory":
       await phpSetDirectory(args[0], args[1], args[2]);
+      break;
+    case "php-modify-ini":
+      await phpModifyIni(args[0], args[1], args[2], args[3]);
+      break;
+    case "php-delete-directory":
+      await phpDeleteDirectory(args[0], args[1]);
       break;
     case "ftp-list":
       await ftpList(args[0]);
