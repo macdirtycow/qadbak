@@ -91,7 +91,7 @@ systemctl reload nginx
 for panel_conf in /etc/nginx/sites-available/qadbak-port-*; do
   [[ -f "$panel_conf" ]] || continue
   panel_port="${panel_conf##*qadbak-port-}"
-  echo "==> Refresh panel port :$panel_port (Qadbak + /embed/webmin/)"
+  echo "==> Refresh panel port :$panel_port (Qadbak panel vhost)"
   QADBAK_NGINX_ONLY=1 bash "$QADBAK_DIR/scripts/enable-panel-port.sh" "$panel_port"
 done
 
