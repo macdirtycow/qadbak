@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, Badge, Button, Card, Input, Label } from "@/components/ui";
+import { Alert, Badge, Button, Card, Input, Label, Textarea } from "@/components/ui";
 import type { ImapMailbox } from "@/lib/provisioner";
 import { useCallback, useEffect, useState } from "react";
 import { DomainPageHeader } from "./DomainPageHeader";
@@ -416,8 +416,8 @@ export function ImapMailboxesManager({
             </div>
             <div>
               <Label>Message</Label>
-              <textarea
-                className="mt-1 w-full rounded-lg border border-panel-border bg-panel-bg px-3 py-2 text-sm text-white"
+              <Textarea
+                className="mt-1"
                 rows={5}
                 value={sendBody}
                 onChange={(e) => setSendBody(e.target.value)}

@@ -10,7 +10,7 @@ export function emit(obj) {
 }
 
 export function fail(message, code = 1) {
-  process.stderr.write(`${message}\n`);
+  emit({ ok: false, error: String(message) });
   process.exit(code);
 }
 

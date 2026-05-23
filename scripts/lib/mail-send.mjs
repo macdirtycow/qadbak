@@ -1,10 +1,24 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { emit, fail, resolveDomainUser } from "./provisioning-common.mjs";
+import { writeFile, mkdir } from "node:fs/promises";
+import { emit, fail, resolveDomainUser, fileExists } from "./provisioning-common.mjs";
 import { listMailboxesFromLayout, discoverMailLayout } from "./mail-layout.mjs";
-import { fileExists } from "./provisioning-common.mjs";
 
 const exec = promisify(execFile);
+
+const MAIL_CONFIGURED_STAMP = "/var/lib/qadbak/native-mail-configured";
+const DOVECOT_NATIVE_CONF = "/etc/dovecot/conf.d/99-qadbak-native.conf";
+
+async function ensureMailReady() {
+  if (await fileExists(MAIL_CONFIGURED_STAMP)) return;
+  if (await fileExists(DOVECOT_NATIVE_CONF)) {
+    await mkdir("/var/lib/qadbak", { recursive: true });
+    await writeFile(MAIL_CONFIGURED_STAMP, "ok\n", "utf8");
+    return;
+  }
+  const { ensureNativeMailStack } = await import("./mail-sync.mjs");
+  await ensureNativeMailStack();
+}
 
 function buildMessage(from, to, subject, body) {
   const subj = String(subject || "").replace(/\r?\n/g, " ").trim() || "(no subject)";
@@ -22,13 +36,8 @@ function buildMessage(from, to, subject, body) {
   ].join("\r\n");
 }
 
-const MAIL_CONFIGURED_STAMP = "/var/lib/qadbak/native-mail-configured";
-
 export async function mailSendDirect(domain, localUser, payloadJson) {
-  if (!(await fileExists(MAIL_CONFIGURED_STAMP))) {
-    const { ensureNativeMailStack } = await import("./mail-sync.mjs");
-    await ensureNativeMailStack();
-  }
+  await ensureMailReady();
   const { user: owner, home } = await resolveDomainUser(domain);
   const layout = await discoverMailLayout(domain, owner, home);
   const mailboxes = await listMailboxesFromLayout(layout);
@@ -56,12 +65,17 @@ export async function mailSendDirect(domain, localUser, payloadJson) {
   try {
     await exec(
       "runuser",
-      ["-u", unixUser, "--", "sendmail", "-f", from, "-t"],
-      { input: message, timeout: 60_000, maxBuffer: 4 * 1024 * 1024 },
+      ["-u", unixUser, "--", "sendmail", "-f", from, "-t", "-i"],
+      { input: message, timeout: 25_000, maxBuffer: 4 * 1024 * 1024 },
     );
   } catch (e) {
+    const err = e;
+    const detail =
+      err && typeof err === "object" && "stderr" in err
+        ? String(err.stderr || "").trim()
+        : "";
     const msg = e instanceof Error ? e.message : String(e);
-    fail(`Send failed: ${msg}`);
+    fail(detail ? `Send failed: ${detail}` : `Send failed: ${msg}`);
   }
 
   emit({ ok: true, from, to, source: "sendmail" });

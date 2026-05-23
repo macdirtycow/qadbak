@@ -2,19 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  color-scheme: dark;
+}
+
 body {
   @apply bg-panel-bg text-slate-100 antialiased;
 }
 
-/* Keep autofill readable on dark inputs (Chrome white/yellow fill) */
+@layer components {
+  .qadbak-field {
+    @apply w-full rounded-lg border border-panel-border px-3 py-2 text-sm;
+    background-color: #0f1419 !important;
+    color: #f1f5f9 !important;
+    caret-color: #f1f5f9;
+  }
+
+  .qadbak-field::placeholder {
+    color: #94a3b8 !important;
+    opacity: 1;
+  }
+}
+
+/* Chrome autofill on dark inputs */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 textarea:-webkit-autofill,
 textarea:-webkit-autofill:hover,
-textarea:-webkit-autofill:focus {
-  -webkit-text-fill-color: #f1f5f9;
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill {
+  -webkit-text-fill-color: #f1f5f9 !important;
   caret-color: #f1f5f9;
-  box-shadow: 0 0 0 1000px #0f1419 inset;
+  box-shadow: 0 0 0 1000px #0f1419 inset !important;
   transition: background-color 99999s ease-out 0s;
 }

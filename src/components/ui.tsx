@@ -63,13 +63,20 @@ export function Badge({
 }
 
 const inputClassName =
-  "w-full rounded-lg border border-panel-border bg-panel-bg px-3 py-2 text-sm text-white placeholder:text-panel-muted focus:border-panel-accent focus:outline-none focus:ring-1 focus:ring-panel-accent";
+  "qadbak-field focus:border-panel-accent focus:outline-none focus:ring-1 focus:ring-panel-accent";
 
 export function Input({
   className = "",
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input className={`${inputClassName} ${className}`.trim()} {...props} />;
+}
+
+export function Textarea({
+  className = "",
+  ...props
+}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea className={`qadbak-field ${className}`.trim()} {...props} />;
 }
 
 export function Label({ children, htmlFor }: { children: ReactNode; htmlFor?: string }) {
