@@ -65,7 +65,6 @@ postconf -e 'virtual_transport = virtual'
 postconf -e 'mailbox_transport = lmtp:unix:private/dovecot-lmtp'
 postconf -e 'inet_interfaces = all'
 postconf -X local_recipient_maps 2>/dev/null || true
-postconf -X virtual_transport 2>/dev/null || true
 
 for key in virtual_alias_domains \
   mailbox_command home_mailbox content_filter \
