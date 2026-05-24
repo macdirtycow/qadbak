@@ -7,9 +7,11 @@ import { useState } from "react";
 export function CreateDomainForm({
   parentOptions,
   initialType = "top",
+  premiumMultiTenant = false,
 }: {
   parentOptions: string[];
   initialType?: "top" | "sub" | "alias";
+  premiumMultiTenant?: boolean;
 }) {
   const router = useRouter();
   const [type, setType] = useState<"top" | "sub" | "alias">(initialType);
@@ -140,7 +142,7 @@ export function CreateDomainForm({
           <Label htmlFor="plan">Plan (optional)</Label>
           <Input id="plan" value={plan} onChange={(e) => setPlan(e.target.value)} />
         </div>
-        {type === "top" && (
+        {type === "top" && premiumMultiTenant && (
           <div className="space-y-3 rounded-lg border border-panel-border bg-panel-bg/50 p-4">
             <p className="text-sm font-medium text-white">Client panel access</p>
             <label className="flex cursor-pointer items-start gap-2 text-sm text-panel-muted">
@@ -169,6 +171,16 @@ export function CreateDomainForm({
               </span>
             </label>
           </div>
+        )}
+        {type === "top" && !premiumMultiTenant && (
+          <p className="text-sm text-panel-muted">
+            Client panel accounts and <code className="text-xs">panel.[domain]</code>{" "}
+            vhosts require Qadbak Premium —{" "}
+            <a href="/admin/license" className="text-panel-accent hover:underline">
+              activate a license
+            </a>
+            .
+          </p>
         )}
         {clientCredentials && (
           <Alert variant="success">

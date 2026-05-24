@@ -57,6 +57,12 @@ fi
 echo "==> Restart (load .env.local into pm2)"
 run_as_qadbak "cd '$ROOT' && bash scripts/pm2-restart-qadbak.sh"
 
+if [[ -f "$ROOT/data/license.json" ]]; then
+  echo "==> License heartbeat + premium sync hint"
+  run_as_qadbak "cd '$ROOT' && node scripts/qadbak-license-cli.mjs heartbeat" || true
+  echo "    Refresh Premium modules in Server admin → License if artifact version changed."
+fi
+
 echo "==> Verify"
 run_as_qadbak "cd '$ROOT' && bash scripts/v1-test-preflight.sh" || true
 curl -sf "http://127.0.0.1:${PORT:-3000}/api/health" | head -c 200

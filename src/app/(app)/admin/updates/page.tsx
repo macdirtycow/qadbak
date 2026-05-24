@@ -1,8 +1,11 @@
 import { AdminUpdatesView } from "@/components/AdminUpdatesView";
 import { requireAdminPage } from "@/lib/admin-api";
+import { PremiumUpgradeCard } from "@/lib/premium/stubs";
+import { isPremiumFeatureEnabled } from "@/lib/premium/server";
 
 export default async function AdminUpdatesPage() {
   await requireAdminPage();
+  const premium = await isPremiumFeatureEnabled("admin-updates");
 
   return (
     <div className="space-y-4">
@@ -12,7 +15,11 @@ export default async function AdminUpdatesPage() {
           Linux package upgrades and Qadbak git updates — without SSH.
         </p>
       </div>
-      <AdminUpdatesView />
+      {premium ? (
+        <AdminUpdatesView />
+      ) : (
+        <PremiumUpgradeCard feature="admin-updates" title="Admin updates (Premium)" />
+      )}
     </div>
   );
 }

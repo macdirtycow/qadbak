@@ -76,13 +76,32 @@ async function saveUsers(users) {
 }
 
 export async function adminLicenseGet() {
+  const licensePath = path.join(QADBAK_DIR, "data", "license.json");
+  try {
+    const raw = await readFile(licensePath, "utf8");
+    const lic = JSON.parse(raw);
+    const rows = await loadRegistry();
+    emit({
+      ok: true,
+      license: {
+        type: lic.plan ? `Qadbak Premium (${lic.plan})` : "Qadbak Core (evaluation)",
+        domains: String(lic.maxDomains ?? rows.length),
+        expiry: lic.expiresAt ?? "N/A — evaluation / no expiry set",
+        status: lic.status ?? "none",
+        features: Array.isArray(lic.features) ? lic.features.join(", ") : "",
+      },
+    });
+    return;
+  } catch {
+    /* fall through */
+  }
   const rows = await loadRegistry();
   emit({
     ok: true,
     license: {
-      type: "Qadbak Independent",
+      type: "Qadbak Core (evaluation)",
       domains: String(rows.length),
-      expiry: "N/A — no VirtualMin license",
+      expiry: "N/A — activate Premium at Server admin → License",
     },
   });
 }

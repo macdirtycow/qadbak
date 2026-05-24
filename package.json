@@ -2,6 +2,7 @@
   "name": "qadbak",
   "description": "Qadbak — independent native hosting control panel",
   "version": "0.1.0",
+  "license": "UNLICENSED",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -24,6 +25,7 @@
     "node-pty": "^1.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "server-only": "^0.0.1",
     "ws": "^8.18.1"
   },
   "devDependencies": {

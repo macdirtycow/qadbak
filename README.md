@@ -17,7 +17,11 @@ In 2009, [Qadbak Investments](https://en.wikipedia.org/wiki/Qadbak_Investments) 
 - Node.js 20+
 - Root access for install scripts
 
-## Install on a VPS
+## Install on a VPS (evaluation)
+
+The public repository is **proprietary source code** published for transparency and
+**personal, non-commercial evaluation** on a VPS you own. Commercial hosting and
+Premium features require a license — see [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md).
 
 ```bash
 git clone https://github.com/macdirtycow/qadbak.git
@@ -25,7 +29,9 @@ cd qadbak
 sudo bash install/qadbak-install.sh
 ```
 
-This installs the hosting stack, Qadbak (`/opt/qadbak`), native provisioning, pm2, and nginx. See [install/README.md](install/README.md) and [docs/QADBAK-NATIVE-INSTALL.md](docs/QADBAK-NATIVE-INSTALL.md).
+During install you may enter a **Premium license key** or skip for Core-only evaluation.
+This installs the hosting stack, Qadbak (`/opt/qadbak`), native provisioning, pm2, and
+nginx. See [install/README.md](install/README.md) and [docs/QADBAK-NATIVE-INSTALL.md](docs/QADBAK-NATIVE-INSTALL.md).
 
 ## Update on the server
 
@@ -171,4 +177,8 @@ data/             users.example.json (template)
 
 ## License
 
-**All Rights Reserved.** Public for transparency; no use without permission from the copyright holder. See [LICENSE](LICENSE).
+**Proprietary — All Rights Reserved.** Copyright (c) 2026 MacDirtyCow / Qadbak and Omiiba.
+
+The source is public on GitHub for auditing and **evaluation on your own VPS only**.
+Forking, redistribution, commercial use, and Premium features without a written license
+are **not permitted**. See [LICENSE](LICENSE) and [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md).

@@ -13,10 +13,12 @@ export function DomainDetail({
   domain,
   disabled,
   isAdmin,
+  premiumPanelClient = false,
 }: {
   domain: VirtualMinDomain;
   disabled: boolean;
   isAdmin: boolean;
+  premiumPanelClient?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -77,7 +79,9 @@ export function DomainDetail({
 
       <WebsiteHealthCard domain={domain.name} isAdmin={isAdmin} />
 
-      {isAdmin && <DomainPanelClientCard domain={domain.name} />}
+      {isAdmin && premiumPanelClient && (
+        <DomainPanelClientCard domain={domain.name} />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>

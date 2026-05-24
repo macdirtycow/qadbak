@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { adminNavItems } from "@/lib/features";
+import { PremiumNavLock } from "@/lib/premium/stubs";
 
 export function AdminNav() {
   const pathname = usePathname();
@@ -19,6 +20,7 @@ export function AdminNav() {
           }`}
         >
           {item.label}
+          {item.premium ? <PremiumNavLock /> : null}
         </Link>
       ))}
     </nav>

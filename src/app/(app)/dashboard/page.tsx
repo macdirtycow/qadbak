@@ -1,6 +1,8 @@
 import { AdminDashboardPanel } from "@/components/AdminDashboardPanel";
 import { ServerConfigButton } from "@/components/ServerConfigButton";
 import { Badge, Card } from "@/components/ui";
+import { PremiumUpgradeCard } from "@/lib/premium/stubs";
+import { isPremiumFeatureEnabled } from "@/lib/premium/server";
 import { getSession } from "@/lib/session";
 import { isDomainDisabled } from "@/lib/domain-utils";
 import { getProvisioner } from "@/lib/provisioner";
@@ -9,6 +11,10 @@ import Link from "next/link";
 export default async function DashboardPage() {
   const session = await getSession();
   if (!session) return null;
+
+  const panelControlPremium = await isPremiumFeatureEnabled(
+    "dashboard-panel-control",
+  );
 
   let domains: Awaited<ReturnType<ReturnType<typeof getProvisioner>["listDomains"]>> = [];
   let error = "";
@@ -82,7 +88,14 @@ export default async function DashboardPage() {
 
       {session.role === "admin" && (
         <>
-          <AdminDashboardPanel />
+          {panelControlPremium ? (
+            <AdminDashboardPanel />
+          ) : (
+            <PremiumUpgradeCard
+              feature="dashboard-panel-control"
+              title="Panel server control (Premium)"
+            />
+          )}
           <Card>
             <h2 className="text-lg font-medium text-white">Server terminal</h2>
             <p className="mt-2 text-sm text-panel-muted">

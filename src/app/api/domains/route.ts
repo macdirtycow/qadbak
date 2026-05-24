@@ -4,17 +4,10 @@ import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
 import { domainToClientUsername } from "@/lib/domain-username";
 import { repairAvailable, repairDomainWebsite } from "@/lib/domain-repair";
-import {
-  applyClientPanelVhost,
-  panelVhostAvailable,
-  panelVhostHostname,
-} from "@/lib/panel-vhost";
+import { panelVhostHostname } from "@/lib/panel-vhost";
+import { isPremiumFeatureEnabled, loadPremiumModule } from "@/lib/premium/server";
 import { requireSession } from "@/lib/session";
-import {
-  assignDomainToClient,
-  createClientUser,
-  findUserByUsername,
-} from "@/lib/users";
+import { findUserByUsername } from "@/lib/users";
 import { VirtualMinError } from "@/lib/errors";
 import { getProvisioner } from "@/lib/provisioner";
 import { isIndependentMode } from "@/lib/provisioner/native-stub";
@@ -22,6 +15,20 @@ import { isIndependentMode } from "@/lib/provisioner/native-stub";
 function randomPanelPassword(): string {
   return randomBytes(12).toString("base64url").slice(0, 16);
 }
+
+type UsersClientModule = {
+  createClientUser: (opts: {
+    username: string;
+    password: string;
+    domains: string[];
+  }) => Promise<unknown>;
+  assignDomainToClient: (username: string, domain: string) => Promise<void>;
+};
+
+type PanelVhostModule = {
+  panelVhostAvailable: () => Promise<boolean>;
+  applyClientPanelVhost: (domain: string) => Promise<string>;
+};
 
 export async function GET() {
   try {
@@ -116,47 +123,66 @@ export async function POST(request: Request) {
     let clientAccount:
       | { username: string; password: string; panelUrl?: string }
       | undefined;
+    let premiumNote: string | undefined;
     const wantClient =
       body.type !== "sub" &&
       body.type !== "alias" &&
       body.createClientAccount !== false;
     if (wantClient) {
-      const clientUsername = domainToClientUsername(domainName, body.user);
-      const panelPassword = randomPanelPassword();
-      const existing = await findUserByUsername(clientUsername);
-      if (existing?.role === "client") {
-        await assignDomainToClient(clientUsername, domainName);
-        clientAccount = {
-          username: clientUsername,
-          password: "(existing account — password unchanged)",
-        };
-      } else if (!existing) {
-        await createClientUser({
-          username: clientUsername,
-          password: panelPassword,
-          domains: [domainName],
-        });
-        clientAccount = {
-          username: clientUsername,
-          password: panelPassword,
-        };
-        await auditLog(
-          session.username,
-          "create-client-user",
-          `${clientUsername}@${domainName}`,
+      if (!(await isPremiumFeatureEnabled("multi-tenant-clients"))) {
+        premiumNote =
+          "Client account not created — Qadbak Premium license required (Server admin → License).";
+      } else {
+        const usersMod = await loadPremiumModule<UsersClientModule>(
+          "multi-tenant-clients",
         );
-      }
-      if (body.createPanelVhost && clientAccount) {
-        const host = panelVhostHostname(domainName);
-        clientAccount.panelUrl = `http://${host}/`;
-        if (await panelVhostAvailable()) {
-          try {
-            await applyClientPanelVhost(domainName);
-          } catch {
-            clientAccount.panelUrl = `${clientAccount.panelUrl} (vhost script failed — run configure-panel-vhost-sudo.sh)`;
-          }
+        if (!usersMod) {
+          premiumNote =
+            "Premium licensed but module not synced. Run: node scripts/qadbak-license-cli.mjs sync";
         } else {
-          clientAccount.panelUrl = `${clientAccount.panelUrl} (run: sudo bash scripts/configure-panel-vhost-sudo.sh)`;
+          const clientUsername = domainToClientUsername(domainName, body.user);
+          const panelPassword = randomPanelPassword();
+          const existing = await findUserByUsername(clientUsername);
+          if (existing?.role === "client") {
+            await usersMod.assignDomainToClient(clientUsername, domainName);
+            clientAccount = {
+              username: clientUsername,
+              password: "(existing account — password unchanged)",
+            };
+          } else if (!existing) {
+            await usersMod.createClientUser({
+              username: clientUsername,
+              password: panelPassword,
+              domains: [domainName],
+            });
+            clientAccount = {
+              username: clientUsername,
+              password: panelPassword,
+            };
+            await auditLog(
+              session.username,
+              "create-client-user",
+              `${clientUsername}@${domainName}`,
+            );
+          }
+          if (body.createPanelVhost && clientAccount) {
+            const host = panelVhostHostname(domainName);
+            clientAccount.panelUrl = `http://${host}/`;
+            if (await isPremiumFeatureEnabled("panel-client-vhost")) {
+              const vhostMod = await loadPremiumModule<PanelVhostModule>(
+                "panel-client-vhost",
+              );
+              if (vhostMod && (await vhostMod.panelVhostAvailable())) {
+                try {
+                  await vhostMod.applyClientPanelVhost(domainName);
+                } catch {
+                  clientAccount.panelUrl = `${clientAccount.panelUrl} (vhost script failed — run configure-panel-vhost-sudo.sh)`;
+                }
+              } else {
+                clientAccount.panelUrl = `${clientAccount.panelUrl} (run: sudo bash scripts/configure-panel-vhost-sudo.sh)`;
+              }
+            }
+          }
         }
       }
     }
@@ -177,6 +203,7 @@ export async function POST(request: Request) {
       ok: true,
       domain: created.name,
       hostingNote,
+      premiumNote,
       clientAccount,
     });
   } catch (err) {

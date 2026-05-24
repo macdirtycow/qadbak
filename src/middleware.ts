@@ -36,6 +36,14 @@ function isClientBlockedPath(pathname: string): boolean {
   return false;
 }
 
+/** Set via .env.local when Premium is activated (QADBAK_PREMIUM_FEATURES=client-rbac,...). */
+function premiumClientRbacEnabled(): boolean {
+  return (process.env.QADBAK_PREMIUM_FEATURES ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .includes("client-rbac");
+}
+
 function clientForbiddenResponse(request: NextRequest, pathname: string) {
   if (pathname.startsWith("/api/")) {
     return NextResponse.json(
@@ -66,7 +74,11 @@ export async function middleware(request: NextRequest) {
   try {
     const { payload } = await jwtVerify(token, secret);
     const role = String(payload.role ?? "");
-    if (role === "client" && isClientBlockedPath(pathname)) {
+    if (
+      role === "client" &&
+      premiumClientRbacEnabled() &&
+      isClientBlockedPath(pathname)
+    ) {
       return clientForbiddenResponse(request, pathname);
     }
     return NextResponse.next();
