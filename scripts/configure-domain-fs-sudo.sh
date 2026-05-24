@@ -43,7 +43,25 @@ chmod 440 "$SUDOERS"
 visudo -cf "$SUDOERS"
 
 pick_test_home() {
-  local td u
+  local td u h reg
+  # Prefer a real hosting user (public_html), not system accounts like syslog.
+  for h in /home/*/public_html; do
+    [[ -d "$h" ]] || continue
+    u="$(basename "$(dirname "$h")")"
+    case "$u" in
+      syslog | www-data | backup | list | irc | gnats | nobody | qadbak) continue ;;
+    esac
+    echo "/home/$u"
+    return
+  done
+  reg="$QADBAK_DIR/data/native-domains.json"
+  if [[ -f "$reg" ]]; then
+    u="$(grep -o '"user":"[^"]*"' "$reg" 2>/dev/null | head -1 | sed 's/"user":"//;s/"//')"
+    if [[ -n "$u" && -d "/home/$u" ]]; then
+      echo "/home/$u"
+      return
+    fi
+  fi
   if [[ -f "$QADBAK_DIR/.env.local" ]]; then
     td="$(grep -E '^(TEST_DOMAIN|QADBAK_TEST_SERVER)=' "$QADBAK_DIR/.env.local" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d "\"'")"
     if [[ -n "$td" && "$td" =~ \. ]]; then
@@ -64,9 +82,7 @@ pick_test_home() {
       fi
     fi
   fi
-  local from_passwd
-  from_passwd="$(getent passwd | awk -F: '$6 ~ /^\/home\/[^/]+$/ {print $6; exit}')"
-  echo "${from_passwd:-/home}"
+  echo "/home"
 }
 
 verify_domain_fs_sudo() {
