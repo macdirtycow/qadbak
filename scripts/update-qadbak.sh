@@ -12,16 +12,16 @@ run_as_qadbak() {
   fi
 }
 
-echo "==> Pull $ROOT"
+echo "==> Sync git $ROOT"
 if [[ "$(id -u)" -eq 0 ]]; then
   # Pull as root is common on VPS; fix ownership before npm run as qadbak.
   cd "$ROOT"
   bash "$ROOT/scripts/reset-git-drift-before-pull.sh"
-  git pull
+  bash "$ROOT/scripts/git-sync-origin.sh"
   bash "$ROOT/scripts/fix-qadbak-ownership.sh"
   bash "$ROOT/scripts/install-node-build-deps.sh" 2>/dev/null || true
 else
-  run_as_qadbak "cd '$ROOT' && bash scripts/reset-git-drift-before-pull.sh && git pull"
+  run_as_qadbak "cd '$ROOT' && bash scripts/reset-git-drift-before-pull.sh && bash scripts/git-sync-origin.sh"
 fi
 
 echo "==> Build (as $USER — never npm install/build as root)"

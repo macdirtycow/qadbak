@@ -41,6 +41,22 @@ cd /opt/qadbak && sudo bash scripts/update-qadbak.sh
 node scripts/qadbak-license-cli.mjs sync
 ```
 
+`update-qadbak.sh` runs `scripts/git-sync-origin.sh`, which fetches origin, migrates legacy `cursor/*` branches to `macdirtycow/*`, and resets when history was rewritten. Set the tracked branch in `/opt/qadbak/.env.local`:
+
+```env
+QADBAK_GIT_BRANCH=macdirtycow/proprietary-premium-commercialization
+```
+
+**One-time bootstrap** after a force-pushed history (if `update-qadbak.sh` is not on the server yet):
+
+```bash
+cd /opt/qadbak
+git fetch --prune origin
+git checkout -B main origin/main
+# or: git checkout -B macdirtycow/proprietary-premium-commercialization origin/macdirtycow/proprietary-premium-commercialization
+sudo bash scripts/update-qadbak.sh
+```
+
 Rebuild Premium when the private repo changes, upload artifact to the license server, then **Refresh modules** in the panel.
 
 ## What eval users may not do

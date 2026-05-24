@@ -5,7 +5,7 @@ QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
 cd "$QADBAK_DIR"
 
 bash "$QADBAK_DIR/scripts/reset-git-drift-before-pull.sh"
-git pull --ff-only
+bash "$QADBAK_DIR/scripts/git-sync-origin.sh"
 bash "$QADBAK_DIR/scripts/fix-qadbak-ownership.sh"
 
 if [[ "$(id -u)" -eq 0 ]]; then

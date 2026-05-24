@@ -225,6 +225,45 @@ apt-get upgrade -y
   return { job: { id: jobId, type: "linux-upgrade", status: "running" } };
 }
 
+function migrateCursorBranch(name) {
+  const n = String(name || "").trim();
+  if (n.startsWith("cursor/")) return `macdirtycow/${n.slice("cursor/".length)}`;
+  return n;
+}
+
+async function readEnvGitBranch() {
+  const envPath = path.join(QADBAK_DIR, ".env.local");
+  if (!(await exists(envPath))) return "";
+  const raw = await readFile(envPath, "utf8");
+  const m = raw.match(/^[ \t]*QADBAK_GIT_BRANCH=(.+)$/m);
+  if (!m) return "";
+  return m[1].trim().replace(/^["']|["']$/g, "");
+}
+
+async function resolveTrackingBranch() {
+  const fromEnv = migrateCursorBranch(await readEnvGitBranch());
+  if (fromEnv) return fromEnv;
+  const head = (
+    await run("git", ["-C", QADBAK_DIR, "rev-parse", "--abbrev-ref", "HEAD"], {
+      timeout: 10_000,
+    })
+  ).trim();
+  if (!head || head === "HEAD") return "main";
+  return migrateCursorBranch(head);
+}
+
+async function originBranchRef(branch) {
+  const ref = `refs/remotes/origin/${branch}`;
+  try {
+    await run("git", ["-C", QADBAK_DIR, "show-ref", "--verify", "--quiet", ref], {
+      timeout: 10_000,
+    });
+    return branch;
+  } catch {
+    return "main";
+  }
+}
+
 async function cmdQadbakStatus() {
   if (!(await exists(path.join(QADBAK_DIR, ".git")))) {
     return {
@@ -236,8 +275,10 @@ async function cmdQadbakStatus() {
   }
   let commit = "";
   let branch = "main";
+  let trackingBranch = "main";
   let remoteUrl = "";
   let behind = 0;
+  let diverged = false;
   try {
     commit = (
       await run("git", ["-C", QADBAK_DIR, "rev-parse", "--short", "HEAD"], {
@@ -249,6 +290,7 @@ async function cmdQadbakStatus() {
         timeout: 10_000,
       })
     ).trim();
+    trackingBranch = await resolveTrackingBranch();
     remoteUrl = (
       await run("git", ["-C", QADBAK_DIR, "remote", "get-url", "origin"], {
         timeout: 10_000,
@@ -265,19 +307,34 @@ async function cmdQadbakStatus() {
     };
   }
   try {
-    await run(
-      "git",
-      ["-C", QADBAK_DIR, "fetch", "origin", branch, "--quiet"],
-      { timeout: 60_000 },
-    );
+    await run("git", ["-C", QADBAK_DIR, "fetch", "--prune", "origin", "--quiet"], {
+      timeout: 120_000,
+    });
+    const remoteBranch = await originBranchRef(trackingBranch);
+    const remoteRef = `origin/${remoteBranch}`;
     const count = (
       await run(
         "git",
-        ["-C", QADBAK_DIR, "rev-list", "--count", `HEAD..origin/${branch}`],
+        ["-C", QADBAK_DIR, "rev-list", "--count", `HEAD..${remoteRef}`],
         { timeout: 10_000 },
       )
     ).trim();
     behind = Number(count) || 0;
+    try {
+      const localSha = (
+        await run("git", ["-C", QADBAK_DIR, "rev-parse", "HEAD"], { timeout: 10_000 })
+      ).trim();
+      const remoteSha = (
+        await run("git", ["-C", QADBAK_DIR, "rev-parse", remoteRef], {
+          timeout: 10_000,
+        })
+      ).trim();
+      if (localSha !== remoteSha && behind === 0) {
+        diverged = true;
+      }
+    } catch {
+      diverged = false;
+    }
   } catch {
     behind = -1;
   }
@@ -286,9 +343,11 @@ async function cmdQadbakStatus() {
       isGit: true,
       commit,
       branch,
+      trackingBranch,
       remoteUrl,
       behind,
-      upToDate: behind === 0,
+      diverged,
+      upToDate: behind === 0 && !diverged,
       checkedAt: new Date().toISOString(),
     },
   };

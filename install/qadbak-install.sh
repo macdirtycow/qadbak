@@ -68,7 +68,11 @@ if ! id "$QADBAK_USER" &>/dev/null; then
   useradd -r -m -d "$QADBAK_DIR" -s /bin/bash "$QADBAK_USER"
 fi
 [[ -d "$QADBAK_DIR/.git" ]] || git clone "$QADBAK_REPO" "$QADBAK_DIR"
-git -C "$QADBAK_DIR" pull --ff-only || true
+if [[ -f "$QADBAK_DIR/scripts/git-sync-origin.sh" ]]; then
+  QADBAK_DIR="$QADBAK_DIR" bash "$QADBAK_DIR/scripts/git-sync-origin.sh"
+else
+  git -C "$QADBAK_DIR" pull --ff-only || true
+fi
 chown -R "$QADBAK_USER:$QADBAK_USER" "$QADBAK_DIR"
 
 bash "$QADBAK_DIR/scripts/install-node-build-deps.sh"
