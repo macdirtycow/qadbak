@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 # Test whether the mailbox unix user can write to Maildir (same uid as Postfix virtual delivery).
 set -euo pipefail
+ROOT="${QADBAK_DIR:-/opt/qadbak}"
+[[ -d "$ROOT" ]] || ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/mail-postfix-paths.sh
+. "$ROOT/scripts/lib/mail-postfix-paths.sh"
+
 MAILDIR="${1:?/path/to/Maildir}"
 MAIL_USER="${2:-}"
 
-# qadbak-vmailbox stores paths relative to virtual_mailbox_base=/.
-if [[ "$MAILDIR" != /* ]]; then
-  MAILDIR="/${MAILDIR#/}"
-fi
-MAILDIR="${MAILDIR%/}"
+MAILDIR="$(qadbak_absolute_maildir_from_vmbox "$MAILDIR")"
 
 if [[ -z "$MAIL_USER" ]]; then
-  # Parent of Maildir is the mailbox unix user (info) or domain owner (siccamanagement).
-  MAIL_USER="$(basename "$(dirname "$MAILDIR")")"
+  MAIL_USER="$(qadbak_unix_user_from_maildir "$MAILDIR")"
 fi
-[[ -n "$MAIL_USER" ]] || MAIL_USER="info"
+[[ -n "$MAIL_USER" ]] || MAIL_USER="postmaster"
 
 PROBE="$MAILDIR/new/.qadbak-write-probe-$$"
 mkdir -p "$MAILDIR"/{cur,new,tmp}

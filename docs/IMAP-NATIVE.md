@@ -35,6 +35,26 @@ Auth user resolution tries, in order:
 - `QADBAK_MAIL_BACKEND=direct` (default in independent mode)
 - `QADBAK_NATIVE_FEATURES` includes `imap`
 
+## Inbound delivery (Postfix → Maildir)
+
+Any VPS / any domain — Qadbak owns Postfix maps under `/etc/postfix/qadbak-*`:
+
+| Setting | Value |
+|---------|--------|
+| `virtual_mailbox_domains` | `hash:/etc/postfix/qadbak-domains` |
+| `virtual_mailbox_maps` | `hash:/etc/postfix/qadbak-vmailbox` |
+| `virtual_mailbox_base` | `/` |
+| `virtual_transport` | `virtual` |
+
+Map paths are **relative** to `virtual_mailbox_base` (e.g. `home/example/homes/info/Maildir/` → `/home/example/homes/info/Maildir/`). Absolute paths in the map break delivery.
+
+Layouts supported automatically:
+
+- Domain owner: `/home/<owner>/Maildir`
+- Sub-mailboxes: `/home/<owner>/homes/<user>/Maildir`
+
+`mail-sync` rebuilds maps from `native-domains.json` + on-disk layout. Shared helpers: `scripts/lib/mail-postfix-paths.sh`, `scripts/lib/mail-layout.mjs`.
+
 ## VPS checks
 
 ```bash

@@ -70,4 +70,4 @@ bash "$ROOT/scripts/test-mail-receive.sh" "$DOMAIN" "$USER_LOCAL" || true
 
 echo ""
 echo "Recent LMTP/postfix lines:"
-grep -iE 'lmtp|info@siccamanagement|status=bounced|status=sent' /var/log/mail.log 2>/dev/null | tail -15 || true
+grep -iE "lmtp|${USER_LOCAL}@${DOMAIN}|status=bounced|status=sent|maildir delivery" /var/log/mail.log /var/log/syslog 2>/dev/null | tail -15 || true

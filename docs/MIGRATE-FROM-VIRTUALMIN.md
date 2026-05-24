@@ -2,7 +2,7 @@
 
 For servers that **already run VirtualMin** (like a Contabo VPS after `qadbak-install.sh`):
 
-## Test server (e.g. siccamanagement.nl on Contabo)
+## Test server (e.g. example.com on any VPS provider)
 
 Use the **hybrid** apply script — keeps VirtualMin, adds phase 6 stack + helpers:
 

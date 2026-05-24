@@ -19,6 +19,7 @@ import {
   resolveMailboxMaildir,
   resolveUnixIds,
   toPostfixVmailboxPath,
+  fromPostfixVmailboxPath,
   QADBAK_POSTFIX_VIRTUAL,
   QADBAK_POSTFIX_DOMAINS,
   QADBAK_POSTFIX_VMAILBOX,
@@ -104,6 +105,16 @@ export async function rebuildPostfixMailboxMaps() {
   await writeVirtualMapFile(QADBAK_POSTFIX_VMAILBOX, toRows(vmailbox));
   await writeVirtualMapFile(QADBAK_POSTFIX_VMAILBOX_UID, toRows(vuids));
   await writeVirtualMapFile(QADBAK_POSTFIX_VMAILBOX_GID, toRows(vgids));
+
+  const vmboxRows = await readMapFile(QADBAK_POSTFIX_VMAILBOX);
+  const absolute = vmboxRows.filter((r) => r.destination.trim().startsWith("/"));
+  if (absolute.length > 0) {
+    const sample = absolute.slice(0, 3).map((r) => r.address).join(", ");
+    throw new Error(
+      `qadbak-vmailbox paths must be relative to virtual_mailbox_base=/ (absolute entries: ${sample})`,
+    );
+  }
+
   return { count: vmailbox.size, emails: new Set(vmailbox.keys()) };
 }
 
@@ -440,6 +451,16 @@ export async function mailDiagnose(domain, localUser) {
   await ok("qadbak-virtual map", await fileExists(QADBAK_POSTFIX_VIRTUAL), QADBAK_POSTFIX_VIRTUAL);
   await ok("qadbak-domains map", await fileExists(QADBAK_POSTFIX_DOMAINS), QADBAK_POSTFIX_DOMAINS);
 
+  const vmboxRows = await readMapFile(QADBAK_POSTFIX_VMAILBOX);
+  const absVmbox = vmboxRows.filter((r) => r.destination.trim().startsWith("/"));
+  await ok(
+    "qadbak-vmailbox paths (relative)",
+    absVmbox.length === 0,
+    absVmbox.length
+      ? `absolute paths break delivery — run mail-sync: ${absVmbox.map((r) => r.address).join(", ")}`
+      : `${vmboxRows.length} mailbox(es)`,
+  );
+
   const domains = await syncVirtualDomainsFile();
   await ok(
     "virtual domains",
@@ -459,6 +480,18 @@ export async function mailDiagnose(domain, localUser) {
       probeUser = row?.user || "info";
     }
   }
+
+  const probeEmail = `${probeUser}@${String(domain).toLowerCase()}`;
+  const vmboxHit = vmboxRows.find((r) => r.address.toLowerCase() === probeEmail);
+  if (vmboxHit) {
+    const resolved = fromPostfixVmailboxPath(vmboxHit.destination);
+    await ok(
+      `vmailbox resolves to ${resolved}`,
+      resolved.startsWith("/home/") && resolved.endsWith("/Maildir"),
+      vmboxHit.destination,
+    );
+  }
+
   const probe = await smtpInboundProbe(domain, probeUser);
   await ok(
     `SMTP RCPT TO ${probe.recipient}`,
@@ -477,7 +510,7 @@ export async function mailDiagnose(domain, localUser) {
     );
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    await ok("LMTP delivery", false, msg);
+    await ok("Maildir delivery", false, msg);
   }
 
   const hints = await mailDnsHints(domain);

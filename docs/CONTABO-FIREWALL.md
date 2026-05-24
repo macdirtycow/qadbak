@@ -33,5 +33,5 @@ Then: `http://YOUR_SERVER_IP:11000/login`
 
 ## Install tips
 
-- Panel hostname: use **vmi….contaboserver.net** or your own domain — **not** the bare IP.
+- Panel hostname: use your **VPS FQDN** (e.g. `vps.example.com`) or provider hostname — **not** the bare IP.
 - Installer asks for port **11000** by default on Contabo-friendly setups.

@@ -254,6 +254,13 @@ export function toPostfixVmailboxPath(absoluteMaildir) {
   return `${String(absoluteMaildir).replace(/\/+$/, "").replace(/^\//, "")}/`;
 }
 
+/** Resolve on-disk Maildir from a qadbak-vmailbox map value (relative or legacy absolute). */
+export function fromPostfixVmailboxPath(vmailboxPath) {
+  const rel = String(vmailboxPath || "").trim().replace(/\/+$/, "");
+  if (!rel) return "";
+  return rel.startsWith("/") ? rel : `/${rel.replace(/^\//, "")}`;
+}
+
 /** Maildir path for a mailbox — prefers passwd home over ~/homes/ guess. */
 export async function resolveMailboxMaildir(layout, localPart, owner, ownerHome) {
   const local = String(localPart || owner).trim().toLowerCase();

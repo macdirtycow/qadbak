@@ -39,7 +39,7 @@ flowchart TB
 
 ## Checklist: native vervanging per gebied
 
-Prioriteit voor **één testdomein** (`siccamanagement.nl`) — daarna pas `apt remove`.
+Prioriteit voor **één testdomein** (bijv. `example.com`) — daarna pas `apt remove`.
 
 | Gebied | Nu op VPS | Native nodig | Richting in repo |
 |--------|-----------|--------------|------------------|
@@ -82,7 +82,7 @@ Je bouwt geen Webmin-kloon; je vervangt **remote.cgi-aanroepen** door **gevalide
 
 ---
 
-## Stappen op `vmi3317912` (veilig)
+## Stappen op je test-VPS (veilig)
 
 ### Nu (gedaan / bezig)
 
