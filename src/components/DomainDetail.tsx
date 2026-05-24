@@ -1,5 +1,6 @@
 "use client";
 
+import { DomainPanelClientCard } from "@/components/DomainPanelClientCard";
 import { DomainQuickLinks } from "@/components/DomainQuickLinks";
 import { WebsiteHealthCard } from "@/components/WebsiteHealthCard";
 import { Badge, Button, Card } from "@/components/ui";
@@ -75,6 +76,8 @@ export function DomainDetail({
       {error && <p className="text-sm text-red-300">{error}</p>}
 
       <WebsiteHealthCard domain={domain.name} isAdmin={isAdmin} />
+
+      {isAdmin && <DomainPanelClientCard domain={domain.name} />}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
