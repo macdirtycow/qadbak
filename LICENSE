@@ -1,30 +1,62 @@
-Copyright (c) 2026 Omiiba. All Rights Reserved.
+PROPRIETARY SOFTWARE LICENSE — QADBAK
+Copyright (c) 2026 MacDirtyCow / Qadbak (https://qadbak.com) and Omiiba
+(https://omiiba.com, https://omiiba.dev). All rights reserved.
 
-PROPRIETARY LICENSE — QADBAK
+================================================================================
+ENGLISH (authoritative)
+================================================================================
 
-Qadbak is a product of Omiiba (https://omiiba.dev). The public app and
-documentation site for this project is separate from the general Omiiba
-sites at omiiba.dev and omiiba.com.
+1. GRANT OF RIGHTS
+   No rights are granted except as expressly stated below. Without prior
+   written permission from the copyright holders, you may NOT:
 
-This repository is publicly visible for reference only. Unless you have
-obtained prior written permission from the copyright holder, you may NOT:
+   • use, run, deploy, or host this software (in whole or in part);
+   • copy, reproduce, mirror, or redistribute source code or binaries;
+   • modify, adapt, translate, merge, or create derivative works;
+   • sublicense, lease, lend, sell, or offer as a service (SaaS) to third
+     parties;
+   • remove or alter copyright, license, or attribution notices.
 
-  • use, run, or deploy this software (in whole or in part);
-  • copy, reproduce, or mirror the source code or binaries;
-  • modify, adapt, translate, or create derivative works;
-  • distribute, publish, sublicense, lease, lend, or sell copies;
-  • use the software for commercial or non-commercial purposes;
-  • remove or alter copyright, license, or attribution notices.
+2. LIMITED EXCEPTION — TRANSPARENCY AND PERSONAL EVALUATION
+   The source code is published on GitHub solely for transparency, security
+   auditing, and personal, non-commercial evaluation on a VPS you own or
+   control. This exception does NOT permit:
 
-Viewing this repository on GitHub or elsewhere does not grant any license
-or right beyond what copyright law allows for mere viewing (e.g. transient
-cache copies for browsing).
+   • hosting paying customers or reselling hosting powered by Qadbak;
+   • using Qadbak Premium features without a valid commercial license;
+   • redistribution of any kind.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL
-THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY.
+3. COMMERCIAL USE AND PREMIUM FEATURES
+   ANY COMMERCIAL USE — including but not limited to paid customer hosting,
+   white-label panels, or operating Qadbak as a service — requires a separate
+   written commercial license and, where applicable, a valid Premium license
+   key from MacDirtyCow / Omiiba. See COMMERCIAL-LICENSING.md.
 
-Qadbak product site: see installer / panel hostname  
-Omiiba: https://omiiba.dev · https://omiiba.com  
-Permission requests: info@mareades.com
+4. THIRD-PARTY SOFTWARE
+   This product includes open-source components listed in NOTICE. Those
+   components remain under their respective licenses.
+
+5. DISCLAIMER
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+   NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+   CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM USE OF THE SOFTWARE.
+
+6. CONTACT
+   Commercial licensing: see COMMERCIAL-LICENSING.md
+   Permission requests: info@mareades.com
+
+================================================================================
+NEDERLANDS (samenvatting)
+================================================================================
+
+Alle rechten voorbehouden. Het is verboden deze software te kopiëren,
+distribueren, wijzigen, sublicentiëren of commercieel te exploiteren zonder
+voorafgaande schriftelijke toestemming van MacDirtyCow / Qadbak en Omiiba.
+
+De code is uitsluitend openbaar op GitHub voor transparantie, auditing en
+persoonlijk, niet-commercieel testgebruik op een eigen VPS. Commercieel gebruik
+(inclusief betaalde klant-hosting en SaaS) en Premium-functies vereisen een
+geldige commerciële licentie.
+
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY.

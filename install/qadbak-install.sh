@@ -68,7 +68,11 @@ if ! id "$QADBAK_USER" &>/dev/null; then
   useradd -r -m -d "$QADBAK_DIR" -s /bin/bash "$QADBAK_USER"
 fi
 [[ -d "$QADBAK_DIR/.git" ]] || git clone "$QADBAK_REPO" "$QADBAK_DIR"
-git -C "$QADBAK_DIR" pull --ff-only || true
+if [[ -f "$QADBAK_DIR/scripts/git-sync-origin.sh" ]]; then
+  QADBAK_DIR="$QADBAK_DIR" bash "$QADBAK_DIR/scripts/git-sync-origin.sh"
+else
+  git -C "$QADBAK_DIR" pull --ff-only || true
+fi
 chown -R "$QADBAK_USER:$QADBAK_USER" "$QADBAK_DIR"
 
 bash "$QADBAK_DIR/scripts/install-node-build-deps.sh"
@@ -103,9 +107,15 @@ PORT=3000
 QADBAK_TERMINAL_WS_PORT=3001
 QADBAK_TERMINAL_WS_HOST=127.0.0.1
 QADBAK_COOKIE_SECURE=false
+QADBAK_LICENSE_SERVER=https://license.omiiba.com
 EOF
 chmod 600 "$ENV_FILE"
 chown "$QADBAK_USER:$QADBAK_USER" "$ENV_FILE"
+
+read -rp "Premium license key (Enter to skip — Core evaluation only): " LICENSE_KEY_IN
+if [[ -n "${LICENSE_KEY_IN// /}" ]]; then
+  QADBAK_LICENSE_KEY="$LICENSE_KEY_IN"
+fi
 
 for s in configure-domain-fs-sudo configure-domain-repair-sudo configure-domain-terminal-sudo \
   configure-panel-vhost-sudo configure-updates-sudo configure-php-fpm-sudo \
@@ -164,6 +174,11 @@ sudo -u "$QADBAK_USER" sudo -n "$QADBAK_DIR/scripts/run-provisioning-helper.sh" 
 bash "$QADBAK_DIR/scripts/ensure-terminal-deps.sh"
 bash "$QADBAK_DIR/scripts/pm2-restart-qadbak.sh"
 env PATH="$PATH:/usr/bin" pm2 startup systemd -u "$QADBAK_USER" --hp "$QADBAK_DIR" | tail -1 | bash || true
+
+if [[ -n "${QADBAK_LICENSE_KEY:-}" ]]; then
+  sudo -u "$QADBAK_USER" node "$QADBAK_DIR/scripts/qadbak-license-cli.mjs" activate "$QADBAK_LICENSE_KEY" \
+    || echo "  WARN: license activation failed — use Server admin → License" >&2
+fi
 
 VERIFY_OK=0
 echo "==> Post-install verify"

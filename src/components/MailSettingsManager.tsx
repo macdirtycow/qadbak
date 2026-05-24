@@ -54,6 +54,12 @@ export function MailSettingsManager({
         <form onSubmit={save} className="space-y-4">
           <div>
             <Label>Catch-all address</Label>
+            <p className="mt-1 text-xs text-panel-muted">
+              Mailbox that receives mail to unknown addresses, e.g.{" "}
+              <code className="text-white">info</code> or{" "}
+              <code className="text-white">info@yourdomain.com</code>. Leave empty
+              to disable.
+            </p>
             <Input
               className="mt-1"
               placeholder="empty = off"

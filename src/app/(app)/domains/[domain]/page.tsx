@@ -1,4 +1,5 @@
 import { DomainDetail } from "@/components/DomainDetail";
+import { isPremiumFeatureEnabled } from "@/lib/premium/server";
 import { getSession } from "@/lib/session";
 import { isDomainDisabled } from "@/lib/domain-utils";
 import { getProvisioner } from "@/lib/provisioner";
@@ -18,12 +19,15 @@ export default async function DomainDetailPage({ params }: Props) {
   );
   if (!domain) notFound();
 
+  const premiumPanelClient = await isPremiumFeatureEnabled("panel-client-vhost");
+
   return (
     <>
       <DomainDetail
         domain={domain}
         disabled={isDomainDisabled(domain)}
         isAdmin={session.role === "admin"}
+        premiumPanelClient={premiumPanelClient}
       />
     </>
   );

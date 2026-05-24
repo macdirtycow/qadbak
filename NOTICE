@@ -1,0 +1,23 @@
+Qadbak — Third-Party Notices
+Copyright (c) 2026 MacDirtyCow / Qadbak and Omiiba. See LICENSE.
+
+This proprietary application includes the following open-source components.
+Each component is used under its own license. This file satisfies attribution
+requirements for permissive licenses.
+
+Direct runtime dependencies (see package.json for versions):
+
+  • Next.js — MIT License
+  • React / React-DOM — MIT License
+  • bcryptjs — MIT License
+  • jose — MIT License
+  • node-pty — MIT License
+  • ws — MIT License
+  • @xterm/xterm, @xterm/addon-fit — MIT License
+
+Development dependencies include ESLint, TypeScript, Tailwind CSS, Playwright,
+and related tools under MIT, Apache-2.0, or ISC licenses as applicable.
+
+Full dependency trees and exact versions: package-lock.json
+
+The Qadbak application as a whole is NOT open source. See LICENSE.

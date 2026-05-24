@@ -11,8 +11,9 @@ if [[ "$(id -u)" -ne 0 ]]; then
 fi
 
 cd "$QADBAK_DIR"
-echo "==> git pull"
-git pull
+echo "==> git sync"
+bash "$QADBAK_DIR/scripts/reset-git-drift-before-pull.sh"
+bash "$QADBAK_DIR/scripts/git-sync-origin.sh"
 
 if [[ -f "$QADBAK_DIR/.env.local" ]] && grep -q '^NODE_TLS_REJECT_UNAUTHORIZED=' "$QADBAK_DIR/.env.local" 2>/dev/null; then
   sed -i '/^NODE_TLS_REJECT_UNAUTHORIZED=/d' "$QADBAK_DIR/.env.local"

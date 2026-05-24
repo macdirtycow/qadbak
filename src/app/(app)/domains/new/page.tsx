@@ -1,4 +1,5 @@
 import { CreateDomainForm } from "@/components/CreateDomainForm";
+import { isPremiumFeatureEnabled } from "@/lib/premium/server";
 import { getSession } from "@/lib/session";
 import { getProvisioner } from "@/lib/provisioner";
 import Link from "next/link";
@@ -17,6 +18,7 @@ export default async function NewDomainPage({ searchParams }: Props) {
 
   const domains = await getProvisioner().listDomains(session);
   const parentOptions = domains.map((d) => d.name);
+  const premiumMultiTenant = await isPremiumFeatureEnabled("multi-tenant-clients");
 
   return (
     <div className="space-y-6">
@@ -28,6 +30,7 @@ export default async function NewDomainPage({ searchParams }: Props) {
       <CreateDomainForm
         parentOptions={parentOptions}
         initialType={initialType}
+        premiumMultiTenant={premiumMultiTenant}
       />
     </div>
   );

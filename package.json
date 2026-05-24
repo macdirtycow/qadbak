@@ -2,7 +2,16 @@
   "name": "qadbak",
   "description": "Qadbak — independent native hosting control panel",
   "version": "0.1.0",
+  "license": "UNLICENSED",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/macdirtycow/qadbak.git"
+  },
+  "homepage": "https://qadbak.com",
+  "bugs": {
+    "url": "https://github.com/macdirtycow/qadbak/issues"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "bash scripts/sync-landing-public.sh && next build",
@@ -24,6 +33,7 @@
     "node-pty": "^1.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "server-only": "^0.0.1",
     "ws": "^8.18.1"
   },
   "devDependencies": {

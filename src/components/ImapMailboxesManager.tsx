@@ -2,7 +2,16 @@
 
 import { Alert, Badge, Button, Card, Input, Label, Textarea } from "@/components/ui";
 import type { ImapMailbox } from "@/lib/provisioner";
-import { useCallback, useEffect, useState } from "react";
+import {
+  buildReferencesHeader,
+  forwardBody,
+  forwardSubject,
+  parseAddressList,
+  parseEmailAddress,
+  quoteReplyBody,
+  replySubject,
+} from "@/lib/mail-reply";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { DomainPageHeader } from "./DomainPageHeader";
 
 type MailUser = { user: string; email?: string; label?: string };
@@ -20,7 +29,13 @@ type ImapMessageDetail = ImapMessageRow & {
   bodyText?: string;
   rawHeaders?: string;
   source?: string;
+  messageId?: string;
+  replyTo?: string;
+  cc?: string;
+  references?: string;
 };
+
+type ComposeMode = "new" | "reply" | "reply-all" | "forward";
 
 export function ImapMailboxesManager({
   domain,
@@ -52,10 +67,15 @@ export function ImapMailboxesManager({
   const [messageLoading, setMessageLoading] = useState(false);
 
   const [sendTo, setSendTo] = useState("");
+  const [sendCc, setSendCc] = useState("");
   const [sendSubject, setSendSubject] = useState("");
   const [sendBody, setSendBody] = useState("");
+  const [sendInReplyTo, setSendInReplyTo] = useState("");
+  const [sendReferences, setSendReferences] = useState("");
+  const [composeMode, setComposeMode] = useState<ComposeMode>("new");
   const [sendLoading, setSendLoading] = useState(false);
   const [sendSuccess, setSendSuccess] = useState("");
+  const composeRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -138,6 +158,83 @@ export function ImapMailboxesManager({
     void load();
   }, [load]);
 
+  const selfEmail = user ? `${user}@${domain}`.toLowerCase() : "";
+
+  function resetCompose() {
+    setComposeMode("new");
+    setSendTo("");
+    setSendCc("");
+    setSendSubject("");
+    setSendBody("");
+    setSendInReplyTo("");
+    setSendReferences("");
+  }
+
+  function startReply(mode: ComposeMode, msg: ImapMessageDetail) {
+    const replyAddr = parseEmailAddress(msg.replyTo || msg.from || "");
+    if (mode === "forward") {
+      setComposeMode("forward");
+      setSendTo("");
+      setSendCc("");
+      setSendSubject(forwardSubject(msg.subject || ""));
+      setSendBody(
+        forwardBody({
+          from: msg.from,
+          to: msg.to,
+          date: msg.date,
+          subject: msg.subject,
+          bodyText: msg.bodyText,
+        }),
+      );
+      setSendInReplyTo("");
+      setSendReferences("");
+    } else if (mode === "reply-all") {
+      const others = new Set<string>([
+        ...parseAddressList(msg.to),
+        ...parseAddressList(msg.cc),
+        ...parseAddressList(msg.from),
+      ]);
+      others.delete(selfEmail);
+      if (replyAddr) others.delete(replyAddr);
+      setComposeMode("reply-all");
+      setSendTo(replyAddr);
+      setSendCc([...others].join(", "));
+      setSendSubject(replySubject(msg.subject || ""));
+      setSendBody(
+        quoteReplyBody({
+          from: msg.from,
+          date: msg.date,
+          bodyText: msg.bodyText,
+        }),
+      );
+      setSendInReplyTo(msg.messageId || "");
+      setSendReferences(
+        buildReferencesHeader(msg.references, msg.messageId) || "",
+      );
+    } else {
+      setComposeMode("reply");
+      setSendTo(replyAddr);
+      setSendCc("");
+      setSendSubject(replySubject(msg.subject || ""));
+      setSendBody(
+        quoteReplyBody({
+          from: msg.from,
+          date: msg.date,
+          bodyText: msg.bodyText,
+        }),
+      );
+      setSendInReplyTo(msg.messageId || "");
+      setSendReferences(
+        buildReferencesHeader(msg.references, msg.messageId) || "",
+      );
+    }
+    setSendSuccess("");
+    setError("");
+    requestAnimationFrame(() => {
+      composeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
   async function sendMail(e: React.FormEvent) {
     e.preventDefault();
     if (!user || !sendTo) return;
@@ -151,8 +248,11 @@ export function ImapMailboxesManager({
         body: JSON.stringify({
           user,
           to: sendTo,
+          cc: sendCc,
           subject: sendSubject,
           body: sendBody,
+          inReplyTo: sendInReplyTo,
+          references: sendReferences,
         }),
       });
       const raw = await res.text();
@@ -169,9 +269,7 @@ export function ImapMailboxesManager({
       }
       if (!res.ok) throw new Error(data.error ?? "Send failed.");
       setSendSuccess(`Message sent to ${sendTo}.`);
-      setSendTo("");
-      setSendSubject("");
-      setSendBody("");
+      resetCompose();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error.");
     } finally {
@@ -350,6 +448,29 @@ export function ImapMailboxesManager({
           </h2>
           {selectedMessage && !messageLoading && (
             <div className="mt-3 space-y-2 text-sm text-panel-muted">
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => startReply("reply", selectedMessage)}
+                >
+                  Reply
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => startReply("reply-all", selectedMessage)}
+                >
+                  Reply all
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => startReply("forward", selectedMessage)}
+                >
+                  Forward
+                </Button>
+              </div>
               {selectedMessage.from && (
                 <p>
                   <span className="text-panel-muted">From: </span>
@@ -388,22 +509,48 @@ export function ImapMailboxesManager({
       )}
 
       {user && (
+        <div ref={composeRef}>
         <Card>
-          <h2 className="text-lg font-medium text-white">Send email</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-medium text-white">
+              {composeMode === "reply"
+                ? "Reply"
+                : composeMode === "reply-all"
+                  ? "Reply all"
+                  : composeMode === "forward"
+                    ? "Forward"
+                    : "Compose email"}
+            </h2>
+            {composeMode !== "new" && (
+              <Button type="button" variant="ghost" onClick={resetCompose}>
+                New message
+              </Button>
+            )}
+          </div>
           <p className="mt-1 text-sm text-panel-muted">
-            Sends via Postfix as {user}@{domain}. Ensure DNS MX points to this server for
-            incoming mail.
+            Sends via Postfix as {user}@{domain}. Replies include threading headers when
+            the original message had a Message-ID.
           </p>
           <form onSubmit={sendMail} className="mt-4 grid gap-3">
             <div>
               <Label>To</Label>
               <Input
                 className="mt-1"
-                type="email"
+                type="text"
                 placeholder="recipient@example.com"
                 value={sendTo}
                 onChange={(e) => setSendTo(e.target.value)}
                 required
+              />
+            </div>
+            <div>
+              <Label>Cc (optional)</Label>
+              <Input
+                className="mt-1"
+                type="text"
+                placeholder="cc1@example.com, cc2@example.com"
+                value={sendCc}
+                onChange={(e) => setSendCc(e.target.value)}
               />
             </div>
             <div>
@@ -429,6 +576,7 @@ export function ImapMailboxesManager({
             </Button>
           </form>
         </Card>
+        </div>
       )}
 
       {isAdmin && (

@@ -406,7 +406,7 @@ export const IMPLEMENTED_PHASE: FeaturePhase = 8;
 export const ADMIN_NAV = [
   { path: "/admin", label: "Overview" },
   { path: "/admin/terminal", label: "Terminal" },
-  { path: "/admin/updates", label: "Updates" },
+  { path: "/admin/updates", label: "Updates", premium: "admin-updates" as const },
   { path: "/admin/status", label: "Status" },
   { path: "/admin/nodes", label: "Nodes" },
   { path: "/admin/server", label: "Services" },
@@ -419,7 +419,11 @@ export const ADMIN_NAV = [
   { path: "/admin/cloud", label: "Cloud (S3)" },
 ] as const;
 
-export function adminNavItems(): readonly { path: string; label: string }[] {
+export function adminNavItems(): readonly {
+  path: string;
+  label: string;
+  premium?: string;
+}[] {
   return ADMIN_NAV;
 }
 
