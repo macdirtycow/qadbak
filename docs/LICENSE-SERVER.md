@@ -103,6 +103,19 @@ sudo -u qadbak node /opt/qadbak/scripts/qadbak-license-cli.mjs activate YOUR-KEY
 sudo -u qadbak node /opt/qadbak/scripts/qadbak-license-cli.mjs sync
 ```
 
+## Test on siccamanagement first (local license server)
+
+`license.omiiba.dev` can stay offline until DNS is ready. On the **siccamanagement** VPS:
+
+```bash
+cd /opt/qadbak
+sudo bash scripts/git-sync-origin.sh
+sudo bash scripts/setup-local-license-server.sh
+sudo bash scripts/test-license-flow.sh
+```
+
+This runs the license API on `http://127.0.0.1:8787`, writes matching secrets to `/opt/qadbak/.env.local`, activates a test key, and restarts the panel. When satisfied, deploy the same `license-server` on main behind `https://license.omiiba.dev` and change only `QADBAK_LICENSE_SERVER` on each panel.
+
 ## Should you install Qadbak on the main server?
 
 | Goal | Install full Qadbak on main? |
