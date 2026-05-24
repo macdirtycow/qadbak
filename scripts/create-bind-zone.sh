@@ -58,6 +58,7 @@ cat >"$ZONE_FILE" <<EOF
     IN  MX  10 ${MAIL_HOST}.
 ns1 IN  A   ${ORIGIN_IP}
 www IN  A   ${ORIGIN_IP}
+panel IN  A   ${ORIGIN_IP}
 ${MAIL_LABEL} IN  A   ${ORIGIN_IP}
 EOF
 
