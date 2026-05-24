@@ -130,6 +130,10 @@ fi
 
 echo "    Postfix myhostname = ${HOST}"
 
+if [[ -x "$QADBAK_DIR/scripts/configure-postfix-apparmor.sh" ]]; then
+  bash "$QADBAK_DIR/scripts/configure-postfix-apparmor.sh" 2>/dev/null || true
+fi
+
 DOVECOT_SNIPPET="/etc/dovecot/conf.d/99-qadbak-native.conf"
 cat >"$DOVECOT_SNIPPET" <<'EOF'
 # Qadbak native mail — Maildir, passwd auth, Postfix LMTP + SASL
@@ -233,6 +237,15 @@ while IFS= read -r email; do
   fi
 done < <(grep -v '^#' "$QADBAK_VMAILBOX" 2>/dev/null | awk '{print $1}' || true)
 [[ "$ALIAS_CONFLICT" -eq 0 ]] || echo "    Fix: sudo bash scripts/configure-native-mail.sh --force"
+
+# Verify postfix can write to a sample Maildir (AppArmor probe).
+SAMPLE_VMAIL="$(grep -v '^#' "$QADBAK_VMAILBOX" 2>/dev/null | awk '{print $2}' | head -1 | tr -d ' ')"
+if [[ -n "$SAMPLE_VMAIL" ]]; then
+  SAMPLE_DIR="${SAMPLE_VMAIL%/}"
+  if [[ -x "$QADBAK_DIR/scripts/probe-postfix-maildir-write.sh" ]]; then
+    bash "$QADBAK_DIR/scripts/probe-postfix-maildir-write.sh" "$SAMPLE_DIR" || true
+  fi
+fi
 
 echo "OK — inbound mail: hash:${QADBAK_DOMAINS} + Maildir maps (qadbak-vmailbox)"
 echo "    Test: sudo bash scripts/check-native-mail.sh YOUR-DOMAIN info"
