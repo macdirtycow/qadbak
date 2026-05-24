@@ -249,6 +249,11 @@ export async function resolveUnixHome(username) {
   return ids?.home || null;
 }
 
+/** Postfix virtual_mailbox_maps path relative to virtual_mailbox_base=/ */
+export function toPostfixVmailboxPath(absoluteMaildir) {
+  return `${String(absoluteMaildir).replace(/\/+$/, "").replace(/^\//, "")}/`;
+}
+
 /** Maildir path for a mailbox — prefers passwd home over ~/homes/ guess. */
 export async function resolveMailboxMaildir(layout, localPart, owner, ownerHome) {
   const local = String(localPart || owner).trim().toLowerCase();

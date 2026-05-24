@@ -5,7 +5,7 @@ MAILDIR="${1:?/path/to/Maildir}"
 MAIL_USER="${2:-}"
 
 if [[ -z "$MAIL_USER" ]]; then
-  MAIL_USER="$(basename "$(dirname "$(dirname "$MAILDIR")")")" 2>/dev/null || true"
+  MAIL_USER="$(basename "$(dirname "$(dirname "$MAILDIR")")")"
 fi
 [[ -n "$MAIL_USER" ]] || MAIL_USER="info"
 
@@ -23,6 +23,6 @@ if sudo -u "$MAIL_USER" touch "$PROBE" 2>/dev/null; then
   exit 0
 fi
 
-echo "FAIL — user $MAIL_USER cannot write to $MAILDIR (check chown/chmod)"
+echo "FAIL — user $MAIL_USER cannot write to $MAILDIR — check chown/chmod"
 ls -ld "$MAILDIR" "$(dirname "$MAILDIR")" 2>/dev/null || true
 exit 1

@@ -18,6 +18,7 @@ import {
   postmapReloadAll,
   resolveMailboxMaildir,
   resolveUnixIds,
+  toPostfixVmailboxPath,
   QADBAK_POSTFIX_VIRTUAL,
   QADBAK_POSTFIX_DOMAINS,
   QADBAK_POSTFIX_VMAILBOX,
@@ -72,7 +73,7 @@ export async function rebuildPostfixMailboxMaps() {
       const destUser = local === owner ? owner : local;
       const maildir = await resolveMailboxMaildir(layout, local, owner, home);
       await ensureMaildir(maildir);
-      vmailbox.set(email, `${maildir}/`);
+      vmailbox.set(email, toPostfixVmailboxPath(maildir));
       const ids = await resolveUnixIds(destUser);
       if (ids) {
         vuids.set(email, ids.uid);
@@ -84,7 +85,7 @@ export async function rebuildPostfixMailboxMaps() {
     const ownerIds = await resolveUnixIds(owner);
     const ownerMaildir = await resolveMailboxMaildir(layout, owner, owner, home);
     if (ownerIds) {
-      vmailbox.set(`postmaster@${domain}`, `${ownerMaildir}/`);
+      vmailbox.set(`postmaster@${domain}`, toPostfixVmailboxPath(ownerMaildir));
       vuids.set(`postmaster@${domain}`, ownerIds.uid);
       vgids.set(`postmaster@${domain}`, ownerIds.gid);
     }
@@ -427,7 +428,8 @@ export async function mailDiagnose(domain, localUser) {
       "postfix config",
       stdout.includes("qadbak-domains") &&
         stdout.includes("qadbak-vmailbox") &&
-        !stdout.match(/virtual_mailbox_base\s*=\s*$/m),
+        /virtual_mailbox_base\s*=\s*\//.test(stdout) &&
+        stdout.includes("virtual_transport = virtual"),
       stdout.replace(/\n/g, " "),
     );
   } catch {
