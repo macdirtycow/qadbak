@@ -299,7 +299,8 @@ export async function mailReceiveTest(domain, localUser) {
   if (!delivered) {
     try {
       const probe = maildirRoot.replace(/\/$/, "");
-      await exec("bash", [`${QADBAK_DIR}/scripts/probe-postfix-maildir-write.sh`, probe], {
+      const destUser = local === owner ? owner : local;
+      await exec("bash", [`${QADBAK_DIR}/scripts/probe-postfix-maildir-write.sh`, probe, destUser], {
         timeout: 10_000,
       }).catch((e) => {
         mailLogHint = e instanceof Error ? e.message : String(e);

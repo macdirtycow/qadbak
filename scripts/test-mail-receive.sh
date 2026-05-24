@@ -36,7 +36,12 @@ else
   echo "==> postfix write probe" >&2
   VBOX="$(postmap -q "$EMAIL" hash:/etc/postfix/qadbak-vmailbox 2>/dev/null || true)"
   if [[ -n "$VBOX" && -x "$ROOT/scripts/probe-postfix-maildir-write.sh" ]]; then
-    bash "$ROOT/scripts/probe-postfix-maildir-write.sh" "${VBOX%/}" "$USER_LOCAL" >&2 || true
+    if [[ "$VBOX" == /* ]]; then
+      PROBE_DIR="${VBOX%/}"
+    else
+      PROBE_DIR="/${VBOX%/}"
+    fi
+    bash "$ROOT/scripts/probe-postfix-maildir-write.sh" "$PROBE_DIR" "$USER_LOCAL" >&2 || true
   fi
   echo "==> recent postfix / apparmor log" >&2
   grep -iE "postfix|${EMAIL}|status=|apparmor|DENIED" /var/log/mail.log /var/log/syslog 2>/dev/null | tail -25 >&2 || \

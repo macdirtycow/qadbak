@@ -4,8 +4,15 @@ set -euo pipefail
 MAILDIR="${1:?/path/to/Maildir}"
 MAIL_USER="${2:-}"
 
+# qadbak-vmailbox stores paths relative to virtual_mailbox_base=/.
+if [[ "$MAILDIR" != /* ]]; then
+  MAILDIR="/${MAILDIR#/}"
+fi
+MAILDIR="${MAILDIR%/}"
+
 if [[ -z "$MAIL_USER" ]]; then
-  MAIL_USER="$(basename "$(dirname "$(dirname "$MAILDIR")")")"
+  # Parent of Maildir is the mailbox unix user (info) or domain owner (siccamanagement).
+  MAIL_USER="$(basename "$(dirname "$MAILDIR")")"
 fi
 [[ -n "$MAIL_USER" ]] || MAIL_USER="info"
 

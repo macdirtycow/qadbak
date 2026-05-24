@@ -247,7 +247,7 @@ if [[ -n "$SAMPLE_VMAIL" ]]; then
   else
     SAMPLE_DIR="/${SAMPLE_VMAIL%/}"
   fi
-  SAMPLE_USER="$(basename "$(dirname "$(dirname "$SAMPLE_DIR")")")"
+  SAMPLE_USER="$(basename "$(dirname "$SAMPLE_DIR")")"
   if [[ -x "$QADBAK_DIR/scripts/probe-postfix-maildir-write.sh" ]]; then
     bash "$QADBAK_DIR/scripts/probe-postfix-maildir-write.sh" "$SAMPLE_DIR" "$SAMPLE_USER" || true
   fi
