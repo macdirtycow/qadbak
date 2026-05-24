@@ -3,6 +3,7 @@
 set -euo pipefail
 
 QADBAK_REPO="${QADBAK_REPO:-https://github.com/macdirtycow/qadbak.git}"
+QADBAK_GIT_BRANCH="${QADBAK_GIT_BRANCH:-macdirtycow/proprietary-premium-commercialization}"
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
 QADBAK_USER="${QADBAK_USER:-qadbak}"
 NODE_MAJOR="${NODE_MAJOR:-20}"
@@ -23,6 +24,14 @@ echo ""
 read -rp "Continue? [y/N]: " CONFIRM
 if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
   exit 0
+fi
+
+if [[ -f "$(dirname "$0")/../scripts/check-ubuntu-support.sh" ]]; then
+  echo ""
+  bash "$(dirname "$0")/../scripts/check-ubuntu-support.sh" || {
+    echo "Fix Ubuntu support issues above before continuing." >&2
+    exit 1
+  }
 fi
 
 FQDN="$(hostname -f 2>/dev/null || hostname)"
@@ -67,7 +76,7 @@ command -v pm2 &>/dev/null || npm install -g pm2
 if ! id "$QADBAK_USER" &>/dev/null; then
   useradd -r -m -d "$QADBAK_DIR" -s /bin/bash "$QADBAK_USER"
 fi
-[[ -d "$QADBAK_DIR/.git" ]] || git clone "$QADBAK_REPO" "$QADBAK_DIR"
+[[ -d "$QADBAK_DIR/.git" ]] || git clone -b "$QADBAK_GIT_BRANCH" "$QADBAK_REPO" "$QADBAK_DIR"
 if [[ -f "$QADBAK_DIR/scripts/git-sync-origin.sh" ]]; then
   QADBAK_DIR="$QADBAK_DIR" bash "$QADBAK_DIR/scripts/git-sync-origin.sh"
 else
@@ -108,7 +117,16 @@ QADBAK_TERMINAL_WS_PORT=3001
 QADBAK_TERMINAL_WS_HOST=127.0.0.1
 QADBAK_COOKIE_SECURE=false
 QADBAK_LICENSE_SERVER=https://license.omiiba.dev
+QADBAK_GIT_BRANCH=$QADBAK_GIT_BRANCH
 EOF
+LICENSE_ENV="/etc/qadbak/license-server.env"
+if [[ -f "$LICENSE_ENV" ]]; then
+  # shellcheck disable=SC1090
+  source "$LICENSE_ENV"
+  if [[ -n "${LICENSE_JWT_SECRET:-}" ]]; then
+    echo "QADBAK_LICENSE_JWT_SECRET=${LICENSE_JWT_SECRET}" >>"$ENV_FILE"
+  fi
+fi
 chmod 600 "$ENV_FILE"
 chown "$QADBAK_USER:$QADBAK_USER" "$ENV_FILE"
 
@@ -122,7 +140,12 @@ for s in configure-domain-fs-sudo configure-domain-repair-sudo configure-domain-
   configure-panel-pm2-sudo configure-host-services-sudo \
   configure-stack-helper-sudo \
   configure-admin-terminal-sudo configure-provisioning-helper-sudo; do
-  bash "$QADBAK_DIR/scripts/${s}.sh"
+  if ! bash "$QADBAK_DIR/scripts/${s}.sh"; then
+    echo "" >&2
+    echo "WARN: $s failed — install paused. Resume without rebuilding:" >&2
+    echo "  sudo bash $QADBAK_DIR/install/qadbak-install-resume.sh" >&2
+    exit 1
+  fi
 done
 
 HASH="$(sudo -u "$QADBAK_USER" node "$QADBAK_DIR/scripts/hash-password.mjs" "$QB_PASS")"
@@ -160,7 +183,13 @@ chown "$QADBAK_USER:$QADBAK_USER" "$INSTALL_TEST_ENV"
 export PANEL_HOST SERVER_FQDN QADBAK_NATIVE_INSTALL=1 QADBAK_DISABLE_WEBMIN=true
 bash "$QADBAK_DIR/scripts/install-hosting-stack.sh"
 [[ -n "$PANEL_ALT_PORT" ]] && bash "$QADBAK_DIR/scripts/enable-panel-port.sh" "$PANEL_ALT_PORT"
-[[ -n "$LE_EMAIL" ]] && certbot --nginx -d "$PANEL_HOST" --non-interactive --agree-tos -m "$LE_EMAIL" || true
+[[ -n "$LE_EMAIL" ]] && certbot --nginx -d "$PANEL_HOST" --non-interactive --agree-tos -m "$LE_EMAIL" && {
+  if grep -q '^QADBAK_COOKIE_SECURE=' "$ENV_FILE"; then
+    sed -i 's/^QADBAK_COOKIE_SECURE=.*/QADBAK_COOKIE_SECURE=true/' "$ENV_FILE"
+  else
+    echo "QADBAK_COOKIE_SECURE=true" >>"$ENV_FILE"
+  fi
+} || true
 
 echo "==> Domain registry"
 bash "$QADBAK_DIR/scripts/export-native-domains.sh" 2>/dev/null || true
@@ -177,7 +206,7 @@ env PATH="$PATH:/usr/bin" pm2 startup systemd -u "$QADBAK_USER" --hp "$QADBAK_DI
 
 if [[ -n "${QADBAK_LICENSE_KEY:-}" ]]; then
   sudo -u "$QADBAK_USER" node "$QADBAK_DIR/scripts/qadbak-license-cli.mjs" activate "$QADBAK_LICENSE_KEY" \
-    || echo "  WARN: license activation failed — use Server admin → License" >&2
+    || echo "  WARN: license activation failed — set QADBAK_LICENSE_JWT_SECRET, start license server, then use Server admin → License" >&2
 fi
 
 VERIFY_OK=0
