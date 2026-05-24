@@ -18,6 +18,10 @@ if [[ ! -f "$ROOT/.env.local" ]]; then
   exit 1
 fi
 
+if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/fix-qadbak-ownership.sh" ]]; then
+  bash "$ROOT/scripts/fix-qadbak-ownership.sh"
+fi
+
 if [[ ! -f "$ROOT/.next/BUILD_ID" ]]; then
   echo "Missing production build — run: sudo -u $USER bash -c 'cd $ROOT && npm run build'" >&2
   exit 1

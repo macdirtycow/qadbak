@@ -15,6 +15,12 @@ log() {
   echo "==> git-sync: $*"
 }
 
+fix_ownership_if_root() {
+  if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/fix-qadbak-ownership.sh" ]]; then
+    bash "$ROOT/scripts/fix-qadbak-ownership.sh"
+  fi
+}
+
 read_env_branch() {
   local f="$ROOT/.env.local"
   [[ -f "$f" ]] || return 0
@@ -108,6 +114,7 @@ REMOTE_SHA="$(git rev-parse "$REMOTE_REF")"
 
 if [[ "$LOCAL_SHA" == "$REMOTE_SHA" ]]; then
   log "up to date ($TARGET @ ${LOCAL_SHA:0:7})"
+  fix_ownership_if_root
   exit 0
 fi
 
@@ -120,3 +127,5 @@ else
 fi
 
 log "synced $TARGET @ $(git rev-parse --short HEAD)"
+
+fix_ownership_if_root
