@@ -109,7 +109,7 @@ chown "$QADBAK_USER:$QADBAK_USER" "$ENV_FILE"
 
 for s in configure-domain-fs-sudo configure-domain-repair-sudo configure-domain-terminal-sudo \
   configure-panel-vhost-sudo configure-updates-sudo configure-php-fpm-sudo \
-  configure-host-services-sudo \
+  configure-panel-pm2-sudo configure-host-services-sudo \
   configure-stack-helper-sudo \
   configure-admin-terminal-sudo configure-provisioning-helper-sudo; do
   bash "$QADBAK_DIR/scripts/${s}.sh"

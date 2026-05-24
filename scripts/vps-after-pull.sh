@@ -18,6 +18,7 @@ sudo -u "$USER" bash -c "cd '$ROOT' && npm install && npm run build"
 bash "$ROOT/scripts/configure-panel-vhost-sudo.sh" 2>/dev/null || true
 bash "$ROOT/scripts/configure-updates-sudo.sh" 2>/dev/null || true
 bash "$ROOT/scripts/configure-php-fpm-sudo.sh" 2>/dev/null || true
+bash "$ROOT/scripts/configure-panel-pm2-sudo.sh" 2>/dev/null || true
 bash "$ROOT/scripts/apply-all-php-fpm-pools.sh" 2>/dev/null || true
 bash "$ROOT/scripts/pm2-restart-qadbak.sh"
 

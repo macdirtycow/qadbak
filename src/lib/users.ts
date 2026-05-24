@@ -103,6 +103,36 @@ export async function createClientUser(opts: {
   return user;
 }
 
+export async function findClientForDomain(
+  domain: string,
+): Promise<PanelUser | undefined> {
+  const d = domain.trim().toLowerCase();
+  const users = await loadUsers();
+  return users.find(
+    (u) =>
+      u.role === "client" &&
+      (u.domains ?? []).some((x) => x.toLowerCase() === d),
+  );
+}
+
+export async function setClientPassword(
+  username: string,
+  password: string,
+): Promise<PanelUser> {
+  const users = await loadUsers();
+  const name = username.trim();
+  const target = users.find(
+    (u) => u.username.toLowerCase() === name.toLowerCase(),
+  );
+  if (!target) throw new Error(`Panel user not found: ${username}`);
+  if (target.role !== "client") {
+    throw new Error(`User is not a client account: ${username}`);
+  }
+  target.passwordHash = await bcrypt.hash(password, 10);
+  await saveUsers(users);
+  return target;
+}
+
 export async function assignDomainToClient(
   username: string,
   domain: string,
