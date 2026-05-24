@@ -75,12 +75,19 @@ curl -sS -X POST https://license.omiiba.dev/v1/admin/keys \
 
 ## 5. Upload Premium artifacts
 
-From a build machine with `qadbak-premium` cloned:
+From a build machine with `qadbak-premium` cloned (no npm package `qadbak` required):
 
 ```bash
-export LICENSE_SERVER=https://license.omiiba.dev
-export LICENSE_ADMIN_TOKEN=<same as server>
-npm run build:release
+cd /opt/qadbak-premium
+export LICENSE_SERVER=http://127.0.0.1:8787
+export LICENSE_ADMIN_TOKEN=$(grep LICENSE_ADMIN_TOKEN /etc/qadbak/license-server.env | cut -d= -f2-)
+npm install && npm run build:release
+```
+
+Or one command on the panel VPS:
+
+```bash
+sudo bash /opt/qadbak/scripts/build-premium-vps.sh
 ```
 
 Artifacts land in `license-server/data/artifacts/` on the license host.
