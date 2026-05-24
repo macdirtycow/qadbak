@@ -12,6 +12,13 @@ import type { ProtectedDirectory, ProtectedUser } from "@/lib/provisioner";
 import { useState } from "react";
 import { DomainPageHeader } from "./DomainPageHeader";
 
+/** URL path under public_html (always shown with leading slash). */
+function displayPath(p: string): string {
+  const t = p.trim();
+  if (!t) return t;
+  return t.startsWith("/") ? t : `/${t}`;
+}
+
 export function ProtectedManager({
   domain,
   initialDirectories,
@@ -30,7 +37,7 @@ export function ProtectedManager({
   const [error, setError] = useState(initialError);
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const [newPath, setNewPath] = useState("/beheer");
+  const [newPath, setNewPath] = useState("/private");
   const [newUser, setNewUser] = useState("");
   const [newPass, setNewPass] = useState("");
   const [deletePath, setDeletePath] = useState<string | null>(null);
@@ -148,7 +155,7 @@ export function ProtectedManager({
       <DomainPageHeader
         domain={domain}
         title="Protected directories"
-        description="HTTP basic auth for website directories"
+        description="HTTP basic auth for folders under public_html (e.g. /private, /members)"
       />
       {error && <Alert>{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
@@ -159,7 +166,7 @@ export function ProtectedManager({
           <Input
             value={newPath}
             onChange={(e) => setNewPath(e.target.value)}
-            placeholder="/path"
+            placeholder="/private"
           />
           <Button type="submit" disabled={loading}>
             Add
@@ -183,7 +190,7 @@ export function ProtectedManager({
                   loadUsers(d.path);
                 }}
               >
-                {d.path}
+                {displayPath(d.path)}
               </button>
               <Button variant="danger" onClick={() => setDeletePath(d.path)}>
                 Delete
@@ -196,7 +203,7 @@ export function ProtectedManager({
       {selectedPath && (
         <Card>
           <h2 className="text-lg font-medium text-white">
-            Users for {selectedPath}
+            Users for {displayPath(selectedPath)}
           </h2>
           <form onSubmit={addUser} className="mt-4 grid gap-4 sm:grid-cols-3">
             <div>
@@ -239,7 +246,7 @@ export function ProtectedManager({
       <ConfirmDialog
         open={!!deletePath}
         title="Delete directory"
-        description={`Delete protected directory ${deletePath}?`}
+        description={`Delete protected directory ${displayPath(deletePath ?? "")}?`}
         confirmLabel="Delete"
         confirmValue={deletePath ?? ""}
         typedValue={confirmTyped}
