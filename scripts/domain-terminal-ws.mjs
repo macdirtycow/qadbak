@@ -11,12 +11,12 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { jwtVerify } from "jose";
 
-const require = createRequire(import.meta.url);
-const { WebSocketServer } = require("ws");
-const pty = require("node-pty");
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
+
+const require = createRequire(path.join(ROOT, "package.json"));
+const { WebSocketServer } = require("ws");
+const pty = require("node-pty");
 
 function loadEnvLocal() {
   const file = path.join(ROOT, ".env.local");

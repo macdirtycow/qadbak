@@ -21,7 +21,12 @@ fi
 
 verify_terminal_imports() {
   run_as_qadbak "cd '$ROOT' && node --input-type=module -e \"
-import('ws').then(() => import('node-pty')).then(() => import('jose')).then(() => process.exit(0)).catch((e) => { console.error(e.message); process.exit(1); });
+import { createRequire } from 'module';
+import path from 'path';
+const req = createRequire(path.join(process.cwd(), 'package.json'));
+req('ws');
+req('node-pty');
+await import('jose');
 \""
 }
 

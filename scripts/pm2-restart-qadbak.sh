@@ -40,7 +40,10 @@ if [[ -n "$LOCK_HASH" && "$(cat "$LOCK_STAMP" 2>/dev/null || true)" != "$LOCK_HA
   run "mkdir -p '$ROOT/node_modules' && echo '$LOCK_HASH' > '$LOCK_STAMP'"
 fi
 
-bash "$ROOT/scripts/ensure-terminal-deps.sh"
+if ! bash "$ROOT/scripts/ensure-terminal-deps.sh"; then
+  echo "==> Terminal deps repair"
+  bash "$ROOT/scripts/repair-terminal-ws.sh" || true
+fi
 
 echo "==> pm2 restart with ecosystem (.env.local → process env)"
 run "cd '$ROOT' && pm2 delete qadbak qadbak-terminal 2>/dev/null || true"

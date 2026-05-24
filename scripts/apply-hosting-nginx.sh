@@ -39,11 +39,19 @@ for candidate in "$PANEL_HOST" "$SERVER_FQDN"; do
   fi
 done
 
+if [[ -f "$QADBAK_DIR/.env.local" ]]; then
+  # shellcheck disable=SC1091
+  source <(grep -E '^(QADBAK_PROVISIONER|QADBAK_NATIVE_INSTALL|QADBAK_DISABLE_WEBMIN)=' "$QADBAK_DIR/.env.local" 2>/dev/null | sed 's/^/export /') || true
+fi
+if [[ "${QADBAK_DISABLE_WEBMIN:-}" == "1" || "${QADBAK_DISABLE_WEBMIN:-}" == "true" ]] || [[ "${QADBAK_PROVISIONER:-}" == "native" ]]; then
+  export QADBAK_NATIVE_INSTALL=1
+fi
+
 # shellcheck source=lib/virtualmin-domains.sh
 source "$ROOT/scripts/lib/virtualmin-domains.sh" 2>/dev/null || true
-DETECT_DOMAIN="${DETECT_DOMAIN:-$(first_virtualmin_domain 2>/dev/null || true)}"
+DETECT_DOMAIN="${DETECT_DOMAIN:-$(first_panel_domain 2>/dev/null || true)}"
 if [[ -z "$DETECT_DOMAIN" ]]; then
-  echo "WARN: No VirtualMin domain for backend probe — set DETECT_DOMAIN=your.domain" >&2
+  echo "WARN: No domain in data/native-domains.json — set DETECT_DOMAIN=your.domain" >&2
   DETECT_DOMAIN="localhost"
 fi
 APACHE_BACKEND="$(DETECT_DOMAIN="$DETECT_DOMAIN" bash "$QADBAK_DIR/scripts/detect-web-backend.sh" 2>/dev/null | tail -1)"
@@ -108,7 +116,11 @@ fi
 
 echo ""
 echo "Done."
-echo "  All customer domains (VirtualMin) → public_html nginx vhosts + Apache $APACHE_BACKEND"
+if [[ "${QADBAK_NATIVE_INSTALL:-}" == "1" ]]; then
+  echo "  Native domains → public_html nginx vhosts (PHP-FPM when pools applied) + Apache $APACHE_BACKEND"
+else
+  echo "  Customer domains → public_html nginx vhosts + Apache $APACHE_BACKEND"
+fi
 if [[ -n "$SSL_CERT_HOST" ]]; then
   echo "  Qadbak panel → https://$PANEL_HOST/login  (and :11000 if enabled)"
 else

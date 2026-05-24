@@ -15,6 +15,7 @@ command -v jq &>/dev/null || apt-get install -y -qq jq
 
 bash "$ROOT/scripts/fix-qadbak-ownership.sh"
 sudo -u "$USER" bash -c "cd '$ROOT' && npm install && npm run build"
+bash "$ROOT/scripts/repair-terminal-ws.sh" 2>/dev/null || bash "$ROOT/scripts/ensure-terminal-deps.sh"
 bash "$ROOT/scripts/configure-panel-vhost-sudo.sh" 2>/dev/null || true
 bash "$ROOT/scripts/configure-updates-sudo.sh" 2>/dev/null || true
 bash "$ROOT/scripts/configure-php-fpm-sudo.sh" 2>/dev/null || true
