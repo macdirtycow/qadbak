@@ -2,11 +2,8 @@ import { chmod, chown, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import {
-  readDomainConfigJson,
-  resolveDomainUser,
-  resolveUnixIds,
-} from "./provisioning-common.mjs";
+import { resolveDomainUser } from "./provisioning-common.mjs";
+import { resolveUnixIds } from "./mail-layout.mjs";
 import {
   normalizeCatchAllAddress,
   readMailSettingsCatchAllEntries,

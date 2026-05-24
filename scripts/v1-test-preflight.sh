@@ -15,6 +15,17 @@ FAILED=0
 echo "==> Qadbak v1 preflight ($ROOT)"
 echo ""
 
+if [[ -f scripts/lib/ubuntu-release.sh ]]; then
+  # shellcheck source=lib/ubuntu-release.sh
+  source scripts/lib/ubuntu-release.sh
+  if qadbak_detect_ubuntu_release; then
+    pass "$(qadbak_ubuntu_release_label)"
+  else
+    warn "OS not Ubuntu 22.04/24.04 — native stack may differ"
+  fi
+fi
+echo ""
+
 if [[ -f .env.local ]]; then
   set -a
   # shellcheck disable=SC1091

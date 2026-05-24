@@ -23,6 +23,7 @@ const ALLOWED = [
   "bind9",
   "mariadb",
   "mysql",
+  "php8.4-fpm",
   "php8.3-fpm",
   "php8.2-fpm",
   "php8.1-fpm",

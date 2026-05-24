@@ -11,20 +11,27 @@ your own VPS for personal testing is permitted under the limited exception in
 | **Qadbak Core** | Domain, mail, DNS, files, backups, native provisioning, basic admin |
 | **Qadbak Premium** | Multi-tenant client panels, admin updates, PHP-FPM isolation, panel vhost automation, dashboard server controls |
 
-Premium is distributed separately (private build + license key). It is not
-included in the public GitHub repository.
+Premium is distributed as a **signed bundle** from the license server after you
+activate your key. It is **not** in the public GitHub repo, and you **do not**
+need GitHub access to `qadbak-premium` or any developer Personal Access Token.
+
+Premium modules are downloaded from the license server after activation (no separate public GitHub repo for Premium source).
 
 ## How to buy
 
 1. Contact **info@mareades.com** or visit **https://omiiba.com** (commercial pages).
-2. You receive a **license key** and access to Premium artifacts for your plan.
-3. In the panel: **Server admin → License** → enter key → **Activate**.
+2. You receive a **license key** (and the license server URL, usually `https://license.omiiba.dev`).
+3. Install public Qadbak Core on your VPS (`git clone` **macdirtycow/qadbak** only).
+4. In the panel: **Server admin → License** → enter key → **Activate** → **Refresh modules**.
+
+Premium modules download automatically from the license server to `data/premium/`.
+No private repository clone is required on your server.
 
 ## License server
 
 Licensed installations validate against:
 
-`https://license.omiiba.com` (configurable via `QADBAK_LICENSE_SERVER` in
+`https://license.omiiba.dev` (configurable via `QADBAK_LICENSE_SERVER` in
 `.env.local`).
 
 Heartbeats run daily. Expired or revoked licenses disable Premium modules.

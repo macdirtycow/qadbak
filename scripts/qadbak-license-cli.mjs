@@ -31,7 +31,7 @@ async function readLicenseJson() {
 async function postLicenseServer(pathname, body) {
   const server =
     process.env.QADBAK_LICENSE_SERVER?.replace(/\/$/, "") ??
-    "https://license.omiiba.com";
+    "https://license.omiiba.dev";
   const res = await fetch(`${server}${pathname}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -139,7 +139,17 @@ try {
   else if (cmd === "status") await status();
   else if (cmd === "sync") {
     await heartbeat();
-    console.log(JSON.stringify({ ok: true, note: "Run panel Refresh modules or npm run build after sync" }));
+    const { spawn } = await import("node:child_process");
+    const child = spawn(
+      process.execPath,
+      [path.join(ROOT, "scripts", "sync-premium-artifact.mjs")],
+      { cwd: ROOT, stdio: "inherit", env: process.env },
+    );
+    const code = await new Promise((resolve) => {
+      child.on("close", resolve);
+    });
+    if (code !== 0) process.exit(code ?? 1);
+    console.log(JSON.stringify({ ok: true, synced: true }));
   } else {
     console.error("Usage: qadbak-license-cli.mjs <activate KEY|heartbeat|status|sync>");
     process.exit(1);

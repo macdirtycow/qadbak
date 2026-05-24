@@ -64,7 +64,7 @@ type HeartbeatResponse = {
 function licenseServer(): string {
   return (
     process.env.QADBAK_LICENSE_SERVER?.replace(/\/$/, "") ??
-    "https://license.omiiba.com"
+    "https://license.omiiba.dev"
   );
 }
 

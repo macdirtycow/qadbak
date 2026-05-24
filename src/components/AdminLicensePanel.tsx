@@ -15,6 +15,8 @@ export function AdminLicensePanel({
   const [error, setError] = useState(initialError ?? "");
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState("");
+  const [modulesSynced, setModulesSynced] = useState<boolean | null>(null);
+  const [syncHint, setSyncHint] = useState("");
 
   async function runAction(action: string, payload: Record<string, string> = {}) {
     setBusy(action);
@@ -28,9 +30,15 @@ export function AdminLicensePanel({
       const data = (await res.json()) as {
         error?: string;
         license?: LicensePublicInfo;
+        modulesSynced?: boolean;
+        modulesSyncError?: string;
       };
       if (!res.ok) throw new Error(data.error ?? "Request failed");
       if (data.license) setLicense(data.license);
+      if (typeof data.modulesSynced === "boolean") {
+        setModulesSynced(data.modulesSynced);
+      }
+      setSyncHint(data.modulesSyncError ?? "");
       if (action === "activate") setKey("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Request failed");
@@ -42,6 +50,19 @@ export function AdminLicensePanel({
   return (
     <div className="space-y-6">
       {error && <Alert>{error}</Alert>}
+      {syncHint && (
+        <Alert>
+          License saved, but Premium modules could not be downloaded: {syncHint}.
+          Build/upload the Premium bundle on the license server, then click Refresh
+          modules.
+        </Alert>
+      )}
+      {modulesSynced === false && license.features.length > 0 && !syncHint && (
+        <Alert>
+          License is active — click <strong>Refresh modules</strong> to download Premium
+          features onto this server.
+        </Alert>
+      )}
       <Card>
         <h2 className="text-lg font-medium text-white">Qadbak license</h2>
         <dl className="mt-4 grid gap-3 sm:grid-cols-2">

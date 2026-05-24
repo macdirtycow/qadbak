@@ -7,7 +7,10 @@ import {
   getLicensePublicInfo,
   heartbeatLicense,
 } from "@/lib/qadbak-license";
-import { syncPremiumArtifact } from "@/lib/premium/server";
+import {
+  isPremiumModulesSynced,
+  syncPremiumArtifact,
+} from "@/lib/premium/server";
 import { getProvisioner } from "@/lib/provisioner";
 
 export async function GET() {
@@ -15,7 +18,12 @@ export async function GET() {
     const session = await requireAdmin();
     const domains = await getProvisioner().listDomains(session);
     const license = await getLicensePublicInfo(domains.length);
-    return jsonOk({ license, premiumActive: license.features.length > 0 });
+    const modulesSynced = await isPremiumModulesSynced();
+    return jsonOk({
+      license,
+      premiumActive: license.features.length > 0,
+      modulesSynced,
+    });
   } catch (err) {
     return handleApiError(err);
   }
@@ -35,10 +43,21 @@ export async function POST(request: Request) {
         return jsonError("License key is required.");
       }
       await activateLicense(body.key);
-      await syncPremiumArtifact().catch(() => null);
+      let modulesSyncError: string | undefined;
+      try {
+        await syncPremiumArtifact();
+      } catch (e) {
+        modulesSyncError =
+          e instanceof Error ? e.message : "Premium module sync failed";
+      }
       await auditLog(session.username, "license-activate");
       const license = await getLicensePublicInfo();
-      return jsonOk({ ok: true, license });
+      return jsonOk({
+        ok: true,
+        license,
+        modulesSynced: await isPremiumModulesSynced(),
+        modulesSyncError,
+      });
     }
 
     if (action === "deactivate") {
@@ -56,7 +75,12 @@ export async function POST(request: Request) {
     if (action === "sync") {
       await syncPremiumArtifact();
       await auditLog(session.username, "license-sync");
-      return jsonOk({ ok: true, license: await getLicensePublicInfo() });
+      const license = await getLicensePublicInfo();
+      return jsonOk({
+        ok: true,
+        license,
+        modulesSynced: await isPremiumModulesSynced(),
+      });
     }
 
     return jsonError('Invalid action. Use "activate", "deactivate", "heartbeat", or "sync".');

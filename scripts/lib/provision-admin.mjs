@@ -191,7 +191,16 @@ export async function adminGlobalFeatureSet(feature, enabled) {
 export async function adminConfigSystem(bundle) {
   const b = String(bundle || "Default").trim();
   const lines = [`Qadbak native config-system (${b})`];
-  const services = ["nginx", "postfix", "dovecot", "mariadb", "php8.3-fpm", "php8.2-fpm"];
+  const services = [
+    "nginx",
+    "postfix",
+    "dovecot",
+    "mariadb",
+    "php8.4-fpm",
+    "php8.3-fpm",
+    "php8.2-fpm",
+    "php8.1-fpm",
+  ];
   for (const svc of services) {
     try {
       const { stdout } = await exec("systemctl", ["is-active", svc], { timeout: 8000 });

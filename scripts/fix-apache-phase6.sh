@@ -12,15 +12,20 @@ fi
 
 # shellcheck source=lib/fix-apache-nginx-ports.sh
 source "$ROOT/scripts/lib/fix-apache-nginx-ports.sh"
+# shellcheck source=lib/php-fpm-pool.sh
+source "$ROOT/scripts/lib/php-fpm-pool.sh"
 
 echo "==> Apache repair (phase 6 / VirtualMin / nginx front)"
 
 if a2query -M 2>/dev/null | grep -q mpm_prefork; then
   echo "    Reverting mpm_prefork → mpm_event (VirtualMin uses php-fpm)"
   a2dismod mpm_prefork 2>/dev/null || true
-  a2dismod php8.1 2>/dev/null || true
+  for v in 8.4 8.3 8.2 8.1; do
+    a2dismod "php${v}" 2>/dev/null || true
+  done
   a2enmod mpm_event proxy_fcgi setenvif rewrite ssl 2>/dev/null || true
-  a2enconf php8.1-fpm 2>/dev/null || true
+  PHP_VER="$(php_fpm_detect_version)"
+  a2enconf "php${PHP_VER}-fpm" 2>/dev/null || true
 fi
 
 echo "==> ports.conf: only 127.0.0.1:8080 (nginx keeps :80 :443)"

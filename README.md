@@ -21,7 +21,7 @@ In 2009, [Qadbak Investments](https://en.wikipedia.org/wiki/Qadbak_Investments) 
 
 The public repository is **proprietary source code** published for transparency and
 **personal, non-commercial evaluation** on a VPS you own. Commercial hosting and
-Premium features require a license — see [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md).
+Premium features require a license — see [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md). Modules are delivered via the license server after activation (no extra GitHub access).
 
 ```bash
 git clone https://github.com/macdirtycow/qadbak.git
