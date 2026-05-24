@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Trace why external mail is not in INBOX (Postfix → LMTP → Maildir → Dovecot).
+# Trace why external mail is not in INBOX (Postfix → Maildir → Dovecot).
 # Usage: sudo bash scripts/trace-inbound-mail.sh DOMAIN MAILBOX_USER
 set -euo pipefail
 ROOT="${QADBAK_DIR:-/opt/qadbak}"
@@ -24,6 +24,12 @@ VALIAS="$(postmap -q "${USER_LOCAL}@${DOMAIN}" hash:/etc/postfix/qadbak-virtual 
 VBOX="$(postmap -q "${USER_LOCAL}@${DOMAIN}" hash:/etc/postfix/qadbak-vmailbox 2>/dev/null || true)"
 echo "qadbak-virtual (must be empty for mailboxes): ${VALIAS:-OK — none}"
 echo "qadbak-vmailbox: ${VBOX:-MISSING}"
+if [[ -n "$VBOX" ]]; then
+  # shellcheck source=lib/mail-postfix-paths.sh
+  . "$ROOT/scripts/lib/mail-postfix-paths.sh"
+  echo "resolved Maildir: $(qadbak_absolute_maildir_from_vmbox "$VBOX")"
+fi
+postconf -h virtual_mailbox_base 2>/dev/null | sed 's/^/virtual_mailbox_base: /' || true
 if [[ -n "$VALIAS" ]]; then
   echo "FAIL — alias map shadows mailbox delivery. Run: sudo bash scripts/configure-native-mail.sh --force"
 fi

@@ -16,7 +16,7 @@
 | `QADBAK_VIRTUALMIN_FALLBACK=true` | Mail/DNS/… blijven `remote.cgi` aanroepen |
 | `QADBAK_NATIVE_INSTALL=1` | `install-hosting-stack.sh` slaat Webmin over |
 
-## Test VPS (`vmi3317912`)
+## Test VPS (your server)
 
 ```bash
 cd /opt/qadbak
@@ -31,7 +31,7 @@ sudo bash scripts/apply-phase8-test-server.sh
 Controle:
 
 - `curl -s http://127.0.0.1:3000/api/health` → `"provisioner":"hybrid"`
-- Panel → **Domains** toont `siccamanagement.nl` zonder Webmin
+- Panel → **Domains** toont `example.com` (jouw testdomein) zonder Webmin
 - Geen **Webmin**-tab op domein
 
 ## Domeinregistry bijwerken

@@ -19,7 +19,7 @@ The unix user comes from `data/native-domains.json` (or `/home/*/.qadbak-domain`
 | Where | Who | WebSocket |
 |-------|-----|-----------|
 | **Server admin → Terminal** | `root` bash (admins only) | `/ws/admin-terminal` |
-| **Domains → … → Terminal** | Domain unix user (e.g. `siccamanagement`) | `/ws/domain-terminal` |
+| **Domains → … → Terminal** | Domain unix user (e.g. `example`) | `/ws/domain-terminal` |
 
 Domain terminal starts in `/tmp` then `run-domain-terminal.sh` cds to the user home (avoids permission denied on private `/home/user` dirs).
 

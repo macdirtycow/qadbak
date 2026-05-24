@@ -3,6 +3,9 @@
 # Usage: sudo bash scripts/test-mail-receive.sh DOMAIN MAILBOX_USER
 set -euo pipefail
 ROOT="${QADBAK_DIR:-/opt/qadbak}"
+[[ -d "$ROOT" ]] || ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/mail-postfix-paths.sh
+. "$ROOT/scripts/lib/mail-postfix-paths.sh"
 DOMAIN="${1:?domain}"
 USER_LOCAL="${2:?mailbox user e.g. info}"
 EMAIL="${USER_LOCAL}@${DOMAIN}"
@@ -36,11 +39,7 @@ else
   echo "==> postfix write probe" >&2
   VBOX="$(postmap -q "$EMAIL" hash:/etc/postfix/qadbak-vmailbox 2>/dev/null || true)"
   if [[ -n "$VBOX" && -x "$ROOT/scripts/probe-postfix-maildir-write.sh" ]]; then
-    if [[ "$VBOX" == /* ]]; then
-      PROBE_DIR="${VBOX%/}"
-    else
-      PROBE_DIR="/${VBOX%/}"
-    fi
+    PROBE_DIR="$(qadbak_absolute_maildir_from_vmbox "$VBOX")"
     bash "$ROOT/scripts/probe-postfix-maildir-write.sh" "$PROBE_DIR" "$USER_LOCAL" >&2 || true
   fi
   echo "==> recent postfix / apparmor log" >&2

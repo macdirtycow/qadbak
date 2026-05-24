@@ -7,6 +7,8 @@ set -euo pipefail
 
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
 [[ -d "$QADBAK_DIR" ]] || QADBAK_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=scripts/lib/mail-postfix-paths.sh
+. "$QADBAK_DIR/scripts/lib/mail-postfix-paths.sh"
 ACTION="${1:-apply}"
 FORCE=0
 [[ "${1:-}" == "--force" ]] && { FORCE=1; ACTION="apply"; }
@@ -239,15 +241,13 @@ while IFS= read -r email; do
 done < <(grep -v '^#' "$QADBAK_VMAILBOX" 2>/dev/null | awk '{print $1}' || true)
 [[ "$ALIAS_CONFLICT" -eq 0 ]] || echo "    Fix: sudo bash scripts/configure-native-mail.sh --force"
 
+qadbak_warn_absolute_vmbox_paths "$QADBAK_VMAILBOX" || echo "    Fix: sudo bash scripts/configure-native-mail.sh --force"
+
 # Verify postfix can write to a sample Maildir (AppArmor probe).
 SAMPLE_VMAIL="$(grep -v '^#' "$QADBAK_VMAILBOX" 2>/dev/null | awk '{print $2}' | head -1 | tr -d ' ')"
 if [[ -n "$SAMPLE_VMAIL" ]]; then
-  if [[ "$SAMPLE_VMAIL" == /* ]]; then
-    SAMPLE_DIR="${SAMPLE_VMAIL%/}"
-  else
-    SAMPLE_DIR="/${SAMPLE_VMAIL%/}"
-  fi
-  SAMPLE_USER="$(basename "$(dirname "$SAMPLE_DIR")")"
+  SAMPLE_DIR="$(qadbak_absolute_maildir_from_vmbox "$SAMPLE_VMAIL")"
+  SAMPLE_USER="$(qadbak_unix_user_from_maildir "$SAMPLE_DIR")"
   if [[ -x "$QADBAK_DIR/scripts/probe-postfix-maildir-write.sh" ]]; then
     bash "$QADBAK_DIR/scripts/probe-postfix-maildir-write.sh" "$SAMPLE_DIR" "$SAMPLE_USER" || true
   fi

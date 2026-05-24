@@ -14,7 +14,7 @@ Independence plan phase 7: **one Qadbak panel, multiple VPS nodes** (ISPConfig-s
 
 The panel still provisions domains on the **default node** (usually `local`). Remote nodes are health-checked; full per-domain routing comes in a later iteration.
 
-## Apply on your test VPS (`vmi3317912`)
+## Apply on your test VPS
 
 ```bash
 cd /opt/qadbak

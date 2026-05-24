@@ -60,31 +60,31 @@ sudo bash scripts/apply-phase8-native-phase.sh ssl
 sudo bash scripts/apply-phase8-native-phase.sh ssl,dns
 ```
 
-## Handmatige tests (siccamanagement.nl)
+## Handmatige tests (example.com)
 
 ```bash
 sudo -u qadbak sudo -n /opt/qadbak/scripts/run-provisioning-helper.sh ping
-sudo -u qadbak sudo -n /opt/qadbak/scripts/run-provisioning-helper.sh ssl-list siccamanagement.nl
-sudo -u qadbak sudo -n /opt/qadbak/scripts/run-provisioning-helper.sh dns-get siccamanagement.nl
+sudo -u qadbak sudo -n /opt/qadbak/scripts/run-provisioning-helper.sh ssl-list example.com
+sudo -u qadbak sudo -n /opt/qadbak/scripts/run-provisioning-helper.sh dns-get example.com
 ```
 
 ### DNS: zone file niet gevonden?
 
 ```bash
-sudo bash scripts/discover-bind-zone.sh siccamanagement.nl
+sudo bash scripts/discover-bind-zone.sh example.com
 sudo bash scripts/export-native-domains.sh
 ```
 
 ## Mail (8d) — Postfix/Dovecot direct
 
-`mail` gebruikt **Postfix maps** (`/etc/postfix/virtual`, …) + **Maildir** onder `/home/<owner>/` en optioneel `/home/<owner>/homes/<user>/`.
+`mail` gebruikt **Qadbak Postfix maps** (`qadbak-domains`, `qadbak-vmailbox`, …) + **Maildir** onder `/home/<owner>/` en optioneel `/home/<owner>/homes/<user>/`.
 
 | Env | Gedrag |
 |-----|--------|
 | `QADBAK_MAIL_BACKEND=direct` | Geen `virtualmin` CLI (standaard bij `native` / fallback uit) |
 | `QADBAK_MAIL_BACKEND=virtualmin` | Oude CLI (alleen hybrid + fallback) |
 
-Debug: `sudo bash scripts/discover-mail-layout.sh siccamanagement.nl`
+Debug: `sudo bash scripts/discover-mail-layout.sh example.com`
 
 ## Klaar voor `apt remove webmin`
 

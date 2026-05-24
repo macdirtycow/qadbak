@@ -89,7 +89,7 @@ flowchart TB
 | Webmin-tab / embeds | Verbergen voor `client`; admin alleen waar nodig | Te doen |
 | Installer | `install-hosting-stack.sh`, geen Webmin-URL in onboarding | Klaar |
 
-**Exit:** E2E op test-VPS zonder iframe; terminal toont prompt als `siccamanagement@…`.
+**Exit:** E2E op test-VPS zonder iframe; terminal toont prompt als `domainowner@…`.
 
 **Terminal nog leeg?** Op de VPS:
 
