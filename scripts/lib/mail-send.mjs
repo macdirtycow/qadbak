@@ -19,20 +19,26 @@ async function ensureMailReady() {
   await ensureNativeMailStack();
 }
 
-function buildMessage(from, to, subject, body) {
+function buildMessage(from, to, subject, body, opts = {}) {
   const subj = String(subject || "").replace(/\r?\n/g, " ").trim() || "(no subject)";
   const text = String(body ?? "");
-  return [
-    `From: ${from}`,
-    `To: ${to}`,
-    `Subject: ${subj}`,
+  const lines = [`From: ${from}`, `To: ${to}`];
+  const cc = String(opts.cc || "").trim();
+  if (cc) lines.push(`Cc: ${cc}`);
+  lines.push(`Subject: ${subj}`);
+  const inReplyTo = String(opts.inReplyTo || "").trim();
+  if (inReplyTo) lines.push(`In-Reply-To: ${inReplyTo}`);
+  const references = String(opts.references || "").trim();
+  if (references) lines.push(`References: ${references}`);
+  lines.push(
     "MIME-Version: 1.0",
     "Content-Type: text/plain; charset=utf-8",
     "Content-Transfer-Encoding: 8bit",
     "",
     text,
     "",
-  ].join("\r\n");
+  );
+  return lines.join("\r\n");
 }
 
 export async function mailSendDirect(domain, localUser, payloadJson) {
@@ -59,10 +65,17 @@ export async function mailSendDirect(domain, localUser, payloadJson) {
   const to = String(payload.to || "").trim();
   const subject = String(payload.subject || "");
   const body = String(payload.body ?? "");
+  const cc = String(payload.cc || "").trim();
+  const inReplyTo = String(payload.inReplyTo || "").trim();
+  const references = String(payload.references || "").trim();
   if (!to || !to.includes("@")) fail("Valid recipient address (to) required");
 
   const from = `${local}@${domain}`;
-  const message = buildMessage(from, to, subject, body);
+  const message = buildMessage(from, to, subject, body, {
+    cc,
+    inReplyTo,
+    references,
+  });
 
   try {
     await queueSendmail(from, message);

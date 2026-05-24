@@ -16,8 +16,11 @@ export async function POST(request: Request, { params }: Params) {
     const body = (await request.json()) as {
       user?: string;
       to?: string;
+      cc?: string;
       subject?: string;
       body?: string;
+      inReplyTo?: string;
+      references?: string;
     };
     if (!body.user?.trim()) {
       return jsonError("Mailbox user is required.");
@@ -28,8 +31,11 @@ export async function POST(request: Request, { params }: Params) {
 
     const payload = JSON.stringify({
       to: body.to.trim(),
+      cc: body.cc?.trim() ?? "",
       subject: body.subject ?? "",
       body: body.body ?? "",
+      inReplyTo: body.inReplyTo?.trim() ?? "",
+      references: body.references?.trim() ?? "",
     });
 
     const raw = await runProvisioningHelper(

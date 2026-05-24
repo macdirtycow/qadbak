@@ -13,7 +13,11 @@ export function parseMailHeaders(raw) {
     subject: pick("Subject") || pick("subject"),
     from: pick("From") || pick("from"),
     to: pick("To") || pick("to"),
+    cc: pick("Cc") || pick("cc"),
     date: pick("Date") || pick("date"),
+    messageId: pick("Message-ID") || pick("Message-Id"),
+    replyTo: pick("Reply-To") || pick("Reply-to"),
+    references: pick("References") || pick("references"),
   };
 }
 

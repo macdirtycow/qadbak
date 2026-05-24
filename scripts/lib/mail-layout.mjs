@@ -213,6 +213,26 @@ async function reloadPostfix() {
   }
 }
 
+/** Enable hash:qadbak-virtual when the map has rows (catch-all / forwards). */
+export async function ensureVirtualAliasMapsEnabled() {
+  const rows = await readMapFile(QADBAK_POSTFIX_VIRTUAL);
+  const has = rows.some((r) => r.address?.trim() && r.destination?.trim());
+  if (!has) {
+    try {
+      await exec("postconf", ["-X", "virtual_alias_maps"], { timeout: 15_000 });
+    } catch {
+      /* */
+    }
+    return false;
+  }
+  await exec(
+    "postconf",
+    ["-e", `virtual_alias_maps = hash:${QADBAK_POSTFIX_VIRTUAL}`],
+    { timeout: 15_000 },
+  );
+  return true;
+}
+
 /** Write virtual_mailbox_domains hash source: "domain.tld OK" per line. */
 export async function writeVirtualDomainsFile(domains) {
   const { writeFile, mkdir } = await import("node:fs/promises");

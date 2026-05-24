@@ -44,7 +44,7 @@ fi
 [[ "$FORCE" -eq 1 ]] && rm -f "$STAMP"
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y -qq postfix dovecot-core dovecot-imapd dovecot-lmtpd 2>/dev/null || true
+apt-get install -y -qq postfix dovecot-core dovecot-imapd dovecot-lmtpd dovecot-sieve 2>/dev/null || true
 
 touch "$QADBAK_VIRTUAL" "$QADBAK_DOMAINS" "$QADBAK_VMAILBOX" "$QADBAK_VMAILBOX_UID" "$QADBAK_VMAILBOX_GID"
 chmod 640 "$QADBAK_VIRTUAL" "$QADBAK_DOMAINS" "$QADBAK_VMAILBOX" "$QADBAK_VMAILBOX_UID" "$QADBAK_VMAILBOX_GID" 2>/dev/null || true
@@ -178,8 +178,16 @@ service lmtp {
   }
 }
 
+protocol imap {
+  mail_plugins = $mail_plugins sieve
+}
+
 protocol lmtp {
-  mail_plugins = $mail_plugins
+  mail_plugins = $mail_plugins sieve
+}
+
+plugin {
+  sieve = ~/Maildir/.dovecot.sieve
 }
 EOF
 

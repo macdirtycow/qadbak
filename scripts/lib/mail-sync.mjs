@@ -1,6 +1,7 @@
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { readMailSettingsCatchAllEntries } from "./mail-settings-catchall.mjs";
 import {
   loadRegistry,
   QADBAK_DIR,
@@ -122,7 +123,10 @@ export async function rebuildPostfixMailboxMaps() {
 export async function stripVirtualAliasMailboxConflicts(mailboxEmails) {
   const rows = await readMapFile(QADBAK_POSTFIX_VIRTUAL);
   const blocked = mailboxEmails instanceof Set ? mailboxEmails : new Set(mailboxEmails);
-  const filtered = rows.filter((r) => !blocked.has(r.address.toLowerCase()));
+  const filtered = rows.filter((r) => {
+    if (r.address.startsWith("@")) return true;
+    return !blocked.has(r.address.toLowerCase());
+  });
   if (filtered.length !== rows.length) {
     await writeVirtualMapFile(QADBAK_POSTFIX_VIRTUAL, filtered);
   }
@@ -142,6 +146,12 @@ export async function rebuildVirtualAliasMap() {
       if (!a.from || !a.to) continue;
       entries.set(String(a.from).toLowerCase(), String(a.to).trim());
     }
+  }
+
+  for (const { address, destination } of await readMailSettingsCatchAllEntries(
+    rows,
+  )) {
+    entries.set(address.toLowerCase(), destination);
   }
 
   const sorted = [...entries.entries()].sort(([a], [b]) => a.localeCompare(b));

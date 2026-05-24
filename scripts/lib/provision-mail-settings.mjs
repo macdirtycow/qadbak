@@ -4,6 +4,13 @@ import {
   readDomainConfigJson,
   writeDomainConfigJson,
 } from "./provisioning-common.mjs";
+import {
+  rebuildPostfixMailboxMaps,
+  rebuildVirtualAliasMap,
+  stripVirtualAliasMailboxConflicts,
+} from "./mail-sync.mjs";
+import { postmapReloadAll, ensureVirtualAliasMapsEnabled } from "./mail-layout.mjs";
+import { applyDomainMailSettings } from "./mail-settings-apply.mjs";
 
 const DEFAULTS = {
   catchAll: "",
@@ -27,9 +34,16 @@ export async function mailSettingsSet(domain, settingsJson) {
       settings = DEFAULTS;
     }
   }
-  await writeDomainConfigJson(domain, "mail-settings.json", {
+  const merged = {
     ...DEFAULTS,
     ...settings,
-  });
-  emit({ ok: true });
+  };
+  await writeDomainConfigJson(domain, "mail-settings.json", merged);
+  const applied = await applyDomainMailSettings(domain, merged);
+  const { emails } = await rebuildPostfixMailboxMaps();
+  await rebuildVirtualAliasMap();
+  await stripVirtualAliasMailboxConflicts(emails);
+  await ensureVirtualAliasMapsEnabled();
+  await postmapReloadAll();
+  emit({ ok: true, applied });
 }
