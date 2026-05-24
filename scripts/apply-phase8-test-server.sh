@@ -69,7 +69,7 @@ sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && bash scripts/pm2-restart-qad
 
 echo "==> E2E credentials"
 if bash "$QADBAK_DIR/scripts/sync-e2e-credentials.sh"; then
-  sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && bash scripts/run-install-e2e.sh" || \
+  bash "$QADBAK_DIR/scripts/run-install-e2e.sh" || \
     echo "    WARN: E2E failed — set QADBAK_E2E_ADMIN_PASS in .env.local" >&2
 else
   echo "    WARN: set QADBAK_E2E_ADMIN_PASS in .env.local then: sudo bash scripts/sync-e2e-credentials.sh" >&2

@@ -52,12 +52,15 @@ if [[ "${QADBAK_SKIP_INSTALL_E2E:-}" == "1" ]]; then
   E2E_OK=1
 elif [[ -f "$ROOT/scripts/run-install-e2e.sh" ]]; then
   echo "==> Playwright E2E (installed panel)"
-  if bash "$ROOT/scripts/run-install-e2e.sh"; then
+  if [[ "$(id -u)" -ne 0 ]]; then
+    echo "  WARN install E2E skipped — Playwright system libs need root (qadbak has no sudo password):" >&2
+    echo "    sudo bash $ROOT/scripts/run-install-e2e.sh" >&2
+  elif bash "$ROOT/scripts/run-install-e2e.sh"; then
     E2E_OK=1
     echo "  OK   install E2E"
   else
-    echo "  WARN install E2E failed (panel may still be fine — re-run as qadbak):" >&2
-    echo "    sudo -u $USER PLAYWRIGHT_BROWSERS_PATH=$ROOT/.cache/ms-playwright bash $ROOT/scripts/run-install-e2e.sh" >&2
+    echo "  WARN install E2E failed (panel may still be fine — re-run as root):" >&2
+    echo "    sudo bash $ROOT/scripts/run-install-e2e.sh" >&2
   fi
 else
   echo "  WARN run-install-e2e.sh missing" >&2
