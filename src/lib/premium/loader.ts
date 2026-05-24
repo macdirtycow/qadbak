@@ -9,6 +9,7 @@ import { promisify } from "node:util";
 import {
   artifactDownloadUrl,
   isPremiumActive,
+  isPremiumLicensed,
   licenseStatus,
   readStoredLicense,
 } from "../qadbak-license";
