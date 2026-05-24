@@ -35,10 +35,23 @@ export async function getActivePremiumState(): Promise<ActivePremiumState | null
   }
 }
 
+/** License valid and Premium bundle extracted under data/premium/. */
+export async function isPremiumModulesSynced(): Promise<boolean> {
+  if (!(await isPremiumActive())) return false;
+  const active = await getActivePremiumState();
+  if (!active?.version || !active.features?.length) return false;
+  try {
+    await access(path.join(premiumVersionDir(active.version), ".installed"));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function isPremiumFeatureEnabled(
   featureId: string,
 ): Promise<boolean> {
-  if (!(await isPremiumActive())) return false;
+  if (!(await isPremiumModulesSynced())) return false;
   const stored = await readStoredLicense();
   if (!stored?.features.includes(featureId)) return false;
   const active = await getActivePremiumState();

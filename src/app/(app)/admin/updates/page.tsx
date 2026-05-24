@@ -1,10 +1,17 @@
 import { AdminUpdatesView } from "@/components/AdminUpdatesView";
 import { requireAdminPage } from "@/lib/admin-api";
+import { PremiumSyncModulesCard } from "@/lib/premium/sync-card";
 import { PremiumUpgradeCard } from "@/lib/premium/stubs";
-import { isPremiumFeatureEnabled } from "@/lib/premium/server";
+import {
+  isPremiumFeatureEnabled,
+  isPremiumModulesSynced,
+} from "@/lib/premium/server";
+import { isPremiumActive } from "@/lib/qadbak-license";
 
 export default async function AdminUpdatesPage() {
   await requireAdminPage();
+  const licensed = await isPremiumActive();
+  const synced = await isPremiumModulesSynced();
   const premium = await isPremiumFeatureEnabled("admin-updates");
 
   return (
@@ -17,6 +24,11 @@ export default async function AdminUpdatesPage() {
       </div>
       {premium ? (
         <AdminUpdatesView />
+      ) : licensed && !synced ? (
+        <PremiumSyncModulesCard
+          feature="admin-updates"
+          title="Admin updates — refresh Premium modules"
+        />
       ) : (
         <PremiumUpgradeCard feature="admin-updates" title="Admin updates (Premium)" />
       )}
