@@ -27,12 +27,6 @@ sudo bash install/qadbak-install.sh
 
 This installs the hosting stack, Qadbak (`/opt/qadbak`), native provisioning, pm2, and nginx. See [install/README.md](install/README.md) and [docs/QADBAK-NATIVE-INSTALL.md](docs/QADBAK-NATIVE-INSTALL.md).
 
-After the panel works, you can remove old GPL panel packages if they were on the box:
-
-```bash
-sudo bash /opt/qadbak/scripts/uninstall-legacy-panel.sh
-```
-
 ## Update on the server
 
 ```bash

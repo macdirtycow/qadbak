@@ -7,7 +7,7 @@ Fresh Ubuntu VPS **without** a legacy GPL control panel on the same machine.
 | Scenario | Installer |
 |----------|-----------|
 | New VPS, Qadbak-first | `sudo bash install/qadbak-install.sh` |
-| Existing VPS with legacy panel | Migrate domains, then `uninstall-legacy-panel.sh` |
+| Existing VPS with legacy panel | [MIGRATE-FROM-VIRTUALMIN.md](./MIGRATE-FROM-VIRTUALMIN.md) |
 | Import domains from remote API | Set `VIRTUALMIN_URL` in `.env.local` (hybrid only) |
 
 ## Install
