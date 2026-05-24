@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Allow Postfix to deliver into VirtualMin/Qadbak Maildirs under /home/*/homes/*/Maildir/
+# Allow Postfix to deliver into Qadbak Maildirs under /home/*/homes/*/Maildir/
 # (default Ubuntu AppArmor only allows /home/*/Maildir/, not nested homes/).
 set -euo pipefail
 

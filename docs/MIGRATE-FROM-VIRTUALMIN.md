@@ -23,12 +23,11 @@ No full `qadbak-install-native.sh` on a box that already has VirtualMin and live
 
 ## Optional later: remove local Webmin
 
-Only when `QADBAK_PROVISIONER=native` (phase 8) can provision domains without `remote.cgi`:
+Only when `QADBAK_PROVISIONER=native` and panel tests pass:
 
-1. Export domain list, mailboxes, DNS zones from VirtualMin  
-2. Import via future native scripts (Hestia-style `v-*` or Qadbak helpers)  
-3. Stop/disable `webmin` service  
-4. Close firewall port 10000  
+1. `sudo bash scripts/apply-phase8-independent.sh`
+2. `bash scripts/audit-vm-dependency.sh`
+3. Backup the VPS, then remove packages manually — see [PHASE-8-INDEPENDENT.md](./PHASE-8-INDEPENDENT.md#legacy-panel-packages-optional)
 
 Until then, keep VirtualMin installed but unused in daily work.
 

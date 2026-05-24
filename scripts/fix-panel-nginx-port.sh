@@ -47,5 +47,9 @@ echo "==> Panel via nginx :$PANEL_PORT"
 curl -sI "http://127.0.0.1:${PANEL_PORT}/login" | head -5 || true
 
 echo ""
-echo "Open: http://YOUR_SERVER_IP:${PANEL_PORT}/login"
+ORIGIN_IP="$(read_env_local_key QADBAK_ORIGIN_IP "")"
+if [[ -z "$ORIGIN_IP" ]]; then
+  ORIGIN_IP="$(curl -4 -s --max-time 3 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')"
+fi
+echo "Open: http://${ORIGIN_IP:-YOUR_SERVER_IP}:${PANEL_PORT}/login"
 echo "Do NOT use :3000 in the browser — that port is only for the Node app behind nginx."

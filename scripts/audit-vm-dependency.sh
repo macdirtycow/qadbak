@@ -76,7 +76,12 @@ if [[ "$INDEPENDENT" -eq 1 ]]; then
   echo "  [x] Panel nginx templates — no /embed/webmin/ (see deploy/nginx-webmin-embed-snippet.conf)"
   echo ""
   echo "Mode: INDEPENDENT — VirtualMin API not used."
-  echo "  Uninstall (after tests): sudo bash scripts/uninstall-legacy-panel.sh"
+  if dpkg -l webmin usermin 2>/dev/null | awk '/^ii/{print $2}' | grep -q .; then
+    echo "  Legacy panel packages still installed (optional cleanup):"
+    echo "    sudo apt-get remove -y --purge webmin usermin 'virtualmin-*'"
+    echo "    sudo apt-get autoremove -y"
+    echo "    Do NOT purge mariadb-client, unzip, zip, awscli, or proftpd if Qadbak uses them."
+  fi
   echo "  Revert API: QADBAK_PROVISIONER=hybrid + QADBAK_VIRTUALMIN_FALLBACK=true + pm2 restart"
 else
   echo "Hybrid mode — disabled native flags above may still call remote.cgi."

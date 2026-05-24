@@ -45,16 +45,21 @@ curl -s http://127.0.0.1:3000/api/health
 # verwacht: "provisioner":"native", "virtualminFallback":false
 ```
 
-## Webmin/VirtualMin pakketten verwijderen
+## Legacy panel packages (optional)
 
-Pas na panel-tests + backup:
+After native mode is verified and you have a backup, remove leftover packages manually:
 
 ```bash
-sudo bash scripts/uninstall-legacy-panel.sh --dry-run
-sudo bash scripts/uninstall-legacy-panel.sh
+sudo systemctl stop webmin usermin 2>/dev/null || true
+sudo apt-get remove -y --purge webmin usermin 'virtualmin-*'
+sudo dpkg -l 'webmin-*' 2>/dev/null | awk '/^ii/{print $2}' | xargs -r sudo apt-get remove -y --purge
+sudo apt-get autoremove -y
+sudo rm -rf /etc/webmin /usr/share/webmin /var/webmin
 ```
 
-Zie [VM-REMOVAL-ROADMAP.md](./VM-REMOVAL-ROADMAP.md).
+Re-install Qadbak dependencies if autoremove removed them: `mariadb-client`, `unzip`, `zip`, `awscli`, `proftpd-basic`.
+
+See [VM-REMOVAL-ROADMAP.md](./VM-REMOVAL-ROADMAP.md).
 
 ## Terugdraaien
 
