@@ -109,16 +109,16 @@ print("250 OK")
 export async function deliverLocalMessage(to, subject, body, from = "postmaster@localhost") {
   const message = buildRfc822(from, to, subject, body);
   try {
-    await queueSendmail(from, message);
-    return { method: "sendmail" };
-  } catch (sendmailErr) {
+    await smtpInjectLocal(to, from, subject, body);
+    return { method: "smtp" };
+  } catch (smtpErr) {
     try {
-      await smtpInjectLocal(to, from, subject, body);
-      return { method: "smtp", sendmailError: String(sendmailErr) };
-    } catch (smtpErr) {
-      const a = sendmailErr instanceof Error ? sendmailErr.message : String(sendmailErr);
-      const b = smtpErr instanceof Error ? smtpErr.message : String(smtpErr);
-      throw new Error(`Local delivery failed (sendmail: ${a}; smtp: ${b})`);
+      await queueSendmail(from, message);
+      return { method: "sendmail", smtpError: String(smtpErr) };
+    } catch (sendmailErr) {
+      const a = smtpErr instanceof Error ? smtpErr.message : String(smtpErr);
+      const b = sendmailErr instanceof Error ? sendmailErr.message : String(sendmailErr);
+      throw new Error(`Local delivery failed (smtp: ${a}; sendmail: ${b})`);
     }
   }
 }

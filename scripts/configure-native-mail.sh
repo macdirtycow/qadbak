@@ -48,13 +48,13 @@ touch "$QADBAK_VIRTUAL" "$QADBAK_DOMAINS" "$QADBAK_VMAILBOX" "$QADBAK_VMAILBOX_U
 chmod 640 "$QADBAK_VIRTUAL" "$QADBAK_DOMAINS" "$QADBAK_VMAILBOX" "$QADBAK_VMAILBOX_UID" "$QADBAK_VMAILBOX_GID" 2>/dev/null || true
 chown root:postfix "$QADBAK_VIRTUAL" "$QADBAK_DOMAINS" "$QADBAK_VMAILBOX" "$QADBAK_VMAILBOX_UID" "$QADBAK_VMAILBOX_GID" 2>/dev/null || true
 
-# Migrate legacy VirtualMin map entries into qadbak-virtual if ours is empty
-if [[ ! -s "$QADBAK_VIRTUAL" && -f /etc/postfix/virtual ]]; then
-  grep -v '^#' /etc/postfix/virtual | sed '/^$/d' >>"$QADBAK_VIRTUAL" 2>/dev/null || true
+# Legacy VirtualMin /etc/postfix/virtual must NOT be copied into qadbak-virtual —
+# mailbox paths live in qadbak-vmailbox; qadbak-virtual is forwards-only.
+if [[ "$FORCE" -eq 1 ]]; then
+  : >"$QADBAK_VIRTUAL"
 fi
 
 echo "==> Postfix (Qadbak virtual domains + direct Maildir delivery)"
-postconf -e "virtual_alias_maps = hash:${QADBAK_VIRTUAL}"
 postconf -e "virtual_mailbox_domains = hash:${QADBAK_DOMAINS}"
 postconf -e "virtual_mailbox_maps = hash:${QADBAK_VMAILBOX}"
 postconf -e "virtual_uid_maps = hash:${QADBAK_VMAILBOX_UID}"
@@ -211,6 +211,28 @@ touch "$STAMP"
 
 echo "==> Sync mailbox maps + virtual domains (hash: ... OK)"
 sync_maps
+
+# Forwards-only alias map — disable if empty so it cannot override qadbak-vmailbox.
+if [[ -s "$QADBAK_VIRTUAL" ]] && grep -q '[^[:space:]]' "$QADBAK_VIRTUAL" 2>/dev/null; then
+  postconf -e "virtual_alias_maps = hash:${QADBAK_VIRTUAL}"
+else
+  : >"$QADBAK_VIRTUAL"
+  postmap "$QADBAK_VIRTUAL" 2>/dev/null || true
+  postconf -X virtual_alias_maps 2>/dev/null || true
+  echo "    virtual_alias_maps disabled (forwards-only; mailboxes use qadbak-vmailbox)"
+fi
+postfix reload 2>/dev/null || systemctl reload postfix 2>/dev/null || true
+
+# Warn if legacy alias still shadows a mailbox (virtual_alias wins over vmailbox).
+ALIAS_CONFLICT=0
+while IFS= read -r email; do
+  [[ -n "$email" ]] || continue
+  if postmap -q "$email" hash:"$QADBAK_VIRTUAL" 2>/dev/null | grep -q .; then
+    echo "WARN: $email in qadbak-virtual AND qadbak-vmailbox — run mail-sync" >&2
+    ALIAS_CONFLICT=1
+  fi
+done < <(grep -v '^#' "$QADBAK_VMAILBOX" 2>/dev/null | awk '{print $1}' || true)
+[[ "$ALIAS_CONFLICT" -eq 0 ]] || echo "    Fix: sudo bash scripts/configure-native-mail.sh --force"
 
 echo "OK — inbound mail: hash:${QADBAK_DOMAINS} + Maildir maps (qadbak-vmailbox)"
 echo "    Test: sudo bash scripts/check-native-mail.sh YOUR-DOMAIN info"

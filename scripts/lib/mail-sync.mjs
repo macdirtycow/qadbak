@@ -13,6 +13,7 @@ import {
   discoverMailLayout,
   listMailboxesFromLayout,
   writeVirtualMapFile,
+  readMapFile,
   writeVirtualDomainsFile,
   postmapReloadAll,
   resolveMailboxMaildir,
@@ -102,7 +103,18 @@ export async function rebuildPostfixMailboxMaps() {
   await writeVirtualMapFile(QADBAK_POSTFIX_VMAILBOX, toRows(vmailbox));
   await writeVirtualMapFile(QADBAK_POSTFIX_VMAILBOX_UID, toRows(vuids));
   await writeVirtualMapFile(QADBAK_POSTFIX_VMAILBOX_GID, toRows(vgids));
-  return vmailbox.size;
+  return { count: vmailbox.size, emails: new Set(vmailbox.keys()) };
+}
+
+/** Remove mailbox addresses from qadbak-virtual (alias map wins over vmailbox in Postfix). */
+export async function stripVirtualAliasMailboxConflicts(mailboxEmails) {
+  const rows = await readMapFile(QADBAK_POSTFIX_VIRTUAL);
+  const blocked = mailboxEmails instanceof Set ? mailboxEmails : new Set(mailboxEmails);
+  const filtered = rows.filter((r) => !blocked.has(r.address.toLowerCase()));
+  if (filtered.length !== rows.length) {
+    await writeVirtualMapFile(QADBAK_POSTFIX_VIRTUAL, filtered);
+  }
+  return rows.length - filtered.length;
 }
 
 /** Email forwards only (virtual_alias_maps — must not overlap mailbox addresses). */
@@ -135,7 +147,9 @@ export async function ensureDomainMailSetup(domain, owner) {
 
   const home = `/home/${u}`;
   await ensureMaildir(path.join(home, "Maildir"));
-  await rebuildPostfixMailboxMaps();
+  const { emails } = await rebuildPostfixMailboxMaps();
+  await rebuildVirtualAliasMap();
+  await stripVirtualAliasMailboxConflicts(emails);
   await syncVirtualDomainsFile();
   await postmapReloadAll();
   await ensureInboundMailDns(d).catch(() => {});
@@ -188,8 +202,9 @@ export async function mailSyncAll() {
     }
   }
 
-  await rebuildPostfixMailboxMaps();
+  const { emails } = await rebuildPostfixMailboxMaps();
   await rebuildVirtualAliasMap();
+  await stripVirtualAliasMailboxConflicts(emails);
   await syncVirtualDomainsFile();
   await postmapReloadAll();
 

@@ -20,7 +20,13 @@ fi
 
 echo ""
 echo "========== 2. Virtual map lookup =========="
-postmap -q "${USER_LOCAL}@${DOMAIN}" hash:/etc/postfix/qadbak-vmailbox 2>/dev/null || echo "(no vmailbox entry)"
+VALIAS="$(postmap -q "${USER_LOCAL}@${DOMAIN}" hash:/etc/postfix/qadbak-virtual 2>/dev/null || true)"
+VBOX="$(postmap -q "${USER_LOCAL}@${DOMAIN}" hash:/etc/postfix/qadbak-vmailbox 2>/dev/null || true)"
+echo "qadbak-virtual (must be empty for mailboxes): ${VALIAS:-OK — none}"
+echo "qadbak-vmailbox: ${VBOX:-MISSING}"
+if [[ -n "$VALIAS" ]]; then
+  echo "FAIL — alias map shadows mailbox delivery. Run: sudo bash scripts/configure-native-mail.sh --force"
+fi
 postmap -q "${DOMAIN}" hash:/etc/postfix/qadbak-domains 2>/dev/null || echo "(domain not in qadbak-domains)"
 
 echo ""
