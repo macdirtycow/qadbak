@@ -39,8 +39,12 @@ USERS="$ROOT/data/users.json"
 
 cp -a "$USERS" "${USERS}.bak.$(date +%Y%m%d%H%M%S)"
 
-export HASH CLIENT_USER DOMAIN USERS
-sudo -u "$USER" node <<'NODE'
+sudo -u "$USER" env \
+  HASH="$HASH" \
+  CLIENT_USER="$CLIENT_USER" \
+  DOMAIN="$DOMAIN" \
+  USERS="$USERS" \
+  node <<'NODE'
 import { readFileSync, writeFileSync } from "fs";
 
 const usersPath = process.env.USERS;
