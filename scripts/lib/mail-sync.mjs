@@ -287,8 +287,8 @@ export async function mailReceiveTest(domain, localUser) {
   }
 
   let after = before;
-  for (let i = 0; i < 40; i += 1) {
-    await sleep(250);
+  for (let i = 0; i < 60; i += 1) {
+    await sleep(500);
     after = await countInboxMessages(maildirRoot);
     if (after > before) break;
   }
@@ -297,14 +297,29 @@ export async function mailReceiveTest(domain, localUser) {
   let mailLogHint = "";
   if (!delivered) {
     try {
-      const { stdout } = await exec(
-        "bash",
-        ["-c", "grep -iE 'lmtp|dovecot|info@' /var/log/mail.log 2>/dev/null | tail -8"],
-        { timeout: 5000 },
-      );
-      mailLogHint = stdout.trim();
+      const probe = maildirRoot.replace(/\/$/, "");
+      await exec("bash", [`${QADBAK_DIR}/scripts/probe-postfix-maildir-write.sh`, probe], {
+        timeout: 10_000,
+      }).catch((e) => {
+        mailLogHint = e instanceof Error ? e.message : String(e);
+      });
     } catch {
       /* */
+    }
+    if (!mailLogHint) {
+      try {
+        const { stdout } = await exec(
+          "bash",
+          [
+            "-c",
+            `grep -iE 'postfix|${to.replace(/'/g, "")}|apparmor|DENIED|status=' /var/log/mail.log /var/log/syslog 2>/dev/null | tail -12`,
+          ],
+          { timeout: 5000 },
+        );
+        mailLogHint = stdout.trim();
+      } catch {
+        /* */
+      }
     }
   }
   return {
