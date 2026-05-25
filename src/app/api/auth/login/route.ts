@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       role: user.role,
       domains: user.domains,
     });
-    applySessionCookie(response, token);
+    applySessionCookie(response, token, request);
 
     await auditLog(user.username, "login");
 

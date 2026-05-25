@@ -1,17 +1,36 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import type { NextResponse } from "next/server";
+import type { NextRequest, NextResponse } from "next/server";
 import type { SessionPayload } from "./types";
 
 const COOKIE_NAME = "panel_session";
 
 /**
- * Secure cookies are ignored by browsers on http://localhost.
- * Set QADBAK_COOKIE_SECURE=false for local `npm run start`.
+ * Cookie Secure flag is set per-request to match the actual response
+ * protocol. This makes first-time installs over plain HTTP (e.g. the
+ * bootstrap panel on http://<ip>:11000/login before the operator
+ * configures HTTPS) work out of the box — browsers silently drop
+ * Set-Cookie with Secure when the response was over HTTP, which would
+ * otherwise prevent login.
+ *
+ * The QADBAK_COOKIE_SECURE env var still acts as an explicit override
+ * (set "true" or "false") for operators who want to lock the behaviour.
  */
-function sessionCookieSecure(): boolean {
+function isHttpsRequest(request?: Request | NextRequest): boolean {
+  if (!request) return false;
+  const xfp = request.headers.get("x-forwarded-proto");
+  if (xfp) return xfp.toLowerCase().split(",")[0].trim() === "https";
+  try {
+    return new URL(request.url).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function sessionCookieSecure(request?: Request | NextRequest): boolean {
   if (process.env.QADBAK_COOKIE_SECURE === "false") return false;
   if (process.env.QADBAK_COOKIE_SECURE === "true") return true;
+  if (request) return isHttpsRequest(request);
   return process.env.NODE_ENV === "production";
 }
 
@@ -54,12 +73,15 @@ export async function getSession(): Promise<SessionPayload | null> {
   return verifySessionToken(token);
 }
 
-export function sessionCookieOptions(token: string) {
+export function sessionCookieOptions(
+  token: string,
+  request?: Request | NextRequest,
+) {
   return {
     name: COOKIE_NAME,
     value: token,
     httpOnly: true,
-    secure: sessionCookieSecure(),
+    secure: sessionCookieSecure(request),
     sameSite: "lax" as const,
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
@@ -67,8 +89,12 @@ export function sessionCookieOptions(token: string) {
 }
 
 /** Attach session to a Route Handler response (required for browser login). */
-export function applySessionCookie(response: NextResponse, token: string) {
-  const opts = sessionCookieOptions(token);
+export function applySessionCookie(
+  response: NextResponse,
+  token: string,
+  request?: Request | NextRequest,
+) {
+  const opts = sessionCookieOptions(token, request);
   response.cookies.set(opts.name, opts.value, {
     httpOnly: opts.httpOnly,
     secure: opts.secure,
@@ -79,12 +105,12 @@ export function applySessionCookie(response: NextResponse, token: string) {
   return response;
 }
 
-export function clearSessionCookieOptions() {
+export function clearSessionCookieOptions(request?: Request | NextRequest) {
   return {
     name: COOKIE_NAME,
     value: "",
     httpOnly: true,
-    secure: sessionCookieSecure(),
+    secure: sessionCookieSecure(request),
     sameSite: "lax" as const,
     path: "/",
     maxAge: 0,

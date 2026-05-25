@@ -15,6 +15,18 @@ If nginx uses `default_server` on port 80 and proxies **everything** to Qadbak (
 
 Panel login without a customer domain name: use **https://panel-host/login** or **http://SERVER_IP:11000/login** (`enable-panel-port.sh`).
 
+## First-time login on HTTP
+
+The panel listens HTTP on :11000 by default so new installs can sign in
+immediately at http://<server-ip>:11000/login before HTTPS is set up.
+Once you have a proper hostname + Let's Encrypt cert (set via
+apply-hosting-nginx.sh with PANEL_HOSTNAME), browsers will switch to
+HTTPS automatically and cookies become Secure.
+
+To force Secure cookies regardless of request protocol, set
+QADBAK_COOKIE_SECURE=true in .env.local. To force off (only for local
+debugging), set it to "false".
+
 ## End-to-end domain creation
 
 Creating a domain from the panel (**Domains → New domain**, which hits
