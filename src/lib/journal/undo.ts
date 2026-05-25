@@ -20,6 +20,7 @@
 
 import { getProvisioner } from "@/lib/provisioner";
 import type { DnsRecord } from "@/lib/provisioner";
+import { deactivateLicense, readStoredLicense } from "@/lib/qadbak-license";
 import type { SessionPayload } from "@/lib/types";
 import type { JournalEntry } from "./types";
 
@@ -69,6 +70,8 @@ export async function runUndo(ctx: UndoContext): Promise<UndoResult> {
       return undoAliasAdd(ctx, spec.payload);
     case "alias.delete":
       return undoAliasDelete(ctx, spec.payload);
+    case "license.activate":
+      return undoLicenseActivate(ctx, spec.payload);
     default:
       throw new UndoNotSupportedError(spec.kind);
   }
@@ -189,6 +192,41 @@ async function undoAliasDelete(
   return {
     ok: true,
     summary: `Re-created alias ${from}@${domain} → ${to}.`,
+  };
+}
+
+/**
+ * Undo a license activation by deactivating the current license.
+ * Payload: { keyHint: string }
+ * Safe because: the admin literally just pasted the key (TTL 30 min);
+ * deactivation only removes data/license.json — the key itself stays
+ * valid on the license server and can be re-activated.
+ *
+ * Refuses to act if the currently-stored license has a *different* key
+ * hint than the one captured at activation time, so a stale undo can't
+ * clobber a license that was already replaced by a later activate.
+ */
+async function undoLicenseActivate(
+  ctx: UndoContext,
+  payload: Record<string, unknown>,
+): Promise<UndoResult> {
+  const expectedHint = stringField(payload, "keyHint");
+  const stored = await readStoredLicense();
+  if (!stored) {
+    throw new UndoRejectedError(
+      "No license is currently stored — nothing to undo.",
+    );
+  }
+  if (expectedHint && stored.keyHint !== expectedHint) {
+    throw new UndoRejectedError(
+      `Stored license key (${stored.keyHint}) differs from the one this entry activated (${expectedHint}). Refusing to deactivate a newer key.`,
+    );
+  }
+  await deactivateLicense();
+  void ctx;
+  return {
+    ok: true,
+    summary: `Deactivated license ${stored.keyHint}. The key is still valid on the license server — paste it again to re-enable Premium.`,
   };
 }
 

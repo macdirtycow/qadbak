@@ -9,3 +9,5 @@ export {
   getActivePremiumState,
   listPremiumVersions,
 } from "./loader";
+
+export type { SyncPremiumResult, SyncPremiumOptions } from "./loader";

@@ -17,6 +17,8 @@ export function AdminLicensePanel({
   const [busy, setBusy] = useState("");
   const [modulesSynced, setModulesSynced] = useState<boolean | null>(null);
   const [syncHint, setSyncHint] = useState("");
+  const [reloadHint, setReloadHint] = useState("");
+  const [journalId, setJournalId] = useState("");
 
   async function runAction(action: string, payload: Record<string, string> = {}) {
     setBusy(action);
@@ -32,6 +34,9 @@ export function AdminLicensePanel({
         license?: LicensePublicInfo;
         modulesSynced?: boolean;
         modulesSyncError?: string;
+        reloaded?: boolean;
+        reloadError?: string;
+        journalId?: string;
       };
       if (!res.ok) throw new Error(data.error ?? "Request failed");
       if (data.license) setLicense(data.license);
@@ -39,6 +44,14 @@ export function AdminLicensePanel({
         setModulesSynced(data.modulesSynced);
       }
       setSyncHint(data.modulesSyncError ?? "");
+      setReloadHint(
+        data.reloaded
+          ? "Panel was auto-reloaded — new Premium menu items should be visible now."
+          : data.reloadError
+            ? `Premium installed, but auto-reload failed: ${data.reloadError}`
+            : "",
+      );
+      setJournalId(data.journalId ?? "");
       if (action === "activate") setKey("");
       if (action === "sync" && data.modulesSynced) {
         setSyncHint("");
@@ -60,7 +73,10 @@ export function AdminLicensePanel({
           modules.
         </Alert>
       )}
-      {modulesSynced === true && !syncHint && (
+      {modulesSynced === true && !syncHint && reloadHint && (
+        <Alert>{reloadHint}</Alert>
+      )}
+      {modulesSynced === true && !syncHint && !reloadHint && (
         <Alert>
           Premium modules are installed on this server. Restart pm2 if admin
           features still show locked.
@@ -70,6 +86,15 @@ export function AdminLicensePanel({
         <Alert>
           License is active — click <strong>Refresh modules</strong> to download Premium
           features onto this server.
+        </Alert>
+      )}
+      {journalId && (
+        <Alert>
+          Recorded in the action journal —{" "}
+          <a className="underline" href={`/admin/journal#${journalId}`}>
+            view exact steps
+          </a>
+          .
         </Alert>
       )}
       <Card>
