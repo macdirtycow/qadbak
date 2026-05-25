@@ -11,6 +11,7 @@ import {
   readDomainConfigJson,
   writeDomainConfigJson,
   QADBAK_DIR,
+  nginxCustomerConfPaths,
 } from "./provisioning-common.mjs";
 import { ensureDomainMailSetup, ensureNativeMailStack } from "./mail-sync.mjs";
 import { ensureBindZone } from "./provision-dns.mjs";
@@ -130,10 +131,8 @@ export async function domainDelete(domain) {
   const hit = rows.find((r) => r.name === name);
   const user = hit?.user ?? defaultUser(name);
 
-  const conf = `/etc/nginx/sites-enabled/qadbak-customer-${name}.conf`;
-  await exec("rm", ["-f", conf, `/etc/nginx/sites-available/qadbak-customer-${name}.conf`]).catch(
-    () => {},
-  );
+  const { available, enabled } = nginxCustomerConfPaths(name);
+  await exec("rm", ["-f", enabled, available]).catch(() => {});
   const removePool = path.join(QADBAK_DIR, "scripts", "remove-php-fpm-pool.sh");
   await exec("bash", [removePool, user], { timeout: 60_000 }).catch(() => {});
 

@@ -13,6 +13,8 @@ PROXY_JSON="$QADBAK_DIR/data/domain-config/${DOMAIN}/proxies.json"
 
 # shellcheck source=lib/php-fpm-pool.sh
 source "$QADBAK_DIR/scripts/lib/php-fpm-pool.sh"
+# shellcheck source=lib/nginx-customer-vhost.sh
+source "$QADBAK_DIR/scripts/lib/nginx-customer-vhost.sh"
 
 [[ -d "$PUB" ]] || mkdir -p "$PUB" && chown -R "${USER}:${USER}" "/home/${USER}"
 
@@ -90,7 +92,8 @@ write_site_server() {
   echo "}"
 }
 
-OUT="/etc/nginx/sites-available/qadbak-customer-${DOMAIN}.conf"
+OUT="$(nginx_customer_conf_available "$DOMAIN")"
+ENABLED_LINK="$(nginx_customer_conf_enabled "$DOMAIN")"
 {
   echo "# Qadbak — ${DOMAIN} (user ${USER}, PHP ${PHP_VER})"
   if [[ -n "$SSL_CERT_HOST" ]]; then
@@ -107,9 +110,11 @@ OUT="/etc/nginx/sites-available/qadbak-customer-${DOMAIN}.conf"
   fi
 } >"$OUT"
 
-ln -sf "$OUT" "/etc/nginx/sites-enabled/qadbak-customer-${DOMAIN}.conf"
-nginx -t
-systemctl reload nginx
+ln -sf "$OUT" "$ENABLED_LINK"
+if [[ "${NGINX_BATCH:-}" != "1" ]]; then
+  nginx -t
+  systemctl reload nginx
+fi
 if php_fpm_pool_available "$USER"; then
   echo "OK — nginx vhost ${DOMAIN} (PHP-FPM unix:$(php_fpm_socket_path "$USER")${SSL_CERT_HOST:+, HTTPS})"
 else

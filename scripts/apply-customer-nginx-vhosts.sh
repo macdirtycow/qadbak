@@ -13,6 +13,8 @@ fi
 
 # shellcheck source=lib/list-customer-domains.sh
 source "$QADBAK_DIR/scripts/lib/list-customer-domains.sh"
+# shellcheck source=lib/nginx-customer-vhost.sh
+source "$QADBAK_DIR/scripts/lib/nginx-customer-vhost.sh"
 
 APACHE_BACKEND="${APACHE_BACKEND:-127.0.0.1:8080}"
 if [[ -f "$QADBAK_DIR/scripts/detect-web-backend.sh" ]]; then
@@ -20,14 +22,7 @@ if [[ -f "$QADBAK_DIR/scripts/detect-web-backend.sh" ]]; then
 fi
 export APACHE_BACKEND
 
-OUT_DIR="/etc/nginx/sites-available"
-ENABLED="/etc/nginx/sites-enabled"
-mkdir -p "$OUT_DIR" "$ENABLED"
-
-rm -f "$OUT_DIR"/qadbak-customer-*.conf 2>/dev/null || true
-for link in "$ENABLED"/qadbak-customer-*.conf; do
-  [[ -e "$link" ]] && rm -f "$link"
-done
+nginx_customer_conf_remove_all
 
 mapfile -t ROWS < <(list_customer_domains_tsv | sort -u)
 if [[ ${#ROWS[@]} -eq 0 ]]; then
@@ -37,6 +32,7 @@ fi
 
 echo "==> Customer nginx vhosts (${#ROWS[@]} domain(s), PHP → $APACHE_BACKEND)"
 count=0
+export NGINX_BATCH=1
 for row in "${ROWS[@]}"; do
   domain="${row%%$'\t'*}"
   user="${row#*$'\t'}"
@@ -48,11 +44,16 @@ for row in "${ROWS[@]}"; do
   fi
   if bash "$QADBAK_DIR/scripts/apply-domain-nginx.sh" "$domain" "$user"; then
     count=$((count + 1))
-    echo "    $domain → $PUB"
+    echo "    $domain → $PUB ($(basename "$(nginx_customer_conf_enabled "$domain")"))"
   else
-    echo "    WARN $domain — nginx apply failed" >&2
+    echo "    WARN $domain — nginx config write failed" >&2
+    nginx_customer_conf_remove "$domain"
   fi
 done
+unset NGINX_BATCH
+
+nginx -t
+systemctl reload nginx
 
 echo "Done. Configured $count domain(s)."
 echo "Test: curl -sI -H 'Host: YOUR_DOMAIN' http://127.0.0.1/ | head -3"

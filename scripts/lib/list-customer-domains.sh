@@ -21,15 +21,34 @@ _resolve_user_for_domain() {
   echo "$user"
 }
 
+_should_skip_nginx_customer_domain() {
+  local domain="$1"
+  local panel="${QADBAK_PUBLIC_HOST:-}"
+  [[ -n "$panel" && "$domain" == "$panel" ]] && return 0
+  [[ -n "$panel" && "$domain" == "www.${panel}" ]] && return 0
+  [[ "$domain" == "license.omiiba.dev" ]] && return 0
+  if [[ "$domain" == "omiiba.dev" || "$domain" == "www.omiiba.dev" ]]; then
+    [[ -f /var/www/omiiba.dev/index.html || -f /etc/nginx/sites-enabled/omiiba.dev.conf ]] && return 0
+  fi
+  return 1
+}
+
 _emit_row() {
   local domain="$1" user="$2"
   [[ -z "$domain" || -z "$user" ]] && return 0
   _is_valid_domain "$domain" || return 0
+  _should_skip_nginx_customer_domain "$domain" && return 0
   printf '%s\t%s\n' "$domain" "$user"
 }
 
 list_customer_domains_tsv() {
   declare -A SEEN=()
+
+  if [[ -f "$QADBAK_DIR/.env.local" ]]; then
+    # shellcheck disable=SC1091
+    source <(grep -E '^QADBAK_PUBLIC_HOST=' "$QADBAK_DIR/.env.local" 2>/dev/null | sed 's/^/export /') || true
+  fi
+  local panel="${QADBAK_PUBLIC_HOST:-}"
 
   local reg="$QADBAK_DIR/data/native-domains.json"
   if [[ -f "$reg" ]]; then

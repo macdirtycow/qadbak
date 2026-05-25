@@ -14,6 +14,19 @@ export function fail(message, code = 1) {
   process.exit(code);
 }
 
+/** Nginx config filenames use underscores (dots break batch cleanup on some hosts). */
+export function nginxCustomerConfSlug(domain) {
+  return String(domain).replace(/\./g, "_");
+}
+
+export function nginxCustomerConfPaths(domain) {
+  const slug = nginxCustomerConfSlug(domain);
+  return {
+    available: `/etc/nginx/sites-available/qadbak-customer-${slug}.conf`,
+    enabled: `/etc/nginx/sites-enabled/qadbak-customer-${slug}.conf`,
+  };
+}
+
 export async function loadRegistry() {
   try {
     const raw = await readFile(REGISTRY, "utf8");

@@ -12,6 +12,7 @@ import {
   fileExists,
   domainConfigDir,
   QADBAK_DIR,
+  nginxCustomerConfPaths,
 } from "./provisioning-common.mjs";
 
 const exec = promisify(execFile);
@@ -28,8 +29,7 @@ async function setRegistryDisabled(domain, disabled) {
 export async function domainEnable(domain) {
   const { user } = await resolveDomainUser(domain);
   await exec("usermod", ["-U", user], { timeout: 15_000 }).catch(() => {});
-  const enabled = `/etc/nginx/sites-enabled/qadbak-customer-${domain}.conf`;
-  const available = `/etc/nginx/sites-available/qadbak-customer-${domain}.conf`;
+  const { available, enabled } = nginxCustomerConfPaths(domain);
   await exec("ln", ["-sf", available, enabled], { timeout: 10_000 }).catch(() => {});
   try {
     await exec("nginx", ["-t"], { timeout: 15_000 });
@@ -44,7 +44,7 @@ export async function domainEnable(domain) {
 export async function domainDisable(domain) {
   const { user } = await resolveDomainUser(domain);
   await exec("usermod", ["-L", user], { timeout: 15_000 }).catch(() => {});
-  const enabled = `/etc/nginx/sites-enabled/qadbak-customer-${domain}.conf`;
+  const { enabled } = nginxCustomerConfPaths(domain);
   await exec("rm", ["-f", enabled], { timeout: 10_000 }).catch(() => {});
   try {
     await exec("systemctl", ["reload", "nginx"], { timeout: 30_000 });
@@ -72,8 +72,8 @@ export async function domainValidate(domain) {
   } else {
     messages.push(`public_html missing (optional)`);
   }
-  const nginxSite = `/etc/nginx/sites-enabled/qadbak-customer-${domain}.conf`;
-  if (await fileExists(nginxSite)) {
+  const { enabled } = nginxCustomerConfPaths(domain);
+  if (await fileExists(enabled)) {
     messages.push(`Nginx vhost enabled`);
   } else if (await fileExists(`/etc/apache2/sites-enabled/${domain}.conf`)) {
     messages.push(`Apache vhost present`);
