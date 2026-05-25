@@ -70,11 +70,30 @@ function emit(obj) {
 
 async function assertHomePath(target) {
   if (!target || typeof target !== "string") fail("Path required.");
-  const resolved = await fs.realpath(target).catch(() => null);
-  if (!resolved || (resolved !== "/home" && !resolved.startsWith("/home/"))) {
+  const abs = path.resolve(target);
+  if (abs !== "/home" && !abs.startsWith("/home/")) {
     fail("Path must be under /home/.");
   }
-  return resolved;
+
+  const existing = await fs.realpath(abs).catch(() => null);
+  if (existing) {
+    if (existing !== "/home" && !existing.startsWith("/home/")) {
+      fail("Path must be under /home/.");
+    }
+    return existing;
+  }
+
+  // Target may not exist yet (e.g. extract/mkdir destination).
+  const parentResolved = await fs.realpath(path.dirname(abs)).catch(() => null);
+  if (
+    !parentResolved ||
+    (parentResolved !== "/home" && !parentResolved.startsWith("/home/"))
+  ) {
+    fail("Path must be under /home/.");
+  }
+  const base = path.basename(abs);
+  if (!base || base === "." || base === "..") fail("Invalid path.");
+  return path.join(parentResolved, base);
 }
 
 function homeUnixUser(resolvedPath) {
