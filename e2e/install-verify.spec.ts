@@ -33,9 +33,15 @@ test("health reports live (non-mock) mode", async ({ request }) => {
 
 test("marketing and about pages", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /your hosting panel/i })).toBeVisible();
+  // Current H1 in marketing-site/index.html:
+  // "A hosting panel that explains itself, undoes itself, heals itself."
+  await expect(
+    page.getByRole("heading", { name: /hosting panel that/i }),
+  ).toBeVisible();
   await page.goto("/about");
-  await expect(page.getByRole("heading", { name: /about the name qadbak/i })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: /about the name qadbak/i }),
+  ).toBeVisible();
 });
 
 test("admin can sign in and open core routes", async ({ page }) => {
