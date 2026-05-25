@@ -20,13 +20,20 @@ if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/fix-qadbak-ownership.sh" ]]; t
 fi
 
 verify_terminal_imports() {
+  # Real ESM smoke import: this matches the resolution path that
+  # scripts/domain-terminal-ws.mjs uses at runtime (await import + createRequire
+  # both flow through Node's module resolver from $ROOT). A bare
+  # `npm ls ws` or `node_modules/ws/package.json` check is too weak —
+  # npm ci can leave the tree in a state where `import "ws"` from a
+  # scripts/*.mjs file fails with ERR_MODULE_NOT_FOUND while the package
+  # is technically present on disk. Run from $ROOT (pm2/Node also launch
+  # qadbak-terminal from $ROOT) so module resolution sees the same cwd.
+  # No 2>/dev/null: surface the Node error to the operator on failure.
   run_as_qadbak "cd '$ROOT' && node --input-type=module -e \"
-import { createRequire } from 'module';
-import path from 'path';
-const req = createRequire(path.join(process.cwd(), 'package.json'));
-req('ws');
-req('node-pty');
+await import('ws');
+await import('node-pty');
 await import('jose');
+console.log('OK — ws + node-pty + jose import cleanly');
 \""
 }
 
@@ -47,12 +54,19 @@ if [[ ${#missing[@]} -gt 0 ]]; then
   install_terminal_deps
 fi
 
+echo "==> Smoke-import deps from scripts/domain-terminal-ws.mjs context"
 if ! verify_terminal_imports; then
-  echo "==> Terminal import check failed — reinstalling deps"
+  echo "    smoke import failed — reinstalling deps" >&2
   install_terminal_deps
+  echo "==> Smoke-import (retry after reinstall)"
   if ! verify_terminal_imports; then
-    echo "FAIL — terminal deps still broken. Run as root:" >&2
-    echo "  sudo bash scripts/apply-terminal-native.sh" >&2
+    # pm2-restart-qadbak.sh catches a non-zero exit here and runs
+    # scripts/repair-terminal-ws.sh automatically (npm install +
+    # ensure-terminal-deps + pm2 restart) — see the trap on line ~47
+    # of pm2-restart-qadbak.sh. If even that fails the operator gets
+    # told to run apply-terminal-native.sh as the last resort.
+    echo "    FAIL — smoke import still failing; deps present on disk but unresolvable" >&2
+    echo "    Fix: sudo bash scripts/apply-terminal-native.sh" >&2
     exit 1
   fi
 fi
