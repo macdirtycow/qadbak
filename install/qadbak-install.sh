@@ -210,11 +210,21 @@ bash "$QADBAK_DIR/scripts/install-hosting-stack.sh"
 [[ -n "$PANEL_ALT_PORT" ]] && bash "$QADBAK_DIR/scripts/enable-panel-port.sh" "$PANEL_ALT_PORT"
 
 echo "==> nginx default-deny (block unknown hostnames)"
-if bash "$QADBAK_DIR/scripts/apply-nginx-default-deny.sh"; then
+# --strip-conflicts: install-hosting-stack.sh just generated the panel
+# vhost with default_server (legacy fallback for fresh installs). The
+# default-deny vhost wants the same slot, so let it auto-strip the
+# conflict. apply-hosting-nginx.sh on subsequent re-runs sees the
+# default-deny vhost and emits the panel listen lines without
+# default_server, so this is a one-time bootstrap fix.
+if bash "$QADBAK_DIR/scripts/apply-nginx-default-deny.sh" --strip-conflicts; then
   echo "  Unknown Host headers now get HTTP 444 instead of leaking to another vhost."
+  # Re-apply the panel vhost so its on-disk template no longer claims
+  # default_server (default-deny is now active). Future repair runs stay
+  # idempotent regardless of which entry point operators use.
+  bash "$QADBAK_DIR/scripts/apply-hosting-nginx.sh" || true
 else
   echo "  WARN: default-deny not enabled — see message above (often a default_server conflict)." >&2
-  echo "        Backfill later with: sudo bash $QADBAK_DIR/scripts/apply-nginx-default-deny.sh" >&2
+  echo "        Backfill later with: sudo bash $QADBAK_DIR/scripts/apply-nginx-default-deny.sh --strip-conflicts" >&2
 fi || true
 [[ -n "$LE_EMAIL" ]] && certbot --nginx -d "$PANEL_HOST" --non-interactive --agree-tos -m "$LE_EMAIL" && {
   if grep -q '^QADBAK_COOKIE_SECURE=' "$ENV_FILE"; then

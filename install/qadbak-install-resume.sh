@@ -52,6 +52,12 @@ fi
 export PANEL_HOST SERVER_FQDN="${SERVER_FQDN:-$(hostname -f)}"
 export QADBAK_NATIVE_INSTALL=1 QADBAK_DISABLE_WEBMIN=true
 bash "$QADBAK_DIR/scripts/install-hosting-stack.sh"
+
+echo "==> nginx default-deny (block unknown hostnames)"
+if bash "$QADBAK_DIR/scripts/apply-nginx-default-deny.sh" --strip-conflicts; then
+  bash "$QADBAK_DIR/scripts/apply-hosting-nginx.sh" || true
+fi || true
+
 bash "$QADBAK_DIR/scripts/export-native-domains.sh" 2>/dev/null || true
 bash "$QADBAK_DIR/scripts/apply-phase8-independent.sh" 2>/dev/null || true
 bash "$QADBAK_DIR/scripts/configure-native-mail.sh" --force

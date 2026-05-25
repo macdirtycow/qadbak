@@ -6,6 +6,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 QADBAK_DIR="${QADBAK_DIR:-$ROOT}"
 
+# shellcheck source=lib/nginx-listen.sh
+source "$ROOT/scripts/lib/nginx-listen.sh"
+
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Run as root: sudo bash scripts/apply-hosting-nginx.sh" >&2
   exit 1
@@ -78,6 +81,18 @@ else
   PANEL_TLS_NAMES="${PANEL_HOST} ${SERVER_FQDN}"
 fi
 
+# When apply-nginx-default-deny.sh has been enabled, the deny vhost owns
+# default_server on ports 80/443. The panel/hosting vhost MUST drop
+# default_server in that case — otherwise nginx -t fails with
+# [emerg] a duplicate default server, the reload aborts, and the VPS
+# becomes unreachable. nginx-listen.sh decides the keyword for us.
+DEFAULT_SERVER_KW="$(panel_default_server_keyword)"
+if default_deny_enabled; then
+  echo "==> default-deny vhost detected — panel vhost will NOT claim default_server"
+else
+  echo "==> default-deny vhost not enabled — panel vhost claims default_server (legacy fallback)"
+fi
+
 NGX="/etc/nginx/sites-available/qadbak"
 sed -e "s/__PANEL_HOST__/$PANEL_HOST/g" \
   -e "s/__SERVER_FQDN__/$SERVER_FQDN/g" \
@@ -85,6 +100,7 @@ sed -e "s/__PANEL_HOST__/$PANEL_HOST/g" \
   -e "s/__PANEL_TLS_NAMES__/$PANEL_TLS_NAMES/g" \
   -e "s/__SSL_CERT_HOST__/${SSL_CERT_HOST:-$SERVER_FQDN}/g" \
   -e "s|__APACHE_BACKEND__|$APACHE_BACKEND|g" \
+  -e "s/__DEFAULT_SERVER__/${DEFAULT_SERVER_KW}/g" \
   "$NGX_SRC" >"$NGX"
 ln -sf "$NGX" /etc/nginx/sites-enabled/qadbak
 rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true

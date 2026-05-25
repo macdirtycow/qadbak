@@ -9,11 +9,15 @@
 #
 # Idempotent. Refuses to enable itself if another vhost already claims
 # default_server on the same port — prints the exact override command
-# instead of guessing which vhost "should" be the default.
+# instead of guessing which vhost "should" be the default. Pass
+# --strip-conflicts to auto-strip default_server from offending vhosts
+# (only safe in installer / orchestrated contexts; an interactive
+# operator should review the conflict instead).
 #
 # Usage:
-#   sudo bash scripts/apply-nginx-default-deny.sh           # apply
-#   sudo bash scripts/apply-nginx-default-deny.sh --check   # diagnose only
+#   sudo bash scripts/apply-nginx-default-deny.sh                    # apply
+#   sudo bash scripts/apply-nginx-default-deny.sh --check            # diagnose only
+#   sudo bash scripts/apply-nginx-default-deny.sh --strip-conflicts  # auto-resolve conflicts
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -26,16 +30,18 @@ SSL_CRT="/etc/ssl/certs/qadbak-default-deny.crt"
 SSL_KEY="/etc/ssl/private/qadbak-default-deny.key"
 
 CHECK_ONLY=0
+STRIP_CONFLICTS=0
 for arg in "$@"; do
   case "$arg" in
     --check) CHECK_ONLY=1 ;;
+    --strip-conflicts) STRIP_CONFLICTS=1 ;;
     -h|--help)
-      sed -n '1,18p' "$0" | sed 's/^# \{0,1\}//'
+      sed -n '1,22p' "$0" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *)
       echo "Unknown argument: $arg" >&2
-      echo "Usage: sudo bash $0 [--check]" >&2
+      echo "Usage: sudo bash $0 [--check] [--strip-conflicts]" >&2
       exit 2
       ;;
   esac
@@ -162,29 +168,70 @@ for port in 80 443; do
 done
 
 if [[ ${#CONFLICTS[@]} -gt 0 ]]; then
-  echo ""
-  echo "WARN: another vhost already claims default_server — refusing to enable" >&2
-  echo "      qadbak-default-deny until the conflict is resolved manually." >&2
-  echo "" >&2
   declare -A SEEN_FILES=()
   for entry in "${CONFLICTS[@]}"; do
-    port="${entry%%|*}"
     file="${entry#*|}"
-    echo "    port ${port}: ${file}" >&2
     SEEN_FILES["$file"]=1
   done
-  echo "" >&2
-  echo "      To hand the default over to qadbak-default-deny, strip" >&2
-  echo "      'default_server' from those vhosts and re-run this script:" >&2
-  echo "" >&2
-  for f in "${!SEEN_FILES[@]}"; do
-    echo "        sudo sed -i 's/ default_server//g' '${f}'" >&2
-  done
-  echo "        sudo nginx -t && sudo systemctl reload nginx" >&2
-  echo "        sudo bash $QADBAK_DIR/scripts/apply-nginx-default-deny.sh" >&2
-  echo "" >&2
-  echo "      Vhost was written to $VHOST_AVAIL but NOT enabled." >&2
-  exit 3
+
+  if [[ "$STRIP_CONFLICTS" -eq 1 ]]; then
+    echo ""
+    echo "==> --strip-conflicts: removing default_server from ${#SEEN_FILES[@]} vhost(s)"
+    for f in "${!SEEN_FILES[@]}"; do
+      # Resolve symlinks so we edit the real file (sites-enabled often points
+      # back into sites-available); follow once is enough for this layout.
+      target="$f"
+      if [[ -L "$f" ]]; then
+        if resolved="$(readlink -f "$f" 2>/dev/null)"; then
+          target="$resolved"
+        fi
+      fi
+      echo "    strip default_server: ${target}"
+      # Linux-only script; GNU sed -i does not need a backup suffix.
+      sed -i 's/ default_server//g' "$target"
+    done
+    # Recompute conflicts after stripping; if anything still claims
+    # default_server we abort instead of enabling on top of a duplicate.
+    CONFLICTS=()
+    for port in 80 443; do
+      while IFS= read -r f; do
+        [[ -z "$f" ]] && continue
+        CONFLICTS+=("${port}|${f}")
+      done < <(list_default_server_files "$port" || true)
+    done
+    if [[ ${#CONFLICTS[@]} -gt 0 ]]; then
+      echo "WARN: default_server still present after --strip-conflicts — bailing out." >&2
+      for entry in "${CONFLICTS[@]}"; do
+        echo "    ${entry%%|*}: ${entry#*|}" >&2
+      done
+      exit 3
+    fi
+  else
+    echo ""
+    echo "WARN: another vhost already claims default_server — refusing to enable" >&2
+    echo "      qadbak-default-deny until the conflict is resolved manually." >&2
+    echo "" >&2
+    for entry in "${CONFLICTS[@]}"; do
+      port="${entry%%|*}"
+      file="${entry#*|}"
+      echo "    port ${port}: ${file}" >&2
+    done
+    echo "" >&2
+    echo "      To hand the default over to qadbak-default-deny, strip" >&2
+    echo "      'default_server' from those vhosts and re-run this script:" >&2
+    echo "" >&2
+    for f in "${!SEEN_FILES[@]}"; do
+      echo "        sudo sed -i 's/ default_server//g' '${f}'" >&2
+    done
+    echo "        sudo nginx -t && sudo systemctl reload nginx" >&2
+    echo "        sudo bash $QADBAK_DIR/scripts/apply-nginx-default-deny.sh" >&2
+    echo "" >&2
+    echo "      Or re-run with --strip-conflicts to do this automatically:" >&2
+    echo "        sudo bash $QADBAK_DIR/scripts/apply-nginx-default-deny.sh --strip-conflicts" >&2
+    echo "" >&2
+    echo "      Vhost was written to $VHOST_AVAIL but NOT enabled." >&2
+    exit 3
+  fi
 fi
 
 echo "==> Enabling $VHOST_ENABLED"
