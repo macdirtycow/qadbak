@@ -21,3 +21,6 @@ data/pre-update-backups/
 /blob-report/
 /playwright/.cache/
 .cache/ms-playwright/
+/premium-source/
+/keys/
+*.pem

@@ -1,5 +1,5 @@
 import "server-only";
-import { createHash, createVerify } from "node:crypto";
+import { createHash, verify as cryptoVerify } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { access, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -80,7 +80,10 @@ async function verifySignature(
     const hash = createHash("sha256");
     await pipeline(createReadStream(tarballPath), hash);
     const digest = hash.digest();
-    return createVerify("Ed25519").update(digest).verify(key, sig);
+    // Ed25519 must use the one-shot crypto.verify(null, …) form.
+    // The streaming createVerify("Ed25519") API throws "Invalid digest"
+    // on Node 22+ because it tries to apply a hash before verifying.
+    return cryptoVerify(null, digest, key, sig);
   } catch {
     return process.env.QADBAK_SKIP_SIGNATURE_VERIFY === "true";
   }

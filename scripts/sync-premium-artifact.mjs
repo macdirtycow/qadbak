@@ -3,7 +3,7 @@
  * Download and extract Premium bundle from license server (CLI / cron).
  * Requires active data/license.json and QADBAK_LICENSE_* in environment or .env.local.
  */
-import { createHash, createVerify } from "node:crypto";
+import { createHash, verify as cryptoVerify } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -63,7 +63,9 @@ async function verifySignature(tarball, sigFile) {
     ]);
     const hash = createHash("sha256");
     await pipeline(createReadStream(tarball), hash);
-    return createVerify("Ed25519").update(hash.digest()).verify(key, sig);
+    // Ed25519 verify must use crypto.verify(null, …); the streaming
+    // createVerify("Ed25519") API throws "Invalid digest" on Node 22+.
+    return cryptoVerify(null, hash.digest(), key, sig);
   } catch {
     return process.env.QADBAK_SKIP_SIGNATURE_VERIFY === "true";
   }
