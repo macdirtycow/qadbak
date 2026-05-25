@@ -2,6 +2,7 @@ import { auditLog } from "@/lib/audit";
 import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
 import { domainToClientUsername } from "@/lib/domain-username";
+import { beginJournal } from "@/lib/journal";
 import { randomPanelPassword } from "@/lib/panel-password";
 import { repairAvailable, repairDomainWebsite } from "@/lib/domain-repair";
 import { panelVhostHostname, panelVhostAvailable } from "@/lib/panel-vhost";
@@ -10,6 +11,7 @@ import { requireSession } from "@/lib/session";
 import { findUserByUsername } from "@/lib/users";
 import { VirtualMinError } from "@/lib/errors";
 import { getProvisioner } from "@/lib/provisioner";
+import { consumeLastJournalSteps } from "@/lib/provisioner/native-exec";
 import { isIndependentMode } from "@/lib/provisioner/native-stub";
 
 type UsersClientModule = {
@@ -39,6 +41,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  let journal: ReturnType<typeof beginJournal> | undefined;
   try {
     const session = await requireAdmin();
     const body = (await request.json()) as {
@@ -59,6 +62,25 @@ export async function POST(request: Request) {
     const unixPass = providedPass || randomPanelPassword();
     const unixPassGenerated = !providedPass;
 
+    journal = beginJournal({
+      action: "domain.create",
+      summary: `Create domain ${domainName}`,
+      session,
+      target: { domain: domainName },
+      undoable: false,
+      metadata: {
+        type: body.type ?? "top",
+        plan: body.plan ?? "Default",
+        parent: body.parent ?? undefined,
+        createClientAccount: body.createClientAccount !== false,
+        createPanelVhost: Boolean(body.createPanelVhost),
+        unixUserProvided: Boolean(body.user),
+        passwordGenerated: unixPassGenerated,
+      },
+    });
+    consumeLastJournalSteps(); // discard any leftover from earlier requests
+    journal.infoStep(`Validated input — domain="${domainName}", type=${body.type ?? "top"}`);
+
     try {
       await getProvisioner().createDomain(
         {
@@ -73,17 +95,24 @@ export async function POST(request: Request) {
         },
         session,
       );
+      journal.captureFromHelper(consumeLastJournalSteps());
     } catch (err) {
+      journal.captureFromHelper(consumeLastJournalSteps());
       if (
         err instanceof VirtualMinError &&
         /already exists|already been created|already in use/i.test(err.message)
       ) {
         const existing = await getProvisioner().findDomainByName(domainName, session);
         if (existing) {
+          journal.warnStep(
+            `Domain already existed on this server — treating as success.`,
+          );
+          await journal.finish(true);
           return jsonOk({
             ok: true,
             domain: existing.name,
             note: "Domain already existed on this server.",
+            journalId: journal.id,
           });
         }
       }
@@ -119,6 +148,7 @@ export async function POST(request: Request) {
     }
 
     await auditLog(session.username, "create-domain", domainName);
+    journal.infoStep(`Domain '${domainName}' visible in registry after lookup retry.`);
 
     let clientAccount:
       | { username: string; password: string; panelUrl?: string }
@@ -200,13 +230,32 @@ export async function POST(request: Request) {
     if (await repairAvailable()) {
       try {
         await repairDomainWebsite(created.name);
+        journal.captureFromHelper(consumeLastJournalSteps());
+        journal.infoStep(
+          `Re-applied per-domain nginx + permissions via Repair helper.`,
+        );
         hostingNote =
           "Website hosting configured for this domain (nginx public_html vhost, same as Repair).";
       } catch {
+        journal.captureFromHelper(consumeLastJournalSteps());
+        journal.warnStep(
+          `Repair helper failed — site may need a manual run from Domains → Overview.`,
+        );
         hostingNote =
           "Domain created. Open Overview → Repair on server if the site does not load yet.";
       }
     }
+
+    if (clientAccount) {
+      journal.infoStep(
+        `Created client panel account '${clientAccount.username}' (Premium).`,
+      );
+    }
+    if (premiumNote) {
+      journal.warnStep(`Premium note: ${premiumNote}`);
+    }
+
+    const finished = await journal.finish(true);
 
     return jsonOk({
       ok: true,
@@ -215,8 +264,13 @@ export async function POST(request: Request) {
       premiumNote,
       clientAccount,
       unixPassword: unixPassGenerated ? unixPass : undefined,
+      journalId: finished.id,
     });
   } catch (err) {
+    if (journal) {
+      journal.captureFromHelper(consumeLastJournalSteps());
+      await journal.finish(false, err instanceof Error ? err.message : String(err));
+    }
     return handleApiError(err);
   }
 }

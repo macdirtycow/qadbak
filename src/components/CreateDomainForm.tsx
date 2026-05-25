@@ -30,6 +30,7 @@ export function CreateDomainForm({
     panelUrl?: string;
   } | null>(null);
   const [unixPassword, setUnixPassword] = useState("");
+  const [journalId, setJournalId] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -39,6 +40,7 @@ export function CreateDomainForm({
     setSuccess("");
     setClientCredentials(null);
     setUnixPassword("");
+    setJournalId("");
     try {
       const res = await fetch("/api/domains", {
         method: "POST",
@@ -62,8 +64,11 @@ export function CreateDomainForm({
       if (data.unixPassword) {
         setUnixPassword(data.unixPassword);
       }
+      if (typeof data.journalId === "string") {
+        setJournalId(data.journalId);
+      }
       setSuccess(`Domain ${domain} created.`);
-      if (!data.clientAccount && !data.unixPassword) {
+      if (!data.clientAccount && !data.unixPassword && !data.journalId) {
         setTimeout(() => {
           router.push(`/domains/${encodeURIComponent(domain)}`);
           router.refresh();
@@ -202,6 +207,21 @@ export function CreateDomainForm({
               User: <strong>{user || domain.split(".")[0]}</strong>
               <br />
               Password: <strong>{unixPassword}</strong>
+            </p>
+          </Alert>
+        )}
+        {journalId && (
+          <Alert variant="info">
+            <p className="text-sm">
+              <strong className="text-white">What just happened?</strong>{" "}
+              See the exact nginx config, unix user creation, PHP-FPM pool and
+              BIND zone we wrote for this domain.{" "}
+              <a
+                href={`/admin/journal?focus=${encodeURIComponent(journalId)}`}
+                className="text-panel-accent hover:underline"
+              >
+                Open in Journal →
+              </a>
             </p>
           </Alert>
         )}

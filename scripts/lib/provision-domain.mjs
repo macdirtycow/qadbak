@@ -15,6 +15,7 @@ import {
 } from "./provisioning-common.mjs";
 import { ensureDomainMailSetup, ensureNativeMailStack } from "./mail-sync.mjs";
 import { ensureBindZone } from "./provision-dns.mjs";
+import { jstep, jinfo } from "./journal-emit.mjs";
 
 const exec = promisify(execFile);
 
@@ -83,27 +84,55 @@ export async function domainCreate(domain, pass, userOpt, extraJson) {
   const home = `/home/${user}`;
   const ownedByQadbak = type === "top" || (type === "sub" && user !== parentUser);
 
+  jinfo(`Resolved domain '${name}' (type=${type}, user=${user})`);
+
   if (ownedByQadbak) {
+    let userExisted = false;
     try {
       await exec("id", [user]);
+      userExisted = true;
     } catch {
+      const t0 = Date.now();
       await exec("useradd", ["-m", "-s", "/bin/bash", user]);
+      jstep("shell", `Created unix user '${user}'`, {
+        command: `useradd -m -s /bin/bash ${user}`,
+        durationMs: Date.now() - t0,
+      });
     }
+    if (userExisted) jinfo(`Unix user '${user}' already existed`);
     await mkdir(path.join(home, "public_html"), { recursive: true });
     await mkdir(path.join(home, "backups"), { recursive: true });
+    jstep("file-write", `Created ${home}/public_html and ${home}/backups`, {
+      filePath: home,
+    });
     await writeFile(path.join(home, ".qadbak-domain"), `${name}\n`, "utf8");
+    jstep("file-write", `Wrote ${home}/.qadbak-domain`, {
+      filePath: `${home}/.qadbak-domain`,
+      byteSize: name.length + 1,
+    });
     await exec("chown", ["-R", `${user}:${user}`, home]);
+    jstep("shell", `Took ownership of ${home}`, {
+      command: `chown -R ${user}:${user} ${home}`,
+    });
     await writeLandingPage(home, user, name);
+    jinfo(`Wrote Qadbak landing page in ${home}/public_html`);
   }
 
   if (ownedByQadbak) {
     await syncPhpFpmPool(user, name);
+    jstep("service-reload", `Applied PHP-FPM pool for '${user}'`, {
+      command: `bash scripts/apply-php-fpm-pool.sh ${user} 8.2 ${home}`,
+    });
   }
   if (type === "alias" && parentUser) {
     await reloadNginx(name, parentUser);
   } else {
     await reloadNginx(name, user);
   }
+  jstep("service-reload", `Applied nginx vhost for ${name}`, {
+    command: `bash scripts/apply-domain-nginx.sh ${name} ${user}`,
+    filePath: `/etc/nginx/sites-available/qadbak-customer-${name.replace(/\./g, "_")}.conf`,
+  });
 
   rows.push({
     name,
@@ -115,9 +144,15 @@ export async function domainCreate(domain, pass, userOpt, extraJson) {
     isDefault: rows.length === 0,
   });
   await saveRegistry(rows);
+  jstep("file-write", `Added '${name}' to native-domains.json registry`, {
+    filePath: `${QADBAK_DIR}/data/native-domains.json`,
+  });
 
   if (type !== "alias") {
     await ensureBindZone(name);
+    jstep("service-reload", `Created BIND9 zone for ${name}`, {
+      filePath: `/etc/bind/zones/db.${name}`,
+    });
   }
 
   if (ownedByQadbak && type !== "alias") {
@@ -125,11 +160,17 @@ export async function domainCreate(domain, pass, userOpt, extraJson) {
       defaultVersion: "8.2",
       directories: [{ dir: "public_html", version: "8.2", mode: "fpm" }],
     });
+    jstep("file-write", `Wrote per-domain PHP config (8.2 + FPM)`, {
+      filePath: `${QADBAK_DIR}/data/domain-config/${name}/php.json`,
+    });
   }
 
   if (type !== "alias") {
     await ensureNativeMailStack();
     await ensureDomainMailSetup(name, user);
+    jstep("service-reload", `Configured Postfix + Dovecot for ${name}`, {
+      command: `mail-sync (Postfix virtual maps + Dovecot LDA for ${name})`,
+    });
   }
 
   emit({ ok: true, domain: name, user, home, type, parent: parent || null, plan });
