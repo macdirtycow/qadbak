@@ -14,14 +14,41 @@ interface EntryResponse {
   entry: JournalEntry;
 }
 
+interface Filters {
+  user: string;
+  action: string;
+  domain: string;
+  days: string;
+  failuresOnly: boolean;
+}
+
+const INITIAL_FILTERS: Filters = {
+  user: "",
+  action: "",
+  domain: "",
+  days: "7",
+  failuresOnly: false,
+};
+
+function buildQuery(f: Filters): string {
+  const p = new URLSearchParams();
+  if (f.user) p.set("user", f.user);
+  if (f.action) p.set("action", f.action);
+  if (f.domain) p.set("domain", f.domain);
+  if (f.days) p.set("days", f.days);
+  if (f.failuresOnly) p.set("failuresOnly", "1");
+  return p.toString();
+}
+
 export function JournalBrowser() {
-  const [filters, setFilters] = useState({
-    user: "",
-    action: "",
-    domain: "",
-    days: "7",
-    failuresOnly: false,
-  });
+  // `filters` is what the form fields currently show; `appliedFilters` is
+  // what the listing actually reflects. Only "Apply filters" / Enter copies
+  // one into the other — without this split, every keystroke would refetch
+  // and in-flight requests for stale values could clobber the latest result,
+  // which is exactly what made the button feel like it did nothing.
+  const [filters, setFilters] = useState<Filters>(INITIAL_FILTERS);
+  const [appliedFilters, setAppliedFilters] =
+    useState<Filters>(INITIAL_FILTERS);
   const [list, setList] = useState<ListResponse | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selected, setSelected] = useState<JournalEntry | null>(null);
@@ -39,21 +66,13 @@ export function JournalBrowser() {
     }
   }, []);
 
-  const buildQuery = useCallback(() => {
-    const p = new URLSearchParams();
-    if (filters.user) p.set("user", filters.user);
-    if (filters.action) p.set("action", filters.action);
-    if (filters.domain) p.set("domain", filters.domain);
-    if (filters.days) p.set("days", filters.days);
-    if (filters.failuresOnly) p.set("failuresOnly", "1");
-    return p.toString();
-  }, [filters]);
-
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/journal?${buildQuery()}`);
+      const res = await fetch(
+        `/api/admin/journal?${buildQuery(appliedFilters)}`,
+      );
       const data = (await res.json()) as ListResponse & { error?: string };
       if (!res.ok || data.error) {
         throw new Error(data.error ?? `HTTP ${res.status}`);
@@ -64,11 +83,18 @@ export function JournalBrowser() {
     } finally {
       setLoading(false);
     }
-  }, [buildQuery]);
+  }, [appliedFilters]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  function applyFilters(e: React.FormEvent) {
+    e.preventDefault();
+    // Shallow clone so identical filter values still trigger a refetch —
+    // makes "Apply filters" double as a manual reload.
+    setAppliedFilters({ ...filters });
+  }
 
   useEffect(() => {
     if (!selectedId) {
@@ -92,60 +118,70 @@ export function JournalBrowser() {
   return (
     <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
       <div className="space-y-4">
-        <Card className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="j-user">User</Label>
-              <Input
-                id="j-user"
-                value={filters.user}
-                placeholder="admin"
-                onChange={(e) => setFilters((f) => ({ ...f, user: e.target.value }))}
-              />
+        <Card>
+          <form onSubmit={applyFilters} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="j-user">User</Label>
+                <Input
+                  id="j-user"
+                  value={filters.user}
+                  placeholder="admin"
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, user: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="j-action">Action prefix</Label>
+                <Input
+                  id="j-action"
+                  value={filters.action}
+                  placeholder="domain. or mail."
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, action: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="j-domain">Domain</Label>
+                <Input
+                  id="j-domain"
+                  value={filters.domain}
+                  placeholder="example.com"
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, domain: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="j-days">Days back</Label>
+                <Input
+                  id="j-days"
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={filters.days}
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, days: e.target.value }))
+                  }
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="j-action">Action prefix</Label>
-              <Input
-                id="j-action"
-                value={filters.action}
-                placeholder="domain. or mail."
-                onChange={(e) => setFilters((f) => ({ ...f, action: e.target.value }))}
+            <label className="flex items-center gap-2 text-sm text-panel-muted">
+              <input
+                type="checkbox"
+                checked={filters.failuresOnly}
+                onChange={(e) =>
+                  setFilters((f) => ({ ...f, failuresOnly: e.target.checked }))
+                }
               />
-            </div>
-            <div>
-              <Label htmlFor="j-domain">Domain</Label>
-              <Input
-                id="j-domain"
-                value={filters.domain}
-                placeholder="example.com"
-                onChange={(e) => setFilters((f) => ({ ...f, domain: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="j-days">Days back</Label>
-              <Input
-                id="j-days"
-                type="number"
-                min={1}
-                max={30}
-                value={filters.days}
-                onChange={(e) => setFilters((f) => ({ ...f, days: e.target.value }))}
-              />
-            </div>
-          </div>
-          <label className="flex items-center gap-2 text-sm text-panel-muted">
-            <input
-              type="checkbox"
-              checked={filters.failuresOnly}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, failuresOnly: e.target.checked }))
-              }
-            />
-            Failures only
-          </label>
-          <Button onClick={refresh} disabled={loading}>
-            {loading ? "Loading…" : "Apply filters"}
-          </Button>
+              Failures only
+            </label>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Loading…" : "Apply filters"}
+            </Button>
+          </form>
         </Card>
 
         {error ? <Alert variant="error">{error}</Alert> : null}
