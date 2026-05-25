@@ -61,11 +61,23 @@ export const wordpressTemplate: AppTemplate = {
     const slug = domain.replace(/[^a-z0-9]/gi, "_").slice(0, 32);
     const suffix = randomBytes(3).toString("hex"); // 6 hex chars
     const dbName = `wp_${slug}_${suffix}`.slice(0, 60);
-    const dbUser = dbName.slice(0, 30); // MySQL user names: max 32, we leave headroom
     const dbPass = makeStrongPassword();
 
-    // 1. Database
-    await runProvisioningHelper("db-create", domain, dbName, dbPass);
+    // 1. Database. MySQL user format is decided by provision-db.mjs (currently
+    // `${unixUser}_${dbName}` truncated to 32 chars). Don't replicate that here
+    // — read it back from the response so we can never get out of sync.
+    const dbCreateResult = (await runProvisioningHelper(
+      "db-create",
+      domain,
+      dbName,
+      dbPass,
+    )) as { user?: string };
+    const dbUser = dbCreateResult.user;
+    if (!dbUser) {
+      throw new Error(
+        "db-create did not return a user name (provisioning-helper bug).",
+      );
+    }
 
     // 2. + 3. WordPress files + wp-config.php (single native helper)
     const result = (await runProvisioningHelper(
