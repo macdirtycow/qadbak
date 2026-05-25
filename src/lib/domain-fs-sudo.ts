@@ -41,6 +41,32 @@ export async function runDomainFsSudo(
   }
 }
 
+/** Scale timeout for large uploads (cap 24h). */
+export function uploadInstallTimeoutMs(fileBytes: number): number {
+  const perMbMs = 2_000;
+  const baseMs = 120_000;
+  const scaled = baseMs + Math.ceil(fileBytes / (1024 * 1024)) * perMbMs;
+  return Math.min(scaled, 86_400_000);
+}
+
+export async function runDomainFsInstallUpload(
+  destAbs: string,
+  tempPath: string,
+  maxBytes: number,
+): Promise<{ sizeBytes: number }> {
+  const payload = JSON.stringify({ tempPath, maxBytes });
+  const stdout = await runDomainFsSudo(["install-upload", destAbs, payload], {
+    timeout: uploadInstallTimeoutMs(maxBytes),
+    maxBuffer: 1024 * 1024,
+  });
+  const line = stdout.trim().split("\n").pop() ?? "";
+  const parsed = JSON.parse(line) as { ok?: boolean; sizeBytes?: number; error?: string };
+  if (!parsed.ok) {
+    throw new VirtualMinError(String(parsed.error ?? "Upload install failed."));
+  }
+  return { sizeBytes: Number(parsed.sizeBytes ?? 0) };
+}
+
 export async function probeDomainFsSudo(): Promise<boolean> {
   try {
     const stdout = await runDomainFsSudo(["list", "/home"], { timeout: 10_000 });

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Re-apply panel nginx (upload limit 64m, terminal WebSocket proxy).
+# Re-apply panel nginx (upload limit 100g, terminal WebSocket proxy).
 # Usage: sudo bash scripts/apply-panel-nginx-fixes.sh [PORT]
 set -euo pipefail
 ROOT="${QADBAK_DIR:-/opt/qadbak}"
@@ -14,4 +14,4 @@ if [[ "$PANEL_PORT" == "3000" ]]; then
   exit 1
 fi
 bash "$ROOT/scripts/enable-panel-port.sh" "$PANEL_PORT"
-echo "OK — panel :$PANEL_PORT nginx → 127.0.0.1:3000 (64m upload, /ws/* → :3001)"
+echo "OK — panel :$PANEL_PORT nginx → 127.0.0.1:3000 (100g upload, /ws/* → :3001)"

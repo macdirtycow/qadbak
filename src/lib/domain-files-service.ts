@@ -102,4 +102,5 @@ export {
   mkdirDomainLive,
   deleteDomainFileLive,
   uploadDomainFileLive,
+  uploadDomainFileFromTempLive,
 } from "./domain-files-live";

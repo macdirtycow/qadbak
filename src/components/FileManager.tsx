@@ -15,6 +15,7 @@ import {
   type DomainFileEntry,
   type DomainFilesListing,
 } from "@/lib/domain-files";
+import { formatUploadLimit } from "@/lib/upload-limits";
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
 import { DomainPageHeader } from "./DomainPageHeader";
@@ -23,11 +24,16 @@ export function FileManager({
   domain,
   initialListing,
   initialError,
+  maxUploadBytes,
+  uploadPremium,
 }: {
   domain: string;
   initialListing: DomainFilesListing;
   initialError: string;
+  maxUploadBytes: number;
+  uploadPremium: boolean;
 }) {
+  const uploadLimitLabel = formatUploadLimit(maxUploadBytes);
   const enc = encodeURIComponent(domain);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [listing, setListing] = useState(initialListing);
@@ -173,6 +179,12 @@ export function FileManager({
     }
     const files = Array.from(fileList);
     if (files.length === 0) return;
+
+    const tooLarge = files.find((f) => f.size > maxUploadBytes);
+    if (tooLarge) {
+      setError(`${tooLarge.name} is larger than ${uploadLimitLabel}.`);
+      return;
+    }
 
     setLoading(true);
     setError("");
@@ -346,7 +358,8 @@ export function FileManager({
                 <div>
                   <p className="font-medium text-white">Upload</p>
                   <p className="text-sm text-panel-muted">
-                    Drag files here or choose from your computer (max. 10 MB per file).
+                    Drag files here or choose from your computer (max. {uploadLimitLabel} per file
+                    {uploadPremium ? ", Premium" : ", Core"}).
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">

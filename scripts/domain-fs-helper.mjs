@@ -7,12 +7,14 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
 const execFileAsync = promisify(execFile);
 
 const MAX_READ_BYTES = 5 * 1024 * 1024;
 const MAX_WRITE_BYTES = 10 * 1024 * 1024;
+const MAX_PANEL_UPLOAD_BYTES = 100 * 1024 ** 3;
 const MAX_ARCHIVE_BYTES = 250 * 1024 * 1024;
 
 /** Keep in sync with TEXT_EXTENSIONS in src/lib/domain-files.ts */
@@ -281,6 +283,40 @@ async function removePath(absPath) {
   emit({ ok: true });
 }
 
+async function installUpload(absDest, payload) {
+  const tempPath = String(payload.tempPath ?? "");
+  const maxBytes = Number(payload.maxBytes ?? 0);
+  if (!tempPath || !Number.isFinite(maxBytes) || maxBytes <= 0) {
+    fail("tempPath and maxBytes required.");
+  }
+  if (maxBytes > MAX_PANEL_UPLOAD_BYTES) {
+    fail("Upload limit exceeds panel maximum.");
+  }
+
+  const tmpRoot = await fs.realpath(os.tmpdir());
+  const resolvedTemp = await fs.realpath(tempPath).catch(() => null);
+  if (!resolvedTemp || !resolvedTemp.startsWith(`${tmpRoot}${path.sep}`)) {
+    fail("Invalid temp path.");
+  }
+  const base = path.basename(resolvedTemp);
+  if (!base.startsWith("qadbak-upload-")) {
+    fail("Invalid temp file.");
+  }
+
+  const st = await fs.stat(resolvedTemp);
+  if (!st.isFile()) fail("Not a file.");
+  if (st.size > maxBytes) {
+    fail(`File exceeds upload limit (${maxBytes} bytes).`);
+  }
+
+  const parent = path.dirname(absDest);
+  await assertHomePath(parent);
+  await fs.copyFile(resolvedTemp, absDest);
+  await chownToHomeUser(absDest);
+  await fs.unlink(resolvedTemp).catch(() => {});
+  emit({ ok: true, sizeBytes: st.size });
+}
+
 async function main() {
   const [cmd, target, payloadRaw] = process.argv.slice(2);
   if (!cmd || !target) fail("Usage: domain-fs-helper.mjs <cmd> <path> [json]");
@@ -332,7 +368,11 @@ async function main() {
       const parent = path.dirname(target);
       await assertHomePath(parent);
       const buf = Buffer.from(String(payload.base64), "base64");
-      if (buf.length > MAX_WRITE_BYTES) fail("File too large.");
+      const cap = Number(payload.maxBytes ?? MAX_WRITE_BYTES);
+      if (!Number.isFinite(cap) || cap <= 0 || cap > MAX_PANEL_UPLOAD_BYTES) {
+        fail("Invalid maxBytes.");
+      }
+      if (buf.length > cap) fail("File too large.");
       await fs.writeFile(target, buf);
       await chownToHomeUser(target);
       emit({ ok: true, sizeBytes: buf.length });
@@ -346,6 +386,11 @@ async function main() {
     case "archive-create": {
       const payload = payloadRaw ? JSON.parse(payloadRaw) : {};
       await archiveCreate(target, payload);
+      break;
+    }
+    case "install-upload": {
+      const payload = payloadRaw ? JSON.parse(payloadRaw) : {};
+      await installUpload(target, payload);
       break;
     }
     default:

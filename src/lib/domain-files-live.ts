@@ -1,5 +1,5 @@
 import type { DomainFileEntry, DomainFileContent } from "./domain-files";
-import { probeDomainFsSudo, runDomainFsSudo } from "./domain-fs-sudo";
+import { probeDomainFsSudo, runDomainFsInstallUpload, runDomainFsSudo } from "./domain-fs-sudo";
 import {
   domainHomePath,
   enrichEntry,
@@ -180,12 +180,37 @@ export async function mkdirDomainLive(
   return parentNorm ? `${parentNorm}/${safe}` : safe;
 }
 
+export async function uploadDomainFileFromTempLive(
+  domain: VirtualMinDomain | string,
+  panelPath: string,
+  tempPath: string,
+  maxBytes: number,
+  actor: { role: Role; domains: string[] },
+): Promise<number> {
+  const parent = panelPath.includes("/")
+    ? panelPath.replace(/\/[^/]+$/, "")
+    : "";
+  if (!isDirWritable(parent)) {
+    throw new VirtualMinError("This directory is read-only.");
+  }
+  const unixUser = await resolveUnixUser(domain, actor);
+  const abs = absFileFromPanel(unixUser, panelPath);
+  const { sizeBytes } = await runDomainFsInstallUpload(abs, tempPath, maxBytes);
+  markLiveFilesystemReady();
+  return sizeBytes;
+}
+
 export async function uploadDomainFileLive(
   domain: VirtualMinDomain | string,
   panelPath: string,
   data: Uint8Array,
   actor: { role: Role; domains: string[] },
+  maxBytes?: number,
 ): Promise<void> {
+  const cap = maxBytes ?? 10 * 1024 * 1024;
+  if (data.byteLength > cap) {
+    throw new VirtualMinError(`File exceeds upload limit (${cap} bytes).`);
+  }
   const parent = panelPath.includes("/")
     ? panelPath.replace(/\/[^/]+$/, "")
     : "";
@@ -195,7 +220,7 @@ export async function uploadDomainFileLive(
   const unixUser = await resolveUnixUser(domain, actor);
   const abs = absFileFromPanel(unixUser, panelPath);
   const base64 = Buffer.from(data).toString("base64");
-  await runHelper("write-bytes", abs, { base64 });
+  await runHelper("write-bytes", abs, { base64, maxBytes: cap });
 }
 
 export async function deleteDomainFileLive(

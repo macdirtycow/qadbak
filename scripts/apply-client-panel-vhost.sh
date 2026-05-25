@@ -78,7 +78,7 @@ server {
     listen [::]:80;
     server_name ${PANEL_HOST};
 
-    client_max_body_size 64m;
+    client_max_body_size 100g;
 
 $(write_proxy_locations)
 }
