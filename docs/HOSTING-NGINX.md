@@ -60,6 +60,38 @@ sudo bash scripts/fix-domain-website.sh YOUR_DOMAIN
 
 This rebuilds the customer vhost (HTTP + HTTPS when a Let's Encrypt cert exists), optionally runs certbot, and adds a placeholder `public_html/index.html` if the folder is empty.
 
+## Block unknown hostnames
+
+When a fresh domain points at the VPS before it's added in the panel,
+nginx falls through to whichever vhost claims `default_server`. On a
+stock install that's the Qadbak panel vhost (which proxies unknown
+hosts to Apache). On servers that also run the license server, panel,
+or any other Qadbak service, an unrelated vhost can end up answering
+for completely unconfigured hostnames — at worst leaking the public
+"Buy license" page to anyone hitting the IP from an unknown DNS name.
+
+`scripts/apply-nginx-default-deny.sh` ships a neutral catch-all vhost
+that returns HTTP 444 (drop connection) on both port 80 and 443. The
+HTTPS listener uses a self-signed cert at
+`/etc/ssl/certs/qadbak-default-deny.crt` so SSL handshakes complete
+cleanly before nginx drops the request — unknown hosts never see
+`ERR_SSL_PROTOCOL_ERROR`, just a clean close.
+
+Fresh installs get this automatically. Existing VPS-en backfill with:
+
+```bash
+sudo bash /opt/qadbak/scripts/apply-nginx-default-deny.sh
+```
+
+The script refuses to enable itself if another vhost already claims
+`default_server` on the same port — it prints the exact `sed` command
+to strip `default_server` from the conflicting file instead of guessing
+which vhost "should" be the default. Diagnose without writing anything:
+
+```bash
+sudo bash /opt/qadbak/scripts/apply-nginx-default-deny.sh --check
+```
+
 ## Cloudflare
 
 - **A** record → VPS IP (`QADBAK_ORIGIN_IP` in `.env.local`).

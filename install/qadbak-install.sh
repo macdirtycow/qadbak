@@ -208,6 +208,14 @@ chown "$QADBAK_USER:$QADBAK_USER" "$INSTALL_TEST_ENV"
 export PANEL_HOST SERVER_FQDN QADBAK_NATIVE_INSTALL=1 QADBAK_DISABLE_WEBMIN=true
 bash "$QADBAK_DIR/scripts/install-hosting-stack.sh"
 [[ -n "$PANEL_ALT_PORT" ]] && bash "$QADBAK_DIR/scripts/enable-panel-port.sh" "$PANEL_ALT_PORT"
+
+echo "==> nginx default-deny (block unknown hostnames)"
+if bash "$QADBAK_DIR/scripts/apply-nginx-default-deny.sh"; then
+  echo "  Unknown Host headers now get HTTP 444 instead of leaking to another vhost."
+else
+  echo "  WARN: default-deny not enabled — see message above (often a default_server conflict)." >&2
+  echo "        Backfill later with: sudo bash $QADBAK_DIR/scripts/apply-nginx-default-deny.sh" >&2
+fi || true
 [[ -n "$LE_EMAIL" ]] && certbot --nginx -d "$PANEL_HOST" --non-interactive --agree-tos -m "$LE_EMAIL" && {
   if grep -q '^QADBAK_COOKIE_SECURE=' "$ENV_FILE"; then
     sed -i 's/^QADBAK_COOKIE_SECURE=.*/QADBAK_COOKIE_SECURE=true/' "$ENV_FILE"
