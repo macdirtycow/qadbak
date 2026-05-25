@@ -50,16 +50,19 @@ export async function POST(request: Request) {
       createClientAccount?: boolean;
       createPanelVhost?: boolean;
     };
-    if (!body.domain || !body.pass) {
-      return jsonError("Domain name and password are required.");
+    if (!body.domain) {
+      return jsonError("Domain name is required.");
     }
     const domainName = body.domain.trim().toLowerCase();
+    const providedPass = body.pass?.trim() ?? "";
+    const unixPass = providedPass || randomPanelPassword();
+    const unixPassGenerated = !providedPass;
 
     try {
       await getProvisioner().createDomain(
         {
           domain: domainName,
-          pass: body.pass,
+          pass: unixPass,
           user: body.user,
           plan: body.plan,
           parent: body.parent,
@@ -205,6 +208,7 @@ export async function POST(request: Request) {
       hostingNote,
       premiumNote,
       clientAccount,
+      unixPassword: unixPassGenerated ? unixPass : undefined,
     });
   } catch (err) {
     return handleApiError(err);

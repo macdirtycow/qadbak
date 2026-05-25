@@ -29,6 +29,7 @@ export function CreateDomainForm({
     password: string;
     panelUrl?: string;
   } | null>(null);
+  const [unixPassword, setUnixPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -37,13 +38,14 @@ export function CreateDomainForm({
     setError("");
     setSuccess("");
     setClientCredentials(null);
+    setUnixPassword("");
     try {
       const res = await fetch("/api/domains", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           domain,
-          pass,
+          pass: pass || undefined,
           user: user || undefined,
           plan: plan || undefined,
           parent: type !== "top" ? parent : undefined,
@@ -57,8 +59,11 @@ export function CreateDomainForm({
       if (data.clientAccount) {
         setClientCredentials(data.clientAccount);
       }
+      if (data.unixPassword) {
+        setUnixPassword(data.unixPassword);
+      }
       setSuccess(`Domain ${domain} created.`);
-      if (!data.clientAccount) {
+      if (!data.clientAccount && !data.unixPassword) {
         setTimeout(() => {
           router.push(`/domains/${encodeURIComponent(domain)}`);
           router.refresh();
@@ -129,17 +134,18 @@ export function CreateDomainForm({
           />
         </div>
         <div>
-          <Label htmlFor="pass">Unix / hosting password</Label>
+          <Label htmlFor="pass">Unix / hosting password (optional)</Label>
           <Input
             id="pass"
             type="password"
             value={pass}
             onChange={(e) => setPass(e.target.value)}
-            required
             autoComplete="new-password"
+            placeholder="Leave empty to auto-generate"
           />
           <p className="mt-1 text-xs text-panel-muted">
-            For the website/FTP system user on this server — not the client panel login.
+            For the website/FTP system user on this server. Leave empty and one is
+            generated and shown once after create. This is not the client panel login.
           </p>
         </div>
         <div>
@@ -187,9 +193,21 @@ export function CreateDomainForm({
             .
           </p>
         )}
+        {unixPassword && (
+          <Alert variant="success">
+            <p className="font-medium text-white">
+              Unix / FTP password (copy now — not shown again)
+            </p>
+            <p className="mt-2 text-sm">
+              User: <strong>{user || domain.split(".")[0]}</strong>
+              <br />
+              Password: <strong>{unixPassword}</strong>
+            </p>
+          </Alert>
+        )}
         {clientCredentials && (
           <Alert variant="success">
-            <p className="font-medium text-white">Client login (copy now — not shown again)</p>
+            <p className="font-medium text-white">Client panel login (copy now — not shown again)</p>
             <p className="mt-2 text-sm">
               Username: <strong>{clientCredentials.username}</strong>
               <br />
