@@ -41,11 +41,11 @@ export function DomainPanelClientCard({ domain }: { domain: string }) {
   }, [load]);
 
   async function saveClient() {
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+    if (password && password.length < 8) {
+      setError("Custom password must be at least 8 characters.");
       return;
     }
-    if (password !== password2) {
+    if (password && password !== password2) {
       setError("Passwords do not match.");
       return;
     }
@@ -58,16 +58,21 @@ export function DomainPanelClientCard({ domain }: { domain: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "upsert-client",
-          password,
+          password: password || undefined,
           username: username.trim() || undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Save failed.");
+      const shownPass = data.password as string | undefined;
       setSuccess(
         data.created
-          ? `Client ${data.username} created. Login: ${data.panelUrl}`
-          : `Password updated for ${data.username}.`,
+          ? shownPass
+            ? `Client ${data.username} created. Password (copy now): ${shownPass}`
+            : `Client ${data.username} created. Login: ${data.panelUrl}`
+          : shownPass
+            ? `Password updated for ${data.username}. New password (copy now): ${shownPass}`
+            : `Password updated for ${data.username}.`,
       );
       setPassword("");
       setPassword2("");
@@ -160,13 +165,18 @@ export function DomainPanelClientCard({ domain }: { domain: string }) {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label htmlFor="panel-pass">Password</Label>
+              <Label htmlFor="panel-pass">
+                Panel password {hasClient ? "" : "(optional)"}
+              </Label>
               <Input
                 id="panel-pass"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
+                placeholder={
+                  hasClient ? "Min. 8 characters" : "Leave empty to auto-generate"
+                }
               />
             </div>
             <div>
@@ -177,9 +187,17 @@ export function DomainPanelClientCard({ domain }: { domain: string }) {
                 value={password2}
                 onChange={(e) => setPassword2(e.target.value)}
                 autoComplete="new-password"
+                placeholder={hasClient ? "" : "Only if you set a custom password"}
+                disabled={!hasClient && !password}
               />
             </div>
           </div>
+          {!hasClient && (
+            <p className="text-xs text-panel-muted">
+              You do not need to enter a password — one is generated and shown once after
+              you click Create client account.
+            </p>
+          )}
 
           <div className="flex flex-wrap gap-2">
             <Button
@@ -189,7 +207,7 @@ export function DomainPanelClientCard({ domain }: { domain: string }) {
               {acting === "client"
                 ? "Saving…"
                 : hasClient
-                  ? "Reset client password"
+                  ? "Reset password"
                   : "Create client account"}
             </Button>
             <Button

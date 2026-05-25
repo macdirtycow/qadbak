@@ -129,14 +129,18 @@ export function CreateDomainForm({
           />
         </div>
         <div>
-          <Label htmlFor="pass">Owner password</Label>
+          <Label htmlFor="pass">Unix / hosting password</Label>
           <Input
             id="pass"
             type="password"
             value={pass}
             onChange={(e) => setPass(e.target.value)}
             required
+            autoComplete="new-password"
           />
+          <p className="mt-1 text-xs text-panel-muted">
+            For the website/FTP system user on this server — not the client panel login.
+          </p>
         </div>
         <div>
           <Label htmlFor="plan">Plan (optional)</Label>
@@ -154,7 +158,8 @@ export function CreateDomainForm({
               />
               <span>
                 Create client account in <code className="text-xs">users.json</code>{" "}
-                (username from domain; one-time password shown after create)
+                (username from domain; panel password is generated automatically and
+                shown after create — no extra field needed)
               </span>
             </label>
             <label className="flex cursor-pointer items-start gap-2 text-sm text-panel-muted">

@@ -1,8 +1,8 @@
-import { randomBytes } from "node:crypto";
 import { auditLog } from "@/lib/audit";
 import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
 import { domainToClientUsername } from "@/lib/domain-username";
+import { randomPanelPassword } from "@/lib/panel-password";
 import { repairAvailable, repairDomainWebsite } from "@/lib/domain-repair";
 import { panelVhostHostname, panelVhostAvailable } from "@/lib/panel-vhost";
 import { isPremiumFeatureEnabled, loadPremiumModule } from "@/lib/premium/server";
@@ -11,10 +11,6 @@ import { findUserByUsername } from "@/lib/users";
 import { VirtualMinError } from "@/lib/errors";
 import { getProvisioner } from "@/lib/provisioner";
 import { isIndependentMode } from "@/lib/provisioner/native-stub";
-
-function randomPanelPassword(): string {
-  return randomBytes(12).toString("base64url").slice(0, 16);
-}
 
 type UsersClientModule = {
   createClientUser: (opts: {
@@ -164,6 +160,8 @@ export async function POST(request: Request) {
               "create-client-user",
               `${clientUsername}@${domainName}`,
             );
+          } else {
+            premiumNote = `Client account not created: username "${clientUsername}" is already used (${existing.role}). Pick another Unix user or create the client under Domains → Overview.`;
           }
           if (body.createPanelVhost && clientAccount) {
             const host = panelVhostHostname(domainName);
