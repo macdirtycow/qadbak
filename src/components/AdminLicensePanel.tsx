@@ -66,6 +66,14 @@ export function AdminLicensePanel({
   return (
     <div className="space-y-6">
       {error && <Alert>{error}</Alert>}
+      {license.verifyError && (
+        <Alert>
+          <strong>License token cannot be verified on this panel.</strong>{" "}
+          {license.verifyError}{" "}
+          Premium features will stay locked until the verifier is configured —
+          see <a className="underline" href="https://github.com/macdirtycow/qadbak/blob/main/docs/COMMERCIAL.md#license-verification">docs/COMMERCIAL.md</a>.
+        </Alert>
+      )}
       {syncHint && (
         <Alert>
           License saved, but Premium modules could not be downloaded: {syncHint}.
@@ -146,6 +154,16 @@ export function AdminLicensePanel({
             <div>
               <dt className="text-sm text-panel-muted">Artifact version</dt>
               <dd className="text-white">{license.artifactVersion}</dd>
+            </div>
+          ) : null}
+          {license.verifyAlgo ? (
+            <div>
+              <dt className="text-sm text-panel-muted">Verified with</dt>
+              <dd className="text-white">
+                {license.verifyAlgo === "EdDSA"
+                  ? "Ed25519 (config/license-public.pem)"
+                  : "HS256 (QADBAK_LICENSE_JWT_SECRET)"}
+              </dd>
             </div>
           ) : null}
         </dl>

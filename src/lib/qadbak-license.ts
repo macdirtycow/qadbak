@@ -1,7 +1,8 @@
 import "server-only";
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, createPublicKey, randomBytes } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import type { KeyObject } from "node:crypto";
 import { jwtVerify, SignJWT } from "jose";
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -38,6 +39,10 @@ export interface LicensePublicInfo {
   lastHeartbeatAt: string | null;
   keyHint: string;
   artifactVersion?: string;
+  /** Algorithm that verified the license token; absent if unverified. */
+  verifyAlgo?: "EdDSA" | "HS256";
+  /** Human-readable reason license is stored but not active. */
+  verifyError?: string;
 }
 
 type ActivateResponse = {
@@ -97,28 +102,69 @@ function requireJwtSecret(): Uint8Array {
 }
 
 /**
- * License *verification* secret. Optional in production.
+ * License *verification* configuration.
  *
- * The license server signs tokens with its own HS256 secret. Panels do
- * not (and should not) share that secret — handing it to every customer
- * would defeat the entire signing model. So when the customer panel has
- * no QADBAK_LICENSE_JWT_SECRET configured, we deliberately skip local
- * JWT verification and trust the cached license status, which:
+ * Security model:
  *
- *   - was validated by the license server at /v1/activate time,
- *   - is re-validated by the license server on every /v1/heartbeat,
- *   - gets cleared locally as soon as a heartbeat reports "revoked".
+ * The panel MUST have a real way to verify license tokens. The historical
+ * fallback that returned valid:true when no key was configured was a
+ * security gap — anyone able to write data/license.json on the panel
+ * host could mint themselves Premium for free. That mode is gone.
  *
- * If a shared secret IS configured (development setups where panel and
- * license server live in the same env), we still verify locally as
- * defence in depth. This avoids the historical "SESSION_SECRET fallback"
- * trap where the panel tried to verify with a totally unrelated random
- * string and silently treated every license as invalid.
+ * Two supported verification paths, tried in order:
+ *
+ *  1. Ed25519 (asymmetric, RECOMMENDED). The license server signs each
+ *     token with its private Ed25519 key. Every panel ships with the
+ *     matching public key at `config/license-public.pem` (or the path
+ *     in $QADBAK_LICENSE_PUBLIC_KEY). The public key is safe to
+ *     distribute — it cannot mint tokens.
+ *
+ *  2. HS256 (symmetric, LEGACY). If $QADBAK_LICENSE_JWT_SECRET is set
+ *     AND matches the license server's HS256 secret, tokens issued with
+ *     that secret will verify. Only useful in single-tenant dev setups
+ *     where panel and license server share a process or secret store.
+ *
+ * If neither path is configured (no public key on disk AND no shared
+ * secret), the verifier returns invalid. That is the correct behaviour
+ * — silently accepting unverified license claims would let a curious
+ * customer hand-edit data/license.json to unlock Premium.
  */
-function tryGetVerifySecret(): Uint8Array | null {
+function tryGetHs256VerifySecret(): Uint8Array | null {
   const secret = process.env.QADBAK_LICENSE_JWT_SECRET?.trim();
   if (!secret || secret.length < 16) return null;
   return new TextEncoder().encode(secret);
+}
+
+/** Cached for the lifetime of the panel process; re-read on QADBAK_LICENSE_PUBLIC_KEY change. */
+let cachedEd25519Key: { path: string; key: KeyObject } | null = null;
+
+async function tryGetEd25519VerifyKey(): Promise<KeyObject | null> {
+  const keyPath =
+    process.env.QADBAK_LICENSE_PUBLIC_KEY?.trim() ||
+    path.join(process.cwd(), "config", "license-public.pem");
+  if (cachedEd25519Key && cachedEd25519Key.path === keyPath) {
+    return cachedEd25519Key.key;
+  }
+  let pem: string;
+  try {
+    pem = await readFile(keyPath, "utf8");
+  } catch {
+    cachedEd25519Key = null;
+    return null;
+  }
+  try {
+    const key = createPublicKey({ key: pem, format: "pem" });
+    if (key.asymmetricKeyType !== "ed25519") {
+      // Not an Ed25519 key — used for something else (e.g. RSA). Skip.
+      cachedEd25519Key = null;
+      return null;
+    }
+    cachedEd25519Key = { path: keyPath, key };
+    return key;
+  } catch {
+    cachedEd25519Key = null;
+    return null;
+  }
 }
 
 export async function getOrCreateInstanceId(): Promise<string> {
@@ -173,21 +219,63 @@ function keyHint(key: string): string {
 export async function verifyLicenseToken(token: string): Promise<{
   valid: boolean;
   payload?: Record<string, unknown>;
-  /** True when local secret was unset and we returned valid:true on trust. */
-  trustedWithoutVerify?: boolean;
+  /** Which verifier accepted the token; useful for /admin/license diagnostics. */
+  algo?: "EdDSA" | "HS256";
+  /** Why verification failed; only populated when valid is false. */
+  reason?: string;
 }> {
-  const secret = tryGetVerifySecret();
-  if (!secret) {
-    return { valid: true, trustedWithoutVerify: true };
+  // 1. Ed25519 with bundled public key (recommended).
+  const pubKey = await tryGetEd25519VerifyKey();
+  if (pubKey) {
+    try {
+      const { payload } = await jwtVerify(token, pubKey, {
+        algorithms: ["EdDSA"],
+      });
+      return {
+        valid: true,
+        payload: payload as Record<string, unknown>,
+        algo: "EdDSA",
+      };
+    } catch {
+      /* fall through to HS256 */
+    }
   }
-  try {
-    const { payload } = await jwtVerify(token, secret, {
-      algorithms: ["HS256"],
-    });
-    return { valid: true, payload: payload as Record<string, unknown> };
-  } catch {
-    return { valid: false };
+
+  // 2. HS256 with shared secret (legacy; only if explicitly configured).
+  const hsSecret = tryGetHs256VerifySecret();
+  if (hsSecret) {
+    try {
+      const { payload } = await jwtVerify(token, hsSecret, {
+        algorithms: ["HS256"],
+      });
+      return {
+        valid: true,
+        payload: payload as Record<string, unknown>,
+        algo: "HS256",
+      };
+    } catch {
+      return {
+        valid: false,
+        reason: pubKey
+          ? "token did not verify with the bundled Ed25519 public key OR the shared HS256 secret"
+          : "token did not verify with the shared HS256 secret (and no Ed25519 public key is bundled)",
+      };
+    }
   }
+
+  if (pubKey) {
+    return {
+      valid: false,
+      reason:
+        "token did not verify with the bundled Ed25519 public key — license server may still be issuing HS256 tokens; either upgrade the license server to Ed25519 or set QADBAK_LICENSE_JWT_SECRET on this panel",
+    };
+  }
+
+  return {
+    valid: false,
+    reason:
+      "no verification key configured — bundle config/license-public.pem (Ed25519) into the panel OR set QADBAK_LICENSE_JWT_SECRET. See docs/COMMERCIAL.md.",
+  };
 }
 
 export function licenseStatus(stored: StoredLicense | null): LicenseStatus {
@@ -233,6 +321,9 @@ export async function getLicensePublicInfo(
       artifactVersion: stored?.artifactVersion,
     };
   }
+  // Run the same verification the rest of the panel does so the admin
+  // can see WHY a "stored = active" license is being treated as locked.
+  const verified = await verifyLicenseToken(stored.token);
   return {
     plan: stored.plan,
     status: licenseStatus(stored),
@@ -244,6 +335,8 @@ export async function getLicensePublicInfo(
     lastHeartbeatAt: stored.lastHeartbeatAt,
     keyHint: stored.keyHint,
     artifactVersion: stored.artifactVersion,
+    verifyAlgo: verified.valid ? verified.algo : undefined,
+    verifyError: verified.valid ? undefined : verified.reason,
   };
 }
 
