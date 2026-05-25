@@ -143,12 +143,16 @@ sudo bash /opt/qadbak/install/qadbak-install-resume.sh
 cd /opt/qadbak && sudo bash scripts/update-qadbak.sh
 ```
 
-If a Premium license is active, the updater auto-refreshes the Premium
-artifact and `pm2 reload`s — no manual **Refresh modules** click needed.
+That's the whole update flow for both Core and Premium customers. The
+panel is **open-core**: Premium source lives in this repo and is gated
+purely by `isPremiumFeatureEnabled()` against the license server's
+feature list — there is no encrypted artifact to download and no
+"Refresh modules" step. `git pull && npm run build && pm2 restart` is
+equivalent under the hood.
 
 ### Bought a Premium license on an existing install?
 
-One-shot upgrade + activate + sync + reload:
+One-shot pull + rebuild + activate:
 
 ```bash
 sudo bash /opt/qadbak/scripts/buy-premium.sh QAD-XXXX-YYYY-ZZZZ-WWWW

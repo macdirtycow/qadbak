@@ -15,9 +15,6 @@ export function AdminLicensePanel({
   const [error, setError] = useState(initialError ?? "");
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState("");
-  const [modulesSynced, setModulesSynced] = useState<boolean | null>(null);
-  const [syncHint, setSyncHint] = useState("");
-  const [reloadHint, setReloadHint] = useState("");
   const [journalId, setJournalId] = useState("");
 
   async function runAction(action: string, payload: Record<string, string> = {}) {
@@ -32,30 +29,12 @@ export function AdminLicensePanel({
       const data = (await res.json()) as {
         error?: string;
         license?: LicensePublicInfo;
-        modulesSynced?: boolean;
-        modulesSyncError?: string;
-        reloaded?: boolean;
-        reloadError?: string;
         journalId?: string;
       };
       if (!res.ok) throw new Error(data.error ?? "Request failed");
       if (data.license) setLicense(data.license);
-      if (typeof data.modulesSynced === "boolean") {
-        setModulesSynced(data.modulesSynced);
-      }
-      setSyncHint(data.modulesSyncError ?? "");
-      setReloadHint(
-        data.reloaded
-          ? "Panel was auto-reloaded — new Premium menu items should be visible now."
-          : data.reloadError
-            ? `Premium installed, but auto-reload failed: ${data.reloadError}`
-            : "",
-      );
       setJournalId(data.journalId ?? "");
       if (action === "activate") setKey("");
-      if (action === "sync" && data.modulesSynced) {
-        setSyncHint("");
-      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Request failed");
     } finally {
@@ -92,28 +71,6 @@ export function AdminLicensePanel({
               .
             </>
           )}
-        </Alert>
-      )}
-      {syncHint && (
-        <Alert>
-          License saved, but Premium modules could not be downloaded: {syncHint}.
-          Build/upload the Premium bundle on the license server, then click Refresh
-          modules.
-        </Alert>
-      )}
-      {modulesSynced === true && !syncHint && reloadHint && (
-        <Alert>{reloadHint}</Alert>
-      )}
-      {modulesSynced === true && !syncHint && !reloadHint && (
-        <Alert>
-          Premium modules are installed on this server. Restart pm2 if admin
-          features still show locked.
-        </Alert>
-      )}
-      {modulesSynced === false && license.features.length > 0 && !syncHint && (
-        <Alert>
-          License is active — click <strong>Refresh modules</strong> to download Premium
-          features onto this server.
         </Alert>
       )}
       {journalId && (
@@ -170,12 +127,6 @@ export function AdminLicensePanel({
                 : "None (Core evaluation)"}
             </dd>
           </div>
-          {license.artifactVersion ? (
-            <div>
-              <dt className="text-sm text-panel-muted">Artifact version</dt>
-              <dd className="text-white">{license.artifactVersion}</dd>
-            </div>
-          ) : null}
           <div>
             <dt className="text-sm text-panel-muted">Trust mode</dt>
             <dd className="text-white">
@@ -205,7 +156,9 @@ export function AdminLicensePanel({
       <Card>
         <h3 className="font-medium text-white">Activate Premium</h3>
         <p className="mt-2 text-sm text-panel-muted">
-          Enter your commercial license key from MacDirtyCow / Omiiba.
+          Enter your commercial license key from MacDirtyCow / Omiiba. Premium
+          source ships with this repo (open-core model) — activation simply
+          unlocks the gated features on the running panel.
         </p>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1">
@@ -227,14 +180,6 @@ export function AdminLicensePanel({
           </Button>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={busy !== ""}
-            onClick={() => runAction("sync")}
-          >
-            {busy === "sync" ? "Syncing…" : "Refresh modules"}
-          </Button>
           <Button
             type="button"
             variant="secondary"

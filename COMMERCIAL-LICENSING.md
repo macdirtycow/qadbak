@@ -11,21 +11,21 @@ your own VPS for personal testing is permitted under the limited exception in
 | **Qadbak Core** | Domain, mail, DNS, files, backups, native provisioning, basic admin |
 | **Qadbak Premium** | Multi-tenant client panels, admin updates, PHP-FPM isolation, panel vhost automation, dashboard server controls |
 
-Premium is distributed as a **signed bundle** from the license server after you
-activate your key. It is **not** in the public GitHub repo, and you **do not**
-need GitHub access to `qadbak-premium` or any developer Personal Access Token.
-
-Premium modules are downloaded from the license server after activation (no separate public GitHub repo for Premium source).
+Qadbak is **open-core**: Premium source ships in this public repo
+alongside Core. A valid license simply unlocks Premium menu items at
+runtime — there is no encrypted bundle, no separate download, no
+private GitHub repository.
 
 ## How to buy
 
 1. Contact **info@mareades.com** or visit **https://omiiba.com** (commercial pages).
 2. You receive a **license key** (and the license server URL, usually `https://license.omiiba.dev`).
-3. Install public Qadbak Core on your VPS (`git clone` **macdirtycow/qadbak** only).
-4. In the panel: **Server admin → License** → enter key → **Activate** → **Refresh modules**.
+3. Install Qadbak on your VPS (`git clone` **macdirtycow/qadbak**).
+4. In the panel: **Server admin → License** → enter key → **Activate**.
 
-Premium modules download automatically from the license server to `data/premium/`.
-No private repository clone is required on your server.
+Premium menu items unlock immediately on the running panel. The update
+flow stays the same for Core and Premium customers:
+`git pull && npm run build && pm2 restart`.
 
 ## License server
 
@@ -40,7 +40,7 @@ Heartbeats run daily. Expired or revoked licenses disable Premium modules.
 
 - Hosting paying customers on Qadbak
 - Reselling or white-labeling the panel
-- Removing license checks or redistributing Premium bundles
+- Removing or weakening the license check in a fork distributed to others
 - Forking and operating a competing hosted panel based on this code
 
 ## Legal

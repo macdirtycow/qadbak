@@ -216,7 +216,6 @@ export async function clearStoredLicense(): Promise<void> {
   } catch {
     /* already absent */
   }
-  await rm(path.join(DATA_DIR, "premium"), { recursive: true, force: true });
   const { clearPremiumFeaturesEnv } = await import("./premium/env-sync");
   await clearPremiumFeaturesEnv();
 }
@@ -503,9 +502,3 @@ export async function issueDevPremiumToken(
   return stored;
 }
 
-export function artifactDownloadUrl(
-  token: string,
-  version: string,
-): string {
-  return `${licenseServerFetchBase()}/v1/artifacts/${encodeURIComponent(version)}/premium.tar.gz?token=${encodeURIComponent(token)}`;
-}

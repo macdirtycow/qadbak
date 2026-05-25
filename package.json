@@ -22,11 +22,7 @@
     "post-install": "bash scripts/post-install-verify.sh",
     "update": "bash scripts/update-qadbak.sh",
     "test:e2e": "bash scripts/run-e2e.sh",
-    "test:e2e:install": "bash scripts/run-install-e2e.sh",
-    "premium:keygen": "node scripts/premium/genkey.mjs",
-    "premium:build": "node scripts/premium/build-bundle.mjs",
-    "premium:publish": "bash scripts/premium/publish-github-release.sh",
-    "premium:ship": "bash scripts/premium/ship.sh"
+    "test:e2e:install": "bash scripts/run-install-e2e.sh"
   },
   "dependencies": {
     "@xterm/addon-fit": "^0.10.0",

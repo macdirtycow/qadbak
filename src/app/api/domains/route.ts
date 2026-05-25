@@ -1,14 +1,11 @@
 import { auditLog } from "@/lib/audit";
 import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
-import { domainToClientUsername } from "@/lib/domain-username";
 import { beginJournal } from "@/lib/journal";
 import { randomPanelPassword } from "@/lib/panel-password";
 import { repairAvailable, repairDomainWebsite } from "@/lib/domain-repair";
-import { panelVhostHostname, panelVhostAvailable } from "@/lib/panel-vhost";
-import { isPremiumFeatureEnabled, loadPremiumModule } from "@/lib/premium/server";
+import { isPremiumFeatureEnabled } from "@/lib/premium/server";
 import { requireSession } from "@/lib/session";
-import { findUserByUsername } from "@/lib/users";
 import { VirtualMinError } from "@/lib/errors";
 import { getProvisioner } from "@/lib/provisioner";
 import {
@@ -16,21 +13,6 @@ import {
   runWithJournalStore,
 } from "@/lib/provisioner/native-exec";
 import { isIndependentMode } from "@/lib/provisioner/native-stub";
-
-type UsersClientModule = {
-  createClientUser: (opts: {
-    username: string;
-    password: string;
-    domains: string[];
-  }) => Promise<unknown>;
-  assignDomainToClient: (username: string, domain: string) => Promise<void>;
-};
-
-type PanelVhostModule = {
-  ensurePanelVhost?: (domain: string) => Promise<string>;
-  applyClientPanelVhost?: (domain: string) => Promise<string>;
-  panelVhostAvailable?: () => Promise<boolean>;
-};
 
 export async function GET() {
   try {
@@ -157,9 +139,11 @@ async function doCreateDomain(request: Request) {
     await auditLog(session.username, "create-domain", domainName);
     journal.infoStep(`Domain '${domainName}' visible in registry after lookup retry.`);
 
-    let clientAccount:
-      | { username: string; password: string; panelUrl?: string }
-      | undefined;
+    // Premium client provisioning (multi-tenant-clients,
+    // panel-client-vhost) is gated by isPremiumFeatureEnabled. The
+    // actual implementation will land as static TypeScript under
+    // src/lib/premium/ in a follow-up commit; until then we surface a
+    // clear premiumNote instead of pretending to create the account.
     let premiumNote: string | undefined;
     const wantClient =
       body.type !== "sub" &&
@@ -170,66 +154,8 @@ async function doCreateDomain(request: Request) {
         premiumNote =
           "Client account not created — Qadbak Premium license required (Server admin → License).";
       } else {
-        const usersMod = await loadPremiumModule<UsersClientModule>(
-          "multi-tenant-clients",
-        );
-        if (!usersMod) {
-          premiumNote =
-            "Premium licensed but module not synced. Run: node scripts/qadbak-license-cli.mjs sync";
-        } else {
-          const clientUsername = domainToClientUsername(domainName, body.user);
-          const panelPassword = randomPanelPassword();
-          const existing = await findUserByUsername(clientUsername);
-          if (existing?.role === "client") {
-            await usersMod.assignDomainToClient(clientUsername, domainName);
-            clientAccount = {
-              username: clientUsername,
-              password: "(existing account — password unchanged)",
-            };
-          } else if (!existing) {
-            await usersMod.createClientUser({
-              username: clientUsername,
-              password: panelPassword,
-              domains: [domainName],
-            });
-            clientAccount = {
-              username: clientUsername,
-              password: panelPassword,
-            };
-            await auditLog(
-              session.username,
-              "create-client-user",
-              `${clientUsername}@${domainName}`,
-            );
-          } else {
-            premiumNote = `Client account not created: username "${clientUsername}" is already used (${existing.role}). Pick another Unix user or create the client under Domains → Overview.`;
-          }
-          if (body.createPanelVhost && clientAccount) {
-            const host = panelVhostHostname(domainName);
-            clientAccount.panelUrl = `http://${host}/`;
-            if (await isPremiumFeatureEnabled("panel-client-vhost")) {
-              const vhostMod = await loadPremiumModule<PanelVhostModule>(
-                "panel-client-vhost",
-              );
-              const applyVhost =
-                vhostMod?.ensurePanelVhost ?? vhostMod?.applyClientPanelVhost;
-              const vhostAvailable = vhostMod?.panelVhostAvailable
-                ? await vhostMod.panelVhostAvailable().catch(() => false)
-                : false;
-              if (applyVhost && vhostAvailable) {
-                try {
-                  await applyVhost(domainName);
-                } catch {
-                  clientAccount.panelUrl = `${clientAccount.panelUrl} (vhost script failed — run configure-panel-vhost-sudo.sh)`;
-                }
-              } else {
-                clientAccount.panelUrl = `${clientAccount.panelUrl} (run: sudo bash scripts/configure-panel-vhost-sudo.sh)`;
-              }
-            } else {
-              clientAccount.panelUrl = `${clientAccount.panelUrl} (panel-client-vhost Premium module not active)`;
-            }
-          }
-        }
+        premiumNote =
+          "Premium licensed — multi-tenant client provisioning module not yet available in this build.";
       }
     }
 
@@ -253,11 +179,6 @@ async function doCreateDomain(request: Request) {
       }
     }
 
-    if (clientAccount) {
-      journal.infoStep(
-        `Created client panel account '${clientAccount.username}' (Premium).`,
-      );
-    }
     if (premiumNote) {
       journal.warnStep(`Premium note: ${premiumNote}`);
     }
@@ -269,7 +190,6 @@ async function doCreateDomain(request: Request) {
       domain: created.name,
       hostingNote,
       premiumNote,
-      clientAccount,
       unixPassword: unixPassGenerated ? unixPass : undefined,
       journalId: finished.id,
     });

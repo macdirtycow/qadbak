@@ -8,11 +8,6 @@ import {
   heartbeatLicense,
   readStoredLicense,
 } from "@/lib/qadbak-license";
-import {
-  isPremiumModulesSynced,
-  syncPremiumArtifact,
-  type SyncPremiumResult,
-} from "@/lib/premium/server";
 import { getProvisioner } from "@/lib/provisioner";
 import { beginJournal } from "@/lib/journal";
 
@@ -21,11 +16,9 @@ export async function GET() {
     const session = await requireAdmin();
     const domains = await getProvisioner().listDomains(session);
     const license = await getLicensePublicInfo(domains.length);
-    const modulesSynced = await isPremiumModulesSynced();
     return jsonOk({
       license,
       premiumActive: license.features.length > 0,
-      modulesSynced,
     });
   } catch (err) {
     return handleApiError(err);
@@ -64,39 +57,27 @@ export async function POST(request: Request) {
           "Undo will deactivate the license you just entered. You'll need to re-paste a key to get Premium back.",
         ttlMinutes: 30,
       });
-      let modulesSyncError: string | undefined;
-      let activated = false;
       try {
         j.step({
           kind: "external-http",
           summary: "POST /v1/activate on license server",
         });
         await activateLicense(body.key);
-        activated = true;
         j.step({
           kind: "file-write",
           summary: "Wrote data/license.json",
           filePath: "data/license.json",
         });
-        try {
-          await syncPremiumArtifact({ journal: j });
-        } catch (e) {
-          modulesSyncError =
-            e instanceof Error ? e.message : "Premium module sync failed";
-          j.warnStep("Premium artifact sync failed", modulesSyncError);
-        }
         await j.finish(true);
       } catch (e) {
         await j.finish(false, e instanceof Error ? e.message : String(e));
-        if (!activated) throw e;
+        throw e;
       }
       await auditLog(session.username, "license-activate");
       const license = await getLicensePublicInfo();
       return jsonOk({
         ok: true,
         license,
-        modulesSynced: await isPremiumModulesSynced(),
-        modulesSyncError,
         journalId: j.id,
       });
     }
@@ -135,37 +116,8 @@ export async function POST(request: Request) {
       return jsonOk({ ok: true, license: await getLicensePublicInfo() });
     }
 
-    if (action === "sync") {
-      const j = beginJournal({
-        action: "license.sync",
-        summary: "Refreshed Qadbak Premium modules",
-        session,
-      });
-      let modulesSyncError: string | undefined;
-      let result: SyncPremiumResult | undefined;
-      try {
-        result = await syncPremiumArtifact({ journal: j });
-        await j.finish(true);
-      } catch (e) {
-        modulesSyncError =
-          e instanceof Error ? e.message : "Premium module sync failed";
-        await j.finish(false, modulesSyncError);
-      }
-      await auditLog(session.username, "license-sync");
-      const license = await getLicensePublicInfo();
-      return jsonOk({
-        ok: true,
-        license,
-        modulesSynced: await isPremiumModulesSynced(),
-        modulesSyncError,
-        reloaded: result?.reloaded ?? false,
-        reloadError: result?.reloadError,
-        journalId: j.id,
-      });
-    }
-
     return jsonError(
-      'Invalid action. Use "activate", "deactivate", "heartbeat", or "sync".',
+      'Invalid action. Use "activate", "deactivate", or "heartbeat".',
     );
   } catch (err) {
     return handleApiError(err);

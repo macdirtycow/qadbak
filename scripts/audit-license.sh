@@ -1,28 +1,24 @@
 #!/usr/bin/env bash
-# Fail if premium files exist without a valid license (CI / release audit).
+# Validate the local license cache (CI / release audit). Open-core
+# refactor removed the `data/premium/` artifact tree, so this now only
+# checks that `data/license.json` looks healthy when present.
 set -euo pipefail
 ROOT="${QADBAK_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 LICENSE="$ROOT/data/license.json"
-PREMIUM="$ROOT/data/premium"
 
-if [[ ! -d "$PREMIUM" ]]; then
-  echo "OK: no premium directory"
+if [[ ! -f "$LICENSE" ]]; then
+  echo "OK: no license file (Core evaluation)"
   exit 0
 fi
 
-if [[ ! -f "$LICENSE" ]]; then
-  echo "FAIL: data/premium present but no data/license.json" >&2
-  exit 1
-fi
-
-STATUS=$(node -e "
+node -e "
 const fs=require('fs');
 const lic=JSON.parse(fs.readFileSync('$LICENSE','utf8'));
 const ok=lic.token && lic.status !== 'revoked' && lic.status !== 'expired';
 process.exit(ok?0:1);
-" 2>/dev/null) || {
-  echo "FAIL: invalid or expired license with premium artifacts" >&2
+" 2>/dev/null || {
+  echo "FAIL: license file present but revoked/expired/malformed" >&2
   exit 1
 }
 
-echo "OK: licensed premium install"
+echo "OK: licensed install"

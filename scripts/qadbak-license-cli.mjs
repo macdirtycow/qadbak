@@ -1,23 +1,17 @@
 #!/usr/bin/env node
 /**
- * CLI for license activate, heartbeat, sync, and status (used by cron/install).
+ * CLI for license activate, heartbeat, deactivate, and status (used by
+ * cron/install). The open-core refactor removed the `sync` subcommand —
+ * Premium source ships in this repo, so there is no artifact to
+ * download. `git pull && npm run build && pm2 restart` is the entire
+ * update flow for Core and Premium customers alike.
  */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 process.chdir(ROOT);
-
-async function loadLicenseModule() {
-  const modPath = path.join(ROOT, ".next", "server", "chunks", "qadbak-license.js");
-  try {
-    return await import(pathToFileURL(modPath).href);
-  } catch {
-    /* dev / pre-build: dynamic import via ts not available — use fetch to local API or inline */
-    return null;
-  }
-}
 
 async function readLicenseJson() {
   try {
@@ -104,7 +98,6 @@ async function heartbeat() {
   if (data.status === "revoked") {
     const { rm } = await import("node:fs/promises");
     await rm(path.join(ROOT, "data", "license.json")).catch(() => {});
-    await rm(path.join(ROOT, "data", "premium"), { recursive: true, force: true });
     console.log(JSON.stringify({ ok: true, revoked: true }));
     return;
   }
@@ -131,6 +124,12 @@ async function status() {
   console.log(JSON.stringify({ ok: true, license: stored }));
 }
 
+async function deactivate() {
+  const { rm } = await import("node:fs/promises");
+  await rm(path.join(ROOT, "data", "license.json")).catch(() => {});
+  console.log(JSON.stringify({ ok: true, deactivated: true }));
+}
+
 const cmd = process.argv[2];
 const arg = process.argv[3];
 
@@ -138,21 +137,11 @@ try {
   if (cmd === "activate" && arg) await activate(arg);
   else if (cmd === "heartbeat") await heartbeat();
   else if (cmd === "status") await status();
-  else if (cmd === "sync") {
-    await heartbeat();
-    const { spawn } = await import("node:child_process");
-    const child = spawn(
-      process.execPath,
-      [path.join(ROOT, "scripts", "sync-premium-artifact.mjs")],
-      { cwd: ROOT, stdio: "inherit", env: process.env },
+  else if (cmd === "deactivate") await deactivate();
+  else {
+    console.error(
+      "Usage: qadbak-license-cli.mjs <activate KEY|heartbeat|deactivate|status>",
     );
-    const code = await new Promise((resolve) => {
-      child.on("close", resolve);
-    });
-    if (code !== 0) process.exit(code ?? 1);
-    console.log(JSON.stringify({ ok: true, synced: true }));
-  } else {
-    console.error("Usage: qadbak-license-cli.mjs <activate KEY|heartbeat|status|sync>");
     process.exit(1);
   }
 } catch (e) {

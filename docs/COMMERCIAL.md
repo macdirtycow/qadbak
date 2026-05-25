@@ -7,9 +7,14 @@ Copyright (c) 2026 MacDirtyCow / Qadbak and Omiiba. See [LICENSE](../LICENSE).
 | Tier | What you install |
 |------|------------------|
 | **Core** | Public [`macdirtycow/qadbak`](https://github.com/macdirtycow/qadbak) — evaluation on your own VPS |
-| **Premium** | Activated in **Server admin → License**; modules download from the license server |
+| **Premium** | Same repo, activated in **Server admin → License** |
 
-Public `git clone` gives Core only. Premium features need a valid license and **Refresh modules** in the panel.
+Qadbak ships as **open-core**: the Premium feature implementations live
+directly in this public repo alongside Core. A valid license simply
+flips the runtime gate (`isPremiumFeatureEnabled`) and unlocks the
+Premium menu items — no separate download, no signed artifact, no
+"Refresh modules" step. Same pattern Discourse, GitLab, Sentry,
+Mattermost, and Cal.com use.
 
 ## Licensed panel configuration
 
@@ -20,8 +25,8 @@ QADBAK_LICENSE_SERVER=https://license.omiiba.dev
 QADBAK_GIT_BRANCH=main
 ```
 
-That's the entire required config. No keys to bundle, no secrets to
-share. Then **Activate** your key and **Refresh modules**. See
+That's the entire required config. **Activate** your key under
+*Server admin → License* and you're done. See
 [License verification](#license-verification) below for what's happening
 under the hood and how to opt into cryptographic verification if you
 want defense-in-depth.
@@ -29,14 +34,35 @@ want defense-in-depth.
 ### Existing install — bought Premium later?
 
 If you already have Qadbak Core running and just bought a key, the
-one-liner below does pull + rebuild + activate + sync + reload in a
-single safe pass:
+one-liner below does pull + rebuild + activate in a single safe pass:
 
 ```bash
 sudo bash /opt/qadbak/scripts/buy-premium.sh QAD-XXXX-YYYY-ZZZZ-WWWW
 ```
 
 Idempotent — safe to re-run if any step fails.
+
+## Updates
+
+```bash
+cd /opt/qadbak && sudo bash scripts/update-qadbak.sh
+```
+
+Identical flow for Core and Premium installs: `git pull`, `npm run
+build`, `pm2 restart`. The updater runs an opportunistic license
+heartbeat at the end so revocations propagate immediately instead of
+waiting for the next scheduled tick.
+
+`update-qadbak.sh` runs `scripts/git-sync-origin.sh`, which fetches
+origin and aligns the checkout with `QADBAK_GIT_BRANCH` (default
+**`main`** for production).
+
+**One-time bootstrap** if an older install still tracks the internal branch:
+
+```bash
+sudo bash /opt/qadbak/scripts/switch-vps-to-main.sh
+sudo bash /opt/qadbak/scripts/update-qadbak.sh
+```
 
 ## License verification
 
@@ -76,10 +102,9 @@ heartbeats, ship a bundled public key. The panel will then require
 every license token to verify against it — failed crypto = Premium
 locked, even with a fresh heartbeat.
 
-1. **Generate a keypair** (one time, on a trusted machine):
-   ```bash
-   npm run premium:keygen -- ~/keys
-   ```
+1. **Generate a keypair** (one time, on a trusted machine) — any
+   Ed25519 keypair works; `openssl genpkey -algorithm Ed25519` is the
+   one-liner most ops teams already have.
 2. **Configure the license server** to sign tokens with the private
    key. Use `scripts/premium/license-server-jwt.mjs` as a drop-in:
    ```js
@@ -112,28 +137,11 @@ The License page surfaces which trust path is in effect under
 | `QADBAK_HEARTBEAT_GRACE_HOURS` | `48` | How long a stale heartbeat is still trusted before downgrading to Core |
 | `QADBAK_DISABLE_HEARTBEAT_SCHEDULER` | unset | Set `true` to disable the in-process scheduler (e.g. for tests) |
 | `QADBAK_DEBUG_HEARTBEAT` | unset | Set `true` to log each successful heartbeat |
-
-## Updates
-
-```bash
-cd /opt/qadbak && sudo bash scripts/update-qadbak.sh
-node scripts/qadbak-license-cli.mjs sync
-```
-
-`update-qadbak.sh` runs `scripts/git-sync-origin.sh`, which fetches origin and aligns the checkout with `QADBAK_GIT_BRANCH` (default **`main`** for production).
-
-**One-time bootstrap** if an older install still tracks the internal branch:
-
-```bash
-sudo bash /opt/qadbak/scripts/switch-vps-to-main.sh
-sudo bash /opt/qadbak/scripts/update-qadbak.sh
-```
-
-Premium **source** and license-server **operator** tooling live in the private repo [`macdirtycow/qadbak-premium`](https://github.com/macdirtycow/qadbak-premium) — not in public qadbak.
+| `QADBAK_PREMIUM_FEATURES` | unset | Comma-separated dev/CI override; bypasses the license check for the listed features only |
 
 ## What eval users may not do
 
 - Host paying customers without a commercial license
-- Redistribute Premium bundles or remove license checks
+- Remove or weaken the license check in a fork distributed to others
 
 See [COMMERCIAL-LICENSING.md](../COMMERCIAL-LICENSING.md).
