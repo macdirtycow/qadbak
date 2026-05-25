@@ -19,6 +19,7 @@
  */
 
 import { getProvisioner } from "@/lib/provisioner";
+import type { DnsRecord } from "@/lib/provisioner";
 import type { SessionPayload } from "@/lib/types";
 import type { JournalEntry } from "./types";
 
@@ -60,6 +61,14 @@ export async function runUndo(ctx: UndoContext): Promise<UndoResult> {
   switch (spec.kind) {
     case "mailbox.add":
       return undoMailboxAdd(ctx, spec.payload);
+    case "dns.record.add":
+      return undoDnsRecordAdd(ctx, spec.payload);
+    case "dns.record.delete":
+      return undoDnsRecordDelete(ctx, spec.payload);
+    case "alias.add":
+      return undoAliasAdd(ctx, spec.payload);
+    case "alias.delete":
+      return undoAliasDelete(ctx, spec.payload);
     default:
       throw new UndoNotSupportedError(spec.kind);
   }
@@ -84,15 +93,7 @@ async function undoMailboxAdd(
   if (!domain || !user) {
     throw new UndoRejectedError("mailbox.add payload missing domain or user");
   }
-  // Cross-check the target on the original entry — defense in depth.
-  if (
-    ctx.entry.target?.domain &&
-    ctx.entry.target.domain.toLowerCase() !== domain.toLowerCase()
-  ) {
-    throw new UndoRejectedError(
-      `Payload domain "${domain}" does not match entry target "${ctx.entry.target.domain}".`,
-    );
-  }
+  assertTargetMatches(ctx, domain);
   await getProvisioner().deleteMailbox(domain, user, ctx.session);
   return {
     ok: true,
@@ -102,9 +103,129 @@ async function undoMailboxAdd(
   };
 }
 
+/**
+ * Undo a DNS record addition by deleting the same record.
+ * Payload: { domain, record: DnsRecord }
+ * Safe because: the admin just added it; reversing it cleanly removes
+ * the line from the BIND zone file and reloads named.
+ */
+async function undoDnsRecordAdd(
+  ctx: UndoContext,
+  payload: Record<string, unknown>,
+): Promise<UndoResult> {
+  const domain = stringField(payload, "domain");
+  const record = recordField(payload, "record");
+  if (!domain || !record) {
+    throw new UndoRejectedError("dns.record.add payload missing domain or record");
+  }
+  assertTargetMatches(ctx, domain);
+  await getProvisioner().deleteDnsRecord(domain, record, ctx.session);
+  return {
+    ok: true,
+    summary: `Removed DNS record ${record.type} ${record.name} → ${record.value} from ${domain}.`,
+  };
+}
+
+/**
+ * Undo a DNS record deletion by re-adding the saved record.
+ * Payload: { domain, record: DnsRecord }
+ * Safe because: we captured the full record before the delete; re-adding
+ * recreates the line with the same TTL/priority.
+ */
+async function undoDnsRecordDelete(
+  ctx: UndoContext,
+  payload: Record<string, unknown>,
+): Promise<UndoResult> {
+  const domain = stringField(payload, "domain");
+  const record = recordField(payload, "record");
+  if (!domain || !record) {
+    throw new UndoRejectedError("dns.record.delete payload missing domain or record");
+  }
+  assertTargetMatches(ctx, domain);
+  await getProvisioner().addDnsRecord(domain, record, ctx.session);
+  return {
+    ok: true,
+    summary: `Re-added DNS record ${record.type} ${record.name} → ${record.value} to ${domain}.`,
+  };
+}
+
+/**
+ * Undo an alias creation by deleting the alias.
+ * Payload: { domain, from }
+ */
+async function undoAliasAdd(
+  ctx: UndoContext,
+  payload: Record<string, unknown>,
+): Promise<UndoResult> {
+  const domain = stringField(payload, "domain");
+  const from = stringField(payload, "from");
+  if (!domain || !from) {
+    throw new UndoRejectedError("alias.add payload missing domain or from");
+  }
+  assertTargetMatches(ctx, domain);
+  await getProvisioner().deleteAlias(domain, from, ctx.session);
+  return {
+    ok: true,
+    summary: `Removed alias ${from}@${domain}.`,
+  };
+}
+
+/**
+ * Undo an alias deletion by re-creating the alias.
+ * Payload: { domain, from, to }
+ */
+async function undoAliasDelete(
+  ctx: UndoContext,
+  payload: Record<string, unknown>,
+): Promise<UndoResult> {
+  const domain = stringField(payload, "domain");
+  const from = stringField(payload, "from");
+  const to = stringField(payload, "to");
+  if (!domain || !from || !to) {
+    throw new UndoRejectedError("alias.delete payload missing domain, from, or to");
+  }
+  assertTargetMatches(ctx, domain);
+  await getProvisioner().createAlias(domain, from, to, ctx.session);
+  return {
+    ok: true,
+    summary: `Re-created alias ${from}@${domain} → ${to}.`,
+  };
+}
+
 /* ────────────────────────────────────────────────────────────────────── */
 /*  Helpers                                                               */
 /* ────────────────────────────────────────────────────────────────────── */
+
+function assertTargetMatches(ctx: UndoContext, domain: string): void {
+  if (
+    ctx.entry.target?.domain &&
+    ctx.entry.target.domain.toLowerCase() !== domain.toLowerCase()
+  ) {
+    throw new UndoRejectedError(
+      `Payload domain "${domain}" does not match entry target "${ctx.entry.target.domain}".`,
+    );
+  }
+}
+
+function recordField(
+  payload: Record<string, unknown>,
+  key: string,
+): DnsRecord | undefined {
+  const v = payload[key];
+  if (!v || typeof v !== "object") return undefined;
+  const obj = v as Record<string, unknown>;
+  const name = typeof obj.name === "string" ? obj.name : undefined;
+  const type = typeof obj.type === "string" ? obj.type : undefined;
+  const value = typeof obj.value === "string" ? obj.value : undefined;
+  if (!name || !type || !value) return undefined;
+  return {
+    name,
+    type,
+    value,
+    ttl: typeof obj.ttl === "string" ? obj.ttl : undefined,
+    priority: typeof obj.priority === "string" ? obj.priority : undefined,
+  };
+}
 
 function stringField(
   payload: Record<string, unknown>,

@@ -124,18 +124,22 @@ after install.
 
 ## What's wired up today
 
-- `domain.create` — full end-to-end coverage. Each create generates ~10 steps:
-  unix user creation, public_html mkdir, .qadbak-domain marker file,
-  ownership chown, PHP-FPM pool apply, nginx vhost apply, registry update,
-  BIND zone, PHP config, Postfix/Dovecot mail setup, and the Repair step.
-  Not undoable — there are too many cascading side effects to safely
-  reverse in one click.
-- `mailbox.add` — journaled AND **undoable within 60 minutes**. The
-  payload is `{ domain, user }`; the undo handler calls
-  `provisioner.deleteMailbox(domain, user)`. See "Reversible
-  infrastructure" below.
-- Every other API route still writes the original one-line `auditLog`
-  entry. Adding journaling is opt-in per route — follow the pattern above.
+| Action | Journaled | Undoable | TTL | Inverse |
+|---|---|---|---|---|
+| `domain.create` | ✅ ~10 steps | ❌ | — | Too many cascading side effects |
+| `mailbox.add` | ✅ | ✅ | 60 min | `deleteMailbox(domain, user)` |
+| `dns.record.add` | ✅ | ✅ | 60 min | `deleteDnsRecord(domain, record)` |
+| `dns.record.delete` | ✅ | ✅ | 60 min | `addDnsRecord(domain, record)` |
+| `alias.add` | ✅ | ✅ | 60 min | `deleteAlias(domain, from)` |
+| `alias.delete` | ✅ | ✅ if `to` captured | 60 min | `createAlias(domain, from, to)` |
+
+The `alias.delete` route does a best-effort lookup of the current
+target before the delete so it can populate the undoSpec — if the
+caller didn't pass `{to}` and we can't read it back, the entry warns
+that undo is unavailable.
+
+Every other API route still writes the original one-line `auditLog`
+entry. Adding journaling is opt-in per route — follow the pattern above.
 
 ## Reversible infrastructure (Fase 2 — Undo)
 
