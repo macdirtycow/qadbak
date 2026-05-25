@@ -42,8 +42,9 @@ Open `Admin → Health` to see the current report.
 | SSL | Cert expires in 4–14 days | warning |
 | SSL | Cert expires in 0–3 days | critical |
 | SSL | Cert already expired | critical |
-| Services | nginx / mariadb / postfix / dovecot down | critical |
-| Services | named (BIND) / fail2ban down | warning (optional) |
+| Services | nginx / mariadb / postfix / dovecot down or missing | critical |
+| Services | named (BIND) / fail2ban down (after install) | warning (optional) |
+| Services | named (BIND) / fail2ban never installed | silently skipped |
 
 ## Adding a new check
 
