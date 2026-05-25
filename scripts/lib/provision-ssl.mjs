@@ -2,9 +2,24 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readFile, access, readdir } from "node:fs/promises";
 import path from "node:path";
-import { emit, fail, resolveDomainUser } from "./provisioning-common.mjs";
+import {
+  emit,
+  fail,
+  fileExists,
+  resolveDomainUser,
+  QADBAK_DIR,
+} from "./provisioning-common.mjs";
 
 const exec = promisify(execFile);
+
+function tailLines(text, n = 40) {
+  if (!text) return "";
+  return String(text)
+    .split(/\r?\n/)
+    .slice(-n)
+    .join("\n")
+    .trim();
+}
 
 async function readCertFile(fullchain, host) {
   const pem = await readFile(fullchain, "utf8");
@@ -78,9 +93,43 @@ export async function sslList(domain) {
   emit({ ok: true, certs });
 }
 
+// SSL issue drives apply-domain-nginx.sh ISSUE_SSL=1 instead of pure certbot,
+// because the Qadbak nginx vhost still needs an HTTPS server-block + PHP-FPM
+// root rewritten alongside the cert — bare `certbot certonly` only fetches
+// pem files and leaves the domain reachable on HTTP only.
 export async function sslIssue(domain, host) {
   const { user, home } = await resolveDomainUser(domain);
   const target = host && host !== domain ? host : domain;
+
+  // The provisioning helper itself is invoked via sudo (see
+  // scripts/run-provisioning-helper.sh), so this Node process is already
+  // root and can exec apply-domain-nginx.sh directly — no `sudo -n` needed.
+  const applyScript = path.join(QADBAK_DIR, "scripts", "apply-domain-nginx.sh");
+  if (await fileExists(applyScript)) {
+    try {
+      await exec("bash", [applyScript, domain, user], {
+        env: { ...process.env, ISSUE_SSL: "1" },
+        timeout: 360_000,
+        maxBuffer: 4 * 1024 * 1024,
+      });
+    } catch (e) {
+      const err = e || {};
+      const combined = [err.stdout || "", err.stderr || ""].join("\n");
+      const tail =
+        tailLines(combined, 40) ||
+        err.message ||
+        "apply-domain-nginx.sh failed";
+      throw new Error(
+        `apply-domain-nginx.sh ${domain} ${user} failed:\n${tail}`,
+      );
+    }
+    emit({ ok: true, domain, host: target, user });
+    return;
+  }
+
+  // Fallback: standalone certbot (used in test envs / CI where the apply
+  // script isn't deployed). Doesn't rewrite the vhost, but at least issues
+  // the cert so the legacy code path keeps working.
   const email =
     process.env.QADBAK_LE_EMAIL?.trim() ||
     process.env.LE_EMAIL?.trim() ||
