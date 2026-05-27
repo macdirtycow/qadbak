@@ -343,8 +343,88 @@ export async function fetchMessageMaildir(folderPath, messageId) {
   throw new Error("Message not found");
 }
 
-/** Try doveadm fetch for message list (optional). */
-export async function listMessagesDoveadm(authUser, folder, limit = 80) {
+/** List message UIDs via doveadm search, then fetch headers per UID. */
+export async function listMessagesDoveadmSearch(authUser, folder, limit = 200) {
+  const box = String(folder || "INBOX").trim();
+  let uids = [];
+  for (const args of [
+    ["search", "-u", authUser, "mailbox", box, "ALL"],
+    ["-f", "tab", "search", "-u", authUser, "mailbox", box, "ALL"],
+  ]) {
+    try {
+      const { stdout } = await exec("doveadm", args, {
+        timeout: 120_000,
+        maxBuffer: 4 * 1024 * 1024,
+      });
+      const found = [];
+      for (const line of stdout.split("\n")) {
+        const t = line.trim();
+        if (!t) continue;
+        const tab = t.split("\t");
+        const uid = tab[0]?.trim();
+        if (uid && /^\d+$/.test(uid)) found.push(uid);
+        else if (/^\d+$/.test(t)) found.push(t);
+      }
+      if (found.length) {
+        uids = found;
+        break;
+      }
+    } catch {
+      /* */
+    }
+  }
+  if (!uids.length) return [];
+
+  uids = uids.slice(-limit).reverse();
+  const messages = [];
+  for (const uid of uids) {
+    try {
+      const { stdout } = await exec(
+        "doveadm",
+        [
+          "fetch",
+          "-u",
+          authUser,
+          "mailbox",
+          box,
+          "uid",
+          uid,
+          "hdr.subject",
+          "hdr.from",
+          "hdr.to",
+          "hdr.date",
+        ],
+        { timeout: 60_000, maxBuffer: 2 * 1024 * 1024 },
+      );
+      const row = parseDoveadmFetch(stdout)[0];
+      if (row) {
+        messages.push({ ...row, id: uid });
+      } else {
+        messages.push({
+          id: uid,
+          subject: "(no subject)",
+          from: "",
+          to: "",
+          date: "",
+          size: "",
+        });
+      }
+    } catch {
+      messages.push({
+        id: uid,
+        subject: "(no subject)",
+        from: "",
+        to: "",
+        date: "",
+        size: "",
+      });
+    }
+  }
+  return messages;
+}
+
+/** Try doveadm fetch for message list (bulk header fetch). */
+export async function listMessagesDoveadm(authUser, folder, limit = 200) {
   const box = String(folder || "INBOX").trim();
   const attempts = [
     ["fetch", "-u", authUser, "mailbox", box, "hdr.subject", "hdr.from", "hdr.to", "hdr.date"],
@@ -362,7 +442,7 @@ export async function listMessagesDoveadm(authUser, folder, limit = 80) {
       /* */
     }
   }
-  return [];
+  return listMessagesDoveadmSearch(authUser, folder, limit);
 }
 
 function parseDoveadmFetch(stdout) {
@@ -442,22 +522,40 @@ export async function fetchMessageDoveadm(authUser, folder, messageId) {
   throw new Error("Message not found");
 }
 
-export async function listMessagesInFolder(authUser, maildirRoot, folder, limit = 80) {
+export async function listMessagesInFolder(authUser, maildirRoot, folder, limit = 200) {
   const fp = folderMaildirPath(maildirRoot, folder);
-  let messages = await listMessagesMaildir(fp, limit);
-  let source = "maildir";
-  if (authUser && messages.length === 0) {
+
+  if (authUser) {
     const fromDove = await listMessagesDoveadm(authUser, folder, limit);
     if (fromDove.length) {
-      messages = fromDove;
-      source = "doveadm";
+      return { messages: fromDove, source: "doveadm", folderPath: fp };
     }
   }
-  return { messages, source, folderPath: fp };
+
+  const maildir = await listMessagesMaildir(fp, limit);
+  if (maildir.length) {
+    return { messages: maildir, source: "maildir", folderPath: fp };
+  }
+
+  if (authUser) {
+    const search = await listMessagesDoveadmSearch(authUser, folder, limit);
+    if (search.length) {
+      return { messages: search, source: "doveadm", folderPath: fp };
+    }
+  }
+
+  return { messages: [], source: authUser ? "doveadm" : "maildir", folderPath: fp };
 }
 
 export async function fetchMessageInFolder(authUser, maildirRoot, folder, messageId) {
   const fp = folderMaildirPath(maildirRoot, folder);
+  if (authUser) {
+    try {
+      return await fetchMessageDoveadm(authUser, folder, messageId);
+    } catch {
+      /* try maildir filename */
+    }
+  }
   try {
     return await fetchMessageMaildir(fp, messageId);
   } catch {

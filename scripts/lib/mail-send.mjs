@@ -2,7 +2,7 @@ import { writeFile, mkdir, unlink } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
 import { emit, fail, resolveDomainUser, fileExists } from "./provisioning-common.mjs";
 import { listMailboxesFromLayout, discoverMailLayout } from "./mail-layout.mjs";
-import { queueSendmail } from "./mail-queue.mjs";
+import { deliverLocalMessage, queueSendmail } from "./mail-queue.mjs";
 
 const SENDMAIL = "/usr/sbin/sendmail";
 const MAIL_CONFIGURED_STAMP = "/var/lib/qadbak/native-mail-configured";
@@ -77,12 +77,19 @@ export async function mailSendDirect(domain, localUser, payloadJson) {
     references,
   });
 
+  const toDomain = to.split("@")[1]?.toLowerCase() ?? "";
+  const sameDomain = toDomain === domain.toLowerCase();
+
   try {
+    if (sameDomain) {
+      await deliverLocalMessage(to, subject, body, from);
+      emit({ ok: true, from, to, source: "smtp-local" });
+      return;
+    }
     await queueSendmail(from, message);
+    emit({ ok: true, from, to, source: "sendmail" });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     fail(`Send failed: ${msg}`);
   }
-
-  emit({ ok: true, from, to, source: "sendmail" });
 }

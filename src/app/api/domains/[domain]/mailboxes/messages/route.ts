@@ -29,7 +29,9 @@ export async function GET(request: Request, { params }: Params) {
       messages: (raw.messages as unknown[]) ?? [],
       folder: (raw.folder as string) ?? folder,
       authUser: raw.authUser as string | undefined,
-      source: raw.source as string | undefined,
+      maildirRoot: raw.maildirRoot as string | undefined,
+      source: (raw.source as string) ?? undefined,
+      count: Array.isArray(raw.messages) ? raw.messages.length : 0,
     });
   } catch (err) {
     return handleApiError(err);

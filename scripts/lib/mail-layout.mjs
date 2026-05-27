@@ -281,9 +281,32 @@ export function fromPostfixVmailboxPath(vmailboxPath) {
   return rel.startsWith("/") ? rel : `/${rel.replace(/^\//, "")}`;
 }
 
-/** Maildir path for a mailbox — prefers passwd home over ~/homes/ guess. */
+/** Maildir path for a mailbox — prefers Postfix vmailbox map, then passwd home. */
 export async function resolveMailboxMaildir(layout, localPart, owner, ownerHome) {
   const local = String(localPart || owner).trim().toLowerCase();
+  const domain = String(layout.domain || "").toLowerCase();
+  const email = local && domain ? `${local}@${domain}` : "";
+
+  const mapPaths = [
+    layout.mailboxMap,
+    QADBAK_POSTFIX_VMAILBOX,
+    "/etc/postfix/vmailbox",
+  ].filter(Boolean);
+
+  if (email) {
+    for (const mapPath of mapPaths) {
+      if (!(await fileExists(mapPath))) continue;
+      const rows = await readMapFile(mapPath);
+      for (const { address, destination } of rows) {
+        if (address.toLowerCase() !== email) continue;
+        const abs = fromPostfixVmailboxPath(destination);
+        if (abs && (await fileExists(abs))) {
+          return abs.replace(/\/+$/, "") || abs;
+        }
+      }
+    }
+  }
+
   const home = ownerHome || layout.home || `/home/${owner}`;
   if (!local || local === owner) {
     const ownerUnixHome = (await resolveUnixHome(owner)) || home;

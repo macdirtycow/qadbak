@@ -94,6 +94,14 @@ export function QadbakWebmailClient({
           <Button
             type="button"
             variant="secondary"
+            disabled={!m.user}
+            onClick={m.composeTestToSelf}
+          >
+            Test send
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
             disabled={m.loading || m.messagesLoading}
             onClick={() => void m.refreshAll()}
           >
@@ -129,6 +137,14 @@ export function QadbakWebmailClient({
             <Alert variant="success">{m.sendSuccess}</Alert>
           )}
         </div>
+      )}
+
+      {(m.authUser || m.maildirRoot || m.messagesSource) && (
+        <p className="shrink-0 border-b border-panel-border/40 px-4 py-1 text-[10px] text-panel-muted">
+          {m.messagesSource ? `Source: ${m.messagesSource}` : null}
+          {m.authUser ? ` · Dovecot: ${m.authUser}` : null}
+          {m.maildirRoot ? ` · Maildir: ${m.maildirRoot}` : null}
+        </p>
       )}
 
       {/* Three-pane */}

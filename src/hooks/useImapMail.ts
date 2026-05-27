@@ -57,6 +57,7 @@ export function useImapMail({
   const [searchQuery, setSearchQuery] = useState("");
   const [source, setSource] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState<string | null>(null);
+  const [maildirRoot, setMaildirRoot] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
@@ -91,8 +92,10 @@ export function useImapMail({
         setUsers(data.users);
         if (!user && data.users[0]?.user) setUser(data.users[0].user);
       }
-      setSource(data.source ?? null);
-      setAuthUser(data.authUser ?? null);
+      setSource((data.source as string | undefined) ?? null);
+      setAuthUser((data.authUser as string | undefined) ?? null);
+      const root = data.maildirRoot as string | undefined;
+      if (root) setMaildirRoot(root);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error.");
     } finally {
@@ -206,6 +209,20 @@ export function useImapMail({
     setError("");
   }
 
+  function composeTestToSelf() {
+    if (!user) return;
+    resetCompose();
+    setComposeMode("new");
+    setSendTo(`${user}@${domain}`);
+    setSendSubject("Qadbak webmail test");
+    setSendBody(
+      `Test message from Qadbak Mail at ${new Date().toLocaleString()}.\n\nIf you see this in INBOX, receiving works.`,
+    );
+    setComposeOpen(true);
+    setSendSuccess("");
+    setError("");
+  }
+
   function startReply(mode: ComposeMode, msg: ImapMessageDetail) {
     const replyAddr = parseEmailAddress(msg.replyTo || msg.from || "");
     if (mode === "forward") {
@@ -290,9 +307,11 @@ export function useImapMail({
         }),
       });
       const raw = await res.text();
-      let data: { error?: string; ok?: boolean } = {};
+      let data: { error?: string; ok?: boolean; source?: string } = {};
       try {
-        data = raw ? (JSON.parse(raw) as { error?: string; ok?: boolean }) : {};
+        data = raw
+          ? (JSON.parse(raw) as { error?: string; ok?: boolean; source?: string })
+          : {};
       } catch {
         const preview = raw.replace(/\s+/g, " ").slice(0, 120);
         throw new Error(
@@ -302,10 +321,15 @@ export function useImapMail({
         );
       }
       if (!res.ok) throw new Error(data.error ?? "Send failed.");
-      setSendSuccess(`Message sent to ${sendTo}.`);
+      const via = (data as { source?: string }).source;
+      setSendSuccess(
+        via === "smtp-local"
+          ? `Message sent to ${sendTo} (delivered on this server).`
+          : `Message sent to ${sendTo}.`,
+      );
       setComposeOpen(false);
       resetCompose();
-      if (selectedFolder) void loadMessages(selectedFolder);
+      if (selectedFolder) await loadMessages(selectedFolder);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error.");
     } finally {
@@ -335,6 +359,7 @@ export function useImapMail({
     setSearchQuery,
     source,
     authUser,
+    maildirRoot,
     selectedFolder,
     messages,
     messagesSource,
@@ -359,6 +384,7 @@ export function useImapMail({
     loadMessages,
     openMessage,
     openComposeNew,
+    composeTestToSelf,
     startReply,
     sendMail,
     resetCompose,

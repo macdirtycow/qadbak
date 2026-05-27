@@ -53,6 +53,7 @@ export async function POST(request: Request, { params }: Params) {
       ok: true,
       from: raw.from as string | undefined,
       to: raw.to as string | undefined,
+      source: raw.source as string | undefined,
     });
   } catch (err) {
     return handleApiError(err);

@@ -20,6 +20,7 @@ export async function GET(request: Request, { params }: Params) {
         mailboxes: (raw.mailboxes as unknown[]) ?? [],
         users: (raw.users as ImapUser[]) ?? [],
         authUser: raw.authUser as string | undefined,
+        maildirRoot: raw.maildirRoot as string | undefined,
         source: raw.source as string | undefined,
         hint: raw.hint as string | undefined,
       });

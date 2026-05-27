@@ -90,6 +90,7 @@ export async function imapList(domain, localUser) {
     ok: true,
     users: domainUsers,
     authUser,
+    maildirRoot,
     mailboxes,
     source,
   });
@@ -138,6 +139,7 @@ export async function imapMessages(domain, localUser, folder) {
     ok: true,
     users: domainUsers,
     authUser,
+    maildirRoot,
     folder: box,
     messages,
     source,
