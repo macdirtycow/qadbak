@@ -1,8 +1,15 @@
-import { readFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { readFile, unlink } from "node:fs/promises";
+import { randomBytes } from "node:crypto";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { promisify } from "node:util";
 import { repairAvailable } from "./domain-repair";
 import { domainUnixUser } from "./domain-files";
 import { getProvisioner } from "./provisioner";
 import type { Role } from "./types";
+
+const execFileAsync = promisify(execFile);
 
 export interface WebsiteProbeResult {
   ok: boolean;
@@ -12,6 +19,8 @@ export interface WebsiteProbeResult {
   cloudflare523?: boolean;
   cloudflare502?: boolean;
   servingApacheDefault?: boolean;
+  /** Local probe could not run; public URL is OK. */
+  inferredFromPublic?: boolean;
 }
 
 export interface WebsiteHealthReport {
@@ -92,6 +101,90 @@ function looksLikeCloudflare502(body: string, status: number): boolean {
   );
 }
 
+function headersFromMap(map: Record<string, string>): Headers {
+  const h = new Headers();
+  for (const [k, v] of Object.entries(map)) h.set(k, v);
+  return h;
+}
+
+function parseCurlHeaderBlock(raw: string): Record<string, string> {
+  const headers: Record<string, string> = {};
+  for (const line of raw.split(/\r?\n/)) {
+    const m = line.match(/^([^:]+):\s*(.*)$/i);
+    if (m) headers[m[1].toLowerCase()] = m[2];
+  }
+  return headers;
+}
+
+function isNetworkProbeError(message: string | undefined): boolean {
+  const err = String(message ?? "").toLowerCase();
+  return (
+    err.includes("fetch failed") ||
+    err.includes("econnrefused") ||
+    err.includes("enotfound") ||
+    err.includes("etimedout") ||
+    err.includes("socket") ||
+    err.includes("no http response") ||
+    err.includes("aborted")
+  );
+}
+
+function apacheBackendBaseUrl(): string {
+  const raw =
+    process.env.QADBAK_APACHE_BACKEND?.trim() ||
+    process.env.APACHE_BACKEND?.trim() ||
+    "127.0.0.1:8080";
+  if (raw.startsWith("http://") || raw.startsWith("https://")) {
+    return raw.replace(/\/+$/, "");
+  }
+  return `http://${raw.replace(/\/+$/, "")}`;
+}
+
+async function analyzeHttpResponse(
+  status: number,
+  body: string,
+  headerSource: Headers | Record<string, string>,
+  domain: string,
+): Promise<WebsiteProbeResult> {
+  const headers =
+    headerSource instanceof Headers
+      ? headerSource
+      : headersFromMap(headerSource);
+  const servingPanelLanding = looksLikeQadbakLanding(body, headers);
+  const cloudflare523 = looksLikeCloudflare523(body, status);
+  const cloudflare502 = looksLikeCloudflare502(body, status);
+  let servingApacheDefault = looksLikeApacheDefaultPage(body);
+  if (servingApacheDefault && (await bodyMatchesPublicHtmlIndex(domain, body))) {
+    servingApacheDefault = false;
+  }
+  const ok =
+    status > 0 &&
+    status < 500 &&
+    !cloudflare523 &&
+    !cloudflare502 &&
+    !servingPanelLanding &&
+    !servingApacheDefault;
+  return {
+    ok,
+    status,
+    servingPanelLanding,
+    cloudflare523,
+    cloudflare502,
+    servingApacheDefault,
+    error: servingPanelLanding
+      ? "This hostname serves the Qadbak marketing page, not public_html."
+      : cloudflare523
+        ? "Cloudflare error 523 — origin unreachable from the internet."
+        : cloudflare502
+          ? "Cloudflare error 502 — nginx cannot reach Apache, or HTTPS to origin without a certificate."
+          : servingApacheDefault
+            ? "Ubuntu/Apache default page — not your public_html."
+            : !ok
+              ? `HTTP ${status}`
+              : undefined,
+  };
+}
+
 async function probeHttp(
   url: string,
   host: string,
@@ -104,39 +197,7 @@ async function probeHttp(
       redirect: "manual",
     });
     const body = await res.text().catch(() => "");
-    const servingPanelLanding = looksLikeQadbakLanding(body, res.headers);
-    const cloudflare523 = looksLikeCloudflare523(body, res.status);
-    const cloudflare502 = looksLikeCloudflare502(body, res.status);
-    let servingApacheDefault = looksLikeApacheDefaultPage(body);
-    if (servingApacheDefault && (await bodyMatchesPublicHtmlIndex(domain, body))) {
-      servingApacheDefault = false;
-    }
-    const ok =
-      res.status > 0 &&
-      res.status < 500 &&
-      !cloudflare523 &&
-      !cloudflare502 &&
-      !servingPanelLanding &&
-      !servingApacheDefault;
-    return {
-      ok,
-      status: res.status,
-      servingPanelLanding,
-      cloudflare523,
-      cloudflare502,
-      servingApacheDefault,
-      error: servingPanelLanding
-        ? "This hostname serves the Qadbak marketing page, not public_html."
-        : cloudflare523
-          ? "Cloudflare error 523 — origin unreachable from the internet."
-          : cloudflare502
-            ? "Cloudflare error 502 — nginx cannot reach Apache, or HTTPS to origin without a certificate."
-            : servingApacheDefault
-              ? "Ubuntu/Apache default page — not your public_html."
-              : !ok
-                ? `HTTP ${res.status}`
-                : undefined,
-    };
+    return analyzeHttpResponse(res.status, body, res.headers, domain);
   } catch (e) {
     return {
       ok: false,
@@ -145,7 +206,66 @@ async function probeHttp(
   }
 }
 
+/** curl with Host header — matches fix-domain-website.sh (works when Node fetch cannot reach :80). */
+async function probeLocalWithCurl(
+  url: string,
+  domain: string,
+): Promise<WebsiteProbeResult | null> {
+  const bodyPath = path.join(
+    tmpdir(),
+    `qadbak-probe-b-${randomBytes(8).toString("hex")}.bin`,
+  );
+  const hdrPath = path.join(
+    tmpdir(),
+    `qadbak-probe-h-${randomBytes(8).toString("hex")}.txt`,
+  );
+  try {
+    const { stdout } = await execFileAsync(
+      "curl",
+      [
+        "-sS",
+        "--max-time",
+        "10",
+        "-o",
+        bodyPath,
+        "-D",
+        hdrPath,
+        "-w",
+        "%{http_code}",
+        "-H",
+        `Host: ${domain}`,
+        url,
+      ],
+      { timeout: 15_000, maxBuffer: 1024 * 1024 },
+    );
+    const status = Number.parseInt(String(stdout).trim(), 10) || 0;
+    if (!status) return null;
+    const body = await readFile(bodyPath, "utf8").catch(() => "");
+    const hdrRaw = await readFile(hdrPath, "utf8").catch(() => "");
+    const blocks = hdrRaw.split(/\r?\n\r?\n/).filter((b) => b.trim());
+    const lastBlock = blocks[blocks.length - 1] ?? hdrRaw;
+    const headerMap = parseCurlHeaderBlock(lastBlock);
+    return analyzeHttpResponse(status, body, headerMap, domain);
+  } catch {
+    return null;
+  } finally {
+    await unlink(bodyPath).catch(() => {});
+    await unlink(hdrPath).catch(() => {});
+  }
+}
+
 async function probeLocalWebsite(domain: string): Promise<WebsiteProbeResult> {
+  const targets = [
+    "http://127.0.0.1/",
+    `${apacheBackendBaseUrl()}/`,
+    "http://[::1]/",
+  ];
+  for (const url of targets) {
+    const curl = await probeLocalWithCurl(url, domain);
+    if (curl && (curl.ok || curl.status || curl.servingPanelLanding)) {
+      return curl;
+    }
+  }
   return probeHttp("http://127.0.0.1/", domain, domain);
 }
 
@@ -211,6 +331,7 @@ function buildIssues(
 
   if (
     !localProbe.ok &&
+    !localProbe.inferredFromPublic &&
     !localProbe.servingPanelLanding &&
     !publicProbe.cloudflare523 &&
     !publicProbe.cloudflare502 &&
@@ -269,10 +390,24 @@ export async function getWebsiteHealth(
       messages: ["Domain validation is only available for administrators."],
     };
   }
-  const [localProbe, publicProbe] = await Promise.all([
+  let [localProbe, publicProbe] = await Promise.all([
     probeLocalWebsite(domain),
     probePublicWebsite(domain),
   ]);
+
+  if (
+    publicProbe.ok &&
+    !localProbe.ok &&
+    isNetworkProbeError(localProbe.error) &&
+    !localProbe.servingPanelLanding
+  ) {
+    localProbe = {
+      ok: true,
+      status: publicProbe.status,
+      inferredFromPublic: true,
+    };
+  }
+
   const originIp = serverOriginIp();
 
   const dnsChecklist = [

@@ -11,6 +11,7 @@ type Probe = {
   cloudflare523?: boolean;
   cloudflare502?: boolean;
   servingApacheDefault?: boolean;
+  inferredFromPublic?: boolean;
 };
 
 type Health = {
@@ -215,10 +216,12 @@ export function WebsiteHealthCard({
               >
                 {health.localProbe.servingPanelLanding
                   ? "Qadbak landing — not public_html"
+                  : health.localProbe.inferredFromPublic
+                    ? `OK via internet — HTTP ${health.publicProbe.status ?? ""}`
                   : health.localProbe.servingApacheDefault && !health.publicProbe.ok
                     ? "Apache fallback (not public_html)"
                     : health.localProbe.servingApacheDefault && health.publicProbe.ok
-                      ? `OK via internet — local curl HTTP ${health.localProbe.status ?? ""}`
+                      ? `OK via internet — local HTTP ${health.localProbe.status ?? ""}`
                       : health.localProbe.ok
                     ? `OK — HTTP ${health.localProbe.status ?? ""}`
                     : health.localProbe.error ?? "No response"}
