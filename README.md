@@ -2,9 +2,9 @@
 
 # Qadbak
 
-### The hosting control panel that's actually yours.
+### Self-hosted hosting control panel for Ubuntu VPS.
 
-Modern admin + client UI for nginx, mail, DNS, SSL, files and databases — running on **your** VPS.
+Admin and client UI for domains, mail, DNS, TLS, databases, backups, and cron — on **your** server. Open-source core; Premium for resellers, webmail, and white-label.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04%20%7C%2024.04-E95420?logo=ubuntu&logoColor=white)](docs/UBUNTU-24-LTS.md)
@@ -44,19 +44,33 @@ Three prompts (hostname, admin password, Let's Encrypt email) and you're done.
 
 ## Features
 
+### Core (open source)
+
 | Area | What you get |
 |------|--------------|
-| **Domains** | Create sites, subdomains, aliases, redirects, reverse proxies; lifecycle in one list. |
-| **Mail** | Mailboxes, IMAP, forwarding, SPF/DKIM/DMARC helpers, per-domain mail logs. |
-| **DNS** | Records via native BIND9, with a clear "what to set at your registrar" view. |
-| **SSL** | One-click Let's Encrypt; renewal monitored, status badge per certificate. |
-| **Databases** | MariaDB databases + users per domain, with phpMyAdmin shortcut. |
-| **Files & terminal** | Native file manager and in-browser shell as the **domain unix user** (no root sharing). |
-| **PHP** | Per-user PHP-FPM pools, version switching, php.ini editor. |
-| **Backups & cron** | Per-domain backups, scheduled jobs in plain English. |
-| **Server admin** | Service control, stack reload, system metrics, resellers, RBAC, audit log. |
+| **Domains** | Sites, subdomains, aliases, redirects, reverse proxies. |
+| **Mail** | Mailboxes, forwarding, SPF/DKIM/DMARC helpers, delivery logs. |
+| **DNS** | BIND9 records + registrar checklist for clients. |
+| **TLS** | Let's Encrypt with per-host renewal status. |
+| **Databases** | MariaDB per domain, phpMyAdmin shortcut. |
+| **Files & terminal** | File manager and shell as the **domain unix user**. |
+| **PHP** | Version switching and per-user PHP-FPM pools. |
+| **Backups** | Downloadable archives: files, **all mailboxes**, panel settings, DNS zone, certs, crontab. |
+| **Operations** | Action journal, undo (mail/DNS), health checks, WordPress install flow. |
+| **Cron** | Scheduled jobs with plain-language editor. |
 
-A live tour of the feature phases is available at `/fases` inside the panel.
+### Premium (license key)
+
+| Module | Description |
+|--------|-------------|
+| **Client portal & RBAC** | End customers manage only their domains. |
+| **Panel vhost provisioning** | Separate panel URLs per reseller brand. |
+| **Webmail** | Built-in IMAP webmail in the panel. |
+| **White-label** | Logo, colours, product name. |
+| **License admin** | View activations, move VPS, heartbeat status. |
+| **Admin updates** | Pull and rebuild panel from the UI. |
+
+Panel tour: `/fases` · Website: [qadbak.com](https://qadbak.com)
 
 ## Pricing
 

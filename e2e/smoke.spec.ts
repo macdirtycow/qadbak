@@ -36,7 +36,9 @@ test.describe("public", () => {
 
   test("marketing home loads", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /your hosting panel/i })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /hosting control panel you run/i }),
+    ).toBeVisible();
   });
 
   test("about page loads", async ({ page }) => {

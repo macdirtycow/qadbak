@@ -33,10 +33,8 @@ test("health reports live (non-mock) mode", async ({ request }) => {
 
 test("marketing and about pages", async ({ page }) => {
   await page.goto("/");
-  // Current H1 in marketing-site/index.html:
-  // "A hosting panel that explains itself, undoes itself, heals itself."
   await expect(
-    page.getByRole("heading", { name: /hosting panel that/i }),
+    page.getByRole("heading", { name: /hosting control panel you run/i }),
   ).toBeVisible();
   await page.goto("/about");
   await expect(
