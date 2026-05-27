@@ -147,9 +147,12 @@ export async function POST(request: Request, { params }: Params) {
           destDir,
           body.newName,
           session,
+          { overwrite: body.overwrite === true },
         );
       } else {
-        destPath = moveDomainPath(body.path, destDir, body.newName);
+        destPath = moveDomainPath(body.path, destDir, body.newName, {
+          overwrite: body.overwrite === true,
+        });
       }
       await auditLog(session.username, "move-file", domain, `${body.path} → ${destPath}`);
       return jsonOk({ path: destPath });

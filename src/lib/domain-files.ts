@@ -589,6 +589,7 @@ export function moveDomainPath(
   sourcePath: string,
   destDir: string,
   newName?: string,
+  options?: DomainFileWriteOptions,
 ): string {
   if (!isPanelFilesMode()) {
     throw new VirtualMinError("Move is not available on the live server.");
@@ -609,8 +610,21 @@ export function moveDomainPath(
     throw new VirtualMinError("This item is read-only and cannot be moved.");
   }
   const finalName = destPath.split("/").pop() ?? entry.name;
-  if (MOCK_TREE[destParent]?.some((e) => e.name === finalName)) {
-    throw new VirtualMinError("An item with that name already exists in the destination folder.");
+  const overwrite = options?.overwrite === true;
+  const existing = MOCK_TREE[destParent]?.find((e) => e.name === finalName);
+  if (existing) {
+    if (!overwrite) {
+      throw new VirtualMinError(
+        "An item with that name already exists in the destination folder. Enable replace or choose another name.",
+      );
+    }
+    if (existing.type !== entry.type) {
+      throw new VirtualMinError("Cannot replace a file with a folder (or the reverse).");
+    }
+    if (existing.editable === false) {
+      throw new VirtualMinError("The existing destination item is read-only and cannot be replaced.");
+    }
+    deleteDomainFilePath(existing.path);
   }
 
   list.splice(idx, 1);

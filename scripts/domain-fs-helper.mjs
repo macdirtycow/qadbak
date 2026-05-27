@@ -60,7 +60,7 @@ function isTextByPath(filePath) {
 }
 
 function fail(message, code = 1) {
-  process.stderr.write(`${message}\n`);
+  emit({ ok: false, error: message });
   process.exit(code);
 }
 
@@ -308,6 +308,7 @@ function isPathInside(parent, child) {
 
 async function movePath(srcAbs, payload) {
   const destAbs = String(payload.destAbs ?? "");
+  const overwrite = payload.overwrite === true;
   if (!destAbs) fail("destAbs required.");
 
   const src = await assertHomePath(srcAbs);
@@ -319,13 +320,24 @@ async function movePath(srcAbs, payload) {
     fail("Cannot move a folder into itself or a subfolder.");
   }
 
+  let destSt = null;
   try {
-    await fs.stat(dest);
-    fail("Destination already exists.");
+    destSt = await fs.stat(dest);
   } catch (e) {
     if (e && typeof e === "object" && "code" in e && e.code !== "ENOENT") {
       throw e;
     }
+  }
+  if (destSt) {
+    if (!overwrite) {
+      fail("Destination already exists. Enable replace or choose another name.");
+    }
+    const srcIsDir = srcSt.isDirectory();
+    const destIsDir = destSt.isDirectory();
+    if (srcIsDir !== destIsDir) {
+      fail("Cannot replace a file with a folder (or the reverse).");
+    }
+    await removePath(dest);
   }
 
   const destParent = path.dirname(dest);

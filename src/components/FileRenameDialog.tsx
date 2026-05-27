@@ -21,11 +21,13 @@ export function FileRenameDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [newName, setNewName] = useState("");
+  const [replaceExisting, setReplaceExisting] = useState(false);
 
   useEffect(() => {
     if (!open || !entry) return;
     setError("");
     setNewName(entry.name);
+    setReplaceExisting(false);
   }, [open, entry]);
 
   const currentParent = useMemo(() => {
@@ -65,6 +67,7 @@ export function FileRenameDialog({
           path: item.path,
           destDir: currentParent,
           newName: sanitizedName,
+          overwrite: replaceExisting,
         }),
       });
       const data = await res.json();
@@ -77,7 +80,9 @@ export function FileRenameDialog({
           : `File renamed to ${destPath}.`,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Rename failed.");
+      const msg = err instanceof Error ? err.message : "Rename failed.";
+      setError(msg);
+      if (/already exists|Enable replace/i.test(msg)) setReplaceExisting(true);
     } finally {
       setLoading(false);
     }
@@ -121,12 +126,21 @@ export function FileRenameDialog({
             </p>
           )}
 
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-panel-muted">
+            <input
+              type="checkbox"
+              checked={replaceExisting}
+              onChange={(e) => setReplaceExisting(e.target.checked)}
+            />
+            Replace existing item with this name if one already exists
+          </label>
+
           <div className="flex flex-wrap justify-end gap-2">
             <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !canSubmit}>
-              Rename
+            <Button type="submit" variant="primary" disabled={loading || !canSubmit}>
+              {loading ? "Renaming…" : "Rename"}
             </Button>
           </div>
         </form>

@@ -31,7 +31,23 @@ export async function runDomainFsSudo(
     const { stdout } = await execFileAsync(node, [helper, ...args], { timeout, maxBuffer });
     return stdout;
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const execErr = err as { message?: string; stdout?: string; stderr?: string };
+    const stdout = String(execErr.stdout ?? "").trim();
+    if (stdout) {
+      const line = stdout.split("\n").pop() ?? "";
+      try {
+        const parsed = JSON.parse(line) as { error?: string };
+        if (parsed.error) throw new VirtualMinError(parsed.error);
+      } catch (parseErr) {
+        if (parseErr instanceof VirtualMinError) throw parseErr;
+      }
+    }
+    const stderr = String(execErr.stderr ?? "").trim();
+    if (stderr) {
+      const line = stderr.split("\n").filter(Boolean).pop() ?? stderr;
+      throw new VirtualMinError(line);
+    }
+    const msg = execErr.message ?? String(err);
     if (/password is required|a password is required/i.test(msg)) {
       throw new VirtualMinError(
         "Native file access needs sudo. On the server run: sudo bash /opt/qadbak/scripts/configure-domain-fs-sudo.sh then pm2 restart qadbak.",

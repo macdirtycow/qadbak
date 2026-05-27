@@ -231,6 +231,7 @@ export async function moveDomainPathLive(
   destDir: string,
   newName: string | undefined,
   actor: { role: Role; domains: string[] },
+  options?: { overwrite?: boolean },
 ): Promise<string> {
   const srcNorm = sourcePath.replace(/^\/+/, "");
   const destPanelPath = resolveMoveDestination(srcNorm, destDir, newName);
@@ -250,7 +251,10 @@ export async function moveDomainPathLive(
   const unixUser = await resolveUnixUser(domain, actor);
   const absSrc = absFileFromPanel(unixUser, srcNorm);
   const absDest = absFileFromPanel(unixUser, destPanelPath);
-  await runHelper("move", absSrc, { destAbs: absDest });
+  await runHelper("move", absSrc, {
+    destAbs: absDest,
+    overwrite: options?.overwrite === true,
+  });
   return destPanelPath;
 }
 

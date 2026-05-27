@@ -25,12 +25,14 @@ export function FileMoveDialog({
   const [error, setError] = useState("");
   const [destDir, setDestDir] = useState("");
   const [newName, setNewName] = useState("");
+  const [replaceExisting, setReplaceExisting] = useState(false);
 
   useEffect(() => {
     if (!open || !entry) return;
     setError("");
     setDestDir(cwd);
     setNewName(entry.name);
+    setReplaceExisting(false);
   }, [open, entry, cwd]);
 
   const previewPath = useMemo(() => {
@@ -59,6 +61,7 @@ export function FileMoveDialog({
           path: item.path,
           destDir,
           newName: newName.trim() || item.name,
+          overwrite: replaceExisting,
         }),
       });
       const data = await res.json();
@@ -71,7 +74,9 @@ export function FileMoveDialog({
           : `File moved to ${destPath}.`,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Move failed.");
+      const msg = err instanceof Error ? err.message : "Move failed.";
+      setError(msg);
+      if (/already exists|Enable replace/i.test(msg)) setReplaceExisting(true);
     } finally {
       setLoading(false);
     }
@@ -156,12 +161,21 @@ export function FileMoveDialog({
             </p>
           )}
 
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-panel-muted">
+            <input
+              type="checkbox"
+              checked={replaceExisting}
+              onChange={(e) => setReplaceExisting(e.target.checked)}
+            />
+            Replace existing item at destination if the name already exists
+          </label>
+
           <div className="flex flex-wrap justify-end gap-2">
             <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !previewPath}>
-              Move
+            <Button type="submit" variant="primary" disabled={loading || !previewPath}>
+              {loading ? "Moving…" : "Move"}
             </Button>
           </div>
         </form>
