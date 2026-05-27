@@ -3,6 +3,9 @@ export const APP_NAME = "Qadbak";
 
 export const APP_TAGLINE = "Independent hosting control panel";
 
+/** Default Q mark SVG (marketing + panel when no white-label logo). */
+export const DEFAULT_LOGO_PATH = "/logo.svg";
+
 /** One-line origin story (2009 headline → VPS panel). See docs/ABOUT-THE-NAME.md */
 export const APP_NAME_BLURB =
   "Named after an infamous 2009 shell — rebuilt as a self-hosted panel for domains, mail, and DNS.";

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { APP_NAME } from "@/lib/brand";
+import { APP_NAME, DEFAULT_LOGO_PATH } from "@/lib/brand";
 import { PanelFooter } from "./PanelFooter";
 import { NavLink, Button } from "./ui";
 
@@ -40,10 +40,16 @@ export function AppShell({
               href="/dashboard"
               className="flex items-center gap-2 text-lg font-semibold text-white"
             >
-              {logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoUrl} alt="" className="h-8 w-auto max-w-[120px]" />
-              ) : null}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoUrl ?? DEFAULT_LOGO_PATH}
+                alt=""
+                className={
+                  logoUrl
+                    ? "h-8 w-auto max-w-[120px]"
+                    : "h-8 w-8 shrink-0"
+                }
+              />
               {title}
             </Link>
             <nav className="flex gap-1">

@@ -21,6 +21,7 @@ const PUBLIC_EXACT = new Set([
   "/landing.css",
   "/landing.js",
   "/favicon.svg",
+  "/logo.svg",
 ]);
 
 function isPublicPath(pathname: string): boolean {

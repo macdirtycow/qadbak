@@ -2,7 +2,7 @@
 
 import { Alert, Button, Card, Input, Label } from "@/components/ui";
 import { PanelFooter } from "@/components/PanelFooter";
-import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
+import { APP_NAME, APP_TAGLINE, DEFAULT_LOGO_PATH } from "@/lib/brand";
 import { applyBrandingTheme } from "@/lib/branding-css";
 import type { BrandingThemeColors } from "@/lib/branding-theme";
 import Link from "next/link";
@@ -74,10 +74,16 @@ export default function LoginPage() {
             ← Back to home
           </Link>
         </p>
-        {logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoUrl} alt="" className="mx-auto mb-4 h-12 w-auto max-w-[200px]" />
-        ) : null}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={logoUrl ?? DEFAULT_LOGO_PATH}
+          alt=""
+          className={
+            logoUrl
+              ? "mx-auto mb-4 h-12 w-auto max-w-[200px]"
+              : "mx-auto mb-4 h-12 w-12"
+          }
+        />
         <h1 className="text-2xl font-semibold text-panel-text">{brandName}</h1>
         <p className="mt-1 text-sm text-panel-muted">{tagline}</p>
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
