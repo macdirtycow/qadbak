@@ -22,8 +22,9 @@ if [[ -f "$ENV_FILE" ]]; then
   echo "    Set QADBAK_COOKIE_SECURE=false in .env.local (required for http://IP:$PORT)"
 fi
 
-echo "==> Ensure Qadbak is running"
-sudo -u qadbak bash -c "cd /opt/qadbak && pm2 restart qadbak" 2>/dev/null || true
+echo "==> Ensure Qadbak is running (loads .env.local)"
+sudo -u qadbak bash -c "cd /opt/qadbak && bash scripts/pm2-restart-qadbak.sh" 2>/dev/null || \
+  sudo -u qadbak bash -c "cd /opt/qadbak && pm2 restart qadbak" 2>/dev/null || true
 
 echo "==> nginx + OS firewall on port $PORT"
 bash "$ROOT/scripts/enable-panel-port.sh" "$PORT"

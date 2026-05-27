@@ -42,6 +42,22 @@ if [[ "${QADBAK_NGINX_ONLY:-}" != "1" ]]; then
   bash "$ROOT/scripts/open-host-firewall-port.sh" "$PORT"
 fi
 
+ENV_FILE="$ROOT/.env.local"
+if [[ -f "$ENV_FILE" ]]; then
+  echo "==> HTTP panel on :$PORT — allow session cookies without TLS"
+  if grep -q '^QADBAK_PANEL_PORT=' "$ENV_FILE"; then
+    sed -i "s/^QADBAK_PANEL_PORT=.*/QADBAK_PANEL_PORT=$PORT/" "$ENV_FILE"
+  else
+    echo "QADBAK_PANEL_PORT=$PORT" >>"$ENV_FILE"
+  fi
+  if grep -q '^QADBAK_COOKIE_SECURE=' "$ENV_FILE"; then
+    sed -i 's/^QADBAK_COOKIE_SECURE=.*/QADBAK_COOKIE_SECURE=false/' "$ENV_FILE"
+  else
+    echo "QADBAK_COOKIE_SECURE=false" >>"$ENV_FILE"
+  fi
+  chown qadbak:qadbak "$ENV_FILE" 2>/dev/null || true
+fi
+
 PUBLIC_IP="$(curl -fsS --max-time 3 ifconfig.me 2>/dev/null || true)"
 WEBMIN_EMBED=0
 if [[ -f "$ROOT/.env.local" ]]; then

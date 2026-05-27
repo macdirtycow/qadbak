@@ -44,6 +44,9 @@ function isHttpsRequest(request?: Request | NextRequest): boolean {
 
 function sessionCookieSecure(request?: Request | NextRequest): boolean {
   if (process.env.QADBAK_COOKIE_SECURE === "false") return false;
+  // Never mark cookies Secure on plain HTTP (e.g. bootstrap panel :11000) even when
+  // .env.local has QADBAK_COOKIE_SECURE=true after certbot on the HTTPS vhost.
+  if (request && !isHttpsRequest(request)) return false;
   if (process.env.QADBAK_COOKIE_SECURE === "true") return true;
   if (request) return isHttpsRequest(request);
   return process.env.NODE_ENV === "production";

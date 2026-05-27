@@ -14,8 +14,10 @@ export default function LoginPage() {
   const [brandName, setBrandName] = useState(APP_NAME);
   const [tagline, setTagline] = useState(APP_TAGLINE);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [httpPanel, setHttpPanel] = useState(false);
 
   useEffect(() => {
+    setHttpPanel(window.location.protocol === "http:");
     fetch("/api/branding")
       .then((r) => r.json())
       .then((d: { brandName?: string; tagline?: string; logoUrl?: string }) => {
@@ -99,9 +101,15 @@ export default function LoginPage() {
           </Button>
         </form>
         <p className="mt-6 text-xs text-panel-muted">
-          Default: <strong className="text-slate-300">admin</strong> / <strong className="text-slate-300">changeme</strong> (or client / changeme).
-          Local: <code className="text-slate-400">VIRTUALMIN_MOCK=true</code> and{" "}
-          <code className="text-slate-400">QADBAK_COOKIE_SECURE=false</code> in .env.local, then restart the server.
+          Use the <strong className="text-slate-300">panel admin password</strong> from install (not the Linux{" "}
+          <code className="text-slate-400">qadbak</code> system user). Dev mock: admin / changeme.
+          {httpPanel ? (
+            <>
+              {" "}
+              HTTP access (e.g. <code className="text-slate-400">:11000</code>) is supported — sign in works without
+              HTTPS.
+            </>
+          ) : null}
         </p>
         <div className="mt-6">
           <PanelFooter showBlurb />
