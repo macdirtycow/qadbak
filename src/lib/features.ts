@@ -304,6 +304,18 @@ export const DOMAIN_FEATURES: DomainFeature[] = [
     },
   },
   {
+    id: "webmail",
+    phase: 6,
+    label: "Webmail",
+    description: "Read and send mail in the browser",
+    path: "mail",
+    navOrder: 11,
+    programs: {
+      admin: ["list-mailbox"],
+      client: ["list-mailbox"],
+    },
+  },
+  {
     id: "mailboxes",
     phase: 6,
     label: "IMAP",

@@ -6,6 +6,7 @@ type Props = { params: Promise<{ domain: string; user: string }> };
 
 export default async function WebmailPage({ params }: Props) {
   const { session, domain } = await requireDomainAccess((await params).domain);
+  const isAdmin = session.role === "admin";
   const user = decodeURIComponent((await params).user);
   let mailboxes: Awaited<ReturnType<ReturnType<typeof getProvisioner>["listImapMailboxes"]>> = [];
   let error = "";
@@ -20,7 +21,7 @@ export default async function WebmailPage({ params }: Props) {
       domain={domain}
       initialMailboxes={mailboxes}
       initialError={error}
-      isAdmin={false}
+      isAdmin={isAdmin}
       initialUser={user}
       webmailMode
     />

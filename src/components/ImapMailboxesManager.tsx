@@ -93,7 +93,8 @@ export function ImapMailboxesManager({
       const res = await fetch(`/api/domains/${enc}/mailboxes${q}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Load failed.");
-      setMailboxes(data.mailboxes ?? []);
+      const boxes = (data.mailboxes ?? []) as ImapMailbox[];
+      setMailboxes(boxes);
       if (Array.isArray(data.users) && data.users.length) {
         setUsers(data.users);
         if (!user && data.users[0]?.user) setUser(data.users[0].user);
@@ -166,6 +167,25 @@ export function ImapMailboxesManager({
   useEffect(() => {
     void load();
   }, [load]);
+
+  const webmailInboxOpened = useRef(false);
+  useEffect(() => {
+    if (!webmailMode || !user || webmailInboxOpened.current) return;
+    const boxes =
+      mailboxes.length > 0 ? mailboxes : initialMailboxes;
+    if (boxes.length === 0) return;
+    const inbox =
+      boxes.find((m) => m.folder?.toUpperCase() === "INBOX") ?? boxes[0];
+    if (!inbox?.folder) return;
+    webmailInboxOpened.current = true;
+    void loadMessages(inbox.folder);
+  }, [
+    webmailMode,
+    user,
+    mailboxes,
+    initialMailboxes,
+    loadMessages,
+  ]);
 
   const filteredMessages = searchQuery.trim()
     ? messages.filter((m) => {

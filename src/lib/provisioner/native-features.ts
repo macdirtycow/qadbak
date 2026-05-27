@@ -1,3 +1,5 @@
+import { isIndependentMode } from "./native-stub";
+
 /** Which native provisioning modules replace VirtualMin API (phase 8 sub-phases). */
 const ALL = [
   "ssl",
@@ -40,4 +42,9 @@ export function nativeFeatureEnabled(feature: NativeFeature): boolean {
 
 export function listEnabledNativeFeatures(): NativeFeature[] {
   return ALL.filter((f) => nativeFeatureEnabled(f));
+}
+
+/** Dovecot IMAP/webmail — enabled explicitly or on full native installs. */
+export function nativeImapEnabled(): boolean {
+  return nativeFeatureEnabled("imap") || isIndependentMode();
 }

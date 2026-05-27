@@ -163,7 +163,7 @@ export function EmailManager({
           <Link href={`/domains/${enc}/mailboxes`} className="text-accent hover:underline">
             IMAP
           </Link>{" "}
-          tab to read and send mail. For external clients: IMAP port 993, SMTP submission
+          tab or <strong className="text-white">Webmail</strong> per mailbox to read and send mail. For external clients: IMAP port 993, SMTP submission
           port 587 (same mailbox password).
         </p>
       </div>
@@ -259,6 +259,12 @@ export function EmailManager({
                   <td className="px-6 py-4 text-panel-muted">{u.real ?? "—"}</td>
                   <td className="px-6 py-4 text-panel-muted">{u.quota ?? "—"}</td>
                   <td className="px-6 py-4 text-right space-x-2">
+                    <Link
+                      href={`/domains/${enc}/mail/${encodeURIComponent(name)}`}
+                      className="inline-flex items-center rounded-lg border border-panel-border px-3 py-1.5 text-sm text-panel-accent hover:bg-panel-border/30"
+                    >
+                      Webmail
+                    </Link>
                     <Button
                       variant="secondary"
                       onClick={() => {

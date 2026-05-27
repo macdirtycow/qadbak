@@ -1,6 +1,6 @@
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
 import { requireDomainApi } from "@/lib/domain-api";
-import { nativeFeatureEnabled } from "@/lib/provisioner/native-features";
+import { nativeImapEnabled } from "@/lib/provisioner/native-features";
 import { runProvisioningHelper } from "@/lib/provisioner/native-exec";
 
 type Params = { params: Promise<{ domain: string }> };
@@ -12,8 +12,11 @@ export async function GET(request: Request, { params }: Params) {
     const user = sp.get("user") ?? "";
     const folder = sp.get("folder") ?? "INBOX";
 
-    if (!nativeFeatureEnabled("imap")) {
-      return jsonError("IMAP message list requires native Dovecot mode.", 501);
+    if (!nativeImapEnabled()) {
+      return jsonError(
+        "IMAP webmail requires Dovecot. Add imap to QADBAK_NATIVE_FEATURES in .env.local, then restart the panel.",
+        501,
+      );
     }
 
     const raw = await runProvisioningHelper(

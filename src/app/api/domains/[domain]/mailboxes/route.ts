@@ -2,7 +2,7 @@ import { auditLog } from "@/lib/audit";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
 import { requireDomainApi } from "@/lib/domain-api";
 import { getProvisioner } from "@/lib/provisioner";
-import { nativeFeatureEnabled } from "@/lib/provisioner/native-features";
+import { nativeImapEnabled } from "@/lib/provisioner/native-features";
 import { runProvisioningHelper } from "@/lib/provisioner/native-exec";
 
 type Params = { params: Promise<{ domain: string }> };
@@ -14,7 +14,7 @@ export async function GET(request: Request, { params }: Params) {
     const { session, domain } = await requireDomainApi((await params).domain);
     const user = new URL(request.url).searchParams.get("user") ?? "";
 
-    if (nativeFeatureEnabled("imap")) {
+    if (nativeImapEnabled()) {
       const raw = await runProvisioningHelper("imap-list", domain, user);
       return jsonOk({
         mailboxes: (raw.mailboxes as unknown[]) ?? [],

@@ -1,4 +1,4 @@
-import { nativeFeatureEnabled } from "./native-features";
+import { nativeFeatureEnabled, nativeImapEnabled } from "./native-features";
 import * as indep from "./independent-ops";
 import * as native from "./native-ops";
 import { isIndependentMode } from "./native-stub";
@@ -88,7 +88,7 @@ export function applyNativeOverrides<T extends Provisioner>(base: T): T {
     out.searchMailLogs = native.searchMailLogsNative;
     out.resendEmail = native.resendEmailNative;
   }
-  if (nativeFeatureEnabled("imap")) {
+  if (nativeImapEnabled()) {
     out.listImapMailboxes = native.listImapMailboxesNative;
     out.copyMailbox = native.copyMailboxNative;
   }

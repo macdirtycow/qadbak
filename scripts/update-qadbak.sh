@@ -25,6 +25,14 @@ else
 fi
 
 ENV_FILE="$ROOT/.env.local"
+# Ensure imap is in native features (webmail + Dovecot folders on existing installs).
+if [[ -f "$ENV_FILE" ]] && grep -q '^QADBAK_NATIVE_FEATURES=' "$ENV_FILE" 2>/dev/null; then
+  if ! grep '^QADBAK_NATIVE_FEATURES=' "$ENV_FILE" | grep -qE '(^|,)(imap)(,|$)'; then
+    sed -i.bak -E 's/^(QADBAK_NATIVE_FEATURES=.*)$/\1,imap/' "$ENV_FILE"
+    rm -f "${ENV_FILE}.bak"
+    echo "==> Added imap to QADBAK_NATIVE_FEATURES (restart after build)"
+  fi
+fi
 if [[ -f "$ENV_FILE" ]] && ! grep -q '^QADBAK_INSTALL_SALT=' "$ENV_FILE" 2>/dev/null; then
   SALT="$(openssl rand -hex 8 2>/dev/null || head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')"
   echo "QADBAK_INSTALL_SALT=$SALT" >>"$ENV_FILE"
