@@ -1,6 +1,7 @@
 "use client";
 
 import { Alert, Button, Card, Input } from "@/components/ui";
+import { domainApiFetch, parseApiJson } from "@/lib/api-fetch";
 import type { DomainFileEntry } from "@/lib/domain-files";
 import { useEffect, useMemo, useState } from "react";
 
@@ -59,7 +60,7 @@ export function FileRenameDialog({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/domains/${enc}/files`, {
+      const res = await domainApiFetch(domain, "/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -70,7 +71,7 @@ export function FileRenameDialog({
           overwrite: replaceExisting,
         }),
       });
-      const data = await res.json();
+      const data = await parseApiJson<{ error?: string; path?: string }>(res);
       if (!res.ok) throw new Error(data.error ?? "Rename failed.");
       const destPath = String(data.path ?? previewPath);
       onSuccess(

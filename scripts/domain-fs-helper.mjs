@@ -291,7 +291,7 @@ async function mkdirPath(absPath) {
   emit({ ok: true });
 }
 
-async function removePath(absPath) {
+async function unlinkPath(absPath) {
   const resolved = await assertHomePath(absPath);
   const st = await fs.lstat(resolved);
   if (st.isDirectory()) {
@@ -299,6 +299,10 @@ async function removePath(absPath) {
   } else {
     await fs.unlink(resolved);
   }
+}
+
+async function removePath(absPath) {
+  await unlinkPath(absPath);
   emit({ ok: true });
 }
 
@@ -337,7 +341,7 @@ async function movePath(srcAbs, payload) {
     if (srcIsDir !== destIsDir) {
       fail("Cannot replace a file with a folder (or the reverse).");
     }
-    await removePath(dest);
+    await unlinkPath(dest);
   }
 
   const destParent = path.dirname(dest);

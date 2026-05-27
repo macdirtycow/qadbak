@@ -1,6 +1,7 @@
 "use client";
 
 import { Alert, Button, Card, Input } from "@/components/ui";
+import { domainApiFetch, parseApiJson } from "@/lib/api-fetch";
 import type { ArchiveFormat } from "@/lib/domain-files-archives";
 import {
   archiveFormatLabel,
@@ -31,7 +32,6 @@ export function FileArchiveDialog({
   onClose: () => void;
   onSuccess: (message: string) => void;
 }) {
-  const enc = encodeURIComponent(domain);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -94,7 +94,7 @@ export function FileArchiveDialog({
             ? `${parent}/${destFolder.trim().replace(/^\/+/, "")}`
             : destFolder.trim().replace(/^\/+/, "")
           : "";
-        const res = await fetch(`/api/domains/${enc}/files`, {
+        const res = await domainApiFetch(domain, "/files", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -103,7 +103,7 @@ export function FileArchiveDialog({
             destDir,
           }),
         });
-        const data = await res.json();
+        const data = await parseApiJson<{ error?: string; destDir?: string }>(res);
         if (!res.ok) throw new Error(data.error ?? "Extract failed.");
         onSuccess(
           `Extracted ${archiveFormatLabel(archiveEntry.archiveFormat)} to ${data.destDir ?? destFolder}.`,
@@ -114,7 +114,7 @@ export function FileArchiveDialog({
 
       const items =
         scope === "selected" ? [...selected] : [];
-      const res = await fetch(`/api/domains/${enc}/files`, {
+      const res = await domainApiFetch(domain, "/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -125,7 +125,11 @@ export function FileArchiveDialog({
           items,
         }),
       });
-      const data = await res.json();
+      const data = await parseApiJson<{
+        error?: string;
+        path?: string;
+        sizeBytes?: number;
+      }>(res);
       if (!res.ok) throw new Error(data.error ?? "Compress failed.");
       onSuccess(`Created ${data.path} (${formatBytes(data.sizeBytes)}).`);
       onClose();

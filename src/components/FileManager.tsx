@@ -17,6 +17,7 @@ import {
   type DomainFileEntry,
   type DomainFilesListing,
 } from "@/lib/domain-files";
+import { domainApiFetch, domainApiPath, parseApiJson } from "@/lib/api-fetch";
 import {
   exceedsUploadLimit,
   formatUploadLimit,
@@ -40,7 +41,6 @@ export function FileManager({
   uploadPremium: boolean;
 }) {
   const uploadLimitLabel = formatUploadLimit(maxUploadBytes);
-  const enc = encodeURIComponent(domain);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [listing, setListing] = useState(initialListing);
   const [error, setError] = useState(initialError);
@@ -72,12 +72,15 @@ export function FileManager({
   const refresh = useCallback(
     async (dir?: string) => {
       const cwd = dir ?? listing.cwd;
-      const res = await fetch(`/api/domains/${enc}/files?dir=${encodeURIComponent(cwd)}`);
-      const data = await res.json();
+      const res = await domainApiFetch(
+        domain,
+        `/files?dir=${encodeURIComponent(cwd)}`,
+      );
+      const data = await parseApiJson<DomainFilesListing & { error?: string }>(res);
       if (!res.ok) throw new Error(data.error ?? "Could not load directory.");
       setListing(data);
     },
-    [enc, listing.cwd],
+    [domain, listing.cwd],
   );
 
   async function navigate(dir: string) {
@@ -125,10 +128,17 @@ export function FileManager({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(
-        `/api/domains/${enc}/files/content?path=${encodeURIComponent(entry.path)}`,
+      const res = await domainApiFetch(
+        domain,
+        `/files/content?path=${encodeURIComponent(entry.path)}`,
       );
-      const data = await res.json();
+      const data = await parseApiJson<{
+        error?: string;
+        content?: string;
+        language?: string;
+        readOnly?: boolean;
+        encoding?: string;
+      }>(res);
       if (!res.ok) throw new Error(data.error ?? "Could not open file.");
       if (data.encoding === "base64") {
         if (entry.editable !== false) {
@@ -154,7 +164,7 @@ export function FileManager({
   }
 
   function downloadUrl(path: string) {
-    return `/api/domains/${enc}/files/download?path=${encodeURIComponent(path)}`;
+    return domainApiPath(domain, `/files/download?path=${encodeURIComponent(path)}`);
   }
 
   async function saveFile() {
@@ -162,12 +172,12 @@ export function FileManager({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/domains/${enc}/files`, {
+      const res = await domainApiFetch(domain, "/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "save", path: editPath, content: editContent }),
       });
-      const data = await res.json();
+      const data = await parseApiJson<{ error?: string }>(res);
       if (!res.ok) throw new Error(data.error ?? "Save failed.");
       setSuccess(
         editPath.startsWith("public_html")
@@ -219,11 +229,11 @@ export function FileManager({
       form.set("dir", listing.cwd);
       form.set("overwrite", overwriteExisting ? "true" : "false");
       for (const f of files) form.append("files", f);
-      const res = await fetch(`/api/domains/${enc}/files/upload`, {
+      const res = await domainApiFetch(domain, "/files/upload", {
         method: "POST",
         body: form,
       });
-      const data = await res.json();
+      const data = await parseApiJson<{ error?: string }>(res);
       if (!res.ok) throw new Error(data.error ?? "Upload failed.");
       setSuccess(
         files.length === 1
@@ -244,7 +254,7 @@ export function FileManager({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/domains/${enc}/files`, {
+      const res = await domainApiFetch(domain, "/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -253,7 +263,7 @@ export function FileManager({
           name: newDirName,
         }),
       });
-      const data = await res.json();
+      const data = await parseApiJson<{ error?: string }>(res);
       if (!res.ok) throw new Error(data.error ?? "Create directory failed.");
       setShowNewDir(false);
       setNewDirName("");
@@ -271,7 +281,7 @@ export function FileManager({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/domains/${enc}/files`, {
+      const res = await domainApiFetch(domain, "/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -282,7 +292,7 @@ export function FileManager({
           overwrite: overwriteExisting,
         }),
       });
-      const data = await res.json();
+      const data = await parseApiJson<{ error?: string; path?: string }>(res);
       if (!res.ok) throw new Error(data.error ?? "Create file failed.");
       setShowNewFile(false);
       setNewFileName("");
@@ -307,12 +317,12 @@ export function FileManager({
     if (!deletePath) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/domains/${enc}/files`, {
+      const res = await domainApiFetch(domain, "/files", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path: deletePath }),
       });
-      const data = await res.json();
+      const data = await parseApiJson<{ error?: string }>(res);
       if (!res.ok) throw new Error(data.error ?? "Delete failed.");
       if (editPath === deletePath) setEditPath(null);
       setDeletePath(null);

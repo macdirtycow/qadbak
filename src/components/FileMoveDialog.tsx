@@ -1,6 +1,7 @@
 "use client";
 
 import { Alert, Button, Card, Input } from "@/components/ui";
+import { domainApiFetch, parseApiJson } from "@/lib/api-fetch";
 import { DOMAIN_FILE_QUICK_PATHS, resolveMoveDestination } from "@/lib/domain-files";
 import type { DomainFileEntry } from "@/lib/domain-files";
 import { useEffect, useMemo, useState } from "react";
@@ -20,7 +21,6 @@ export function FileMoveDialog({
   onClose: () => void;
   onSuccess: (destPath: string, message: string) => void;
 }) {
-  const enc = encodeURIComponent(domain);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [destDir, setDestDir] = useState("");
@@ -53,7 +53,7 @@ export function FileMoveDialog({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/domains/${enc}/files`, {
+      const res = await domainApiFetch(domain, "/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -64,7 +64,7 @@ export function FileMoveDialog({
           overwrite: replaceExisting,
         }),
       });
-      const data = await res.json();
+      const data = await parseApiJson<{ error?: string; path?: string }>(res);
       if (!res.ok) throw new Error(data.error ?? "Move failed.");
       const destPath = String(data.path ?? previewPath);
       onSuccess(
