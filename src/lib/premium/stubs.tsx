@@ -18,11 +18,14 @@ export function PremiumUpgradeCard({
         </Alert>
       </div>
       <p className="mt-4 text-sm text-panel-muted">
-        Activate your license under{" "}
+        A new key in license admin does not activate this server automatically.
+        Open{" "}
         <Link href="/admin/license" className="text-panel-accent hover:underline">
           Server admin → License
         </Link>
-        . Commercial licensing:{" "}
+        , paste the key, and click <strong className="text-white">Activate</strong>.
+        Then <strong className="text-white">Heartbeat now</strong> if Premium modules stay empty.
+        Commercial licensing:{" "}
         <a
           href="https://omiiba.dev"
           className="text-panel-accent hover:underline"

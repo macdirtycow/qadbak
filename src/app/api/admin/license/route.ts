@@ -6,6 +6,7 @@ import {
   deactivateLicense,
   getLicensePublicInfo,
   heartbeatLicense,
+  isPremiumActive,
   readStoredLicense,
 } from "@/lib/qadbak-license";
 import { getProvisioner } from "@/lib/provisioner";
@@ -18,7 +19,7 @@ export async function GET() {
     const license = await getLicensePublicInfo(domains.length);
     return jsonOk({
       license,
-      premiumActive: license.features.length > 0,
+      premiumActive: await isPremiumActive(),
     });
   } catch (err) {
     return handleApiError(err);
