@@ -171,7 +171,7 @@ export function AdminDashboardPanel() {
           <h2 className="text-lg font-medium text-white">Hosting services</h2>
           <Link
             href="/admin/server"
-            className="text-sm text-panel-accent hover:underline"
+            className="text-sm text-panel-link hover:underline"
           >
             All services →
           </Link>

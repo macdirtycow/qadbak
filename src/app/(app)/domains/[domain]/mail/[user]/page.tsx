@@ -1,4 +1,4 @@
-import { ImapMailboxesManager } from "@/components/ImapMailboxesManager";
+import { QadbakWebmailClient } from "@/components/QadbakWebmailClient";
 import { requireDomainAccess } from "@/lib/domain-api";
 import { getProvisioner } from "@/lib/provisioner";
 
@@ -6,7 +6,6 @@ type Props = { params: Promise<{ domain: string; user: string }> };
 
 export default async function WebmailPage({ params }: Props) {
   const { session, domain } = await requireDomainAccess((await params).domain);
-  const isAdmin = session.role === "admin";
   const user = decodeURIComponent((await params).user);
   let mailboxes: Awaited<ReturnType<ReturnType<typeof getProvisioner>["listImapMailboxes"]>> = [];
   let error = "";
@@ -17,13 +16,11 @@ export default async function WebmailPage({ params }: Props) {
   }
 
   return (
-    <ImapMailboxesManager
+    <QadbakWebmailClient
       domain={domain}
       initialMailboxes={mailboxes}
       initialError={error}
-      isAdmin={isAdmin}
       initialUser={user}
-      webmailMode
     />
   );
 }

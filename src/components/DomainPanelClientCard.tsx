@@ -224,7 +224,7 @@ export function DomainPanelClientCard({ domain }: { domain: string }) {
               URL:{" "}
               <a
                 href={panelUrl}
-                className="text-panel-accent hover:underline"
+                className="text-panel-link hover:underline"
                 target="_blank"
                 rel="noreferrer"
               >

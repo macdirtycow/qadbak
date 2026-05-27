@@ -2,6 +2,11 @@ import "server-only";
 import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
+import {
+  DEFAULT_ACCENT,
+  DEFAULT_PRIMARY,
+  brandingCssVars as buildBrandingCssVars,
+} from "@/lib/branding-css";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const BRANDING_JSON = path.join(DATA_DIR, "branding.json");
@@ -31,9 +36,6 @@ type StoredBranding = {
   primaryColor?: string;
   accentColor?: string;
 };
-
-const DEFAULT_PRIMARY = "#3b82f6";
-const DEFAULT_ACCENT = "#5eead4";
 
 function normalizeHex(color: string | undefined, fallback: string): string {
   const c = String(color ?? "").trim();
@@ -82,7 +84,7 @@ export function displayBranding(
 }
 
 export function brandingCssVars(b: PanelBranding): string {
-  return `:root{--brand-primary:${b.primaryColor};--brand-accent:${b.accentColor};}`;
+  return buildBrandingCssVars(b.primaryColor, b.accentColor);
 }
 
 export async function savePanelBranding(

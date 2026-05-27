@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --brand-primary: #3b82f6;
+  --brand-accent: #5eead4;
+  --brand-primary-rgb: 59 130 246;
+  --brand-accent-rgb: 94 234 212;
+}
+
 html {
   color-scheme: dark;
 }

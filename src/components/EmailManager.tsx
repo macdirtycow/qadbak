@@ -261,7 +261,7 @@ export function EmailManager({
                   <td className="px-6 py-4 text-right space-x-2">
                     <Link
                       href={`/domains/${enc}/mail/${encodeURIComponent(name)}`}
-                      className="inline-flex items-center rounded-lg border border-panel-border px-3 py-1.5 text-sm text-panel-accent hover:bg-panel-border/30"
+                      className="inline-flex items-center rounded-lg border border-panel-border px-3 py-1.5 text-sm text-panel-link hover:bg-panel-border/30"
                     >
                       Webmail
                     </Link>

@@ -1,7 +1,9 @@
 "use client";
 
 import { Alert, Button, Card, Input, Label } from "@/components/ui";
-import { useState } from "react";
+import { applyBrandingToDocument } from "@/lib/branding-css";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type BrandingState = {
   brandName: string;
@@ -13,11 +15,16 @@ type BrandingState = {
 };
 
 export function BrandingEditor({ initial }: { initial: BrandingState }) {
+  const router = useRouter();
   const [form, setForm] = useState(initial);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [busy, setBusy] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(initial.logoUrl);
+
+  useEffect(() => {
+    applyBrandingToDocument(form.primaryColor, form.accentColor);
+  }, [form.primaryColor, form.accentColor]);
 
   async function save(payload: Record<string, unknown>) {
     setBusy(true);
@@ -33,6 +40,8 @@ export function BrandingEditor({ initial }: { initial: BrandingState }) {
       if (!res.ok) throw new Error(data.error ?? "Save failed.");
       setForm(data);
       setLogoPreview(data.logoUrl);
+      applyBrandingToDocument(data.primaryColor, data.accentColor);
+      router.refresh();
       setSuccess("Branding saved.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed.");
@@ -104,6 +113,7 @@ export function BrandingEditor({ initial }: { initial: BrandingState }) {
               setForm({ ...form, primaryColor: e.target.value })
             }
           />
+          <p className="mt-1 text-xs text-panel-muted">Buttons and nav highlights</p>
         </div>
         <div>
           <Label htmlFor="accent">Accent color</Label>
@@ -114,6 +124,25 @@ export function BrandingEditor({ initial }: { initial: BrandingState }) {
             value={form.accentColor}
             onChange={(e) => setForm({ ...form, accentColor: e.target.value })}
           />
+          <p className="mt-1 text-xs text-panel-muted">Links and focus rings</p>
+        </div>
+      </div>
+      <div
+        className="mt-4 rounded-lg border border-panel-border p-4"
+        aria-label="Color preview"
+      >
+        <p className="text-xs font-medium uppercase tracking-wide text-panel-muted">
+          Live preview
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <Button type="button">Primary button</Button>
+          <Button type="button" variant="secondary">
+            Secondary
+          </Button>
+          <span className="text-sm text-panel-link">Sample link</span>
+          <span className="rounded-full bg-panel-accent/20 px-2 py-0.5 text-xs text-white">
+            Nav highlight
+          </span>
         </div>
       </div>
       <div className="mt-4">

@@ -115,7 +115,7 @@ export function ScriptsManager({
                         ·{" "}
                         <a
                           href={s.url}
-                          className="text-panel-accent hover:underline"
+                          className="text-panel-link hover:underline"
                           target="_blank"
                           rel="noreferrer"
                         >

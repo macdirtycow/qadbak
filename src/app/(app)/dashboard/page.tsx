@@ -67,7 +67,7 @@ export default async function DashboardPage() {
               <li key={d.name} className="flex items-center justify-between py-3">
                 <Link
                   href={`/domains/${encodeURIComponent(d.name)}`}
-                  className="font-medium text-white hover:text-panel-accent"
+                  className="font-medium text-white hover:text-panel-link"
                 >
                   {d.name}
                 </Link>
@@ -80,7 +80,7 @@ export default async function DashboardPage() {
         )}
         <Link
           href="/domains"
-          className="mt-4 inline-block text-sm text-panel-accent hover:underline"
+          className="mt-4 inline-block text-sm text-panel-link hover:underline"
         >
           All domains →
         </Link>
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
             </p>
             <Link
               href="/admin/terminal"
-              className="mt-4 inline-block text-sm text-panel-accent hover:underline"
+              className="mt-4 inline-block text-sm text-panel-link hover:underline"
             >
               Open server terminal →
             </Link>

@@ -3,6 +3,7 @@
 import { Alert, Button, Card, Input, Label } from "@/components/ui";
 import { PanelFooter } from "@/components/PanelFooter";
 import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
+import { applyBrandingToDocument } from "@/lib/branding-css";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -20,11 +21,22 @@ export default function LoginPage() {
     setHttpPanel(window.location.protocol === "http:");
     fetch("/api/branding")
       .then((r) => r.json())
-      .then((d: { brandName?: string; tagline?: string; logoUrl?: string }) => {
-        if (d.brandName) setBrandName(d.brandName);
-        if (d.tagline) setTagline(d.tagline);
-        if (d.logoUrl) setLogoUrl(d.logoUrl);
-      })
+      .then(
+        (d: {
+          brandName?: string;
+          tagline?: string;
+          logoUrl?: string;
+          primaryColor?: string;
+          accentColor?: string;
+        }) => {
+          if (d.brandName) setBrandName(d.brandName);
+          if (d.tagline) setTagline(d.tagline);
+          if (d.logoUrl) setLogoUrl(d.logoUrl);
+          if (d.primaryColor && d.accentColor) {
+            applyBrandingToDocument(d.primaryColor, d.accentColor);
+          }
+        },
+      )
       .catch(() => {});
   }, []);
 

@@ -13,7 +13,10 @@ const config: Config = {
           bg: "#0f1419",
           card: "#1a2332",
           border: "#2d3a4f",
-          accent: "#3b82f6",
+          /** Buttons, nav highlights — maps to branding Primary color */
+          accent: "rgb(var(--brand-primary-rgb) / <alpha-value>)",
+          /** Links and secondary highlights — maps to branding Accent color */
+          link: "rgb(var(--brand-accent-rgb) / <alpha-value>)",
           muted: "#94a3b8",
         },
       },

@@ -21,7 +21,7 @@ export default function AdminOverviewPage() {
         <p className="text-sm text-panel-muted">
           <span className="text-panel-muted/70">2009 → today · </span>
           From press-release vapor to a VPS you can actually log into.{" "}
-          <Link href="/about" className="text-panel-accent hover:underline">
+          <Link href="/about" className="text-panel-link hover:underline">
             About the name {APP_NAME}
           </Link>
         </p>

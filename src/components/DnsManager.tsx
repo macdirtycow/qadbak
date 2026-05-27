@@ -111,7 +111,7 @@ export function DnsManager({
             See{" "}
             <a
               href="https://github.com/macdirtycow/qadbak/blob/main/docs/CLOUDFLARE.md"
-              className="text-panel-accent underline"
+              className="text-panel-link underline"
               target="_blank"
               rel="noopener noreferrer"
             >

@@ -406,7 +406,7 @@ export function FileManager({
                     {i > 0 && <span className="text-panel-muted">/</span>}
                     <button
                       type="button"
-                      className="text-panel-accent hover:underline"
+                      className="text-panel-link hover:underline"
                       onClick={() => navigate(crumb.path)}
                     >
                       {crumb.label}
@@ -433,7 +433,7 @@ export function FileManager({
                     <td className="px-4 py-3" colSpan={4}>
                       <button
                         type="button"
-                        className="text-panel-accent hover:underline"
+                        className="text-panel-link hover:underline"
                         onClick={() => {
                           const parts = listing.cwd.split("/");
                           parts.pop();
@@ -453,7 +453,7 @@ export function FileManager({
                     <td className="px-4 py-3">
                       <button
                         type="button"
-                        className="text-left font-medium text-white hover:text-panel-accent"
+                        className="text-left font-medium text-white hover:text-panel-link"
                         onClick={() => openEntry(entry)}
                       >
                         <span className="mr-2 inline-block w-14 text-xs uppercase text-panel-muted">
@@ -484,7 +484,7 @@ export function FileManager({
                         {entry.type === "file" && entry.archive && writable && (
                           <Button
                             variant="ghost"
-                            className="!px-2 !py-1 text-xs text-panel-accent"
+                            className="!px-2 !py-1 text-xs text-panel-link"
                             onClick={() => openArchiveExtract(entry)}
                           >
                             Extract

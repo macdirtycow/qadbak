@@ -192,7 +192,7 @@ export function CreateDomainForm({
           <p className="text-sm text-panel-muted">
             Client panel accounts and <code className="text-xs">panel.[domain]</code>{" "}
             vhosts require Qadbak Premium —{" "}
-            <a href="/admin/license" className="text-panel-accent hover:underline">
+            <a href="/admin/license" className="text-panel-link hover:underline">
               activate a license
             </a>
             .
@@ -218,7 +218,7 @@ export function CreateDomainForm({
               BIND zone we wrote for this domain.{" "}
               <a
                 href={`/admin/journal?focus=${encodeURIComponent(journalId)}`}
-                className="text-panel-accent hover:underline"
+                className="text-panel-link hover:underline"
               >
                 Open in Journal →
               </a>

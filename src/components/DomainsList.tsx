@@ -103,7 +103,7 @@ export function DomainsList({
                 <td className="px-6 py-4">
                   <Link
                     href={`/domains/${encodeURIComponent(d.name)}`}
-                    className="font-medium text-white hover:text-panel-accent"
+                    className="font-medium text-white hover:text-panel-link"
                   >
                     {d.name}
                   </Link>

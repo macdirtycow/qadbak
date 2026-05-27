@@ -11,6 +11,7 @@ import {
   quoteReplyBody,
   replySubject,
 } from "@/lib/mail-reply";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DomainPageHeader } from "./DomainPageHeader";
 
@@ -392,13 +393,17 @@ export function ImapMailboxesManager({
             {loading ? "Loading…" : "Load folders"}
           </Button>
           {user && webmailMode ? null : user ? (
-            <a
+            <Link
               href={`/domains/${enc}/mail/${encodeURIComponent(user)}`}
-              className="text-sm text-panel-accent hover:underline"
+              className="inline-flex items-center rounded-lg border border-panel-border bg-panel-accent/10 px-3 py-2 text-sm font-medium text-white hover:bg-panel-accent/25"
             >
               Open webmail
-            </a>
-          ) : null}
+            </Link>
+          ) : (
+            <span className="text-xs text-panel-muted">
+              Enter a mailbox user, then open webmail
+            </span>
+          )}
           {sourceLabel && <Badge>{sourceLabel}</Badge>}
           {authUser && (
             <span className="text-xs text-panel-muted">

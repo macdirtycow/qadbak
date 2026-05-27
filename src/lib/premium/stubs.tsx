@@ -37,7 +37,7 @@ export function PremiumUpgradeCard({
       <p className="mt-4 text-sm text-panel-muted">
         License server: check <strong className="text-white">{feature}</strong> on your key
         (June plan modules: {ALL_PREMIUM_FEATURES.join(", ")}). Then{" "}
-        <Link href="/admin/license" className="text-panel-accent hover:underline">
+        <Link href="/admin/license" className="text-panel-link hover:underline">
           Server admin → License
         </Link>{" "}
         → <strong className="text-white">Heartbeat now</strong>. On the VPS:{" "}

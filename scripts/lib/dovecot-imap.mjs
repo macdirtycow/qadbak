@@ -271,7 +271,13 @@ async function collectMaildirFiles(folderPath) {
       try {
         const st = await stat(fp);
         if (!st.isFile()) continue;
-        files.push({ id: name, path: fp, mtime: st.mtimeMs, size: st.size });
+        files.push({
+          id: name,
+          path: fp,
+          mtime: st.mtimeMs,
+          size: st.size,
+          unread: sub === "new",
+        });
       } catch {
         /* */
       }
@@ -300,6 +306,7 @@ export async function listMessagesMaildir(folderPath, limit = 80) {
       to: headers.to,
       date: headers.date,
       size: formatBytes(f.size),
+      unread: Boolean(f.unread),
     });
   }
   return messages;

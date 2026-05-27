@@ -130,7 +130,7 @@ function AppInstallSuccess({
           href={result.primaryUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="block break-all text-base text-panel-accent hover:underline"
+          className="block break-all text-base text-panel-link hover:underline"
         >
           {result.primaryUrl}
         </a>
@@ -141,7 +141,7 @@ function AppInstallSuccess({
               href={result.secondaryUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-panel-accent hover:underline"
+              className="text-panel-link hover:underline"
             >
               {result.secondaryUrl}
             </a>
@@ -177,7 +177,7 @@ function AppInstallSuccess({
           creation, file download, wp-config generation, ownership.{" "}
           <a
             href={`/admin/journal?focus=${encodeURIComponent(result.journalId)}`}
-            className="text-panel-accent hover:underline"
+            className="text-panel-link hover:underline"
           >
             Open in Journal →
           </a>

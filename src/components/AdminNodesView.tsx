@@ -85,7 +85,7 @@ export function AdminNodesView() {
                       <span className="font-medium text-white">{n.name}</span>
                       <span className="ml-2 text-xs text-panel-muted">({n.id})</span>
                       {n.isDefault || n.id === defaultNodeId ? (
-                        <span className="ml-2 rounded bg-panel-accent/20 px-2 py-0.5 text-xs text-panel-accent">
+                        <span className="ml-2 rounded bg-panel-accent/20 px-2 py-0.5 text-xs text-panel-link">
                           default
                         </span>
                       ) : null}
