@@ -27,19 +27,19 @@ write_qadbak_landing() {
   <style>
     :root {
       color-scheme: dark;
-      --bg: #0c100e;
-      --surface: #141a17;
-      --border: #2a3830;
-      --text: #ece8e1;
-      --muted: #9caaa3;
-      --accent: #2ea872;
+      --bg: #0f0f0e;
+      --surface: #1c1c1a;
+      --border: #2e2e2c;
+      --text: #eceae6;
+      --muted: #9c9892;
+      --accent: #e8e6e1;
       font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
-      background: radial-gradient(ellipse 70% 45% at 50% -5%, rgba(46, 168, 114, 0.08), transparent 55%), var(--bg);
+      background: radial-gradient(ellipse 70% 45% at 50% -5%, rgba(236, 234, 228, 0.05), transparent 55%), var(--bg);
       color: var(--text);
       display: grid;
       place-items: center;

@@ -1,16 +1,16 @@
 :root {
-  --bg: #0c100e;
-  --bg-raised: #111612;
-  --bg-card: #141a17;
-  --text: #ece8e1;
-  --muted: #9c958a;
-  --border: rgba(236, 232, 225, 0.1);
-  --border-strong: rgba(46, 168, 114, 0.35);
-  --brand: #2ea872;
-  --brand-soft: #247a5c;
-  --brand-dim: rgba(46, 168, 114, 0.12);
-  --brand-glow: #7dd3a8;
-  --ok: #7eb892;
+  --bg: #0f0f0e;
+  --bg-raised: #161615;
+  --bg-card: #1c1c1a;
+  --text: #eceae6;
+  --muted: #9c9892;
+  --border: rgba(236, 234, 228, 0.1);
+  --border-strong: rgba(236, 234, 228, 0.22);
+  --brand: #e8e6e1;
+  --brand-soft: #a8a49c;
+  --brand-dim: rgba(236, 234, 228, 0.08);
+  --brand-glow: #f0eeea;
+  --ok: #8a9a8e;
   --radius: 6px;
   --font: "IBM Plex Sans", system-ui, sans-serif;
   --font-display: "Newsreader", Georgia, "Times New Roman", serif;
@@ -44,7 +44,7 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 70% 45% at 50% -5%, rgba(46, 168, 114, 0.08), transparent 55%),
+    radial-gradient(ellipse 70% 45% at 50% -5%, rgba(236, 234, 228, 0.05), transparent 55%),
     var(--bg);
 }
 
@@ -55,7 +55,7 @@ a {
 }
 
 a:hover {
-  color: #9ee8c4;
+  color: #f5f3ef;
 }
 
 .container {
@@ -68,7 +68,7 @@ a:hover {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(12, 16, 14, 0.88);
+  background: rgba(15, 15, 14, 0.88);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(14px);
 }
@@ -181,14 +181,14 @@ a:hover {
 
 .btn-primary {
   background: var(--brand);
-  color: #0c100e;
+  color: #0f0f0e;
   border-color: var(--brand);
 }
 
 .btn-primary:hover {
-  background: #9ee8c4;
-  border-color: #9ee8c4;
-  color: #0c100e;
+  background: #f5f3ef;
+  border-color: #f5f3ef;
+  color: #0f0f0e;
 }
 
 .btn-secondary {
@@ -482,7 +482,7 @@ section {
 
 .price-card.popular {
   border-color: var(--brand-soft);
-  background: linear-gradient(180deg, rgba(196, 165, 116, 0.08) 0%, var(--bg-card) 40%);
+  background: linear-gradient(180deg, rgba(236, 234, 228, 0.06) 0%, var(--bg-card) 40%);
 }
 
 .price-badge {
@@ -541,7 +541,7 @@ section {
 
 .price-card.popular .btn-primary {
   background: var(--brand);
-  color: #0c100e;
+  color: #0f0f0e;
 }
 
 /* Compare */
@@ -659,7 +659,7 @@ section {
 
 .cta-block .btn-primary {
   background: var(--brand);
-  color: #0c100e;
+  color: #0f0f0e;
 }
 
 .cta-block .btn-secondary {

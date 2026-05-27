@@ -1,5 +1,6 @@
 import {
   DEFAULT_BRANDING_THEME,
+  FOREST_BRANDING_THEME,
   OCEAN_BRANDING_THEME,
   type BrandingThemeColors,
 } from "@/lib/branding-theme";
@@ -21,10 +22,16 @@ export type BrandingPreset = {
 
 export const BRANDING_PRESETS: BrandingPreset[] = [
   {
+    id: "slate",
+    name: "Stone",
+    description: "Warm gray — Omiiba / Qadbak default",
+    colors: DEFAULT_BRANDING_THEME,
+  },
+  {
     id: "emerald",
     name: "Forest",
-    description: "Premium green — Omiiba / Qadbak default",
-    colors: DEFAULT_BRANDING_THEME,
+    description: "Green accent — alternate",
+    colors: FOREST_BRANDING_THEME,
   },
   {
     id: "ocean",
@@ -44,20 +51,6 @@ export const BRANDING_PRESETS: BrandingPreset[] = [
       borderColor: "#2e2a42",
       mutedColor: "#a1a1aa",
       textColor: "#f5f3ff",
-    },
-  },
-  {
-    id: "slate",
-    name: "Slate",
-    description: "Neutral corporate grey-blue",
-    colors: {
-      primaryColor: "#64748b",
-      accentColor: "#94a3b8",
-      backgroundColor: "#0f1115",
-      cardColor: "#181b22",
-      borderColor: "#2a303c",
-      mutedColor: "#94a3b8",
-      textColor: "#f8fafc",
     },
   },
   {
@@ -90,7 +83,7 @@ export const BRANDING_PRESETS: BrandingPreset[] = [
   },
 ];
 
-export const DEFAULT_BRANDING_THEME_ID: BrandingThemeId = "emerald";
+export const DEFAULT_BRANDING_THEME_ID: BrandingThemeId = "slate";
 
 const PRESET_BY_ID = new Map(
   BRANDING_PRESETS.map((p) => [p.id, p] as const),
@@ -120,8 +113,11 @@ export function inferThemeIdFromColors(
       return preset.id;
     }
   }
-  if (primary === "#10b981" || primary === "#34d399") return "emerald";
+  if (primary === "#2ea872" || primary === "#10b981" || primary === "#34d399") {
+    return "emerald";
+  }
   if (primary === "#3b82f6") return "ocean";
+  if (primary === "#e8e6e1" || primary === "#64748b") return "slate";
   return DEFAULT_BRANDING_THEME_ID;
 }
 
