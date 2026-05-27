@@ -44,7 +44,21 @@ export function listEnabledNativeFeatures(): NativeFeature[] {
   return ALL.filter((f) => nativeFeatureEnabled(f));
 }
 
-/** Dovecot IMAP/webmail — enabled explicitly or on full native installs. */
+/** Panel mail uses Postfix/Dovecot on disk (not VirtualMin remote.cgi). */
+export function nativeMailUsesDirectBackend(): boolean {
+  const mode = process.env.QADBAK_MAIL_BACKEND?.trim().toLowerCase() ?? "";
+  if (mode === "direct" || mode === "postfix" || mode === "dovecot") {
+    return true;
+  }
+  if (mode === "virtualmin" || mode === "cli") return false;
+  return isIndependentMode();
+}
+
+/** Dovecot IMAP/webmail — explicit imap flag, independent mode, or native direct mail. */
 export function nativeImapEnabled(): boolean {
-  return nativeFeatureEnabled("imap") || isIndependentMode();
+  return (
+    nativeFeatureEnabled("imap") ||
+    isIndependentMode() ||
+    (nativeFeatureEnabled("mail") && nativeMailUsesDirectBackend())
+  );
 }

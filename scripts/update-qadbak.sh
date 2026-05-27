@@ -98,11 +98,10 @@ if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/configure-bind-native.sh" ]]; 
   echo "==> BIND9 (native DNS)"
   bash "$ROOT/scripts/configure-bind-native.sh" 2>/dev/null || true
 fi
-if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/configure-native-mail.sh" ]]; then
+if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/repair-panel-webmail.sh" ]]; then
   echo ""
-  echo "==> Mail stack sync"
-  bash "$ROOT/scripts/configure-native-mail.sh" --force 2>/dev/null || true
-  sudo -u "$USER" sudo -n "$ROOT/scripts/run-provisioning-helper.sh" mail-sync 2>/dev/null || true
+  echo "==> Webmail (IMAP / Dovecot)"
+  bash "$ROOT/scripts/repair-panel-webmail.sh" 2>/dev/null || true
 fi
 if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/apply-phase8-independent.sh" ]]; then
   echo "Re-apply native flags: sudo bash $ROOT/scripts/apply-phase8-independent.sh"
