@@ -28,6 +28,8 @@ function isPublicPath(pathname: string): boolean {
   if (PUBLIC_EXACT.has(pathname)) return true;
   if (pathname.startsWith("/api/branding")) return true;
   if (pathname.startsWith("/_next")) return true;
+  // Marketing logos, favicons, etc. (must load without a session)
+  if (pathname.startsWith("/assets/")) return true;
   return false;
 }
 
