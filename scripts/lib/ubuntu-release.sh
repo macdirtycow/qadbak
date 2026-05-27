@@ -61,10 +61,11 @@ qadbak_install_aws_cli() {
     return 0
   fi
   if apt-cache show awscli &>/dev/null 2>&1; then
-    apt-get install -y -qq awscli
-    apt-mark manual awscli 2>/dev/null || true
-    echo "  OK   awscli (apt)"
-    return 0
+    if apt-get install -y -qq awscli 2>/dev/null; then
+      apt-mark manual awscli 2>/dev/null || true
+      echo "  OK   awscli (apt)"
+      return 0
+    fi
   fi
   if command -v snap &>/dev/null && snap install aws-cli --classic 2>/dev/null; then
     ln -sf /snap/bin/aws /usr/local/bin/aws 2>/dev/null || true
