@@ -96,12 +96,46 @@ async function getInstanceId() {
   }
 }
 
+async function licenseMeta() {
+  const { readFileSync, existsSync } = await import("node:fs");
+  let panelVersion = process.env.QADBAK_PANEL_VERSION?.trim() || "";
+  if (!panelVersion) {
+    try {
+      const pkg = JSON.parse(readFileSync(path.join(ROOT, "package.json"), "utf8"));
+      panelVersion = pkg.version || "0.0.0";
+    } catch {
+      panelVersion = "0.0.0";
+    }
+  }
+  const publicHost =
+    process.env.QADBAK_PUBLIC_HOST?.trim() ||
+    process.env.HOSTNAME?.trim() ||
+    "unknown";
+  let fingerprintTag = null;
+  try {
+    const envPath = path.join(ROOT, ".env.local");
+    if (existsSync(envPath)) {
+      const raw = readFileSync(envPath, "utf8");
+      const m = raw.match(/^QADBAK_INSTALL_SALT=(.+)$/m);
+      const salt = m?.[1]?.trim().replace(/^["']|["']$/g, "");
+      if (salt) fingerprintTag = `qb-${salt.slice(0, 12)}`;
+    }
+  } catch {
+    /* */
+  }
+  return { fingerprintTag, panelVersion, publicHost };
+}
+
 async function activate(key) {
   const instanceId = await getInstanceId();
+  const meta = await licenseMeta();
   const data = await postLicenseServer("/v1/activate", {
     key,
     instanceId,
-    hostname: process.env.QADBAK_PUBLIC_HOST ?? process.env.HOSTNAME ?? "unknown",
+    hostname: meta.publicHost,
+    publicHost: meta.publicHost,
+    fingerprintTag: meta.fingerprintTag,
+    panelVersion: meta.panelVersion,
   });
   const { writeFile, mkdir } = await import("node:fs/promises");
   const now = new Date().toISOString();
@@ -135,9 +169,13 @@ async function heartbeat() {
     console.log(JSON.stringify({ ok: true, skipped: true, reason: "no license" }));
     return;
   }
+  const meta = await licenseMeta();
   const data = await postLicenseServer("/v1/heartbeat", {
     token: stored.token,
     instanceId: stored.instanceId,
+    fingerprintTag: meta.fingerprintTag,
+    panelVersion: meta.panelVersion,
+    publicHost: meta.publicHost,
   });
   if (data.status === "revoked") {
     const { rm } = await import("node:fs/promises");

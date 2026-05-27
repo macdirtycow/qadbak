@@ -287,6 +287,7 @@ export function AdminLicensePanel({
                 <thead>
                   <tr className="border-b border-panel-border text-panel-muted">
                     <th className="py-2 pr-4">Host</th>
+                    <th className="py-2 pr-4">Fingerprint</th>
                     <th className="py-2 pr-4">Instance</th>
                     <th className="py-2 pr-4">First seen</th>
                     <th className="py-2 pr-4">Last heartbeat</th>
@@ -307,6 +308,10 @@ export function AdminLicensePanel({
                             (this server)
                           </span>
                         ) : null}
+                      </td>
+                      <td className="py-2 pr-4 font-mono text-xs text-panel-muted">
+                        {row.fingerprintTag ?? "—"}
+                        {row.panelVersion ? ` · v${row.panelVersion}` : ""}
                       </td>
                       <td className="py-2 pr-4 font-mono text-xs text-panel-muted">
                         {shortId(row.instanceId)}

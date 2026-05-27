@@ -411,14 +411,19 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
 }
 
 export async function activateLicense(key: string): Promise<StoredLicense> {
+  const { licenseClientMeta } = await import("./license-client-meta");
   const instanceId = await getOrCreateInstanceId();
-  const hostname =
-    process.env.QADBAK_PUBLIC_HOST?.trim() ||
-    process.env.HOSTNAME?.trim() ||
-    "unknown";
+  const meta = licenseClientMeta();
   const data = await postJson<ActivateResponse>(
     `${licenseServerFetchBase()}/v1/activate`,
-    { key: key.trim(), instanceId, hostname },
+    {
+      key: key.trim(),
+      instanceId,
+      hostname: meta.publicHost,
+      publicHost: meta.publicHost,
+      fingerprintTag: meta.fingerprintTag,
+      panelVersion: meta.panelVersion,
+    },
   );
   const now = new Date().toISOString();
   const stored: StoredLicense = {
@@ -474,10 +479,13 @@ export async function deactivateLicense(): Promise<void> {
 export type LicenseActivationRow = {
   instanceId: string;
   hostnameHint: string;
+  fingerprintTag?: string | null;
+  panelVersion?: string | null;
   firstSeenAt: string | null;
   lastHeartbeatAt: string | null;
   isCurrent: boolean;
   status: "active" | "stale";
+  warnings?: string[];
 };
 
 export async function listLicenseActivations(): Promise<{
