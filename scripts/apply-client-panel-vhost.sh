@@ -110,9 +110,8 @@ write_vhost() {
     echo "        root /var/www/html;"
     echo "        try_files \$uri =404;"
     echo "    }"
-    echo "    location / {"
-    echo "        return 301 https://\$host\$request_uri;"
-    echo "    }"
+    echo "    # Proxy on :80 (required for Cloudflare Flexible — do not force HTTPS redirect)"
+    write_proxy_locations
     echo "}"
     echo ""
     echo "server {"

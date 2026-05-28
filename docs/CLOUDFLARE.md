@@ -95,7 +95,9 @@ This script checks pm2 + `:3000/api/health`, recreates `panel.<domain>` nginx vh
 
 ### Cloudflare SSL
 
-Same as [502](#error-502--bad-gateway): use **Flexible** if the origin has no cert on `panel.<domain>` yet; use **Full** after Let's Encrypt (the repair script runs certbot when DNS points at the server).
+**Important for `panel.<domain>`:** the panel vhost serves **HTTP on port 80** to the app (no forced redirect). That is required when Cloudflare SSL is **Flexible** (Cloudflare talks HTTP to your server). If you use **Full**, HTTPS on port 443 also works after Let's Encrypt.
+
+Same as [502](#error-502--bad-gateway): use **Flexible** if the origin has no cert on `panel.<domain>` yet; use **Full** after Let's Encrypt (the repair script runs certbot when DNS points at the server). Avoid **Full (strict)** until the origin certificate is valid.
 
 ### Diagnose only
 

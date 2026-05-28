@@ -130,7 +130,8 @@ echo "==> 2) panel.<domain> reachability (before repair)"
 FAIL=0
 for d in "${UNIQUE[@]}"; do
   host="panel.${d}"
-  code_http="$(curl -s -o /dev/null -w '%{http_code}' -H "Host: $host" http://127.0.0.1/login 2>/dev/null || echo 000)"
+  code_http="$(curl -s -o /dev/null -w '%{http_code}' -H "Host: $host" http://127.0.0.1/login 2>/dev/null)"
+  code_http="${code_http:-000}"
   echo "    $host HTTP → $code_http"
   if [[ ! "$code_http" =~ ^(200|301|302|307|308)$ ]]; then
     FAIL=1
@@ -186,21 +187,43 @@ if [[ -f "$QADBAK_DIR/scripts/open-host-firewall-port.sh" ]]; then
 fi
 
 echo ""
-echo "==> 7) pm2 restart (load .env.local)"
+echo "==> 7) Session cookies (HTTPS panels + Cloudflare)"
+ENV_FILE="$QADBAK_DIR/.env.local"
+if [[ -f "$ENV_FILE" ]]; then
+  if grep -q '^QADBAK_COOKIE_SECURE=false' "$ENV_FILE" 2>/dev/null; then
+    sed -i 's/^QADBAK_COOKIE_SECURE=false/QADBAK_COOKIE_SECURE=true/' "$ENV_FILE"
+    echo "    Set QADBAK_COOKIE_SECURE=true (was false from :11000 bootstrap)"
+  elif ! grep -q '^QADBAK_COOKIE_SECURE=' "$ENV_FILE" 2>/dev/null; then
+    echo "QADBAK_COOKIE_SECURE=true" >>"$ENV_FILE"
+    echo "    Set QADBAK_COOKIE_SECURE=true"
+  fi
+  chown "$QADBAK_USER:$QADBAK_USER" "$ENV_FILE" 2>/dev/null || true
+fi
+
+echo ""
+echo "==> 8) pm2 restart (load .env.local)"
 sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && bash scripts/pm2-restart-qadbak.sh" || true
 
 echo ""
-echo "==> 8) Verify"
+echo "==> 9) Verify (HTTP + HTTPS on origin)"
 FAIL=0
 for d in "${UNIQUE[@]}"; do
   host="panel.${d}"
-  code_http="$(curl -s -o /dev/null -w '%{http_code}' -H "Host: $host" http://127.0.0.1/login 2>/dev/null || echo 000)"
-  echo "    $host HTTP → $code_http"
+  code_http="$(curl -s -o /dev/null -w '%{http_code}' -H "Host: $host" http://127.0.0.1/login 2>/dev/null)"
+  code_http="${code_http:-000}"
+  code_https="$(curl -sk -o /dev/null -w '%{http_code}' -H "Host: $host" https://127.0.0.1/login 2>/dev/null)"
+  code_https="${code_https:-000}"
+  echo "    $host HTTP → $code_http  HTTPS → $code_https"
   if [[ "$code_http" =~ ^(200|301|302|307|308)$ ]]; then
-    echo "    OK — https://$host/login (Cloudflare: Flexible or Full SSL)"
+    echo "    OK — http://$host/login (Cloudflare Flexible uses this)"
   else
-    echo "    FAIL — $host still broken on origin HTTP" >&2
+    echo "    FAIL — $host HTTP broken on origin" >&2
     FAIL=1
+  fi
+  if [[ -f "/etc/letsencrypt/live/${host}/fullchain.pem" ]]; then
+    if [[ ! "$code_https" =~ ^(200|301|302|307|308)$ ]]; then
+      echo "    WARN — $host HTTPS → $code_https (use Cloudflare SSL: Full)" >&2
+    fi
   fi
 done
 
@@ -222,7 +245,13 @@ if [[ "$FAIL" -ne 0 || "$VHOST_FAIL" -ne 0 ]]; then
   exit 1
 fi
 
+ORIGIN_IP="$(curl -4 -fsS --max-time 3 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')"
 echo "OK — panel access repaired."
 echo "  Customer: https://panel.<your-domain>/login"
 echo "  Main:     https://${MAIN_PANEL_HOST}/login"
-echo "  Direct:   http://$(curl -4 -fsS --max-time 2 ifconfig.me 2>/dev/null || echo SERVER_IP):${PANEL_PORT}/login"
+echo "  Direct:   http://${ORIGIN_IP}:${PANEL_PORT}/login"
+echo ""
+echo "Cloudflare (panel.siccamanagement.nl etc.):"
+echo "  1) DNS A-record: panel → ${ORIGIN_IP} (proxied orange cloud OK)"
+echo "  2) SSL/TLS mode: Flexible (HTTP to origin) or Full (with Let's Encrypt on panel.*)"
+echo "  3) Do NOT use Full (strict) unless origin cert is valid for panel.<domain>"

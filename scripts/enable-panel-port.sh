@@ -50,11 +50,6 @@ if [[ -f "$ENV_FILE" ]]; then
   else
     echo "QADBAK_PANEL_PORT=$PORT" >>"$ENV_FILE"
   fi
-  if grep -q '^QADBAK_COOKIE_SECURE=' "$ENV_FILE"; then
-    sed -i 's/^QADBAK_COOKIE_SECURE=.*/QADBAK_COOKIE_SECURE=false/' "$ENV_FILE"
-  else
-    echo "QADBAK_COOKIE_SECURE=false" >>"$ENV_FILE"
-  fi
   chown qadbak:qadbak "$ENV_FILE" 2>/dev/null || true
 fi
 
