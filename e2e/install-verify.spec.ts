@@ -36,6 +36,7 @@ test("marketing and about pages", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: /hosting control panel you run/i }),
   ).toBeVisible();
+  await expect(page.getByRole("cell", { name: "16 apps" })).toBeVisible();
   await page.goto("/about");
   await expect(
     page.getByRole("heading", { name: /about the name qadbak/i }),

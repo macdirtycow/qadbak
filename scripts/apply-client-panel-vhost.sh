@@ -151,17 +151,23 @@ HAS_CERT=0
 if [[ -f "/etc/letsencrypt/live/${PANEL_HOST}/fullchain.pem" ]]; then
   HAS_CERT=1
 elif [[ -n "$LE_EMAIL" ]] && command -v certbot &>/dev/null; then
-  echo "==> TLS for ${PANEL_HOST} (Let's Encrypt, ${LE_EMAIL})"
-  # `certonly` (NOT --nginx installer) so certbot never rewrites this
-  # file. The --nginx authenticator only adds a temporary location
-  # during the challenge and reverts when done.
-  if certbot certonly --nginx -d "$PANEL_HOST" \
-       --non-interactive --agree-tos -m "$LE_EMAIL" --keep-until-expiring; then
-    HAS_CERT=1
-    echo "    OK — Let's Encrypt cert issued for ${PANEL_HOST}"
+  PANEL_PUBLIC_IP=""
+  if command -v dig &>/dev/null; then
+    PANEL_PUBLIC_IP="$(dig +short A "$PANEL_HOST" @8.8.8.8 2>/dev/null | grep -E '^[0-9.]+$' | head -1 || true)"
+  fi
+  if [[ -z "$PANEL_PUBLIC_IP" ]]; then
+    echo "    SKIP TLS — no public DNS A record for ${PANEL_HOST} yet (add at registrar: A → ${SERVER_IP})" >&2
+    echo "          Panel works on http://${PANEL_HOST}/ until DNS + certbot succeed." >&2
   else
-    echo "    WARN: certbot failed — use http://${PANEL_HOST}/ until DNS propagates, then re-run this script" >&2
-    echo "          Most common cause: A-record for ${PANEL_HOST} not yet pointing at ${SERVER_IP}" >&2
+    echo "==> TLS for ${PANEL_HOST} (Let's Encrypt, ${LE_EMAIL}) — DNS → ${PANEL_PUBLIC_IP}"
+    if certbot certonly --nginx -d "$PANEL_HOST" \
+         --non-interactive --agree-tos -m "$LE_EMAIL" --keep-until-expiring; then
+      HAS_CERT=1
+      echo "    OK — Let's Encrypt cert issued for ${PANEL_HOST}"
+    else
+      echo "    WARN: certbot failed — use http://${PANEL_HOST}/ until DNS propagates, then re-run this script" >&2
+      echo "          Most common cause: A-record for ${PANEL_HOST} not yet pointing at ${SERVER_IP}" >&2
+    fi
   fi
 fi
 
@@ -170,6 +176,10 @@ write_vhost "$HAS_CERT" >"$OUT"
 ln -sf "$OUT" "$ENABLED"
 nginx -t
 systemctl reload nginx
+
+if [[ -f "$ROOT/scripts/lib/sanitize-nginx-panel-vhosts.sh" ]]; then
+  bash "$ROOT/scripts/lib/sanitize-nginx-panel-vhosts.sh" 2>/dev/null || true
+fi
 
 if [[ "$HAS_CERT" == "1" ]]; then
   echo "OK — https://${PANEL_HOST}/login"

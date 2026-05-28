@@ -7,7 +7,7 @@ const POST_INSTALL: Record<string, string> = {
   joomla:
     "Open your site URL and complete the Joomla web installer. Use the database credentials shown below when asked.",
   drupal:
-    "Visit /core/install.php (or the installer redirect) and follow Drupal's setup wizard with the database below.",
+    "Open your site URL (or /core/install.php) and follow Drupal's setup wizard with the MySQL credentials below.",
   nextcloud:
     "Open the site URL, create the admin account, and enter the MySQL credentials from this screen.",
   phpmyadmin:

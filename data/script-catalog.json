@@ -2,71 +2,160 @@
   {
     "name": "wordpress",
     "label": "WordPress",
-    "desc": "WordPress CMS (latest from wordpress.org)",
+    "desc": "CMS — latest from wordpress.org with auto wp-config.php",
     "version": "latest",
+    "minPhp": "8.0",
     "requiresDb": true,
-    "icon": "🦋",
-    "category": "cms"
+    "category": "cms",
+    "icon": "🦋"
   },
   {
     "name": "joomla",
     "label": "Joomla",
-    "desc": "Joomla 5 CMS",
+    "desc": "CMS — Joomla 5 full package",
     "version": "5",
+    "minPhp": "8.1",
     "requiresDb": true,
-    "icon": "📰",
-    "category": "cms"
+    "category": "cms",
+    "icon": "📰"
   },
   {
     "name": "drupal",
     "label": "Drupal",
-    "desc": "Drupal 10 (composer)",
+    "desc": "CMS — Drupal 10 from drupal.org zip (no Composer on server)",
     "version": "10",
+    "minPhp": "8.1",
     "requiresDb": true,
-    "icon": "💧",
-    "category": "cms"
+    "category": "cms",
+    "icon": "💧"
   },
   {
-    "name": "phpmyadmin",
-    "label": "phpMyAdmin",
-    "desc": "phpMyAdmin database admin (static files)",
-    "version": "5.2",
-    "icon": "🗄️",
-    "category": "tools"
-  },
-  {
-    "name": "nextcloud",
-    "label": "Nextcloud",
-    "desc": "Nextcloud ZIP install",
+    "name": "grav",
+    "label": "Grav",
+    "desc": "Flat-file CMS — no database required",
     "version": "latest",
-    "requiresDb": true,
-    "icon": "☁️",
-    "category": "collaboration"
+    "minPhp": "8.1",
+    "requiresDb": false,
+    "category": "cms",
+    "icon": "🪨"
   },
   {
-    "name": "matomo",
-    "label": "Matomo",
-    "desc": "Self-hosted web analytics",
-    "version": "latest",
+    "name": "mediawiki",
+    "label": "MediaWiki",
+    "desc": "Wiki engine — same software as Wikipedia",
+    "version": "1.41",
+    "minPhp": "8.1",
     "requiresDb": true,
-    "icon": "📊",
-    "category": "analytics"
-  },
-  {
-    "name": "prestashop",
-    "label": "PrestaShop",
-    "desc": "PrestaShop 8 e-commerce",
-    "version": "8.2",
-    "requiresDb": true,
-    "icon": "🛒",
-    "category": "ecommerce"
+    "category": "cms",
+    "icon": "📚"
   },
   {
     "name": "ghost",
     "label": "Ghost",
-    "desc": "Ghost publishing (Node.js 18+)",
+    "desc": "Publishing platform — Node.js 18+ (ghost-cli, SQLite default)",
     "version": "5",
-    "icon": "👻",
-    "category": "cms"
+    "requiresDb": false,
+    "category": "cms",
+    "icon": "👻"
+  },
+  {
+    "name": "prestashop",
+    "label": "PrestaShop",
+    "desc": "E-commerce — PrestaShop 8 web installer",
+    "version": "8.2",
+    "minPhp": "8.1",
+    "requiresDb": true,
+    "category": "ecommerce",
+    "icon": "🛒"
+  },
+  {
+    "name": "opencart",
+    "label": "OpenCart",
+    "desc": "E-commerce — OpenCart 3 storefront",
+    "version": "3.0",
+    "minPhp": "8.0",
+    "requiresDb": true,
+    "category": "ecommerce",
+    "icon": "🏪"
+  },
+  {
+    "name": "nextcloud",
+    "label": "Nextcloud",
+    "desc": "File sync, calendar, and collaboration",
+    "version": "latest",
+    "minPhp": "8.1",
+    "requiresDb": true,
+    "category": "collaboration",
+    "icon": "☁️"
+  },
+  {
+    "name": "kanboard",
+    "label": "Kanboard",
+    "desc": "Kanban project boards — lightweight PHP app",
+    "version": "1.2",
+    "minPhp": "8.0",
+    "requiresDb": true,
+    "category": "collaboration",
+    "icon": "📋"
+  },
+  {
+    "name": "moodle",
+    "label": "Moodle",
+    "desc": "Learning platform — courses, quizzes, and enrolment",
+    "version": "4.5",
+    "minPhp": "8.1",
+    "requiresDb": true,
+    "category": "education",
+    "icon": "🎓"
+  },
+  {
+    "name": "phpbb",
+    "label": "phpBB",
+    "desc": "Forum — phpBB 3.3 full package",
+    "version": "3.3",
+    "minPhp": "8.0",
+    "requiresDb": true,
+    "category": "forum",
+    "icon": "💬"
+  },
+  {
+    "name": "matomo",
+    "label": "Matomo",
+    "desc": "Privacy-friendly web analytics (self-hosted)",
+    "version": "latest",
+    "minPhp": "8.0",
+    "requiresDb": true,
+    "category": "analytics",
+    "icon": "📊"
+  },
+  {
+    "name": "limesurvey",
+    "label": "LimeSurvey",
+    "desc": "Surveys and questionnaires — GDPR-friendly",
+    "version": "6",
+    "minPhp": "8.1",
+    "requiresDb": true,
+    "category": "surveys",
+    "icon": "📝"
+  },
+  {
+    "name": "phpmyadmin",
+    "label": "phpMyAdmin",
+    "desc": "Web UI for MySQL — install in a subfolder",
+    "version": "5.2",
+    "minPhp": "8.0",
+    "requiresDb": false,
+    "category": "tools",
+    "icon": "🗄️"
+  },
+  {
+    "name": "adminer",
+    "label": "Adminer",
+    "desc": "Single-file database manager (MySQL/MariaDB)",
+    "version": "4.8",
+    "minPhp": "8.0",
+    "requiresDb": false,
+    "category": "tools",
+    "icon": "🔧"
   }
 ]

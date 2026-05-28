@@ -13,9 +13,11 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 curl -fsSL "https://download.limesurvey.org/latest-master/limesurvey.zip" -o "$TMP/ls.zip"
 unzip -q "$TMP/ls.zip" -d "$TMP/extract"
-ROOT="$(find "$TMP/extract" -maxdepth 2 -name index.php -print -quit | xargs -r dirname)"
-if [[ -z "$ROOT" ]]; then
-  ROOT="$TMP/extract"
-fi
+ROOT=""
+while IFS= read -r -d '' idx; do
+  ROOT="$(dirname "$idx")"
+  break
+done < <(find "$TMP/extract" -maxdepth 3 -name index.php -print0 2>/dev/null)
+[[ -n "$ROOT" ]] || ROOT="$TMP/extract"
 cp -a "$ROOT/"* "$TARGET/"
 echo "OK — LimeSurvey in $TARGET (open the installer wizard; use MySQL credentials from the panel)"

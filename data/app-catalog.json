@@ -35,7 +35,7 @@
     "id": "drupal",
     "name": "drupal",
     "label": "Drupal",
-    "desc": "CMS — Drupal 10 recommended project via Composer",
+    "desc": "CMS — Drupal 10 from drupal.org zip (no Composer on server)",
     "version": "10",
     "minPhp": "8.1",
     "requiresDb": true,

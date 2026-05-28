@@ -183,6 +183,9 @@ for d in "${UNIQUE[@]}"; do
     VHOST_FAIL=1
   fi
 done
+if [[ -f "$QADBAK_DIR/scripts/lib/sanitize-nginx-panel-vhosts.sh" ]]; then
+  bash "$QADBAK_DIR/scripts/lib/sanitize-nginx-panel-vhosts.sh" 2>/dev/null || true
+fi
 
 echo ""
 echo "==> 5) Alt panel port :$PANEL_PORT (not :3000 in browser)"

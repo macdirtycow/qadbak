@@ -46,6 +46,7 @@ async function loadCatalog() {
         name: row.name ?? row.id,
         label: row.label ?? row.name,
         desc: row.desc ?? "",
+        tagline: row.tagline ?? row.desc ?? "",
         version: row.version ?? "native",
         minPhp: row.minPhp,
         requiresDb: Boolean(row.requiresDb),
