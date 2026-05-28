@@ -68,6 +68,26 @@ export async function createSession(payload: SessionPayload): Promise<string> {
     .sign(secretKey());
 }
 
+export async function signLoginTotpChallenge(userId: string): Promise<string> {
+  return new SignJWT({ typ: "totp-login", userId })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("5m")
+    .sign(secretKey());
+}
+
+export async function verifyLoginTotpChallenge(
+  token: string,
+): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, secretKey());
+    if (payload.typ !== "totp-login") return null;
+    return String(payload.userId);
+  } catch {
+    return null;
+  }
+}
+
 export async function verifySessionToken(
   token: string,
 ): Promise<SessionPayload | null> {

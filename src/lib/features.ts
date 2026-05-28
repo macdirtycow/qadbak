@@ -405,6 +405,7 @@ export const IMPLEMENTED_PHASE: FeaturePhase = 8;
 export const ADMIN_NAV = [
   { path: "/admin", label: "Overview" },
   { path: "/admin/privacy", label: "Privacy & data" },
+  { path: "/admin/totp", label: "Two-factor" },
   { path: "/admin/terminal", label: "Terminal" },
   { path: "/admin/updates", label: "Updates", premium: "admin-updates" as const },
   { path: "/admin/status", label: "Status" },

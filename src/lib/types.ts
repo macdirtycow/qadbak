@@ -6,6 +6,8 @@ export interface PanelUser {
   passwordHash: string;
   role: Role;
   domains: string[];
+  /** Base32 TOTP secret; when set, login requires authenticator code. */
+  totpSecret?: string;
 }
 
 export interface SessionPayload {

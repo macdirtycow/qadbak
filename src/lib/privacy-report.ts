@@ -3,8 +3,10 @@ import "server-only";
 import { existsSync } from "node:fs";
 import { stat } from "node:fs/promises";
 import path from "node:path";
+import { auditRetentionConfig } from "./audit-retention";
 import { countAuditActions } from "./audit-read";
 import { listApiKeys } from "./api-keys";
+import { loadUsers } from "./users";
 import { getLicensePublicInfo } from "./qadbak-license";
 import { licenseClientMeta } from "./license-client-meta";
 
@@ -44,7 +46,9 @@ export type PrivacyReport = {
     apiKeysWithIpAllowlist: number;
     terminalWsLocalOnly: boolean;
     failedLogins24h: number;
+    totpUsers: number;
   };
+  auditRetention: ReturnType<typeof auditRetentionConfig>;
   envHints: { key: string; value: string; note: string }[];
   recommendations: string[];
 };
@@ -156,6 +160,9 @@ export async function buildPrivacyReport(): Promise<PrivacyReport> {
     Date.now() - 24 * 60 * 60 * 1000,
   ).catch(() => 0);
 
+  const users = await loadUsers();
+  const totpUsers = users.filter((u) => u.totpSecret).length;
+
   const apiKeys = await listApiKeys();
   const apiKeysCount = apiKeys.length;
   const apiKeysWithIpAllowlist = apiKeys.filter(
@@ -218,6 +225,16 @@ export async function buildPrivacyReport(): Promise<PrivacyReport> {
       value: meta.publicHost,
       note: "Sent to license server on heartbeat",
     },
+    {
+      key: "QADBAK_AUDIT_MAX_LINES",
+      value: String(auditRetentionConfig().maxLines),
+      note: "Local audit.log line cap",
+    },
+    {
+      key: "QADBAK_AUDIT_RETENTION_DAYS",
+      value: String(auditRetentionConfig().retentionDays || "off"),
+      note: "Drop audit entries older than N days",
+    },
   ];
 
   let cookieSecure: PrivacyReport["session"]["cookieSecure"] = "auto";
@@ -260,7 +277,9 @@ export async function buildPrivacyReport(): Promise<PrivacyReport> {
       apiKeysWithIpAllowlist,
       terminalWsLocalOnly,
       failedLogins24h,
+      totpUsers,
     },
+    auditRetention: auditRetentionConfig(),
     envHints,
     recommendations,
   };

@@ -13,6 +13,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [needsTotp, setNeedsTotp] = useState(false);
+  const [loginToken, setLoginToken] = useState("");
+  const [totp, setTotp] = useState("");
   const [brandName, setBrandName] = useState(APP_NAME);
   const [tagline, setTagline] = useState(APP_TAGLINE);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -42,13 +45,17 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
+      const body = needsTotp
+        ? { loginToken, totp: totp.trim() }
+        : { username, password };
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify(body),
       });
-      let data: { error?: string } = {};
+      let data: { error?: string; requiresTotp?: boolean; loginToken?: string } =
+        {};
       try {
         data = await res.json();
       } catch {
@@ -59,7 +66,12 @@ export default function LoginPage() {
         setError(data.error ?? "Sign-in failed.");
         return;
       }
-      // Full navigation ensures session cookie is applied (Brave / npm start + Secure fix)
+      if (data.requiresTotp && data.loginToken) {
+        setNeedsTotp(true);
+        setLoginToken(data.loginToken);
+        setError("");
+        return;
+      }
       window.location.assign("/dashboard");
     } finally {
       setLoading(false);
@@ -88,31 +100,64 @@ export default function LoginPage() {
         <p className="mt-1 text-sm text-panel-muted">{tagline}</p>
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
           {error && <Alert>{error}</Alert>}
-          <div>
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              name="username"
-              autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+          {!needsTotp && (
+            <div>
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                name="username"
+                autoComplete="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+          )}
+          {!needsTotp ? (
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          ) : (
+            <div>
+              <Label htmlFor="totp">Authenticator code</Label>
+              <Input
+                id="totp"
+                name="totp"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                value={totp}
+                onChange={(e) => setTotp(e.target.value)}
+                placeholder="6-digit code"
+                required
+              />
+              <button
+                type="button"
+                className="mt-2 text-xs text-panel-link hover:underline"
+                onClick={() => {
+                  setNeedsTotp(false);
+                  setLoginToken("");
+                  setTotp("");
+                }}
+              >
+                ← Back to password
+              </button>
+            </div>
+          )}
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in…" : "Sign in"}
+            {loading
+              ? "Signing in…"
+              : needsTotp
+                ? "Verify code"
+                : "Sign in"}
           </Button>
         </form>
         <p className="mt-6 text-xs text-panel-muted">

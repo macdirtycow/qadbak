@@ -78,3 +78,20 @@ export async function verifyPassword(
   return bcrypt.compare(password, user.passwordHash);
 }
 
+export async function findUserById(id: string): Promise<PanelUser | undefined> {
+  const users = await loadUsers();
+  return users.find((u) => u.id === id);
+}
+
+export async function setUserTotpSecret(
+  userId: string,
+  secret: string | null,
+): Promise<void> {
+  const users = await loadUsers();
+  const idx = users.findIndex((u) => u.id === userId);
+  if (idx < 0) throw new Error("User not found.");
+  if (secret) users[idx]!.totpSecret = secret;
+  else delete users[idx]!.totpSecret;
+  await saveUsers(users);
+}
+

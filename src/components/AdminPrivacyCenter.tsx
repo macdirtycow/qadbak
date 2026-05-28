@@ -89,6 +89,47 @@ export function AdminPrivacyCenter({
             >
               Export audit log (tail)
             </a>
+            <button
+              type="button"
+              className="inline-flex items-center rounded-md border border-panel-border px-4 py-2 text-sm text-white hover:bg-panel-border/30"
+              onClick={async () => {
+                setLoading(true);
+                setError("");
+                try {
+                  const res = await fetch("/api/admin/privacy", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "rotate-audit" }),
+                  });
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.error ?? "Trim failed");
+                  if (data.report) setReport(data.report);
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : "Error");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            >
+              Trim audit log
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center rounded-md border border-panel-border px-4 py-2 text-sm text-white hover:bg-panel-border/30"
+              onClick={() => {
+                const blob = new Blob([JSON.stringify(report, null, 2)], {
+                  type: "application/json",
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `qadbak-privacy-${new Date().toISOString().slice(0, 10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              Download report (JSON)
+            </button>
           </div>
         </div>
       </Card>
@@ -125,8 +166,26 @@ export function AdminPrivacyCenter({
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-panel-muted">API keys</dt>
-              <dd className="text-white">{report.storage.apiKeysCount}</dd>
-            </div>
+            <dd className="text-white">{report.storage.apiKeysCount}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-panel-muted">2FA enabled (panel users)</dt>
+            <dd className="text-white">
+              {report.hardening.totpUsers}{" "}
+              <Link href="/admin/totp" className="text-panel-link hover:underline">
+                Manage
+              </Link>
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4 sm:col-span-2">
+            <dt className="text-panel-muted">Audit retention</dt>
+            <dd className="text-right text-white">
+              max {report.auditRetention.maxLines.toLocaleString()} lines
+              {report.auditRetention.retentionDays > 0
+                ? ` · ${report.auditRetention.retentionDays} days`
+                : ""}
+            </dd>
+          </div>
             <div className="flex justify-between gap-4">
               <dt className="text-panel-muted">Offsite backup creds</dt>
               <dd className="text-white">

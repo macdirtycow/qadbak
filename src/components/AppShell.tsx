@@ -70,6 +70,12 @@ export function AppShell({
             </nav>
           </div>
           <div className="flex items-center gap-3 text-sm">
+            <Link
+              href="/account/security"
+              className="text-panel-muted hover:text-white"
+            >
+              Security
+            </Link>
             <span className="text-panel-muted">
               {username}
               <span className="ml-1 rounded bg-slate-800 px-1.5 py-0.5 text-xs">

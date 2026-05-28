@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { auditLog, rotateAuditLogNow } from "@/lib/audit";
 import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonOk } from "@/lib/api";
 import { buildPrivacyReport } from "@/lib/privacy-report";
@@ -33,6 +34,22 @@ export async function GET(request: Request) {
     }
     const report = await buildPrivacyReport();
     return jsonOk(report);
+  } catch (err) {
+    return handleApiError(err);
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const session = await requireAdmin();
+    const body = (await request.json()) as { action?: string };
+    if (body.action === "rotate-audit") {
+      await rotateAuditLogNow();
+      await auditLog(session.username, "audit-rotate");
+      const report = await buildPrivacyReport();
+      return jsonOk({ ok: true, report });
+    }
+    return handleApiError(new Error("Unknown action."));
   } catch (err) {
     return handleApiError(err);
   }
