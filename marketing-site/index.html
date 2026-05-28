@@ -6,7 +6,7 @@
     <title>Qadbak — Self-hosted hosting control panel for Ubuntu</title>
     <meta
       name="description"
-      content="Open-source hosting panel for Ubuntu VPS. Premium subscriptions from €2.50/month — or €55 every 3 years. Cancel anytime in Stripe."
+      content="Self-hosted hosting panel for Ubuntu: one-click apps, REST API, offsite backups, WAF, TOTP 2FA, and privacy controls. Premium from €2.50/month."
     />
     <meta name="theme-color" content="#0f1419" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -20,7 +20,7 @@
     <meta property="og:title" content="Qadbak — Hosting control panel" />
     <meta
       property="og:description"
-      content="Run your own panel on Ubuntu. Premium is a Stripe subscription (monthly to 3-year) — not a one-time lifetime deal."
+      content="Run your own panel on Ubuntu — app catalog, API v1, backups, security, and GDPR-friendly admin tools on your VPS."
     />
     <meta property="og:url" content="https://qadbak.com" />
   </head>
@@ -34,6 +34,8 @@
           </a>
           <nav class="nav-links" aria-label="Main">
             <a href="#platform">Platform</a>
+            <a href="#apps">Apps</a>
+            <a href="#security">Security</a>
             <a href="#integrations">Integrations</a>
             <a href="#premium">Premium</a>
             <a href="#pricing">Pricing</a>
@@ -52,6 +54,8 @@
         </div>
         <div class="mobile-menu" aria-label="Mobile">
           <a href="#platform">Platform</a>
+          <a href="#apps">Apps</a>
+          <a href="#security">Security</a>
           <a href="#integrations">Integrations</a>
           <a href="#premium">Premium</a>
           <a href="#pricing">Pricing</a>
@@ -71,8 +75,8 @@
             <h1>Hosting control panel you run on your own VPS.</h1>
             <p class="hero-lead">
               Qadbak replaces cPanel-style workflows with a single admin and client UI:
-              sites, mail, DNS, TLS, databases, files, and scheduled backups — without
-              sending customer data to our servers.
+              sites, mail, DNS, TLS, databases, one-click apps, offsite backups, and
+              operator security tools — all on your VPS, without sending customer data to us.
             </p>
             <div class="hero-cta">
               <a href="https://license.omiiba.dev/buy" class="btn btn-primary btn-lg" rel="noopener">Premium from €2.50/mo</a>
@@ -87,11 +91,12 @@
           <aside class="hero-aside">
             <h2>What’s new</h2>
             <ul>
+              <li><strong>App catalog</strong> — WordPress, Joomla, Drupal, Nextcloud, phpMyAdmin, Matomo, PrestaShop, Ghost</li>
+              <li><strong>Privacy &amp; trust</strong> — TOTP 2FA, activity log, admin privacy center (data stays on your server)</li>
               <li>REST API v1 + scoped API keys (WHMCS / Blesta starters)</li>
               <li><code>panel.&lt;domain&gt;</code> URLs — Cloudflare Flexible or Full HTTPS</li>
-              <li>Offsite backups (S3 / B2 / GCS) and granular file/DB restore</li>
-              <li>ModSecurity WAF + ClamAV scans per domain</li>
-              <li>Node / Python / Docker runtimes + one-click app catalog</li>
+              <li>Offsite backups (S3 / B2 / GCS) + granular file/DB restore wizard</li>
+              <li>ModSecurity WAF, ClamAV, fail2ban, metrics &amp; alert webhooks</li>
             </ul>
           </aside>
         </div>
@@ -128,15 +133,133 @@
             </article>
             <article class="card">
               <h3>Backups</h3>
-              <p>Downloadable archives: site files, all maildirs, panel config, DNS zone, certificates, crontab. Offsite upload and single-file restore.</p>
+              <p>Downloadable archives: site files, maildirs, panel config, DNS zone, certificates, crontab. Offsite to S3, B2, or GCS with encrypted policy and per-file restore.</p>
             </article>
             <article class="card">
               <h3>Security</h3>
-              <p>Per-domain ModSecurity toggle, scheduled ClamAV scans, host firewall rules from admin — with audit journal entries.</p>
+              <p>Per-domain ModSecurity WAF, ClamAV malware scans, host firewall rules, fail2ban — plus domain security tab and journal entries.</p>
             </article>
             <article class="card">
               <h3>Runtimes</h3>
-              <p>Node, Python, and Docker compose helpers beside classic PHP-FPM — one pool per customer unix user.</p>
+              <p>Node, Python, and Docker compose helpers beside PHP-FPM — one pool per customer unix user (Ghost uses Node 18+).</p>
+            </article>
+            <article class="card">
+              <h3>One-click apps</h3>
+              <p>Admin app catalog and per-domain installer: CMS, shop, analytics, and tools into <code>public_html</code> with install journal + rollback hints.</p>
+            </article>
+            <article class="card">
+              <h3>Trust &amp; privacy</h3>
+              <p>TOTP two-factor login, local activity log with retention, privacy report export — no third-party analytics on the panel.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="apps" class="alt-bg">
+        <div class="container">
+          <p class="section-label">App catalog</p>
+          <h2 class="section-title">Install popular software in one flow</h2>
+          <p class="section-lead">
+            Pick an app from <strong>Server admin → App catalog</strong> or from a domain’s
+            <strong>Apps</strong> tab. Each install runs on the server as the domain user,
+            creates databases when needed, and is logged in the action journal.
+          </p>
+          <div class="app-grid" role="list">
+            <article class="app-chip" role="listitem">
+              <span class="app-chip-icon" aria-hidden="true">🦋</span>
+              <div>
+                <h3>WordPress</h3>
+                <p>Latest from wordpress.org · auto <code>wp-config.php</code></p>
+              </div>
+            </article>
+            <article class="app-chip" role="listitem">
+              <span class="app-chip-icon" aria-hidden="true">📰</span>
+              <div>
+                <h3>Joomla 5</h3>
+                <p>Full CMS package · PHP 8.1+</p>
+              </div>
+            </article>
+            <article class="app-chip" role="listitem">
+              <span class="app-chip-icon" aria-hidden="true">💧</span>
+              <div>
+                <h3>Drupal 10</h3>
+                <p>Recommended project · structured content</p>
+              </div>
+            </article>
+            <article class="app-chip" role="listitem">
+              <span class="app-chip-icon" aria-hidden="true">☁️</span>
+              <div>
+                <h3>Nextcloud</h3>
+                <p>Files, calendar, collaboration on your VPS</p>
+              </div>
+            </article>
+            <article class="app-chip" role="listitem">
+              <span class="app-chip-icon" aria-hidden="true">🗄️</span>
+              <div>
+                <h3>phpMyAdmin</h3>
+                <p>Browser UI for MariaDB · subfolder install</p>
+              </div>
+            </article>
+            <article class="app-chip" role="listitem">
+              <span class="app-chip-icon" aria-hidden="true">📊</span>
+              <div>
+                <h3>Matomo</h3>
+                <p>Self-hosted analytics · no Google tags</p>
+              </div>
+            </article>
+            <article class="app-chip" role="listitem">
+              <span class="app-chip-icon" aria-hidden="true">🛒</span>
+              <div>
+                <h3>PrestaShop 8</h3>
+                <p>E-commerce · web installer + MySQL</p>
+              </div>
+            </article>
+            <article class="app-chip" role="listitem">
+              <span class="app-chip-icon" aria-hidden="true">👻</span>
+              <div>
+                <h3>Ghost</h3>
+                <p>Newsletter blogging · ghost-cli · Node 18+</p>
+              </div>
+            </article>
+          </div>
+          <p class="section-lead" style="margin-top: 1.5rem; margin-bottom: 0">
+            More apps ship via <code>data/app-catalog.json</code> in the open-source repo — same installers your panel uses.
+          </p>
+        </div>
+      </section>
+
+      <section id="security">
+        <div class="container">
+          <p class="section-label">Security &amp; privacy</p>
+          <h2 class="section-title">Operator controls without shipping data to us</h2>
+          <p class="section-lead">
+            Customer sites and mail stay on your hardware. The panel adds practical safeguards
+            for admins and optional license heartbeat only (see <a href="/privacy">privacy policy</a>).
+          </p>
+          <div class="grid-2">
+            <article class="card">
+              <h3>TOTP two-factor login</h3>
+              <p>Admins enable authenticator apps under Account → Security or Server admin → 2FA. Password login then asks for a one-time code.</p>
+            </article>
+            <article class="card">
+              <h3>Activity log</h3>
+              <p>Server admin → Activity log: sign-ins, API actions, and config changes with configurable retention on disk.</p>
+            </article>
+            <article class="card">
+              <h3>Privacy center</h3>
+              <p>Outbound connections table, privacy report download, audit export, and trim tools — built for GDPR-minded hosts.</p>
+            </article>
+            <article class="card">
+              <h3>Install fingerprint</h3>
+              <p>Each VPS gets a stable <span class="code-chip">qb-…</span> tag on license heartbeat (not customer PII) — auto-provisioned on install and update.</p>
+            </article>
+            <article class="card">
+              <h3>WAF &amp; malware</h3>
+              <p>Toggle ModSecurity per domain, schedule ClamAV scans, review hits from the domain security tab.</p>
+            </article>
+            <article class="card">
+              <h3>Alerts &amp; metrics</h3>
+              <p>Disk, SSL expiry, and backup health on the status dashboard — email, Slack, or Telegram when thresholds breach.</p>
             </article>
           </div>
         </div>
@@ -171,7 +294,7 @@
         </div>
       </section>
 
-      <section id="different">
+      <section id="different" class="alt-bg">
         <div class="container">
           <p class="section-label">Operator tools</p>
           <h2 class="section-title">Built for people who run the server</h2>
@@ -189,12 +312,12 @@
               <p>Disk, memory, certificate expiry, and service status in one place with suggested fix commands.</p>
             </article>
             <article class="card">
-              <h3>WordPress install</h3>
-              <p>One guided flow: domain, database, download, config — logged as a single journal entry.</p>
+              <h3>App catalog admin</h3>
+              <p>Browse featured apps, requirements (PHP, DB, Node), and install paths — same catalog on every domain’s Apps tab.</p>
             </article>
             <article class="card">
-              <h3>App catalog</h3>
-              <p>Install common apps into <code>public_html</code> from the Scripts screen — logged like any other change.</p>
+              <h3>Install journal</h3>
+              <p>App installs show progress, post-install checklist, and rollback hints when an installer leaves partial files.</p>
             </article>
             <article class="card">
               <h3>Website health</h3>
@@ -204,7 +327,7 @@
         </div>
       </section>
 
-      <section id="premium" class="alt-bg">
+      <section id="premium">
         <div class="container">
           <p class="section-label">Premium</p>
           <h2 class="section-title">Multi-tenant hosting business</h2>
@@ -263,6 +386,16 @@
               </tr>
               <tr>
                 <td>REST API v1 + billing modules (open source in repo)</td>
+                <td><span class="tag tag-free">Included</span></td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td>One-click app catalog (8 apps)</td>
+                <td><span class="tag tag-free">Included</span></td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td>TOTP 2FA, activity log, privacy center</td>
                 <td><span class="tag tag-free">Included</span></td>
                 <td>—</td>
               </tr>
@@ -342,6 +475,8 @@
                 <tr><td>Client + admin UI</td><td class="yes">Native</td><td>WHM + cPanel</td><td>Yes</td><td>Yes</td></tr>
                 <tr><td>Full backup export</td><td class="yes">Yes</td><td>Add-ons</td><td>Add-ons</td><td>Basic</td></tr>
                 <tr><td>Action journal + undo</td><td class="yes">Mail, DNS</td><td>No</td><td>Limited</td><td>No</td></tr>
+                <tr><td>One-click app catalog</td><td class="yes">8 apps</td><td>Softaculous</td><td>Catalog</td><td>Limited</td></tr>
+                <tr><td>Admin 2FA + privacy report</td><td class="yes">TOTP + local log</td><td>Add-ons</td><td>Varies</td><td>No</td></tr>
               </tbody>
             </table>
           </div>
@@ -421,6 +556,13 @@
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
+                Which apps can I install with one click?
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="faq-a">WordPress, Joomla, Drupal, Nextcloud, phpMyAdmin, Matomo, PrestaShop, and Ghost — from Server admin → App catalog or Domains → your domain → Apps. Ghost needs Node 18+ on the server; most others use PHP-FPM and MariaDB created by the panel.</div>
+            </div>
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false">
                 Cloudflare and panel.<span class="code">domain</span>?
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
@@ -453,6 +595,8 @@
           <h4>Product</h4>
           <ul>
             <li><a href="#platform">Features</a></li>
+            <li><a href="#apps">App catalog</a></li>
+            <li><a href="#security">Security</a></li>
             <li><a href="#pricing">Pricing</a></li>
             <li><a href="https://license.omiiba.dev/buy" rel="noopener">Premium plans</a></li>
             <li><a href="/login">Panel login</a></li>
