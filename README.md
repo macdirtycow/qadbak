@@ -85,14 +85,15 @@ Website: [qadbak.com](https://qadbak.com) · Market features: [docs/MARKET-FEATU
 
 | Plan | Price | Use it for |
 |------|-------|------------|
-| Pro · **1 month** | **€2.50** | Trying things out |
+| Pro · **1 month** | **€2.50/mo** | Trying things out (subscription) |
 | Pro · 3 months | €7.45 | Short project |
 | Pro · 6 months | €10.50 | Half-year of hosting |
 | Pro · **1 year** ★ Most popular | **€20** | Annual usage |
 | Pro · Lifetime | €220 | Unlimited time, one VPS, all future versions |
 
-All plans cover **50 domains** on **1 VPS** with full Premium modules. One-time
-payment in EUR. The Qadbak core panel is open source and runs without a
+All plans cover **50 domains** on **1 VPS** with full Premium modules. Monthly
+and longer plans are **Stripe subscriptions** (renew until cancelled); lifetime
+is a one-time payment in EUR. The Qadbak core panel is open source and runs without a
 license — Premium unlocks the multi-tenant client modules, RBAC, panel-vhost
 provisioning, per-user PHP-FPM isolation and live admin updates.
 
