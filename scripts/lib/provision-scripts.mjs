@@ -31,6 +31,14 @@ const INSTALLERS = {
   limesurvey: "install-app-limesurvey.sh",
   grav: "install-app-grav.sh",
   adminer: "install-app-adminer.sh",
+  roundcube: "install-app-roundcube.sh",
+  dokuwiki: "install-app-dokuwiki.sh",
+  piwigo: "install-app-piwigo.sh",
+  mybb: "install-app-mybb.sh",
+  bookstack: "install-app-bookstack.sh",
+  firefly: "install-app-firefly.sh",
+  osticket: "install-app-osticket.sh",
+  processwire: "install-app-processwire.sh",
 };
 
 async function loadCatalog() {

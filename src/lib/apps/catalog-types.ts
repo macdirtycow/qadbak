@@ -6,7 +6,10 @@ export type AppCategory =
   | "ecommerce"
   | "education"
   | "forum"
-  | "surveys";
+  | "surveys"
+  | "media"
+  | "finance"
+  | "support";
 
 export interface AppCatalogEntry {
   id: string;

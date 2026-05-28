@@ -23,6 +23,14 @@ const FALLBACK_ICONS: Record<string, string> = {
   limesurvey: "📝",
   grav: "🪨",
   adminer: "🔧",
+  roundcube: "✉️",
+  dokuwiki: "📖",
+  piwigo: "🖼️",
+  mybb: "🗨️",
+  bookstack: "📕",
+  firefly: "💰",
+  osticket: "🎫",
+  processwire: "⚙️",
 };
 
 function normalizeRow(row: Record<string, unknown>): AppCatalogEntry {

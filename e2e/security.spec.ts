@@ -78,7 +78,7 @@ test.describe("premium messaging on marketing", () => {
   test("HTML explains app store scope vs Softaculous", async ({ request }) => {
     const res = await request.get("/");
     const html = await res.text();
-    expect(html).toMatch(/16 curated apps|16 maintained apps/i);
+    expect(html).toMatch(/24 curated apps|24 maintained apps|24 apps you can install/i);
     expect(html).toMatch(/Softaculous/i);
   });
 });

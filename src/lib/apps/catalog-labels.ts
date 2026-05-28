@@ -9,4 +9,7 @@ export const CATEGORY_LABELS: Record<AppCategory, string> = {
   education: "Education",
   forum: "Forums",
   surveys: "Surveys",
+  media: "Media & galleries",
+  finance: "Finance",
+  support: "Support & helpdesk",
 };
