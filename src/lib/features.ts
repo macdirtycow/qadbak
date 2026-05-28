@@ -302,6 +302,18 @@ export const DOMAIN_FEATURES: DomainFeature[] = [
     },
   },
   {
+    id: "runtimes",
+    phase: 5,
+    label: "Runtimes",
+    description: "PHP-FPM, Node.js, Python, Docker apps",
+    path: "runtimes",
+    navOrder: 12,
+    programs: {
+      admin: ["list-domains"],
+      client: ["list-domains"],
+    },
+  },
+  {
     id: "proxies",
     phase: 5,
     label: "Proxies",
@@ -408,6 +420,8 @@ export const ADMIN_NAV = [
   { path: "/admin/license", label: "License" },
   { path: "/admin/branding", label: "Branding", premium: "white-label" as const },
   { path: "/admin/cloud", label: "Cloud (S3)" },
+  { path: "/admin/firewall", label: "Firewall" },
+  { path: "/admin/api-keys", label: "API keys" },
 ] as const;
 
 export function adminNavItems(): readonly {

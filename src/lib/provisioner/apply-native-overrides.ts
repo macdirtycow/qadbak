@@ -126,6 +126,12 @@ export function applyNativeOverrides<T extends Provisioner>(base: T): T {
     out.installScript = native.installScriptNative;
     out.deleteInstalledScript = native.deleteInstalledScriptNative;
   }
+  if (nativeFeatureEnabled("runtimes")) {
+    out.getRuntimes = native.getRuntimesNative;
+    out.installNodeRuntime = native.installNodeRuntimeNative;
+    out.installPythonRuntime = native.installPythonRuntimeNative;
+    out.installDockerRuntime = native.installDockerRuntimeNative;
+  }
   if (nativeFeatureEnabled("security")) {
     out.getMailSecurity = native.getMailSecurityNative;
     out.setSpamFilter = native.setSpamFilterNative;

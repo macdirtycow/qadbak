@@ -1,17 +1,36 @@
 [
   {
     "name": "wordpress",
+    "label": "WordPress",
     "desc": "WordPress CMS (latest from wordpress.org)",
-    "version": "latest"
+    "version": "latest",
+    "requiresDb": true
+  },
+  {
+    "name": "joomla",
+    "label": "Joomla",
+    "desc": "Joomla 5 CMS",
+    "version": "5",
+    "requiresDb": true
+  },
+  {
+    "name": "drupal",
+    "label": "Drupal",
+    "desc": "Drupal 10 (composer)",
+    "version": "10",
+    "requiresDb": true
   },
   {
     "name": "phpmyadmin",
+    "label": "phpMyAdmin",
     "desc": "phpMyAdmin database admin (static files)",
     "version": "5.2"
   },
   {
     "name": "nextcloud",
+    "label": "Nextcloud",
     "desc": "Nextcloud ZIP install",
-    "version": "latest"
+    "version": "latest",
+    "requiresDb": true
   }
 ]

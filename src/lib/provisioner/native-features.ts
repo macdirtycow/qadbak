@@ -24,6 +24,7 @@ const ALL = [
   "shared",
   "proxies",
   "scripts",
+  "runtimes",
   "security",
   "resellers",
 ] as const;

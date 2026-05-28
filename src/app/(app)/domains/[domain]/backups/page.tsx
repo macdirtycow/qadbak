@@ -25,8 +25,10 @@ export default async function BackupsPage({ params }: Props) {
       initialScheduled={scheduled}
       canBackup
       canRestore={isAdmin}
+      canPartialRestore={nativeMode}
       canUpload={isAdmin && nativeMode}
       nativeMode={nativeMode}
+      isAdmin={isAdmin}
       initialError={error}
     />
   );

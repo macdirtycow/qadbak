@@ -742,6 +742,47 @@ export async function deleteInstalledScriptNative(
   await runProvisioningHelper("script-delete", domain, script);
 }
 
+export async function getRuntimesNative(domain: string, _actor: Actor) {
+  const r = await runProvisioningHelper("runtimes-get", domain);
+  return {
+    runtimes: (r.runtimes as { apps?: unknown[] }) ?? { apps: [] },
+    phpFpmSocket: String(r.phpFpmSocket ?? ""),
+  };
+}
+
+export async function installNodeRuntimeNative(
+  domain: string,
+  name: string,
+  port: number,
+  subpath: string | undefined,
+  _actor: Actor,
+) {
+  return runProvisioningHelper(
+    "runtimes-node-install",
+    domain,
+    name,
+    String(port),
+    subpath ?? "/",
+  );
+}
+
+export async function installPythonRuntimeNative(
+  domain: string,
+  name: string,
+  port: number,
+  _actor: Actor,
+) {
+  return runProvisioningHelper("runtimes-python-install", domain, name, String(port));
+}
+
+export async function installDockerRuntimeNative(
+  domain: string,
+  name: string,
+  _actor: Actor,
+) {
+  return runProvisioningHelper("runtimes-docker-install", domain, name);
+}
+
 export async function getMailSecurityNative(
   domain: string,
   _actor: Actor,

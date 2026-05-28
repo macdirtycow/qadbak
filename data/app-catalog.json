@@ -1,0 +1,52 @@
+[
+  {
+    "id": "wordpress",
+    "name": "wordpress",
+    "label": "WordPress",
+    "desc": "CMS — latest from wordpress.org",
+    "version": "latest",
+    "minPhp": "8.0",
+    "requiresDb": true,
+    "installer": "install-app-wordpress.sh"
+  },
+  {
+    "id": "joomla",
+    "name": "joomla",
+    "label": "Joomla",
+    "desc": "CMS — Joomla 5 full package",
+    "version": "5",
+    "minPhp": "8.1",
+    "requiresDb": true,
+    "installer": "install-app-joomla.sh"
+  },
+  {
+    "id": "drupal",
+    "name": "drupal",
+    "label": "Drupal",
+    "desc": "CMS — Drupal 10 recommended project",
+    "version": "10",
+    "minPhp": "8.1",
+    "requiresDb": true,
+    "installer": "install-app-drupal.sh"
+  },
+  {
+    "id": "phpmyadmin",
+    "name": "phpmyadmin",
+    "label": "phpMyAdmin",
+    "desc": "Database admin (subfolder)",
+    "version": "5.2",
+    "minPhp": "8.0",
+    "requiresDb": false,
+    "installer": "install-app-phpmyadmin.sh"
+  },
+  {
+    "id": "nextcloud",
+    "name": "nextcloud",
+    "label": "Nextcloud",
+    "desc": "File sync and collaboration",
+    "version": "latest",
+    "minPhp": "8.1",
+    "requiresDb": true,
+    "installer": "install-app-nextcloud.sh"
+  }
+]

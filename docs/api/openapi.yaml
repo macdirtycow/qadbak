@@ -1,0 +1,80 @@
+openapi: 3.0.3
+info:
+  title: Qadbak API v1
+  version: 1.0.0
+  description: Native hosting automation API (Bearer API keys).
+servers:
+  - url: https://panel.example.com/api/v1
+security:
+  - bearerAuth: []
+paths:
+  /domains:
+    get:
+      summary: List hosted domains
+      operationId: listDomains
+      security:
+        - bearerAuth: [domains:read]
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create domain
+      operationId: createDomain
+      security:
+        - bearerAuth: [domains:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [domain]
+              properties:
+                domain:
+                  type: string
+                user:
+                  type: string
+                plan:
+                  type: string
+                pass:
+                  type: string
+      responses:
+        "200":
+          description: Created
+  /domains/{domain}:
+    get:
+      summary: Get domain
+      operationId: getDomain
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: [domains:read]
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not found
+    delete:
+      summary: Delete domain
+      operationId: deleteDomain
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - bearerAuth: [domains:write]
+      responses:
+        "200":
+          description: Deleted
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: API key from Admin → API keys

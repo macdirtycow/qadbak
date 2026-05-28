@@ -1795,6 +1795,54 @@ export async function deleteInstalledScript(
   await hostingRemoteCall("delete-script", { domain, script }, actor);
 }
 
+export async function getRuntimes(
+  domain: string,
+  actor: { role: Role; domains: string[] },
+): Promise<Record<string, unknown>> {
+  void domain;
+  void actor;
+  return { apps: [], phpFpmSocket: "" };
+}
+
+export async function installNodeRuntime(
+  domain: string,
+  name: string,
+  port: number,
+  subpath: string | undefined,
+  actor: { role: Role; domains: string[] },
+): Promise<Record<string, unknown>> {
+  void domain;
+  void name;
+  void port;
+  void subpath;
+  void actor;
+  throw new PanelError("Node runtime requires native provisioner (runtimes feature).", 501);
+}
+
+export async function installPythonRuntime(
+  domain: string,
+  name: string,
+  port: number,
+  actor: { role: Role; domains: string[] },
+): Promise<Record<string, unknown>> {
+  void domain;
+  void name;
+  void port;
+  void actor;
+  throw new PanelError("Python runtime requires native provisioner (runtimes feature).", 501);
+}
+
+export async function installDockerRuntime(
+  domain: string,
+  name: string,
+  actor: { role: Role; domains: string[] },
+): Promise<Record<string, unknown>> {
+  void domain;
+  void name;
+  void actor;
+  throw new PanelError("Docker runtime requires native provisioner (runtimes feature).", 501);
+}
+
 export interface ProxyRoute {
   path: string;
   dest: string;

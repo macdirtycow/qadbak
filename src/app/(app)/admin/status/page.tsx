@@ -1,4 +1,5 @@
 import { AdminHostMetrics } from "@/components/AdminHostMetrics";
+import { AdminMetricsHistory } from "@/components/AdminMetricsHistory";
 import { AdminServerView } from "@/components/AdminServerView";
 import { requireAdminPage } from "@/lib/admin-api";
 import {
@@ -41,6 +42,7 @@ export default async function AdminStatusPage() {
         </p>
       </div>
       <AdminHostMetrics initialMetrics={metrics} initialError={metricsError} />
+      <AdminMetricsHistory />
       <AdminServerView
         initialBandwidth={bandwidth}
         initialServices={services}

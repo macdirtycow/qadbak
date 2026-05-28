@@ -1,0 +1,15 @@
+{
+  "emailTo": "admin@example.com",
+  "slackWebhook": "",
+  "telegramWebhook": "",
+  "rules": [
+    {
+      "id": "disk-85",
+      "enabled": true,
+      "metric": "disk",
+      "threshold": 85,
+      "channel": "email",
+      "target": ""
+    }
+  ]
+}

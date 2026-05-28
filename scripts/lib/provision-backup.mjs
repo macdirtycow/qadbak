@@ -302,6 +302,14 @@ export async function backupCreate(domain, scopeArg) {
   const sched = await loadSchedule(domain);
   await pruneOldBackups(home, sched.retain);
 
+  let offsite = { uploaded: false };
+  try {
+    const { maybeUploadBackupOffsite } = await import("./backup-offsite.mjs");
+    offsite = await maybeUploadBackupOffsite(domain, file, archive);
+  } catch (e) {
+    offsite = { uploaded: false, error: e instanceof Error ? e.message : String(e) };
+  }
+
   emit({
     ok: true,
     file: archive,
@@ -309,6 +317,7 @@ export async function backupCreate(domain, scopeArg) {
     sizeBytes: (await stat(file)).size,
     components,
     mailAccounts,
+    offsite,
   });
 }
 
@@ -525,4 +534,137 @@ export async function backupScheduleToggle(domain, enabled) {
   await saveSchedule(domain, sched);
   await syncBackupCron(domain);
   emit({ ok: true, schedule: sched });
+}
+
+const POLICY_CFG = "backup-policy.json";
+
+export async function backupPolicyGet(domain) {
+  await resolveDomainUser(domain);
+  const policy = await readDomainConfigJson(domain, POLICY_CFG, {
+    offsite: false,
+    providerId: "default",
+  });
+  emit({ ok: true, policy });
+}
+
+export async function backupPolicySet(domain, jsonArg) {
+  await resolveDomainUser(domain);
+  let body = {};
+  try {
+    body = JSON.parse(jsonArg || "{}");
+  } catch {
+    fail("invalid policy JSON");
+  }
+  const prev = await readDomainConfigJson(domain, POLICY_CFG, {
+    offsite: false,
+    providerId: "default",
+  });
+  const next = {
+    offsite: body.offsite !== undefined ? Boolean(body.offsite) : prev.offsite,
+    providerId: String(body.providerId ?? prev.providerId ?? "default"),
+  };
+  await writeDomainConfigJson(domain, POLICY_CFG, next);
+  emit({ ok: true, policy: next });
+}
+
+function safeArchivePath(home, name) {
+  const fname = safeBackupName(name);
+  const dir = path.resolve(backupsDir(home));
+  const full = path.resolve(path.join(dir, fname));
+  if (!full.startsWith(`${dir}${path.sep}`)) fail("Invalid backup path");
+  return full;
+}
+
+function safeRelativePath(rel) {
+  const p = String(rel || "").replace(/\\/g, "/").replace(/^\/+/, "");
+  if (!p || p.includes("..")) fail("Invalid path in archive");
+  return p;
+}
+
+export async function backupArchiveList(domain, name, prefixArg) {
+  const { home } = await resolveDomainUser(domain);
+  const archive = safeArchivePath(home, name);
+  if (!(await fileExists(archive))) fail(`Backup not found: ${name}`);
+  const prefix = prefixArg ? safeRelativePath(prefixArg) : "";
+  const { stdout } = await exec("tar", ["-tzf", archive], {
+    timeout: 120_000,
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  const lines = stdout.split("\n").filter(Boolean);
+  const filtered = prefix
+    ? lines.filter((l) => l === prefix || l.startsWith(`${prefix}/`))
+    : lines;
+  const entries = [];
+  const seen = new Set();
+  for (const line of filtered) {
+    const parts = line.split("/").filter(Boolean);
+    if (!parts.length) continue;
+    const top = prefix ? parts.slice(prefix.split("/").filter(Boolean).length) : parts;
+    if (!top.length) continue;
+    const node = top[0];
+    const key = prefix ? `${prefix}/${node}` : node;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const isDir = line.endsWith("/") || filtered.some((l) => l.startsWith(`${line}/`));
+    entries.push({
+      path: key,
+      name: node,
+      type: isDir ? "dir" : "file",
+    });
+  }
+  entries.sort((a, b) => a.path.localeCompare(b.path));
+  emit({ ok: true, archive: path.basename(archive), prefix: prefix || "/", entries: entries.slice(0, 500) });
+}
+
+export async function backupRestoreFile(domain, name, relPath) {
+  const d = String(domain).trim().toLowerCase();
+  const { user, home } = await resolveDomainUser(d);
+  const archive = safeArchivePath(home, name);
+  const rel = safeRelativePath(relPath);
+  if (!rel.startsWith("public_html/")) {
+    fail("Clients may only restore files under public_html/");
+  }
+  const staging = `/tmp/qadbak-partial-${user}-${Date.now()}`;
+  await mkdir(staging, { recursive: true });
+  await exec("tar", ["-xzf", archive, "-C", staging, rel], { timeout: 300_000 });
+  const src = path.join(staging, rel);
+  if (!(await fileExists(src))) fail(`Path not in backup: ${rel}`);
+  const dest = path.join(home, rel);
+  await mkdir(path.dirname(dest), { recursive: true });
+  const st = await stat(src);
+  if (st.isDirectory()) {
+    await exec("rsync", ["-a", `${src}/`, `${dest}/`], { timeout: 300_000 });
+  } else {
+    await cp(src, dest);
+  }
+  await exec("chown", ["-R", `${user}:${user}`, path.join(home, "public_html")], {
+    timeout: 120_000,
+  }).catch(() => {});
+  await rm(staging, { recursive: true, force: true });
+  emit({ ok: true, restored: rel, archive: path.basename(archive) });
+}
+
+export async function backupRestoreDatabase(domain, name, dbName) {
+  const d = String(domain).trim().toLowerCase();
+  const { user, home } = await resolveDomainUser(d);
+  const archive = safeArchivePath(home, name);
+  const db = String(dbName || "").replace(/[^a-zA-Z0-9_]/g, "");
+  if (!db) fail("database name required");
+  const prefix = `${user}_`;
+  if (!db.startsWith(prefix) && db !== user.replace(/-/g, "_")) {
+    fail("Database not owned by this domain");
+  }
+  const staging = `/tmp/qadbak-db-restore-${user}-${Date.now()}`;
+  await mkdir(staging, { recursive: true });
+  const sqlMember = `mysql/${db}.sql`;
+  await exec("tar", ["-xzf", archive, "-C", staging, sqlMember], { timeout: 300_000 });
+  const sqlPath = path.join(staging, sqlMember);
+  if (!(await fileExists(sqlPath))) fail(`No dump for database ${db} in this backup`);
+  await exec(
+    "bash",
+    ["-c", `mysql ${db} < ${JSON.stringify(sqlPath)}`],
+    { timeout: 600_000, maxBuffer: 32 * 1024 * 1024 },
+  );
+  await rm(staging, { recursive: true, force: true });
+  emit({ ok: true, database: db, archive: path.basename(archive) });
 }

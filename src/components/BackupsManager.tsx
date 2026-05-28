@@ -22,6 +22,8 @@ export function BackupsManager({
   canUpload = false,
   initialError,
   nativeMode = false,
+  isAdmin = false,
+  canPartialRestore = false,
 }: {
   domain: string;
   initialScheduled: ScheduledBackup[];
@@ -31,6 +33,9 @@ export function BackupsManager({
   canUpload?: boolean;
   initialError: string;
   nativeMode?: boolean;
+  isAdmin?: boolean;
+  /** Browse archive + restore single file under public_html */
+  canPartialRestore?: boolean;
 }) {
   const router = useRouter();
   const enc = encodeURIComponent(domain);
@@ -50,6 +55,12 @@ export function BackupsManager({
   const [retainCount, setRetainCount] = useState(7);
   const [uploadName, setUploadName] = useState("");
   const uploadInputRef = useRef<HTMLInputElement>(null);
+  const [browseArchive, setBrowseArchive] = useState("");
+  const [browsePrefix, setBrowsePrefix] = useState("");
+  const [browseEntries, setBrowseEntries] = useState<{ path: string; name: string; type: string }[]>([]);
+  const [partialPath, setPartialPath] = useState("");
+  const [offsiteEnabled, setOffsiteEnabled] = useState(false);
+  const [providerId, setProviderId] = useState("default");
 
   const scheduleRow = useMemo(
     () => scheduled.find((s) => s.id === "schedule"),
@@ -64,6 +75,80 @@ export function BackupsManager({
     const res = await fetch(`/api/domains/${enc}/backups`);
     const data = await res.json();
     if (res.ok) setScheduled(data.scheduled ?? []);
+  }
+
+  async function loadOffsitePolicy() {
+    if (!nativeMode || !isAdmin) return;
+    const res = await fetch(`/api/domains/${enc}/backups/policy`);
+    const data = await res.json();
+    if (res.ok && data.policy) {
+      setOffsiteEnabled(Boolean(data.policy.offsite));
+      setProviderId(String(data.policy.providerId ?? "default"));
+    }
+  }
+
+  async function saveOffsitePolicy() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/domains/${enc}/backups/policy`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ offsite: offsiteEnabled, providerId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      setSuccess("Offsite backup policy saved.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function browseArchiveList() {
+    if (!browseArchive.trim()) return;
+    setLoading(true);
+    setError("");
+    try {
+      const q = new URLSearchParams({
+        name: browseArchive.trim(),
+        prefix: browsePrefix.trim(),
+      });
+      const res = await fetch(`/api/domains/${enc}/backups/archive?${q}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Browse failed");
+      setBrowseEntries(data.entries ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function restorePartialFile() {
+    if (!browseArchive.trim() || !partialPath.trim()) return;
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch(`/api/domains/${enc}/backups/archive`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "restore-file",
+          name: browseArchive.trim(),
+          path: partialPath.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Restore failed");
+      setSuccess(`Restored ${data.restored ?? partialPath}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function startBackup() {
@@ -274,6 +359,105 @@ export function BackupsManager({
       />
       {error && <Alert>{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
+
+      {nativeMode && isAdmin && (
+        <Card>
+          <h2 className="text-lg font-medium text-white">Offsite backup (S3 / B2)</h2>
+          <p className="mt-2 text-sm text-panel-muted">
+            After each backup, upload to configured provider (Admin → Cloud).
+          </p>
+          <label className="mt-4 flex items-center gap-2 text-sm text-panel-muted">
+            <input
+              type="checkbox"
+              checked={offsiteEnabled}
+              onChange={(e) => setOffsiteEnabled(e.target.checked)}
+            />
+            Upload backups offsite
+          </label>
+          <div className="mt-3">
+            <Label htmlFor="provider-id">Provider ID</Label>
+            <Input
+              id="provider-id"
+              className="mt-1 max-w-xs"
+              value={providerId}
+              onChange={(e) => setProviderId(e.target.value)}
+            />
+          </div>
+          <div className="mt-4 flex gap-2">
+            <Button variant="secondary" disabled={loading} onClick={saveOffsitePolicy}>
+              Save offsite policy
+            </Button>
+            <Button variant="ghost" disabled={loading} onClick={loadOffsitePolicy}>
+              Reload policy
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {nativeMode && canPartialRestore && (
+        <Card>
+          <h2 className="text-lg font-medium text-white">Granular restore</h2>
+          <p className="mt-2 text-sm text-panel-muted">
+            Browse a backup and restore one file under public_html/.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="browse-archive">Archive</Label>
+              <Input
+                id="browse-archive"
+                className="mt-1"
+                value={browseArchive}
+                onChange={(e) => setBrowseArchive(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="browse-prefix">Prefix</Label>
+              <Input
+                id="browse-prefix"
+                className="mt-1"
+                placeholder="public_html"
+                value={browsePrefix}
+                onChange={(e) => setBrowsePrefix(e.target.value)}
+              />
+            </div>
+          </div>
+          <Button className="mt-3" variant="secondary" disabled={loading} onClick={browseArchiveList}>
+            List contents
+          </Button>
+          {browseEntries.length > 0 && (
+            <ul className="mt-4 max-h-40 overflow-auto text-sm text-panel-muted divide-y divide-panel-border">
+              {browseEntries.map((e) => (
+                <li key={e.path} className="py-1">
+                  <button
+                    type="button"
+                    className="hover:text-white"
+                    onClick={() => setPartialPath(e.path)}
+                  >
+                    {e.path}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-3">
+            <Label htmlFor="partial-path">Path to restore</Label>
+            <Input
+              id="partial-path"
+              className="mt-1"
+              value={partialPath}
+              onChange={(e) => setPartialPath(e.target.value)}
+            />
+          </div>
+          <Button
+            className="mt-3"
+            variant="danger"
+            disabled={loading || !partialPath.startsWith("public_html/")}
+            onClick={restorePartialFile}
+          >
+            Restore file only
+          </Button>
+        </Card>
+      )}
 
       {canBackup && (
         <div className="flex flex-wrap justify-end gap-2">

@@ -30,7 +30,23 @@ import {
   backupScheduleGet,
   backupScheduleSet,
   backupScheduleToggle,
+  backupPolicyGet,
+  backupPolicySet,
+  backupArchiveList,
+  backupRestoreFile,
+  backupRestoreDatabase,
 } from "./lib/provision-backup.mjs";
+import {
+  firewallStatus,
+  firewallAllow,
+  firewallDeny,
+} from "./lib/provision-firewall.mjs";
+import { malwareScanDomain } from "./lib/provision-malware.mjs";
+import {
+  modsecurityStatus,
+  modsecurityToggle,
+} from "./lib/provision-modsecurity.mjs";
+import { metricsSnapshot } from "./lib/metrics-collector.mjs";
 import { cronList, cronCreate, cronDelete } from "./lib/provision-cron.mjs";
 import { aliasList, aliasCreate, aliasDelete } from "./lib/provision-aliases.mjs";
 import { redirectList, redirectCreate, redirectDelete } from "./lib/provision-redirects.mjs";
@@ -92,6 +108,16 @@ import {
   scriptInstall,
   scriptDelete,
 } from "./lib/provision-scripts.mjs";
+import {
+  runtimesGet,
+  runtimesNodeInstall,
+  runtimesPythonInstall,
+  runtimesDockerInstall,
+} from "./lib/provision-runtimes.mjs";
+import {
+  cloudCredentialsList,
+  cloudCredentialsSave,
+} from "./lib/cloud-credentials.mjs";
 import { appInstallWordpress } from "./lib/provision-app-wordpress.mjs";
 import {
   securityGet,
@@ -411,6 +437,69 @@ async function main() {
       break;
     case "script-delete":
       await scriptDelete(args[0], args[1]);
+      break;
+    case "runtimes-get":
+      await runtimesGet(args[0]);
+      break;
+    case "runtimes-node-install":
+      await runtimesNodeInstall(args[0], args[1], args[2], args[3]);
+      break;
+    case "runtimes-python-install":
+      await runtimesPythonInstall(args[0], args[1], args[2]);
+      break;
+    case "runtimes-docker-install":
+      await runtimesDockerInstall(args[0], args[1]);
+      break;
+    case "cloud-credentials-list":
+      await cloudCredentialsList();
+      break;
+    case "cloud-credentials-save":
+      await cloudCredentialsSave(
+        args[0],
+        args[1],
+        args[2],
+        args[3],
+        args[4],
+        args[5],
+        args[6],
+        args[7],
+      );
+      break;
+    case "backup-policy-get":
+      await backupPolicyGet(args[0]);
+      break;
+    case "backup-policy-set":
+      await backupPolicySet(args[0], args[1]);
+      break;
+    case "backup-archive-list":
+      await backupArchiveList(args[0], args[1], args[2]);
+      break;
+    case "backup-restore-file":
+      await backupRestoreFile(args[0], args[1], args[2]);
+      break;
+    case "backup-restore-database":
+      await backupRestoreDatabase(args[0], args[1], args[2]);
+      break;
+    case "firewall-status":
+      await firewallStatus();
+      break;
+    case "firewall-allow":
+      await firewallAllow(args[0], args[1]);
+      break;
+    case "firewall-deny":
+      await firewallDeny(args[0]);
+      break;
+    case "malware-scan":
+      await malwareScanDomain(args[0]);
+      break;
+    case "modsecurity-status":
+      await modsecurityStatus(args[0]);
+      break;
+    case "modsecurity-toggle":
+      await modsecurityToggle(args[0], args[1]);
+      break;
+    case "metrics-snapshot":
+      await metricsSnapshot();
       break;
     case "security-get":
       await securityGet(args[0]);

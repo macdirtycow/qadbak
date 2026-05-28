@@ -91,8 +91,8 @@ export function ScriptsManager({
     <div className="space-y-6">
       <DomainPageHeader
         domain={domain}
-        title="Script installers"
-        description="WordPress, Drupal, and other apps"
+        title="Apps"
+        description="One-click CMS installers (WordPress, Joomla, Drupal, …)"
       />
       {error && <Alert>{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
@@ -151,7 +151,9 @@ export function ScriptsManager({
                 <option value="">Choose…</option>
                 {available.map((s) => (
                   <option key={s.name} value={s.name}>
-                    {s.name} {s.version ? `(${s.version})` : ""}
+                    {(s as { label?: string }).label ?? s.name}
+                    {s.version ? ` · ${s.version}` : ""}
+                    {(s as { requiresDb?: boolean }).requiresDb ? " · needs DB" : ""}
                   </option>
                 ))}
               </select>
