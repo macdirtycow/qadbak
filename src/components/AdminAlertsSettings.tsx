@@ -145,12 +145,9 @@ export function AdminAlertsSettings() {
         </Button>
       </div>
       <p className="text-xs text-panel-muted">
-        Fase 6: plan een cron voor{" "}
-        <code className="text-white">metrics-snapshot</code> en periodieke evaluate — zie{" "}
-        <a href="/admin/phases" className="text-panel-link hover:underline">
-          8 phases
-        </a>
-        .
+        Tip: plan een cron voor{" "}
+        <code className="text-white">metrics-snapshot</code> en periodieke evaluate op de
+        server.
       </p>
     </Card>
   );

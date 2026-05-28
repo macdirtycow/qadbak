@@ -210,20 +210,6 @@ export function SecurityManager({
 
       {isAdmin && (
         <Card className="border-panel-accent/30 bg-panel-accent/5">
-          <h2 className="text-sm font-medium text-white">Fase 7 — Security</h2>
-          <p className="mt-2 text-sm text-panel-muted">
-            ModSecurity WAF, ClamAV malware scans, spam/DKIM — lokaal op deze VPS. Server-breed:
-            UFW en fail2ban onder{" "}
-            <a href="/admin/firewall" className="text-panel-link hover:underline">
-              Firewall
-            </a>
-            .
-          </p>
-        </Card>
-      )}
-
-      {isAdmin && (
-        <Card className="border-panel-accent/30 bg-panel-accent/5">
           <h2 className="text-sm font-medium text-white">Privacy on this domain</h2>
           <p className="mt-2 text-sm text-panel-muted">
             WAF logs, malware scans, and mail filters run locally on your VPS — nothing is

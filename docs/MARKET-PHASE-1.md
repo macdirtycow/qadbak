@@ -41,5 +41,3 @@ See [VM-REMOVAL-ROADMAP.md](./VM-REMOVAL-ROADMAP.md) for per-module status.
 | Live metrics | Admin → Status |
 | New domain | Domains → New |
 | Per domain | Mail, DNS, SSL, Databases, Cron, Backups, Files, Terminal |
-
-**Fase-hub:** Admin → **8 phases** — toont o.a. native provisioner en domain registry checks.

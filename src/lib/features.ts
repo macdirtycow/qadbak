@@ -412,7 +412,6 @@ export const ADMIN_NAV = [
   { path: "/admin/health", label: "Health" },
   { path: "/admin/journal", label: "Journal" },
   { path: "/admin/audit", label: "Activity log" },
-  { path: "/admin/phases", label: "8 phases" },
   { path: "/admin/apps", label: "App catalog" },
   { path: "/admin/nodes", label: "Nodes" },
   { path: "/admin/server", label: "Services" },

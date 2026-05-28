@@ -2,13 +2,6 @@
 
 Shipped on `main` for native VPS installs. Each phase has a checklist in `docs/MARKET-PHASE-N.md`.
 
-## Panel hub
-
-**Admin → 8 phases** (`/admin/phases`) — live VPS checks, links per fase, checklists en CLI-commando’s.  
-Compact voortgang ook op **Admin → Status**.
-
-Alias: `/fases` (redirect voor admins).
-
 ## Overview
 
 | Phase | Summary | Doc | Panel |
@@ -22,13 +15,14 @@ Alias: `/fases` (redirect voor admins).
 | **7** | Firewall, WAF, ClamAV | [MARKET-PHASE-7.md](./MARKET-PHASE-7.md) | Firewall, Domain security |
 | **8** | REST API v1, integrations | [MARKET-PHASE-8.md](./MARKET-PHASE-8.md) | API keys, OpenAPI |
 
+The phase roadmap is **not** shown in the customer-facing panel (internal/docs and `scripts/run-market-phases-check.sh` only).
+
 ## Quick verify on a VPS
 
 ```bash
 cd /opt/qadbak
 sudo bash scripts/run-market-phases-check.sh   # all 8 phases
 sudo bash scripts/run-market-phase1-check.sh   # phase 1 only
-curl -sS http://127.0.0.1:3000/api/admin/phases -H "Cookie: …" | jq .
 ```
 
 ## Operator highlights

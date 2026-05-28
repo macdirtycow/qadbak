@@ -80,7 +80,7 @@ export function AdminApiKeysView() {
       <div>
         <h1 className="text-2xl font-semibold text-white">API keys (v1)</h1>
         <p className="mt-1 text-sm text-panel-muted">
-          Fase 8 — Bearer token for <code>/api/v1/*</code>
+          Bearer token for <code>/api/v1/*</code>
         </p>
       </div>
       <Card className="border-panel-accent/30 bg-panel-accent/5 space-y-3">
@@ -112,10 +112,7 @@ export function AdminApiKeysView() {
           </li>
         </ul>
         <p className="text-xs text-panel-muted">
-          Tip: create keys with IP allowlist for production billing servers.{" "}
-          <a href="/admin/phases" className="text-panel-link hover:underline">
-            Phase 8 checklist
-          </a>
+          Tip: create keys with IP allowlist for production billing servers.
         </p>
       </Card>
       {error && <Alert>{error}</Alert>}

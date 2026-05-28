@@ -71,8 +71,8 @@ fi
 echo ""
 if [[ "$fail" -eq 0 ]]; then
   echo "All phase checks passed or only minor warnings."
-  echo "Open Admin → 8 phases for live panel status."
+  echo "See docs/MARKET-FEATURES.md for operator checklists."
   exit 0
 fi
-echo "Some phases need attention — see Admin → 8 phases in the panel."
+echo "Some phases need attention — see docs/MARKET-PHASE-*.md."
 exit 1

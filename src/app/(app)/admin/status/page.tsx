@@ -1,4 +1,3 @@
-import { PhasesHub } from "@/components/admin/PhasesHub";
 import { AdminHostMetrics } from "@/components/AdminHostMetrics";
 import { AdminAlertsSettings } from "@/components/AdminAlertsSettings";
 import { AdminMetricsHistory } from "@/components/AdminMetricsHistory";
@@ -43,7 +42,6 @@ export default async function AdminStatusPage() {
           CPU, memory, disk, firewall, and service health — native Qadbak.
         </p>
       </div>
-      <PhasesHub compact />
       <AdminHostMetrics initialMetrics={metrics} initialError={metricsError} />
       <AdminMetricsHistory />
       <AdminAlertsSettings />

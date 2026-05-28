@@ -20,5 +20,3 @@
 | Node / Python / Docker | Domains → Runtimes |
 | PHP per folder | Domains → PHP |
 | Reverse proxy paths | Domains → Proxies |
-
-Fase 3-kaart op de Runtimes-pagina met link naar **8 phases**.
