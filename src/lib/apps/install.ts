@@ -31,6 +31,13 @@ export class AppNotFoundError extends Error {
 function validate(template: AppTemplate, input: Record<string, unknown>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const field of template.inputs) {
+    if (field.type === "boolean") {
+      const raw = input[field.name];
+      out[field.name] =
+        raw === true || raw === "true" || raw === "1" ? "true" : "false";
+      continue;
+    }
+
     const raw = input[field.name];
     const value = typeof raw === "string" ? raw.trim() : "";
     if (!value) {
@@ -69,7 +76,7 @@ export async function runAppInstall(opts: {
   session: AppInstallContext["session"];
 }): Promise<AppInstallResult> {
   return runWithJournalStore(async () => {
-    const template = getTemplate(opts.templateId);
+    const template = await getTemplate(opts.templateId);
     if (!template) throw new AppNotFoundError(opts.templateId);
 
     const input = validate(template, opts.rawInput);

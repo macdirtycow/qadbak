@@ -3,11 +3,17 @@
     "id": "wordpress",
     "name": "wordpress",
     "label": "WordPress",
-    "desc": "CMS — latest from wordpress.org",
+    "desc": "CMS — latest from wordpress.org with auto wp-config.php",
     "version": "latest",
     "minPhp": "8.0",
     "requiresDb": true,
-    "installer": "install-app-wordpress.sh"
+    "category": "cms",
+    "icon": "🦋",
+    "tagline": "Blog or business site in minutes",
+    "featured": true,
+    "intentMode": "full",
+    "installer": "install-app-wordpress.sh",
+    "etaSeconds": 60
   },
   {
     "id": "joomla",
@@ -17,7 +23,13 @@
     "version": "5",
     "minPhp": "8.1",
     "requiresDb": true,
-    "installer": "install-app-joomla.sh"
+    "category": "cms",
+    "icon": "📰",
+    "tagline": "Flexible CMS for portals and magazines",
+    "featured": true,
+    "intentMode": "full",
+    "installer": "install-app-joomla.sh",
+    "etaSeconds": 90
   },
   {
     "id": "drupal",
@@ -27,26 +39,85 @@
     "version": "10",
     "minPhp": "8.1",
     "requiresDb": true,
-    "installer": "install-app-drupal.sh"
-  },
-  {
-    "id": "phpmyadmin",
-    "name": "phpmyadmin",
-    "label": "phpMyAdmin",
-    "desc": "Database admin (subfolder)",
-    "version": "5.2",
-    "minPhp": "8.0",
-    "requiresDb": false,
-    "installer": "install-app-phpmyadmin.sh"
+    "category": "cms",
+    "icon": "💧",
+    "tagline": "Enterprise-grade structured content",
+    "intentMode": "full",
+    "installer": "install-app-drupal.sh",
+    "etaSeconds": 120
   },
   {
     "id": "nextcloud",
     "name": "nextcloud",
     "label": "Nextcloud",
-    "desc": "File sync and collaboration",
+    "desc": "File sync, calendar, and collaboration",
     "version": "latest",
     "minPhp": "8.1",
     "requiresDb": true,
-    "installer": "install-app-nextcloud.sh"
+    "category": "collaboration",
+    "icon": "☁️",
+    "tagline": "Your own private cloud",
+    "featured": true,
+    "intentMode": "full",
+    "installer": "install-app-nextcloud.sh",
+    "etaSeconds": 90
+  },
+  {
+    "id": "phpmyadmin",
+    "name": "phpmyadmin",
+    "label": "phpMyAdmin",
+    "desc": "Web UI for MySQL — install in a subfolder",
+    "version": "5.2",
+    "minPhp": "8.0",
+    "requiresDb": false,
+    "category": "tools",
+    "icon": "🗄️",
+    "tagline": "Manage databases in the browser",
+    "intentMode": "full",
+    "installer": "install-app-phpmyadmin.sh",
+    "etaSeconds": 45
+  },
+  {
+    "id": "matomo",
+    "name": "matomo",
+    "label": "Matomo",
+    "desc": "Privacy-friendly web analytics (self-hosted)",
+    "version": "latest",
+    "minPhp": "8.0",
+    "requiresDb": true,
+    "category": "analytics",
+    "icon": "📊",
+    "tagline": "Analytics without Google",
+    "intentMode": "full",
+    "installer": "install-app-matomo.sh",
+    "etaSeconds": 90
+  },
+  {
+    "id": "prestashop",
+    "name": "prestashop",
+    "label": "PrestaShop",
+    "desc": "E-commerce store — coming soon",
+    "version": "8",
+    "minPhp": "8.1",
+    "requiresDb": true,
+    "category": "ecommerce",
+    "icon": "🛒",
+    "tagline": "Online shop on your VPS",
+    "comingSoon": true,
+    "intentMode": "domain-only"
+  },
+  {
+    "id": "ghost",
+    "name": "ghost",
+    "label": "Ghost",
+    "desc": "Modern publishing platform — coming soon",
+    "version": "5",
+    "minPhp": "8.0",
+    "requiresDb": true,
+    "category": "cms",
+    "icon": "👻",
+    "tagline": "Newsletter-first blogging",
+    "comingSoon": true,
+    "intentMode": "domain-only"
   }
 ]

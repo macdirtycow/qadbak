@@ -11,6 +11,7 @@ import {
 import type { AvailableScript, InstalledScript } from "@/lib/provisioner";
 import { useState } from "react";
 import { DomainPageHeader } from "./DomainPageHeader";
+import { DomainAppsPicker } from "./DomainAppsPicker";
 
 export function ScriptsManager({
   domain,
@@ -183,8 +184,22 @@ export function ScriptsManager({
 
       {isAdmin && (
         <Card>
-          <h2 className="text-lg font-medium text-white">Install</h2>
-          <form onSubmit={doInstall} className="mt-4 grid gap-4 sm:grid-cols-2">
+          <h2 className="text-lg font-medium text-white">Install from catalog</h2>
+          <p className="mt-1 text-sm text-panel-muted">
+            Need database + wizard in one flow? Use{" "}
+            <a href="/admin/apps" className="text-panel-link hover:underline">
+              Server admin → App catalog
+            </a>{" "}
+            for one-click installs with journal + credentials.
+          </p>
+          <div className="mt-4">
+            <DomainAppsPicker
+              available={available as Parameters<typeof DomainAppsPicker>[0]["available"]}
+              selected={installScript}
+              onSelect={setInstallScript}
+            />
+          </div>
+          <form onSubmit={doInstall} className="mt-6 grid gap-4 sm:grid-cols-2">
             <div>
               <Label>Script</Label>
               <select

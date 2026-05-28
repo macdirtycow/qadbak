@@ -26,6 +26,13 @@ export type AppFormField =
       type: "domain";
       help?: string;
       required?: boolean;
+    }
+  | {
+      name: string;
+      label: string;
+      type: "boolean";
+      help?: string;
+      defaultValue?: string;
     };
 
 /** Output the user sees on the success screen. Shown ONCE. */
@@ -85,4 +92,8 @@ export interface AppTemplateSummary {
   description: string;
   etaSeconds?: number;
   inputs: AppFormField[];
+  category?: string;
+  minPhp?: string;
+  requiresDb?: boolean;
+  featured?: boolean;
 }

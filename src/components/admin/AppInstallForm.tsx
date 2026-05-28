@@ -8,8 +8,11 @@ export function AppInstallForm({ template }: { template: AppTemplateSummary }) {
   const [values, setValues] = useState<Record<string, string>>(() => {
     const out: Record<string, string> = {};
     for (const f of template.inputs) {
-      if (f.type !== "domain" && "defaultValue" in f && f.defaultValue) {
+      if ("defaultValue" in f && f.defaultValue) {
         out[f.name] = f.defaultValue;
+      }
+      if (f.type === "boolean" && !out[f.name]) {
+        out[f.name] = "false";
       }
     }
     return out;
@@ -60,24 +63,41 @@ export function AppInstallForm({ template }: { template: AppTemplateSummary }) {
                 <span className="ml-1 text-red-400">*</span>
               ) : null}
             </Label>
-            <Input
-              id={`f-${field.name}`}
-              type={
-                field.type === "password"
-                  ? "password"
-                  : field.type === "email"
-                    ? "email"
-                    : "text"
-              }
-              value={values[field.name] ?? ""}
-              placeholder={
-                "placeholder" in field ? field.placeholder : undefined
-              }
-              required={"required" in field ? field.required : false}
-              onChange={(e) =>
-                setValues((v) => ({ ...v, [field.name]: e.target.value }))
-              }
-            />
+            {field.type === "boolean" ? (
+              <label className="mt-2 flex items-center gap-2 text-sm text-panel-muted">
+                <input
+                  id={`f-${field.name}`}
+                  type="checkbox"
+                  checked={values[field.name] === "true"}
+                  onChange={(e) =>
+                    setValues((v) => ({
+                      ...v,
+                      [field.name]: e.target.checked ? "true" : "false",
+                    }))
+                  }
+                />
+                Enable
+              </label>
+            ) : (
+              <Input
+                id={`f-${field.name}`}
+                type={
+                  field.type === "password"
+                    ? "password"
+                    : field.type === "email"
+                      ? "email"
+                      : "text"
+                }
+                value={values[field.name] ?? ""}
+                placeholder={
+                  "placeholder" in field ? field.placeholder : undefined
+                }
+                required={"required" in field ? field.required : false}
+                onChange={(e) =>
+                  setValues((v) => ({ ...v, [field.name]: e.target.value }))
+                }
+              />
+            )}
             {"help" in field && field.help ? (
               <p className="mt-1 text-xs text-panel-muted">{field.help}</p>
             ) : null}

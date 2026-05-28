@@ -12,7 +12,7 @@ export default async function AdminAppInstallPage({
 }) {
   await requireAdminPage();
   const { id } = await params;
-  const template = getTemplate(id);
+  const template = await getTemplate(id);
   if (!template) notFound();
   // Note: we send the whole template (including inputs schema) to the
   // client component for form rendering. The install() function is server

@@ -4,33 +4,52 @@
     "label": "WordPress",
     "desc": "WordPress CMS (latest from wordpress.org)",
     "version": "latest",
-    "requiresDb": true
+    "requiresDb": true,
+    "icon": "🦋",
+    "category": "cms"
   },
   {
     "name": "joomla",
     "label": "Joomla",
     "desc": "Joomla 5 CMS",
     "version": "5",
-    "requiresDb": true
+    "requiresDb": true,
+    "icon": "📰",
+    "category": "cms"
   },
   {
     "name": "drupal",
     "label": "Drupal",
     "desc": "Drupal 10 (composer)",
     "version": "10",
-    "requiresDb": true
+    "requiresDb": true,
+    "icon": "💧",
+    "category": "cms"
   },
   {
     "name": "phpmyadmin",
     "label": "phpMyAdmin",
     "desc": "phpMyAdmin database admin (static files)",
-    "version": "5.2"
+    "version": "5.2",
+    "icon": "🗄️",
+    "category": "tools"
   },
   {
     "name": "nextcloud",
     "label": "Nextcloud",
     "desc": "Nextcloud ZIP install",
     "version": "latest",
-    "requiresDb": true
+    "requiresDb": true,
+    "icon": "☁️",
+    "category": "collaboration"
+  },
+  {
+    "name": "matomo",
+    "label": "Matomo",
+    "desc": "Self-hosted web analytics",
+    "version": "latest",
+    "requiresDb": true,
+    "icon": "📊",
+    "category": "analytics"
   }
 ]

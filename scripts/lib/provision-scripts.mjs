@@ -20,6 +20,7 @@ const INSTALLERS = {
   drupal: "install-app-drupal.sh",
   phpmyadmin: "install-app-phpmyadmin.sh",
   nextcloud: "install-app-nextcloud.sh",
+  matomo: "install-app-matomo.sh",
 };
 
 async function loadCatalog() {
@@ -29,13 +30,19 @@ async function loadCatalog() {
       const raw = await readFile(p, "utf8");
       const arr = JSON.parse(raw);
       if (!Array.isArray(arr)) continue;
-      return arr.map((row) => ({
+      return arr
+        .filter((row) => !row.comingSoon)
+        .map((row) => ({
         name: row.name ?? row.id,
         label: row.label ?? row.name,
         desc: row.desc ?? "",
         version: row.version ?? "native",
         minPhp: row.minPhp,
         requiresDb: Boolean(row.requiresDb),
+        category: row.category,
+        icon: row.icon,
+        comingSoon: Boolean(row.comingSoon),
+        intentMode: row.intentMode,
       }));
     } catch {
       /* try next */

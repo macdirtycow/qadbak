@@ -6,7 +6,7 @@ import { listTemplates } from "@/lib/apps";
 export async function GET() {
   try {
     await requireAdmin();
-    return jsonOk({ templates: listTemplates() });
+    return jsonOk({ templates: await listTemplates() });
   } catch (err) {
     return handleApiError(err);
   }
