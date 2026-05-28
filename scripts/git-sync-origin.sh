@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fetch origin and align the VPS checkout with the remote branch.
-# Handles: history rewrites (reset --hard), cursor/* → macdirtycow/* rename, QADBAK_GIT_BRANCH.
+# Handles: history rewrites (reset --hard), QADBAK_GIT_BRANCH, cursor/* vs macdirtycow/*.
 set -euo pipefail
 
 ROOT="${QADBAK_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
@@ -48,23 +48,41 @@ branch_exists_on_origin() {
   git show-ref --quiet "refs/remotes/origin/$1"
 }
 
-resolve_target_branch() {
-  local env_branch current migrated
+# Pick the first branch name that exists on origin (exact env name before legacy migrate).
+pick_origin_branch() {
+  local env_branch current migrated candidates=() c
 
   env_branch="$(read_env_branch || true)"
   if [[ -n "$env_branch" ]]; then
-    printf '%s' "$(migrate_cursor_branch_name "$env_branch")"
-    return
+    candidates+=("$env_branch")
+    migrated="$(migrate_cursor_branch_name "$env_branch")"
+    if [[ "$migrated" != "$env_branch" ]]; then
+      candidates+=("$migrated")
+    fi
   fi
 
   current="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
-  if [[ -z "$current" || "$current" == "HEAD" ]]; then
-    printf '%s' "main"
-    return
+  if [[ -n "$current" && "$current" != "HEAD" ]]; then
+    candidates+=("$current")
+    migrated="$(migrate_cursor_branch_name "$current")"
+    if [[ "$migrated" != "$current" ]]; then
+      candidates+=("$migrated")
+    fi
   fi
 
-  migrated="$(migrate_cursor_branch_name "$current")"
-  printf '%s' "$migrated"
+  candidates+=("main")
+
+  for c in "${candidates[@]}"; do
+    [[ -z "$c" ]] && continue
+    if branch_exists_on_origin "$c"; then
+      if [[ -n "$env_branch" && "$c" != "$env_branch" && "$c" == "$(migrate_cursor_branch_name "$env_branch")" ]]; then
+        log "using origin/$c (legacy macdirtycow alias; set QADBAK_GIT_BRANCH=$c or use origin/$env_branch)"
+      fi
+      printf '%s' "$c"
+      return 0
+    fi
+  done
+  return 1
 }
 
 log "fetch origin (prune stale branches)"
@@ -74,28 +92,18 @@ if [[ -f "$ROOT/scripts/reset-git-drift-before-pull.sh" ]]; then
   bash "$ROOT/scripts/reset-git-drift-before-pull.sh"
 fi
 
-TARGET="$(resolve_target_branch)"
-
-if ! branch_exists_on_origin "$TARGET"; then
-  log "origin/$TARGET not found — trying main"
-  TARGET="main"
-fi
-
-if ! branch_exists_on_origin "$TARGET"; then
-  echo "git-sync-origin: no origin/main or configured branch on remote" >&2
+if ! TARGET="$(pick_origin_branch)"; then
+  echo "git-sync-origin: no matching branch on origin (check QADBAK_GIT_BRANCH in .env.local)" >&2
   exit 1
 fi
 
-CURRENT="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo HEAD)"
-if [[ "$CURRENT" == cursor/* ]]; then
-  MIGRATED_CURRENT="$(migrate_cursor_branch_name "$CURRENT")"
-  if [[ "$CURRENT" != "$MIGRATED_CURRENT" ]]; then
-    log "rename local branch $CURRENT → $MIGRATED_CURRENT"
-    git branch -m "$CURRENT" "$MIGRATED_CURRENT" 2>/dev/null || true
-    CURRENT="$MIGRATED_CURRENT"
-  fi
+ENV_BRANCH="$(read_env_branch || true)"
+if [[ -n "$ENV_BRANCH" && "$TARGET" != "$ENV_BRANCH" && "$TARGET" == "main" ]]; then
+  log "WARN: QADBAK_GIT_BRANCH=$ENV_BRANCH not on origin — fell back to main" >&2
+  log "       Push the branch or fix the name in .env.local" >&2
 fi
 
+CURRENT="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo HEAD)"
 REMOTE_REF="origin/$TARGET"
 
 if [[ "$CURRENT" != "$TARGET" ]]; then
