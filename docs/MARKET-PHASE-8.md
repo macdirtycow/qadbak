@@ -21,3 +21,18 @@ Create keys in Admin → API keys. Scopes: `domains:read`, `domains:write`, `bac
 - [ ] WHMCS module test create + terminate domain against staging panel
 - [ ] Publish integration guide on qadbak.com
 - [ ] Rate limit / IP allowlist per key (configured at create time)
+
+## Panel (fase 8)
+
+| Area | Path |
+|------|------|
+| Create / revoke keys | Admin → **API keys** |
+| OpenAPI + WHMCS links | API keys page → Integrations card |
+| Reseller scoping | Admin → Resellers + key reseller tag |
+
+Example:
+
+```bash
+curl -sS -H "Authorization: Bearer qadbak_…" \
+  https://panel.example.com/api/v1/domains
+```

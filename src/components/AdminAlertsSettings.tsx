@@ -2,6 +2,7 @@
 
 import { Alert, Button, Card, Input, Label } from "@/components/ui";
 import type { AlertSettings } from "@/lib/alert-rules";
+import { RECOMMENDED_ALERT_RULES } from "@/lib/alert-rules-presets";
 import { useEffect, useState } from "react";
 
 export function AdminAlertsSettings() {
@@ -111,7 +112,31 @@ export function AdminAlertsSettings() {
       {fired.length > 0 && (
         <Alert>Fired: {fired.join("; ")}</Alert>
       )}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant="secondary"
+          disabled={loading}
+          onClick={() =>
+            setSettings((s) =>
+              s
+                ? {
+                    ...s,
+                    rules: RECOMMENDED_ALERT_RULES.map((r) => ({
+                      ...r,
+                      target:
+                        r.channel === "email"
+                          ? s.emailTo ?? ""
+                          : r.channel === "slack"
+                            ? s.slackWebhook ?? ""
+                            : s.telegramWebhook ?? "",
+                    })),
+                  }
+                : s,
+            )
+          }
+        >
+          Load recommended rules
+        </Button>
         <Button disabled={loading} onClick={save}>
           Save
         </Button>
@@ -119,6 +144,14 @@ export function AdminAlertsSettings() {
           Test evaluate
         </Button>
       </div>
+      <p className="text-xs text-panel-muted">
+        Fase 6: plan een cron voor{" "}
+        <code className="text-white">metrics-snapshot</code> en periodieke evaluate — zie{" "}
+        <a href="/admin/phases" className="text-panel-link hover:underline">
+          8 phases
+        </a>
+        .
+      </p>
     </Card>
   );
 }

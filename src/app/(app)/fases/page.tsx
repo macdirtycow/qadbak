@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
 
-/** Phases overview removed from commercial panel navigation. */
-export default function PhasesPage() {
+/** Public alias — admins see the full phase hub. */
+export default async function FasesPage() {
+  const session = await getSession();
+  if (session?.role === "admin") {
+    redirect("/admin/phases");
+  }
   redirect("/dashboard");
 }

@@ -32,3 +32,14 @@ sudo bash scripts/run-market-phase1-check.sh
 - Premium: license heartbeat OK, backups + cloud tabs load
 
 See [VM-REMOVAL-ROADMAP.md](./VM-REMOVAL-ROADMAP.md) for per-module status.
+
+## Panel (fase 1)
+
+| Area | Path |
+|------|------|
+| Health & self-healing | Admin → Health |
+| Live metrics | Admin → Status |
+| New domain | Domains → New |
+| Per domain | Mail, DNS, SSL, Databases, Cron, Backups, Files, Terminal |
+
+**Fase-hub:** Admin → **8 phases** — toont o.a. native provisioner en domain registry checks.

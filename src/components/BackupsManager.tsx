@@ -457,6 +457,19 @@ export function BackupsManager({
       {error && <Alert>{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
 
+      {isAdmin && nativeMode && (
+        <Card className="border-panel-accent/30 bg-panel-accent/5">
+          <h2 className="text-sm font-medium text-white">Fase 4 &amp; 5 — Backups</h2>
+          <p className="mt-2 text-sm text-panel-muted">
+            <strong>Fase 4:</strong> encrypted offsite upload na lokale backup (Admin → Cloud).
+            <strong className="ml-1">Fase 5:</strong> archive browser en partial restore hieronder.
+          </p>
+          <a href="/admin/phases" className="mt-2 inline-block text-sm text-panel-link hover:underline">
+            Fase-hub →
+          </a>
+        </Card>
+      )}
+
       {nativeMode && isAdmin && (
         <Card>
           <h2 className="text-lg font-medium text-white">Offsite backup (S3 / B2)</h2>

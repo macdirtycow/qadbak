@@ -19,18 +19,13 @@ export interface AlertSettings {
   rules: AlertRule[];
 }
 
+import { RECOMMENDED_ALERT_RULES } from "./alert-rules-presets";
+
+export { RECOMMENDED_ALERT_RULES } from "./alert-rules-presets";
+
 const DEFAULTS: AlertSettings = {
   emailTo: "",
-  rules: [
-    {
-      id: "disk-85",
-      enabled: true,
-      metric: "disk",
-      threshold: 85,
-      channel: "email",
-      target: "",
-    },
-  ],
+  rules: [RECOMMENDED_ALERT_RULES[0]!],
 };
 
 export async function loadAlertSettings(): Promise<AlertSettings> {

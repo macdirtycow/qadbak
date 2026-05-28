@@ -80,9 +80,44 @@ export function AdminApiKeysView() {
       <div>
         <h1 className="text-2xl font-semibold text-white">API keys (v1)</h1>
         <p className="mt-1 text-sm text-panel-muted">
-          Bearer token for /api/v1/* — see docs/api/openapi.yaml
+          Fase 8 — Bearer token for <code>/api/v1/*</code>
         </p>
       </div>
+      <Card className="border-panel-accent/30 bg-panel-accent/5 space-y-3">
+        <h2 className="text-sm font-medium text-white">Integrations</h2>
+        <ul className="text-sm text-panel-muted space-y-2">
+          <li>
+            <a
+              href="https://github.com/macdirtycow/qadbak/blob/main/docs/api/openapi.yaml"
+              className="text-panel-link hover:underline"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              OpenAPI spec
+            </a>{" "}
+            — domains, mail, DNS, SSL, backups, suspend
+          </li>
+          <li>
+            <a
+              href="https://github.com/macdirtycow/qadbak/blob/main/docs/integrations/WHMCS-INTEGRATION.md"
+              className="text-panel-link hover:underline"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              WHMCS module guide
+            </a>
+          </li>
+          <li>
+            <code className="text-white">integrations/blesta/</code> — Blesta starter
+          </li>
+        </ul>
+        <p className="text-xs text-panel-muted">
+          Tip: create keys with IP allowlist for production billing servers.{" "}
+          <a href="/admin/phases" className="text-panel-link hover:underline">
+            Phase 8 checklist
+          </a>
+        </p>
+      </Card>
       {error && <Alert>{error}</Alert>}
       {newSecret && (
         <Alert variant="success">

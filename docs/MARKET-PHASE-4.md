@@ -18,3 +18,13 @@
 - [ ] Save B2/S3 credentials in panel
 - [ ] Enable offsite on test domain; create backup; object appears in bucket
 - [ ] Retention still governed by `backups.json` retain + local prune
+
+## Panel (fase 4)
+
+| Step | Path |
+|------|------|
+| Save S3/B2/GCS credentials | Admin → **Cloud (S3)** |
+| Enable offsite per domain | Domains → Backups → offsite policy |
+| List remote objects | Backups → remote list (after upload) |
+
+Requires `QADBAK_SECRETS_KEY` in `.env.local`.

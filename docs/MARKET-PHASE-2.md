@@ -22,3 +22,13 @@ WordPress (full wp-config), Joomla, Drupal, Nextcloud, phpMyAdmin, Matomo.
 ```env
 QADBAK_NATIVE_FEATURES=...,scripts
 ```
+
+## Panel (fase 2)
+
+| Flow | Path |
+|------|------|
+| Catalog + search | Admin → **App catalog** |
+| One-click + DB + journal | App catalog → choose app → Install |
+| Custom subpath + rollback | Domains → [domain] → **Apps** |
+
+**Catalog file:** `data/app-catalog.json` (icons, categories, coming-soon flags).

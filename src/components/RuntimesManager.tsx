@@ -82,6 +82,21 @@ export function RuntimesManager({
       {error && <Alert>{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
 
+      {isAdmin && (
+        <Card className="border-panel-accent/30 bg-panel-accent/5">
+          <h2 className="text-sm font-medium text-white">Fase 3 — Runtimes</h2>
+          <p className="mt-2 text-sm text-panel-muted">
+            Zet <code className="text-white">runtimes</code> in{" "}
+            <code className="text-white">QADBAK_NATIVE_FEATURES</code>. Node krijgt een
+            systemd unit + nginx proxy; Python gebruikt gunicorn; Docker is een compose
+            MVP met start/stop/logs hieronder.
+          </p>
+          <a href="/admin/phases" className="mt-2 inline-block text-sm text-panel-link hover:underline">
+            Alle 8 fasen →
+          </a>
+        </Card>
+      )}
+
       <Card>
         <h2 className="text-lg font-medium text-white">PHP</h2>
         <p className="mt-2 text-sm text-panel-muted">
