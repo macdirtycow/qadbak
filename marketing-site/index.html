@@ -34,7 +34,7 @@
           </a>
           <nav class="nav-links" aria-label="Main">
             <a href="#platform">Platform</a>
-            <a href="#apps">Apps</a>
+            <a href="#apps">App store</a>
             <a href="#security">Security</a>
             <a href="#integrations">Integrations</a>
             <a href="#premium">Premium</a>
@@ -54,7 +54,7 @@
         </div>
         <div class="mobile-menu" aria-label="Mobile">
           <a href="#platform">Platform</a>
-          <a href="#apps">Apps</a>
+          <a href="#apps">App store</a>
           <a href="#security">Security</a>
           <a href="#integrations">Integrations</a>
           <a href="#premium">Premium</a>
@@ -91,7 +91,7 @@
           <aside class="hero-aside">
             <h2>What’s new</h2>
             <ul>
-              <li><strong>App catalog</strong> — WordPress, Joomla, Drupal, Nextcloud, phpMyAdmin, Matomo, PrestaShop, Ghost</li>
+              <li><strong>App store</strong> — 16 one-click apps (CMS, shops, Moodle, wiki, forums, surveys)</li>
               <li><strong>Privacy &amp; trust</strong> — TOTP 2FA, activity log, admin privacy center (data stays on your server)</li>
               <li>REST API v1 + scoped API keys (WHMCS / Blesta starters)</li>
               <li><code>panel.&lt;domain&gt;</code> URLs — Cloudflare Flexible or Full HTTPS</li>
@@ -144,8 +144,8 @@
               <p>Node, Python, and Docker compose helpers beside PHP-FPM — one pool per customer unix user (Ghost uses Node 18+).</p>
             </article>
             <article class="card">
-              <h3>One-click apps</h3>
-              <p>Admin app catalog and per-domain installer: CMS, shop, analytics, and tools into <code>public_html</code> with install journal + rollback hints.</p>
+              <h3>App store</h3>
+              <p>16 installable apps with search, categories, and one-click flow — Server admin → App store or per-domain Apps tab.</p>
             </article>
             <article class="card">
               <h3>Trust &amp; privacy</h3>
@@ -155,75 +155,50 @@
         </div>
       </section>
 
-      <section id="apps" class="alt-bg">
+      <section id="apps" class="alt-bg app-store-section">
         <div class="container">
-          <p class="section-label">App catalog</p>
-          <h2 class="section-title">Install popular software in one flow</h2>
+          <p class="section-label">App store</p>
+          <h2 class="section-title">16 apps you can install today</h2>
           <p class="section-lead">
-            Pick an app from <strong>Server admin → App catalog</strong> or from a domain’s
-            <strong>Apps</strong> tab. Each install runs on the server as the domain user,
-            creates databases when needed, and is logged in the action journal.
+            Real installers on your VPS — not placeholders. Browse by category in
+            <strong>Server admin → App store</strong>, or pick an app on any domain’s
+            <strong>Apps</strong> tab. MySQL is created when needed; every install is journaled.
           </p>
-          <div class="app-grid" role="list">
-            <article class="app-chip" role="listitem">
-              <span class="app-chip-icon" aria-hidden="true">🦋</span>
-              <div>
-                <h3>WordPress</h3>
-                <p>Latest from wordpress.org · auto <code>wp-config.php</code></p>
-              </div>
-            </article>
-            <article class="app-chip" role="listitem">
-              <span class="app-chip-icon" aria-hidden="true">📰</span>
-              <div>
-                <h3>Joomla 5</h3>
-                <p>Full CMS package · PHP 8.1+</p>
-              </div>
-            </article>
-            <article class="app-chip" role="listitem">
-              <span class="app-chip-icon" aria-hidden="true">💧</span>
-              <div>
-                <h3>Drupal 10</h3>
-                <p>Recommended project · structured content</p>
-              </div>
-            </article>
-            <article class="app-chip" role="listitem">
-              <span class="app-chip-icon" aria-hidden="true">☁️</span>
-              <div>
-                <h3>Nextcloud</h3>
-                <p>Files, calendar, collaboration on your VPS</p>
-              </div>
-            </article>
-            <article class="app-chip" role="listitem">
-              <span class="app-chip-icon" aria-hidden="true">🗄️</span>
-              <div>
-                <h3>phpMyAdmin</h3>
-                <p>Browser UI for MariaDB · subfolder install</p>
-              </div>
-            </article>
-            <article class="app-chip" role="listitem">
-              <span class="app-chip-icon" aria-hidden="true">📊</span>
-              <div>
-                <h3>Matomo</h3>
-                <p>Self-hosted analytics · no Google tags</p>
-              </div>
-            </article>
-            <article class="app-chip" role="listitem">
-              <span class="app-chip-icon" aria-hidden="true">🛒</span>
-              <div>
-                <h3>PrestaShop 8</h3>
-                <p>E-commerce · web installer + MySQL</p>
-              </div>
-            </article>
-            <article class="app-chip" role="listitem">
-              <span class="app-chip-icon" aria-hidden="true">👻</span>
-              <div>
-                <h3>Ghost</h3>
-                <p>Newsletter blogging · ghost-cli · Node 18+</p>
-              </div>
-            </article>
+          <div class="app-store-hero">
+            <div>
+              <p class="app-store-stat">16</p>
+              <p class="app-store-stat-label">installable apps</p>
+            </div>
+            <div>
+              <p class="app-store-stat">8</p>
+              <p class="app-store-stat-label">categories</p>
+            </div>
+            <div>
+              <p class="app-store-stat">1-click</p>
+              <p class="app-store-stat-label">DB + files + journal</p>
+            </div>
           </div>
-          <p class="section-lead" style="margin-top: 1.5rem; margin-bottom: 0">
-            More apps ship via <code>data/app-catalog.json</code> in the open-source repo — same installers your panel uses.
+          <p class="app-store-categories">CMS · E-commerce · Collaboration · Education · Forums · Analytics · Surveys · Tools</p>
+          <div class="app-grid app-grid-lg" role="list">
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">🦋</span><div><h3>WordPress</h3><p class="app-chip-cat">CMS</p><p>Latest · auto wp-config</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">📰</span><div><h3>Joomla 5</h3><p class="app-chip-cat">CMS</p><p>Full package · PHP 8.1+</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">💧</span><div><h3>Drupal 10</h3><p class="app-chip-cat">CMS</p><p>Composer project</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">🪨</span><div><h3>Grav</h3><p class="app-chip-cat">CMS</p><p>Flat-file · no database</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">📚</span><div><h3>MediaWiki</h3><p class="app-chip-cat">CMS</p><p>Wiki / knowledge base</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">👻</span><div><h3>Ghost</h3><p class="app-chip-cat">CMS</p><p>Node 18+ · newsletter blog</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">🛒</span><div><h3>PrestaShop 8</h3><p class="app-chip-cat">E-commerce</p><p>Web shop installer</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">🏪</span><div><h3>OpenCart 3</h3><p class="app-chip-cat">E-commerce</p><p>Classic PHP storefront</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">☁️</span><div><h3>Nextcloud</h3><p class="app-chip-cat">Collaboration</p><p>Files &amp; calendar</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">📋</span><div><h3>Kanboard</h3><p class="app-chip-cat">Collaboration</p><p>Kanban boards</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">🎓</span><div><h3>Moodle</h3><p class="app-chip-cat">Education</p><p>Courses &amp; quizzes</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">💬</span><div><h3>phpBB</h3><p class="app-chip-cat">Forums</p><p>Community forums</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">📊</span><div><h3>Matomo</h3><p class="app-chip-cat">Analytics</p><p>Self-hosted stats</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">📝</span><div><h3>LimeSurvey</h3><p class="app-chip-cat">Surveys</p><p>Forms &amp; feedback</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">🗄️</span><div><h3>phpMyAdmin</h3><p class="app-chip-cat">Tools</p><p>MySQL web UI</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">🔧</span><div><h3>Adminer</h3><p class="app-chip-cat">Tools</p><p>Single-file DB manager</p></div></article>
+          </div>
+          <p class="section-lead" style="margin-top: 2rem; margin-bottom: 0">
+            Catalog lives in <code>data/app-catalog.json</code> — add apps with a shell installer in <code>scripts/lib/</code>.
           </p>
         </div>
       </section>
@@ -312,7 +287,7 @@
               <p>Disk, memory, certificate expiry, and service status in one place with suggested fix commands.</p>
             </article>
             <article class="card">
-              <h3>App catalog admin</h3>
+              <h3>App store admin</h3>
               <p>Browse featured apps, requirements (PHP, DB, Node), and install paths — same catalog on every domain’s Apps tab.</p>
             </article>
             <article class="card">
@@ -390,7 +365,7 @@
                 <td>—</td>
               </tr>
               <tr>
-                <td>One-click app catalog (8 apps)</td>
+                <td>App store (16 one-click apps)</td>
                 <td><span class="tag tag-free">Included</span></td>
                 <td>—</td>
               </tr>
@@ -559,7 +534,7 @@
                 Which apps can I install with one click?
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
-              <div class="faq-a">WordPress, Joomla, Drupal, Nextcloud, phpMyAdmin, Matomo, PrestaShop, and Ghost — from Server admin → App catalog or Domains → your domain → Apps. Ghost needs Node 18+ on the server; most others use PHP-FPM and MariaDB created by the panel.</div>
+              <div class="faq-a">Sixteen apps: WordPress, Joomla, Drupal, Grav, MediaWiki, Ghost, PrestaShop, OpenCart, Nextcloud, Kanboard, Moodle, phpBB, Matomo, LimeSurvey, phpMyAdmin, and Adminer. Open <strong>Server admin → App store</strong> or <strong>Domains → [domain] → Apps</strong>. Ghost needs Node 18+; Grav and Adminer need no MySQL; everything else gets a database from the panel when you use one-click install.</div>
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
@@ -595,7 +570,7 @@
           <h4>Product</h4>
           <ul>
             <li><a href="#platform">Features</a></li>
-            <li><a href="#apps">App catalog</a></li>
+            <li><a href="#apps">App store</a></li>
             <li><a href="#security">Security</a></li>
             <li><a href="#pricing">Pricing</a></li>
             <li><a href="https://license.omiiba.dev/buy" rel="noopener">Premium plans</a></li>

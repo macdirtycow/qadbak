@@ -23,6 +23,14 @@ const INSTALLERS = {
   matomo: "install-app-matomo.sh",
   prestashop: "install-app-prestashop.sh",
   ghost: "install-app-ghost.sh",
+  mediawiki: "install-app-mediawiki.sh",
+  moodle: "install-app-moodle.sh",
+  phpbb: "install-app-phpbb.sh",
+  opencart: "install-app-opencart.sh",
+  kanboard: "install-app-kanboard.sh",
+  limesurvey: "install-app-limesurvey.sh",
+  grav: "install-app-grav.sh",
+  adminer: "install-app-adminer.sh",
 };
 
 async function loadCatalog() {

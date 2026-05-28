@@ -1,18 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Card } from "@/components/ui";
 import { CATEGORY_LABELS } from "@/lib/apps/catalog-labels";
 import type { AppCatalogEntry, AppCategory } from "@/lib/apps/catalog-types";
 import type { AppTemplateSummary } from "@/lib/apps/types";
 
 const CATEGORY_ORDER: AppCategory[] = [
   "cms",
-  "collaboration",
-  "analytics",
-  "tools",
   "ecommerce",
+  "collaboration",
+  "education",
+  "forum",
+  "analytics",
+  "surveys",
+  "tools",
 ];
 
 export function AdminAppsCatalog({
@@ -26,6 +28,7 @@ export function AdminAppsCatalog({
   const [category, setCategory] = useState<AppCategory | "all">("all");
 
   const intentIds = new Set(templates.map((t) => t.id));
+  const installable = catalog.filter((a) => !a.comingSoon && intentIds.has(a.id));
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -35,7 +38,8 @@ export function AdminAppsCatalog({
       return (
         app.label.toLowerCase().includes(q) ||
         app.desc.toLowerCase().includes(q) ||
-        app.tagline.toLowerCase().includes(q)
+        app.tagline.toLowerCase().includes(q) ||
+        app.category.toLowerCase().includes(q)
       );
     });
   }, [catalog, query, category]);
@@ -50,79 +54,179 @@ export function AdminAppsCatalog({
   const coming = filtered.filter((a) => a.comingSoon);
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap gap-3">
-        <input
-          type="search"
-          placeholder="Search apps…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="min-w-[200px] flex-1 rounded-lg border border-panel-border bg-panel-bg px-3 py-2 text-sm text-white"
-        />
-        <select
-          value={category}
-          onChange={(e) =>
-            setCategory(e.target.value as AppCategory | "all")
-          }
-          className="rounded-lg border border-panel-border bg-panel-bg px-3 py-2 text-sm text-white"
-        >
-          <option value="all">All categories</option>
-          {CATEGORY_ORDER.map((c) => (
-            <option key={c} value={c}>
-              {CATEGORY_LABELS[c]}
-            </option>
-          ))}
-        </select>
+    <div className="space-y-10">
+      <div className="rounded-xl border border-panel-border bg-gradient-to-br from-panel-accent/10 via-panel-bg to-panel-bg p-6 sm:p-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-widest text-panel-accent">
+              App store
+            </p>
+            <p className="mt-2 text-3xl font-semibold text-white sm:text-4xl">
+              {installable.length} installable apps
+            </p>
+            <p className="mt-2 max-w-2xl text-sm text-panel-muted">
+              One-click flow: MySQL (when needed), files on the domain home, credentials
+              on screen, and a journaled install you can roll back from Domains → Apps.
+            </p>
+          </div>
+          <dl className="flex flex-wrap gap-6 text-sm">
+            <div>
+              <dt className="text-panel-muted">Categories</dt>
+              <dd className="text-xl font-semibold text-white">
+                {CATEGORY_ORDER.filter((c) =>
+                  catalog.some((a) => a.category === c),
+                ).length}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-panel-muted">Featured</dt>
+              <dd className="text-xl font-semibold text-white">
+                {catalog.filter((a) => a.featured).length}
+              </dd>
+            </div>
+          </dl>
+        </div>
       </div>
 
-      {featured.length > 0 && (
-        <section>
-          <h2 className="text-sm font-medium uppercase tracking-wide text-panel-muted">
-            Featured
-          </h2>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((app) => (
-              <AppCard key={app.id} app={app} hasIntent={intentIds.has(app.id)} />
-            ))}
-          </div>
-        </section>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+        <input
+          type="search"
+          placeholder="Search apps (WordPress, Moodle, shop, wiki…)"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="min-h-[44px] flex-1 rounded-lg border border-panel-border bg-panel-bg px-4 py-2.5 text-sm text-white placeholder:text-panel-muted/70"
+        />
+        <div className="flex flex-wrap gap-2">
+          <CategoryPill
+            active={category === "all"}
+            onClick={() => setCategory("all")}
+            label="All"
+          />
+          {CATEGORY_ORDER.map((c) => {
+            const count = catalog.filter((a) => a.category === c).length;
+            if (count === 0) return null;
+            return (
+              <CategoryPill
+                key={c}
+                active={category === c}
+                onClick={() => setCategory(c)}
+                label={CATEGORY_LABELS[c]}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {filtered.length === 0 && (
+        <p className="text-center text-sm text-panel-muted py-12">
+          No apps match your search.
+        </p>
       )}
 
-      {restByCategory.map(({ cat, items }) => (
-        <section key={cat}>
-          <h2 className="text-sm font-medium uppercase tracking-wide text-panel-muted">
-            {CATEGORY_LABELS[cat]}
-          </h2>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((app) => (
-              <AppCard key={app.id} app={app} hasIntent={intentIds.has(app.id)} />
+      {category === "all" && featured.length > 0 && (
+        <StoreSection title="Featured picks">
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {featured.map((app) => (
+              <AppStoreCard
+                key={app.id}
+                app={app}
+                hasIntent={intentIds.has(app.id)}
+              />
             ))}
           </div>
-        </section>
-      ))}
+        </StoreSection>
+      )}
+
+      {category === "all" ? (
+        restByCategory.map(({ cat, items }) => (
+          <StoreSection key={cat} title={CATEGORY_LABELS[cat]}>
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {items.map((app) => (
+                <AppStoreCard
+                  key={app.id}
+                  app={app}
+                  hasIntent={intentIds.has(app.id)}
+                />
+              ))}
+            </div>
+          </StoreSection>
+        ))
+      ) : (
+        filtered.filter((a) => !a.comingSoon).length > 0 && (
+          <StoreSection title={CATEGORY_LABELS[category]}>
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {filtered
+                .filter((a) => !a.comingSoon)
+                .map((app) => (
+                  <AppStoreCard
+                    key={app.id}
+                    app={app}
+                    hasIntent={intentIds.has(app.id)}
+                  />
+                ))}
+            </div>
+          </StoreSection>
+        )
+      )}
 
       {coming.length > 0 && (
-        <section>
-          <h2 className="text-sm font-medium uppercase tracking-wide text-panel-muted">
-            Coming soon
-          </h2>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StoreSection title="Coming soon">
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {coming.map((app) => (
-              <AppCard key={app.id} app={app} hasIntent={false} />
+              <AppStoreCard key={app.id} app={app} hasIntent={false} />
             ))}
           </div>
-        </section>
+        </StoreSection>
       )}
 
-      <p className="text-sm text-panel-muted">
-        Per-domain installs (custom path, rollback) live under{" "}
+      <p className="border-t border-panel-border pt-6 text-sm text-panel-muted">
+        Custom install path, rollback, and reinstall:{" "}
         <strong className="text-white">Domains → [domain] → Apps</strong>.
       </p>
     </div>
   );
 }
 
-function AppCard({
+function CategoryPill({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+        active
+          ? "bg-panel-accent text-panel-bg"
+          : "border border-panel-border text-panel-muted hover:border-panel-accent/50 hover:text-white"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function StoreSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section>
+      <h2 className="text-base font-semibold text-white">{title}</h2>
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+
+function AppStoreCard({
   app,
   hasIntent,
 }: {
@@ -130,58 +234,69 @@ function AppCard({
   hasIntent: boolean;
 }) {
   const badges = [
-    app.version && `v${app.version}`,
-    app.minPhp && `PHP ${app.minPhp}+`,
-    app.requiresDb ? "MySQL" : null,
+    app.version && app.version !== "native" ? `v${app.version}` : null,
+    app.minPhp ? `PHP ${app.minPhp}+` : null,
+    app.requiresDb ? "MySQL" : "No DB",
+    CATEGORY_LABELS[app.category],
   ].filter(Boolean);
 
-  const inner = (
-    <Card
-      className={`h-full transition ${
+  const body = (
+    <article
+      className={`flex h-full min-h-[220px] flex-col rounded-xl border bg-panel-bg p-5 transition ${
         app.comingSoon
-          ? "opacity-60"
-          : "hover:border-panel-accent"
+          ? "border-panel-border opacity-55"
+          : hasIntent
+            ? "border-panel-border hover:border-panel-accent hover:shadow-lg hover:shadow-panel-accent/5"
+            : "border-panel-border"
       }`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-3xl">{app.icon}</span>
+      <div className="flex items-start justify-between gap-3">
+        <span className="text-4xl leading-none" aria-hidden>
+          {app.icon}
+        </span>
         {app.comingSoon ? (
-          <span className="rounded bg-panel-border px-2 py-0.5 text-xs text-panel-muted">
+          <span className="shrink-0 rounded-full bg-panel-border px-2.5 py-1 text-xs text-panel-muted">
             Soon
           </span>
         ) : hasIntent ? (
-          <span className="rounded bg-panel-accent/20 px-2 py-0.5 text-xs text-panel-accent">
-            One-click
+          <span className="shrink-0 rounded-full bg-panel-accent/25 px-2.5 py-1 text-xs font-medium text-panel-accent">
+            Install
           </span>
         ) : null}
       </div>
-      <h3 className="mt-3 text-lg font-medium text-white">{app.label}</h3>
-      <p className="mt-1 text-sm text-panel-muted">{app.tagline}</p>
-      <div className="mt-3 flex flex-wrap gap-1">
+      <h3 className="mt-4 text-xl font-semibold text-white">{app.label}</h3>
+      <p className="mt-2 flex-1 text-sm leading-relaxed text-panel-muted">
+        {app.tagline}
+      </p>
+      <p className="mt-2 line-clamp-2 text-xs text-panel-muted/80">{app.desc}</p>
+      <div className="mt-4 flex flex-wrap gap-1.5">
         {badges.map((b) => (
           <span
             key={b}
-            className="rounded bg-black/30 px-1.5 py-0.5 text-xs text-panel-muted"
+            className="rounded-md bg-black/35 px-2 py-0.5 text-xs text-panel-muted"
           >
             {b}
           </span>
         ))}
       </div>
       {app.etaSeconds && hasIntent ? (
-        <p className="mt-3 text-xs uppercase tracking-wide text-panel-muted/70">
-          ~{Math.ceil(app.etaSeconds / 60)} min · DB + files + journal
+        <p className="mt-4 text-xs uppercase tracking-wide text-panel-muted/70">
+          ~{Math.max(1, Math.ceil(app.etaSeconds / 60))} min install
         </p>
       ) : null}
-    </Card>
+    </article>
   );
 
   if (app.comingSoon || !hasIntent) {
-    return <div>{inner}</div>;
+    return body;
   }
 
   return (
-    <Link href={`/admin/apps/${encodeURIComponent(app.id)}/install`}>
-      {inner}
+    <Link
+      href={`/admin/apps/${encodeURIComponent(app.id)}/install`}
+      className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-panel-accent rounded-xl"
+    >
+      {body}
     </Link>
   );
 }

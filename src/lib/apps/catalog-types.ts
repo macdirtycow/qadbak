@@ -3,7 +3,10 @@ export type AppCategory =
   | "tools"
   | "collaboration"
   | "analytics"
-  | "ecommerce";
+  | "ecommerce"
+  | "education"
+  | "forum"
+  | "surveys";
 
 export interface AppCatalogEntry {
   id: string;

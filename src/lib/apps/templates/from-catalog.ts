@@ -18,6 +18,22 @@ const POST_INSTALL: Record<string, string> = {
     "Open your shop URL and complete the PrestaShop installer. Use the MySQL credentials below when asked.",
   ghost:
     "Ghost installs with SQLite by default. SSH as the domain user: cd into the install folder, run ghost config url https://your-domain, then ghost setup and ghost start. Proxy port 2368 (Domains → Runtimes or nginx). To use MySQL instead, edit config.production.json after setup.",
+  mediawiki:
+    "Open your site URL and follow the MediaWiki installer. Use the MySQL credentials below for the database step.",
+  moodle:
+    "Visit the site URL and complete Moodle's setup wizard. Paste the database credentials from this screen when asked.",
+  phpbb:
+    "Open install/app.php (or the installer redirect) and create the admin account. Use the MySQL credentials below.",
+  opencart:
+    "Run the OpenCart web installer at your shop URL. Choose MySQL and use the credentials below.",
+  kanboard:
+    "Sign in with the default admin / admin and change the password immediately. Configure the database in config.php if prompted.",
+  limesurvey:
+    "Complete the LimeSurvey installer at your site URL. Use MySQL and the credentials below.",
+  grav:
+    "Open /admin on your site to create the Grav administrator — no database required.",
+  adminer:
+    "Open the Adminer URL and sign in with an existing MySQL user. Restrict access (HTTP auth or IP allowlist) — do not leave this public without protection.",
 };
 
 function makeStrongPassword(): string {
@@ -32,6 +48,10 @@ function defaultInstallPath(entry: AppCatalogEntry): string {
   if (entry.id === "matomo") return "public_html/matomo";
   if (entry.id === "ghost") return "ghost";
   if (entry.id === "nextcloud") return "public_html";
+  if (entry.id === "matomo") return "public_html/matomo";
+  if (entry.id === "kanboard") return "public_html/kanboard";
+  if (entry.id === "limesurvey") return "public_html/limesurvey";
+  if (entry.id === "adminer") return "public_html/adminer";
   return "public_html";
 }
 

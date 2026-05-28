@@ -126,7 +126,7 @@ export function ScriptsManager({
       <DomainPageHeader
         domain={domain}
         title="Apps"
-        description="One-click CMS installers (WordPress, Joomla, Drupal, …)"
+        description="Install from the app store catalog (16+ apps) into this domain"
       />
       {error && <Alert>{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
@@ -184,13 +184,13 @@ export function ScriptsManager({
 
       {isAdmin && (
         <Card>
-          <h2 className="text-lg font-medium text-white">Install from catalog</h2>
+          <h2 className="text-lg font-medium text-white">Install from app store</h2>
           <p className="mt-1 text-sm text-panel-muted">
-            Need database + wizard in one flow? Use{" "}
+            Quick install on this domain, or use{" "}
             <a href="/admin/apps" className="text-panel-link hover:underline">
-              Server admin → App catalog
+              Server admin → App store
             </a>{" "}
-            for one-click installs with journal + credentials.
+            for the full catalog with database credentials and journal in one flow.
           </p>
           <div className="mt-4">
             <DomainAppsPicker

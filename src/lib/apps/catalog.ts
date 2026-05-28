@@ -13,6 +13,16 @@ const FALLBACK_ICONS: Record<string, string> = {
   phpmyadmin: "🗄️",
   nextcloud: "☁️",
   matomo: "📊",
+  prestashop: "🛒",
+  ghost: "👻",
+  mediawiki: "📚",
+  moodle: "🎓",
+  phpbb: "💬",
+  opencart: "🏪",
+  kanboard: "📋",
+  limesurvey: "📝",
+  grav: "🪨",
+  adminer: "🔧",
 };
 
 function normalizeRow(row: Record<string, unknown>): AppCatalogEntry {
