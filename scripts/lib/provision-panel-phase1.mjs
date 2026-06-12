@@ -79,7 +79,22 @@ export async function mailboxAutoreplySet(domain, payloadJson) {
   if (hit) Object.assign(hit, row);
   else mailboxes.push(row);
   await writeDomainConfigJson(domain, MAILBOX_SETTINGS, { mailboxes });
-  emit({ ok: true, mailbox: row });
+  const { applyAutoresponderSieve } = await import("./mail-settings-apply.mjs");
+  const { user: owner, home } = await resolveDomainUser(domain);
+  const mailboxHome = user === owner ? home : `/home/${user}`;
+  let sieve = { applied: false };
+  try {
+    sieve = await applyAutoresponderSieve(
+      user,
+      mailboxHome,
+      `${user}@${domain.toLowerCase()}`,
+      Boolean(row.enabled),
+      row.body,
+    );
+  } catch {
+    /* */
+  }
+  emit({ ok: true, mailbox: row, sieve });
 }
 
 export async function mailBouncesList(domain) {

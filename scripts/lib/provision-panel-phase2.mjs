@@ -1,5 +1,6 @@
 import { execFile } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { readFile, appendFile } from "node:fs/promises";
+import path from "node:path";
 import { promisify } from "node:util";
 import {
   emit,
@@ -8,7 +9,12 @@ import {
   readDomainConfigJson,
   writeDomainConfigJson,
   fileExists,
+  QADBAK_DIR,
 } from "./provisioning-common.mjs";
+
+function domainConfigDir(domain) {
+  return path.join(QADBAK_DIR, "data", "domain-config", String(domain).toLowerCase());
+}
 import { mailSendDirect } from "./mail-send.mjs";
 
 const exec = promisify(execFile);
@@ -85,6 +91,11 @@ export async function gitDeployRun(domain) {
   await exec("sudo", ["-u", user, "bash", "-c", cmd], { timeout: 120_000 });
   cfg.lastDeploy = new Date().toISOString();
   await writeDomainConfigJson(domain, "git-deploy.json", cfg);
+  const logPath = path.join(domainConfigDir(domain), "git-deploy-log.jsonl");
+  await appendFile(
+    logPath,
+    `${JSON.stringify({ at: cfg.lastDeploy, action: "deploy", branch: cfg.branch })}\n`,
+  );
   emit({ ok: true, lastDeploy: cfg.lastDeploy });
 }
 

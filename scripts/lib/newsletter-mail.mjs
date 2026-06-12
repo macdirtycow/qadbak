@@ -66,6 +66,21 @@ function stripHtml(html) {
     .trim();
 }
 
+export function wrapNewsletterLinksForTracking(html, opts) {
+  const { trackBase, domain, campaignId, email } = opts;
+  return String(html).replace(/href="(https?:\/\/[^"#]+)"/gi, (full, url) => {
+    if (
+      url.includes("/api/newsletter/track") ||
+      url.includes("/api/newsletter/unsubscribe") ||
+      url.includes("/api/newsletter/confirm")
+    ) {
+      return full;
+    }
+    const tracked = `${trackBase}?domain=${encodeURIComponent(domain)}&kind=click&c=${encodeURIComponent(campaignId)}&e=${encodeURIComponent(email)}&url=${encodeURIComponent(url)}`;
+    return `href="${tracked}"`;
+  });
+}
+
 export function appendUnsubscribeFooter(html, text, unsubscribeUrl) {
   const htmlFooter = `<hr style="border:none;border-top:1px solid #ccc;margin:24px 0"/><p style="font-size:12px;color:#666">You received this email because you subscribed to our newsletter. <a href="${unsubscribeUrl}">Unsubscribe</a></p>`;
   const textFooter = `\n\n---\nUnsubscribe: ${unsubscribeUrl}`;

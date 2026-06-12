@@ -14,7 +14,12 @@ const CSRF_EXEMPT_PREFIXES = [
   "/api/contact/",
 ] as const;
 
+function isGitWebhook(pathname: string): boolean {
+  return /\/git-webhook$/.test(pathname);
+}
+
 function isCsrfExempt(pathname: string): boolean {
+  if (isGitWebhook(pathname)) return true;
   return CSRF_EXEMPT_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
 }
 

@@ -14,6 +14,7 @@ import {
   appendUnsubscribeFooter,
   newsletterPublicUrls,
   sendNewsletterMessage,
+  wrapNewsletterLinksForTracking,
 } from "./newsletter-mail.mjs";
 
 const SETTINGS_FILE = "newsletter-settings.json";
@@ -409,6 +410,12 @@ export async function newsletterCampaignQueue(domain, campaignId) {
       unsubUrl,
     );
     const trackBase = `${urls.subscribe.replace("/subscribe", "/track")}`;
+    const trackedHtml = wrapNewsletterLinksForTracking(withFooter.html, {
+      trackBase,
+      domain,
+      campaignId: id,
+      email: sub.email,
+    });
     const pixel = `<img src="${trackBase}?domain=${encodeURIComponent(domain)}&kind=open&c=${encodeURIComponent(id)}&e=${encodeURIComponent(sub.email)}" width="1" height="1" alt="" />`;
     return {
       campaignId: id,
@@ -417,7 +424,7 @@ export async function newsletterCampaignQueue(domain, campaignId) {
       from,
       fromName: settings.fromName || undefined,
       subject: campaign.subject,
-      html: `${withFooter.html}${pixel}`,
+      html: `${trackedHtml}${pixel}`,
       text: withFooter.text,
     };
   });

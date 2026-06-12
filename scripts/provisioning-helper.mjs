@@ -152,6 +152,44 @@ import {
   planDelete,
 } from "./lib/provision-resellers.mjs";
 import {
+  deliverabilityDashboard,
+  bounceSuppressList,
+  bounceSuppressAdd,
+  newsletterGdprExport,
+  newsletterTemplatesList,
+  newsletterTemplateSave,
+  newsletterSegmentsList,
+  newsletterSegmentSave,
+  analyticsHistory,
+  gitDeployLogGet,
+  gitDeployRollback,
+  wpToolkitPlugins,
+  wpToolkitSecurity,
+  wpToolkitBackup,
+  maintenanceNginx,
+  contactFormEmbed,
+  stagingPromote,
+  stagingVhost,
+  bandwidthTraffic,
+  memcachedGet,
+  memcachedSet,
+  mongoCreate,
+  awstatsRun,
+  subdomainAdd,
+  seo404Scan,
+  woocommerceStatus,
+  ciPipelineGet,
+  ciPipelineSet,
+  ciPipelineRun,
+  ticketNotify,
+  invoiceMarkSent,
+  carddavExportVcf,
+  nodesPingHealth,
+  panelPolicyGet,
+  panelPolicySet,
+  mailboxAutoreplyApply,
+} from "./lib/provision-panel-complete.mjs";
+import {
   dmarcGet,
   dmarcSet,
   mailboxAutoreplyList,
@@ -282,7 +320,7 @@ async function main() {
       await dbCreate(args[0], args[1], args[2], args[3]);
       break;
     case "db-pass":
-      await dbPass(args[0], args[1], args[2]);
+      await dbPass(args[0], args[1], args[2], args[3]);
       break;
     case "domain-create":
       await domainCreate(args[0], args[1], args[2], args[3]);
@@ -805,6 +843,120 @@ async function main() {
       break;
     case "carddav-contact-upsert":
       await carddavContactUpsert(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "deliverability-dashboard":
+      await deliverabilityDashboard(args[0]);
+      break;
+    case "mailbox-autoreply-apply":
+      await mailboxAutoreplyApply(args[0], args[1]);
+      break;
+    case "bounce-suppress-list":
+      await bounceSuppressList(args[0]);
+      break;
+    case "bounce-suppress-add": {
+      const p = parseJsonArg(1);
+      await bounceSuppressAdd(args[0], p.email || args[1]);
+      break;
+    }
+    case "newsletter-gdpr-export":
+      await newsletterGdprExport(args[0]);
+      break;
+    case "newsletter-templates-list":
+      await newsletterTemplatesList(args[0]);
+      break;
+    case "newsletter-template-save":
+      await newsletterTemplateSave(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "newsletter-segments-list":
+      await newsletterSegmentsList(args[0]);
+      break;
+    case "newsletter-segment-save":
+      await newsletterSegmentSave(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "analytics-history":
+      await analyticsHistory(args[0]);
+      break;
+    case "git-deploy-log":
+      await gitDeployLogGet(args[0]);
+      break;
+    case "git-deploy-rollback":
+      await gitDeployRollback(args[0]);
+      break;
+    case "wp-toolkit-plugins":
+      await wpToolkitPlugins(args[0]);
+      break;
+    case "wp-toolkit-security":
+      await wpToolkitSecurity(args[0]);
+      break;
+    case "wp-toolkit-backup":
+      await wpToolkitBackup(args[0]);
+      break;
+    case "maintenance-nginx":
+      await maintenanceNginx(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "contact-form-embed":
+      await contactFormEmbed(args[0]);
+      break;
+    case "staging-promote":
+      await stagingPromote(args[0]);
+      break;
+    case "staging-vhost":
+      await stagingVhost(args[0]);
+      break;
+    case "bandwidth-traffic":
+      await bandwidthTraffic(args[0]);
+      break;
+    case "memcached-get":
+      await memcachedGet(args[0]);
+      break;
+    case "memcached-set":
+      await memcachedSet(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "mongo-create": {
+      const p = parseJsonArg(1);
+      await mongoCreate(args[0], p.name || args[1], p.pass || args[2]);
+      break;
+    }
+    case "awstats-run":
+      await awstatsRun(args[0]);
+      break;
+    case "subdomain-add":
+      await subdomainAdd(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "seo-404-scan":
+      await seo404Scan(args[0]);
+      break;
+    case "woocommerce-status":
+      await woocommerceStatus(args[0]);
+      break;
+    case "ci-pipeline-get":
+      await ciPipelineGet(args[0]);
+      break;
+    case "ci-pipeline-set":
+      await ciPipelineSet(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "ci-pipeline-run":
+      await ciPipelineRun(args[0]);
+      break;
+    case "ticket-notify":
+      await ticketNotify(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "invoice-mark-sent": {
+      const p = parseJsonArg(1);
+      await invoiceMarkSent(args[0], p.invoiceId || args[1]);
+      break;
+    }
+    case "carddav-export-vcf":
+      await carddavExportVcf(args[0]);
+      break;
+    case "nodes-ping-health":
+      await nodesPingHealth();
+      break;
+    case "panel-policy-get":
+      await panelPolicyGet();
+      break;
+    case "panel-policy-set":
+      await panelPolicySet(args[0] || "{}");
       break;
     default:
       emit({ ok: false, error: `Unknown command: ${cmd}` });

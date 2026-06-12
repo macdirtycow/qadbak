@@ -41,6 +41,7 @@ const PUBLIC_EXACT = new Set([
 
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_EXACT.has(pathname)) return true;
+  if (/\/git-webhook$/.test(pathname)) return true;
   if (pathname.startsWith("/api/branding")) return true;
   if (pathname.startsWith("/_next")) return true;
   if (pathname.startsWith("/assets/")) return true;

@@ -90,12 +90,22 @@ export async function dbCreate(domain, name, pass, typeArg) {
   emit({ ok: true, name, user: dbUser.replace(/`/g, ""), type: "mysql" });
 }
 
-export async function dbPass(domain, name, pass) {
+export async function dbPass(domain, name, pass, typeArg) {
+  const dbType = String(typeArg || "mysql").toLowerCase();
+  if (dbType === "postgres" || dbType === "postgresql") {
+    const { user } = await resolveDomainUser(domain);
+    const dbUser = `${user}_${name}`.slice(0, 63).replace(/-/g, "_");
+    await postgresExec(
+      `ALTER USER ${pgIdent(dbUser)} WITH PASSWORD '${pass.replace(/'/g, "''")}'`,
+    );
+    emit({ ok: true, type: "postgres" });
+    return;
+  }
   const { user } = await resolveDomainUser(domain);
   const dbUser = sqlQuote(`${user}_${name}`.slice(0, 32));
   await mysqlExec(
     `ALTER USER ${dbUser}@'localhost' IDENTIFIED BY '${pass.replace(/'/g, "''")}'`,
   );
   await mysqlExec("FLUSH PRIVILEGES");
-  emit({ ok: true });
+  emit({ ok: true, type: "mysql" });
 }

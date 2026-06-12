@@ -29,6 +29,9 @@ export function PanelToolsManager({
   const [autoBody, setAutoBody] = useState("");
   const [gitUrl, setGitUrl] = useState("");
   const [gitBranch, setGitBranch] = useState("main");
+  const [gitSecret, setGitSecret] = useState("");
+  const [bounceEmail, setBounceEmail] = useState("");
+  const [ciCmd, setCiCmd] = useState("npm run build");
   const [maintMsg, setMaintMsg] = useState("We'll be back soon.");
   const [sshKey, setSshKey] = useState("");
   const [ticketSubject, setTicketSubject] = useState("");
@@ -66,23 +69,36 @@ export function PanelToolsManager({
       if (section === "deliverability") {
         await Promise.all([
           call("dmarc-get"),
+          call("deliverability-dashboard"),
           call("mailbox-autoreply-list"),
           call("mail-bounces-list"),
+          call("bounce-suppress-list"),
           call("newsletter-stats-get"),
+          call("newsletter-templates-list"),
+          call("newsletter-segments-list"),
         ]);
       } else if (section === "website") {
         await Promise.all([
           call("analytics-summary"),
+          call("analytics-history"),
           call("git-deploy-get"),
+          call("git-deploy-log"),
           call("wp-toolkit-status"),
+          call("wp-toolkit-security"),
+          call("woocommerce-status"),
           call("maintenance-get"),
           call("contact-form-get"),
+          call("contact-form-embed"),
+          call("seo-404-scan"),
+          call("ci-pipeline-get"),
         ]);
       } else if (section === "staging") {
         await Promise.all([
           call("staging-get"),
           call("bandwidth-usage"),
+          call("bandwidth-traffic"),
           call("redis-get"),
+          call("memcached-get"),
           call("ssh-keys-list"),
           call("awstats-config"),
         ]);
@@ -91,6 +107,7 @@ export function PanelToolsManager({
           call("tickets-list"),
           call("billing-invoices-list"),
           call("carddav-status"),
+          call("carddav-export-vcf"),
         ]);
       }
     } catch {
@@ -129,7 +146,9 @@ export function PanelToolsManager({
     hits?: number;
     topPages?: { path: string; count: number }[];
   };
-  const gitCfg = data["git-deploy-get"] as { config?: { repoUrl?: string; branch?: string } };
+  const gitCfg = data["git-deploy-get"] as {
+    config?: { repoUrl?: string; branch?: string; webhookSecret?: string };
+  };
   const wp = data["wp-toolkit-status"] as { installed?: boolean; version?: string };
   const bandwidth = data["bandwidth-usage"] as { diskBytes?: number; history?: { at: string; bytes: number }[] };
   const tickets = data["tickets-list"] as { tickets?: { id: string; subject: string; status: string }[] };
@@ -137,6 +156,22 @@ export function PanelToolsManager({
     invoices?: { id: string; description: string; amount: number; status: string }[];
   };
   const contactCfg = data["contact-form-get"] as { config?: { listId?: string } };
+  const deliverability = data["deliverability-dashboard"] as {
+    score?: number;
+    grade?: string;
+    spf?: boolean;
+    dkim?: boolean;
+    dmarc?: string;
+  };
+  const analyticsHist = data["analytics-history"] as {
+    points?: { at: string; hits: number }[];
+  };
+  const traffic = data["bandwidth-traffic"] as {
+    bytes?: number;
+    points?: { at: string; bytes: number }[];
+  };
+  const embed = data["contact-form-embed"] as { snippet?: string };
+  const seo404 = data["seo-404-scan"] as { notFound?: { path: string; count: number }[] };
 
   return (
     <div className="space-y-6">
@@ -177,6 +212,19 @@ export function PanelToolsManager({
 
       {section === "deliverability" && (
         <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <h2 className="font-medium text-white">Deliverability score</h2>
+            <p className="mt-2 text-3xl font-semibold text-white">
+              {deliverability?.grade ?? "—"}{" "}
+              <span className="text-base text-panel-muted">
+                ({deliverability?.score ?? 0}/100)
+              </span>
+            </p>
+            <p className="mt-1 text-sm text-panel-muted">
+              SPF {deliverability?.spf ? "✓" : "✗"} · DKIM {deliverability?.dkim ? "✓" : "✗"} ·
+              DMARC {deliverability?.dmarc ?? "—"}
+            </p>
+          </Card>
           <Card>
             <h2 className="font-medium text-white">DMARC wizard</h2>
             <p className="mt-1 text-sm text-panel-muted">{dmarc?.suggestedRecord}</p>
@@ -247,6 +295,25 @@ export function PanelToolsManager({
                 2,
               )}
             </pre>
+            <Input
+              className="mt-2"
+              placeholder="Suppress email"
+              value={bounceEmail}
+              onChange={(e) => setBounceEmail(e.target.value)}
+            />
+            <Button
+              className="mt-2"
+              variant="secondary"
+              disabled={loading || !bounceEmail}
+              onClick={async () => {
+                await call("bounce-suppress-add", { email: bounceEmail });
+                setBounceEmail("");
+                setSuccess("Address suppressed and unsubscribed.");
+                await call("bounce-suppress-list");
+              }}
+            >
+              Suppress address
+            </Button>
           </Card>
           <Card>
             <h2 className="font-medium text-white">Newsletter stats</h2>
@@ -256,6 +323,41 @@ export function PanelToolsManager({
               · Clicks:{" "}
               {(data["newsletter-stats-get"] as { totals?: { clicks?: number } })?.totals?.clicks ?? 0}
             </p>
+            <Button
+              className="mt-3"
+              variant="secondary"
+              disabled={loading}
+              onClick={async () => {
+                const r = await call("newsletter-gdpr-export");
+                const csv = (r as { csv?: string }).csv ?? "";
+                void navigator.clipboard.writeText(csv);
+                setSuccess("Subscriber export copied (GDPR).");
+              }}
+            >
+              Export subscribers (GDPR)
+            </Button>
+          </Card>
+          <Card>
+            <h2 className="font-medium text-white">Newsletter templates</h2>
+            <ul className="mt-2 text-xs text-panel-muted">
+              {(
+                (data["newsletter-templates-list"] as { templates?: { id: string; name: string }[] })
+                  ?.templates ?? []
+              ).map((t) => (
+                <li key={t.id}>{t.name}</li>
+              ))}
+            </ul>
+          </Card>
+          <Card>
+            <h2 className="font-medium text-white">Newsletter segments</h2>
+            <ul className="mt-2 text-xs text-panel-muted">
+              {(
+                (data["newsletter-segments-list"] as { segments?: { id: string; name: string }[] })
+                  ?.segments ?? []
+              ).map((s) => (
+                <li key={s.id}>{s.name}</li>
+              ))}
+            </ul>
           </Card>
         </div>
       )}
@@ -269,6 +371,13 @@ export function PanelToolsManager({
               {analytics?.topPages?.slice(0, 5).map((p) => (
                 <li key={p.path}>
                   {p.path} ({p.count})
+                </li>
+              ))}
+            </ul>
+            <ul className="mt-2 text-xs text-panel-muted">
+              {analyticsHist?.points?.slice(-7).map((p) => (
+                <li key={p.at}>
+                  {p.at}: {p.hits} hits
                 </li>
               ))}
             </ul>
@@ -287,11 +396,22 @@ export function PanelToolsManager({
               value={gitBranch || gitCfg?.config?.branch || "main"}
               onChange={(e) => setGitBranch(e.target.value)}
             />
+            <Input
+              className="mt-2"
+              placeholder="Webhook secret"
+              type="password"
+              value={gitSecret || gitCfg?.config?.webhookSecret || ""}
+              onChange={(e) => setGitSecret(e.target.value)}
+            />
             <div className="mt-3 flex gap-2">
               <Button
                 variant="secondary"
                 onClick={async () => {
-                  await call("git-deploy-set", { repoUrl: gitUrl, branch: gitBranch });
+                  await call("git-deploy-set", {
+                    repoUrl: gitUrl,
+                    branch: gitBranch,
+                    webhookSecret: gitSecret,
+                  });
                   setSuccess("Git config saved.");
                 }}
                 disabled={loading}
@@ -307,7 +427,31 @@ export function PanelToolsManager({
               >
                 Deploy now
               </Button>
+              <Button
+                variant="secondary"
+                onClick={async () => {
+                  await call("git-deploy-rollback");
+                  setSuccess("Rolled back one commit.");
+                }}
+                disabled={loading}
+              >
+                Rollback
+              </Button>
             </div>
+            <p className="mt-2 text-xs text-panel-muted">
+              Webhook: POST /api/domains/{domain}/git-webhook with header X-Qadbak-Deploy-Secret
+            </p>
+            <ul className="mt-2 max-h-24 overflow-auto text-xs text-slate-400">
+              {(
+                (data["git-deploy-log"] as { log?: { at: string; action: string }[] })?.log ?? []
+              )
+                .slice(-5)
+                .map((e) => (
+                  <li key={e.at}>
+                    {e.at}: {e.action}
+                  </li>
+                ))}
+            </ul>
           </Card>
           <Card>
             <h2 className="font-medium text-white">WordPress toolkit</h2>
@@ -316,18 +460,46 @@ export function PanelToolsManager({
                 ? `WordPress ${wp.version ?? ""} in public_html`
                 : "WordPress not detected"}
             </p>
+            {(data["wp-toolkit-security"] as { issues?: string[] })?.issues?.length ? (
+              <ul className="mt-2 text-xs text-amber-400">
+                {(data["wp-toolkit-security"] as { issues: string[] }).issues.slice(0, 5).map((i) => (
+                  <li key={i}>{i}</li>
+                ))}
+              </ul>
+            ) : null}
             {wp?.installed && (
-              <Button
-                className="mt-3"
-                onClick={async () => {
-                  await call("wp-toolkit-update");
-                  setSuccess("WordPress core update ran.");
-                  await call("wp-toolkit-status");
-                }}
-                disabled={loading}
-              >
-                Update WordPress core
-              </Button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  onClick={async () => {
+                    await call("wp-toolkit-backup");
+                    setSuccess("Backup started.");
+                  }}
+                  disabled={loading}
+                  variant="secondary"
+                >
+                  Backup first
+                </Button>
+                <Button
+                  onClick={async () => {
+                    await call("wp-toolkit-update");
+                    setSuccess("WordPress core update ran.");
+                    await call("wp-toolkit-status");
+                  }}
+                  disabled={loading}
+                >
+                  Update core
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={async () => {
+                    await call("wp-toolkit-plugins");
+                    setSuccess("Plugins updated.");
+                  }}
+                  disabled={loading}
+                >
+                  Update plugins
+                </Button>
+              </div>
             )}
           </Card>
           <Card>
@@ -358,14 +530,82 @@ export function PanelToolsManager({
               >
                 Disable
               </Button>
+              <Button
+                variant="secondary"
+                onClick={async () => {
+                  await call("maintenance-nginx", { enabled: true, message: maintMsg });
+                  setSuccess("Nginx maintenance snippet applied.");
+                }}
+                disabled={loading}
+              >
+                Nginx maintenance
+              </Button>
             </div>
+          </Card>
+          <Card>
+            <h2 className="font-medium text-white">WooCommerce</h2>
+            <p className="mt-2 text-sm text-panel-muted">
+              {(data["woocommerce-status"] as { installed?: boolean; version?: string })?.installed
+                ? `WooCommerce ${(data["woocommerce-status"] as { version?: string }).version ?? ""}`
+                : "Not detected"}
+            </p>
+          </Card>
+          <Card>
+            <h2 className="font-medium text-white">Deploy pipeline</h2>
+            <Input
+              className="mt-2 font-mono text-xs"
+              value={ciCmd}
+              onChange={(e) => setCiCmd(e.target.value)}
+            />
+            <div className="mt-2 flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={async () => {
+                  await call("ci-pipeline-set", { command: ciCmd });
+                  setSuccess("Pipeline command saved.");
+                }}
+                disabled={loading}
+              >
+                Save
+              </Button>
+              <Button
+                onClick={async () => {
+                  await call("ci-pipeline-run");
+                  setSuccess("Pipeline finished.");
+                }}
+                disabled={loading}
+              >
+                Run
+              </Button>
+            </div>
+          </Card>
+          <Card>
+            <h2 className="font-medium text-white">404 monitor</h2>
+            <ul className="mt-2 text-xs text-slate-400">
+              {seo404?.notFound?.slice(0, 8).map((p) => (
+                <li key={p.path}>
+                  {p.path} ({p.count})
+                </li>
+              ))}
+            </ul>
           </Card>
           <Card className="lg:col-span-2">
             <h2 className="font-medium text-white">Contact form</h2>
             <p className="mt-1 text-sm text-panel-muted">
-              List ID: <code>{contactCfg?.config?.listId}</code> — POST to{" "}
-              <code>/api/contact/submit</code>
+              List ID: <code>{contactCfg?.config?.listId}</code>
             </p>
+            {embed?.snippet && (
+              <Button
+                className="mt-2"
+                variant="secondary"
+                onClick={() => {
+                  void navigator.clipboard.writeText(embed.snippet ?? "");
+                  setSuccess("Contact form embed copied.");
+                }}
+              >
+                Copy embed code
+              </Button>
+            )}
           </Card>
         </div>
       )}
@@ -374,22 +614,58 @@ export function PanelToolsManager({
         <div className="grid gap-4 lg:grid-cols-2">
           <Card>
             <h2 className="font-medium text-white">Staging</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                onClick={async () => {
+                  await call("staging-sync");
+                  setSuccess("Staging copy synced from public_html.");
+                }}
+                disabled={loading}
+              >
+                Sync to staging
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={async () => {
+                  await call("staging-vhost");
+                  setSuccess("Staging subdomain configured.");
+                }}
+                disabled={loading}
+              >
+                Enable staging URL
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={async () => {
+                  await call("staging-promote");
+                  setSuccess("Staging promoted to live site.");
+                }}
+                disabled={loading}
+              >
+                Promote to live
+              </Button>
+            </div>
+          </Card>
+          <Card>
+            <h2 className="font-medium text-white">Disk & traffic</h2>
+            <p className="mt-2 text-sm text-panel-muted">
+              Disk: {Math.round((bandwidth?.diskBytes ?? 0) / 1024 / 1024)} MB · Traffic:{" "}
+              {Math.round((traffic?.bytes ?? 0) / 1024 / 1024)} MB (logs)
+            </p>
+          </Card>
+          <Card>
+            <h2 className="font-medium text-white">Subdomain</h2>
             <Button
               className="mt-3"
+              variant="secondary"
               onClick={async () => {
-                await call("staging-sync");
-                setSuccess("Staging copy synced from public_html.");
+                await call("subdomain-add", { sub: "shop" });
+                setSuccess("Subdomain shop created.");
               }}
               disabled={loading}
             >
-              Sync to staging/
+              Add shop.{domain}
             </Button>
-          </Card>
-          <Card>
-            <h2 className="font-medium text-white">Disk / usage</h2>
-            <p className="mt-2 text-sm text-panel-muted">
-              {Math.round((bandwidth?.diskBytes ?? 0) / 1024 / 1024)} MB home directory
-            </p>
           </Card>
           <Card>
             <h2 className="font-medium text-white">Redis prefix</h2>
@@ -402,6 +678,35 @@ export function PanelToolsManager({
               disabled={loading}
             >
               Enable Redis config
+            </Button>
+          </Card>
+          <Card>
+            <h2 className="font-medium text-white">Memcached</h2>
+            <Button
+              className="mt-3"
+              variant="secondary"
+              onClick={async () => {
+                await call("memcached-set", { enabled: true });
+                setSuccess("Memcached prefix saved (shared 127.0.0.1:11211).");
+              }}
+              disabled={loading}
+            >
+              Enable Memcached config
+            </Button>
+          </Card>
+          <Card>
+            <h2 className="font-medium text-white">MongoDB database</h2>
+            <Button
+              className="mt-3"
+              variant="secondary"
+              onClick={async () => {
+                const r = await call("mongo-create", { name: "app" });
+                setSuccess(`Mongo DB created. Password in response.`);
+                void r;
+              }}
+              disabled={loading}
+            >
+              Create app database
             </Button>
           </Card>
           <Card>
@@ -431,14 +736,24 @@ export function PanelToolsManager({
             <p className="mt-2 text-xs text-panel-muted">
               Config snippet stored when enabled. Install awstats package on server.
             </p>
-            <Button
-              className="mt-2"
-              variant="secondary"
-              onClick={() => void call("awstats-config")}
-              disabled={loading}
-            >
-              Generate config
-            </Button>
+            <div className="mt-2 flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => void call("awstats-config")}
+                disabled={loading}
+              >
+                Generate config
+              </Button>
+              <Button
+                onClick={async () => {
+                  await call("awstats-run");
+                  setSuccess("AWStats report run.");
+                }}
+                disabled={loading}
+              >
+                Run report
+              </Button>
+            </div>
           </Card>
         </div>
       )}
@@ -514,8 +829,24 @@ export function PanelToolsManager({
             </Button>
             <ul className="mt-3 text-sm text-panel-muted">
               {invoices?.invoices?.slice(0, 5).map((i) => (
-                <li key={i.id}>
-                  {i.description} — €{i.amount} ({i.status})
+                <li key={i.id} className="flex flex-wrap items-center gap-2">
+                  <span>
+                    {i.description} — €{i.amount} ({i.status})
+                  </span>
+                  {i.status === "draft" && (
+                    <Button
+                      variant="secondary"
+                      className="!py-0.5 !text-xs"
+                      onClick={async () => {
+                        await call("invoice-mark-sent", { invoiceId: i.id });
+                        setSuccess("Invoice marked sent.");
+                        await call("billing-invoices-list");
+                      }}
+                      disabled={loading}
+                    >
+                      Mark sent
+                    </Button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -528,17 +859,30 @@ export function PanelToolsManager({
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
             />
-            <Button
-              className="mt-2"
-              onClick={async () => {
-                await call("carddav-contact-upsert", { email: contactEmail, name: "Contact" });
-                setSuccess("Contact saved.");
-                await call("carddav-status");
-              }}
-              disabled={loading || !contactEmail}
-            >
-              Save contact
-            </Button>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Button
+                onClick={async () => {
+                  await call("carddav-contact-upsert", { email: contactEmail, name: "Contact" });
+                  setSuccess("Contact saved.");
+                  await call("carddav-status");
+                }}
+                disabled={loading || !contactEmail}
+              >
+                Save contact
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={async () => {
+                  const r = await call("carddav-export-vcf");
+                  const vcf = (r as { vcf?: string }).vcf ?? "";
+                  void navigator.clipboard.writeText(vcf);
+                  setSuccess("vCard export copied.");
+                }}
+                disabled={loading}
+              >
+                Export vCard
+              </Button>
+            </div>
           </Card>
           {isAdmin && (
             <Card>
