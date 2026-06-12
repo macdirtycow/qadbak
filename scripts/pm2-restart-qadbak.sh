@@ -64,6 +64,15 @@ sleep 2
 curl -sf "http://127.0.0.1:3000/api/health" | head -c 120 || true
 echo ""
 
+if [[ -f "$ROOT/data/license.json" ]]; then
+  echo "==> License heartbeat (refresh Premium after reboot)"
+  if run "cd '$ROOT' && node scripts/qadbak-license-cli.mjs heartbeat"; then
+    echo "    OK"
+  else
+    echo "    WARN — heartbeat failed (check curl to license server from this host)" >&2
+  fi
+fi
+
 echo "==> Terminal WS backend (:$TERMINAL_PORT)"
 if ss -tln 2>/dev/null | grep -q ":${TERMINAL_PORT} "; then
   CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 3 "http://127.0.0.1:${TERMINAL_PORT}/" 2>/dev/null || echo 000)"

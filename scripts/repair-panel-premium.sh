@@ -58,6 +58,12 @@ sudo -u "$USER" bash -c "set -a && source '$ENV_FILE' && set +a && node '$ROOT/s
   echo "WARN: heartbeat failed — check JWT secret matches license server" >&2
 }
 
+if [[ -f "$ROOT/scripts/configure-license-heartbeat-timer.sh" ]]; then
+  echo ""
+  echo "==> Systemd license heartbeat timer (every 6h fallback)"
+  bash "$ROOT/scripts/configure-license-heartbeat-timer.sh" || true
+fi
+
 echo ""
 echo "==> Restart panel (load QADBAK_PREMIUM_FEATURES from .env.local)"
 bash "$ROOT/scripts/pm2-restart-qadbak.sh"

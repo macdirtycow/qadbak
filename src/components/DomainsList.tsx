@@ -129,17 +129,29 @@ export function DomainsList({
                       Files
                     </Button>
                     {isAdmin && (
-                      <Button
-                        variant="secondary"
-                        disabled={busy === d.name}
-                        onClick={() => toggle(d.name, disabled)}
-                      >
-                        {busy === d.name
-                          ? "Working…"
-                          : disabled
-                            ? "Enable"
-                            : "Disable"}
-                      </Button>
+                      <>
+                        <Button
+                          variant="ghost"
+                          onClick={() =>
+                            router.push(
+                              `/domains/${encodeURIComponent(d.name)}/lifecycle`,
+                            )
+                          }
+                        >
+                          Delete
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          disabled={busy === d.name}
+                          onClick={() => toggle(d.name, disabled)}
+                        >
+                          {busy === d.name
+                            ? "Working…"
+                            : disabled
+                              ? "Enable"
+                              : "Disable"}
+                        </Button>
+                      </>
                     )}
                   </div>
                 </td>

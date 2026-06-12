@@ -1,6 +1,7 @@
 import { access } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { runProvisioningHelper } from "./provisioner/native-exec";
 
 const execFileAsync = promisify(execFile);
 
@@ -17,15 +18,29 @@ export async function repairAvailable(): Promise<boolean> {
     });
     return true;
   } catch {
+    /* fall back to provisioning helper */
+  }
+  try {
+    await runProvisioningHelper("ping");
+    return true;
+  } catch {
     return false;
   }
 }
 
 export async function repairDomainWebsite(domain: string): Promise<string> {
-  const { stdout, stderr } = await execFileAsync(
-    "sudo",
-    ["-n", REPAIR_SCRIPT, domain],
-    { timeout: 120_000, maxBuffer: 2 * 1024 * 1024 },
-  );
-  return [stdout, stderr].filter(Boolean).join("\n").trim() || "Repair completed.";
+  try {
+    await access(REPAIR_SCRIPT);
+    const { stdout, stderr } = await execFileAsync(
+      "sudo",
+      ["-n", REPAIR_SCRIPT, domain],
+      { timeout: 300_000, maxBuffer: 8 * 1024 * 1024 },
+    );
+    return [stdout, stderr].filter(Boolean).join("\n").trim() || "Repair completed.";
+  } catch {
+    /* domain-repair sudo not configured — use provisioning helper (same as create) */
+  }
+  const result = await runProvisioningHelper("domain-website-repair", domain);
+  const output = typeof result.output === "string" ? result.output : "";
+  return output.trim() || "Repair completed.";
 }

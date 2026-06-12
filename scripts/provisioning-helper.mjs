@@ -20,6 +20,7 @@ import {
 } from "./lib/provision-mail.mjs";
 import { dbList, dbCreate, dbPass } from "./lib/provision-db.mjs";
 import { domainCreate, domainDelete } from "./lib/provision-domain.mjs";
+import { domainWebsiteRepair } from "./lib/provision-repair.mjs";
 import {
   backupList,
   backupCreate,
@@ -227,6 +228,9 @@ async function main() {
       break;
     case "domain-delete":
       await domainDelete(args[0]);
+      break;
+    case "domain-website-repair":
+      await domainWebsiteRepair(args[0]);
       break;
     case "backup-list":
       await backupList(args[0]);

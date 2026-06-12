@@ -175,30 +175,28 @@ export async function domainCreate(domain, pass, userOpt, extraJson) {
     });
   }
 
-  if (ownedByQadbak) {
-    const ensureScript = path.join(QADBAK_DIR, "scripts", "ensure-domain-website.sh");
-    const ensureUser = type === "alias" && parentUser ? parentUser : user;
+  if (ownedByQadbak && type !== "alias") {
+    const repairScript = path.join(QADBAK_DIR, "scripts", "fix-domain-website.sh");
     try {
       const t0 = Date.now();
-      const { stdout, stderr } = await exec("bash", [ensureScript, name, ensureUser], {
-        timeout: 180_000,
-        maxBuffer: 4 * 1024 * 1024,
+      const { stdout, stderr } = await exec("bash", [repairScript, name], {
+        timeout: 300_000,
+        maxBuffer: 8 * 1024 * 1024,
       });
-      jstep("shell", `Ensured website end-to-end for ${name}`, {
-        command: `ensure-domain-website.sh ${name} ${ensureUser}`,
+      jstep("shell", `Website live for ${name} (fix-domain-website)`, {
+        command: `fix-domain-website.sh ${name}`,
         durationMs: Date.now() - t0,
         output: [stdout, stderr].filter(Boolean).join("\n"),
       });
     } catch (err) {
       const message = err?.stderr || err?.stdout || err?.message || String(err);
-      jstep("shell", `ensure-domain-website.sh non-fatal failure for ${name}`, {
-        command: `ensure-domain-website.sh ${name} ${ensureUser}`,
+      jstep("shell", `fix-domain-website.sh non-fatal failure for ${name}`, {
+        command: `fix-domain-website.sh ${name}`,
         ok: false,
         output: message,
         errorMessage:
-          "End-to-end website ensure failed (probably certbot or nginx -t). " +
-          "Unix user + public_html + landing are in place; re-run later with: " +
-          `sudo bash ${ensureScript} ${name} ${ensureUser}`,
+          "Website repair failed during create — use Overview → Repair or: " +
+          `sudo bash ${repairScript} ${name}`,
       });
     }
   }
