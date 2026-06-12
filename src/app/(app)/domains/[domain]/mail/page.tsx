@@ -19,6 +19,11 @@ const SECTIONS: MailSection[] = [
     description: "Create mailboxes, passwords, and quotas",
   },
   {
+    slug: "newsletter",
+    title: "Newsletter",
+    description: "Subscribers, campaigns, and signup forms",
+  },
+  {
     slug: "settings",
     title: "Settings",
     description: "Catch-all, autoresponder, and domain mail options",

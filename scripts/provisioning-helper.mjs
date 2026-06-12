@@ -151,6 +151,23 @@ import {
   planCreate,
   planDelete,
 } from "./lib/provision-resellers.mjs";
+import {
+  newsletterGet,
+  newsletterSet,
+  newsletterSubscribersList,
+  newsletterSubscriberUpsert,
+  newsletterSubscriberDelete,
+  newsletterSubscribersImport,
+  newsletterCampaignsList,
+  newsletterCampaignUpsert,
+  newsletterCampaignDelete,
+  newsletterCampaignQueue,
+  newsletterSendBatch,
+  newsletterCampaignTest,
+  newsletterPublicSubscribe,
+  newsletterPublicConfirm,
+  newsletterPublicUnsubscribe,
+} from "./lib/provision-newsletter.mjs";
 
 const cmd = process.argv[2];
 const args = process.argv.slice(3);
@@ -591,6 +608,51 @@ async function main() {
       break;
     case "plan-delete":
       await planDelete(args[0]);
+      break;
+    case "newsletter-get":
+      await newsletterGet(args[0]);
+      break;
+    case "newsletter-set":
+      await newsletterSet(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "newsletter-subscribers-list":
+      await newsletterSubscribersList(args[0]);
+      break;
+    case "newsletter-subscriber-upsert":
+      await newsletterSubscriberUpsert(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "newsletter-subscriber-delete":
+      await newsletterSubscriberDelete(args[0], args[1]);
+      break;
+    case "newsletter-subscribers-import":
+      await newsletterSubscribersImport(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "newsletter-campaigns-list":
+      await newsletterCampaignsList(args[0]);
+      break;
+    case "newsletter-campaign-upsert":
+      await newsletterCampaignUpsert(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "newsletter-campaign-delete":
+      await newsletterCampaignDelete(args[0], args[1]);
+      break;
+    case "newsletter-campaign-queue":
+      await newsletterCampaignQueue(args[0], args[1]);
+      break;
+    case "newsletter-send-batch":
+      await newsletterSendBatch(args[0], args[1]);
+      break;
+    case "newsletter-campaign-test":
+      await newsletterCampaignTest(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "newsletter-public-subscribe":
+      await newsletterPublicSubscribe(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "newsletter-public-confirm":
+      await newsletterPublicConfirm(args[0], args[1]);
+      break;
+    case "newsletter-public-unsubscribe":
+      await newsletterPublicUnsubscribe(args[0], args[1]);
       break;
     default:
       emit({ ok: false, error: `Unknown command: ${cmd}` });

@@ -8,6 +8,7 @@ type MailTab = { slug: string; label: string; adminOnly?: boolean };
 const TABS: MailTab[] = [
   { slug: "", label: "Overview" },
   { slug: "accounts", label: "Accounts" },
+  { slug: "newsletter", label: "Newsletter" },
   { slug: "settings", label: "Settings" },
   { slug: "logs", label: "Logs" },
   { slug: "imap", label: "IMAP", adminOnly: true },
