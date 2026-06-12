@@ -6,7 +6,7 @@
     <title>Qadbak — Self-hosted hosting control panel for Ubuntu</title>
     <meta
       name="description"
-      content="Self-hosted hosting panel for Ubuntu: one-click apps, REST API, offsite backups, WAF, TOTP 2FA, and privacy controls. Premium from €2.50/month."
+      content="Self-hosted hosting panel for Ubuntu: Site tools, newsletters, one-click apps, REST API, offsite backups, WAF, TOTP 2FA, and a live demo at demo.qadbak.com. Premium from €2.50/month."
     />
     <meta name="theme-color" content="#0f1419" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -34,6 +34,7 @@
           </a>
           <nav class="nav-links" aria-label="Main">
             <a href="#platform">Platform</a>
+            <a href="#demo">Live demo</a>
             <a href="#apps">App store</a>
             <a href="#security">Security</a>
             <a href="#integrations">Integrations</a>
@@ -43,6 +44,7 @@
             <a href="#faq">FAQ</a>
           </nav>
           <div class="nav-actions">
+            <a href="https://demo.qadbak.com/login" class="btn btn-secondary" rel="noopener">Live demo</a>
             <a href="https://github.com/macdirtycow/qadbak" class="btn btn-secondary" rel="noopener">GitHub</a>
             <a href="https://license.omiiba.dev/buy" class="btn btn-primary" rel="noopener">Premium plans</a>
             <button type="button" class="nav-toggle" aria-label="Menu" aria-expanded="false">
@@ -54,6 +56,8 @@
         </div>
         <div class="mobile-menu" aria-label="Mobile">
           <a href="#platform">Platform</a>
+          <a href="#demo">Live demo</a>
+          <a href="https://demo.qadbak.com/login" rel="noopener">Open demo</a>
           <a href="#apps">App store</a>
           <a href="#security">Security</a>
           <a href="#integrations">Integrations</a>
@@ -84,7 +88,8 @@
               built-in webmail, offsite backups (S3 / B2 / GCS), and white-label.
             </p>
             <div class="hero-cta">
-              <a href="https://license.omiiba.dev/buy" class="btn btn-primary btn-lg" rel="noopener">Premium from €2.50/mo</a>
+              <a href="https://demo.qadbak.com/login" class="btn btn-primary btn-lg" rel="noopener">Try live demo</a>
+              <a href="https://license.omiiba.dev/buy" class="btn btn-secondary btn-lg" rel="noopener">Premium from €2.50/mo</a>
               <a href="https://github.com/macdirtycow/qadbak" class="btn btn-secondary btn-lg" rel="noopener">View source</a>
             </div>
             <ul class="facts">
@@ -96,10 +101,11 @@
           <aside class="hero-aside">
             <h2>What’s new</h2>
             <ul>
+              <li><strong>Live demo</strong> — <a href="https://demo.qadbak.com/login" rel="noopener">demo.qadbak.com</a> (read-only panel tour)</li>
+              <li><strong>Site tools</strong> — deliverability, Git deploy, staging, analytics, support tickets</li>
+              <li><strong>Newsletter</strong> — subscribers, campaigns, open/click tracking, GDPR export</li>
               <li><strong>App store</strong> — 24 one-click apps (CMS, shops, wiki, forums, gallery, helpdesk, finance)</li>
-              <li><strong>Privacy &amp; trust</strong> — TOTP 2FA, activity log, admin privacy center (data stays on your server)</li>
               <li>REST API v1 + scoped API keys (WHMCS / Blesta starters)</li>
-              <li><code>panel.&lt;domain&gt;</code> URLs — Cloudflare Flexible or Full HTTPS</li>
               <li>Local backups + restore wizard (offsite upload → Premium)</li>
               <li>ModSecurity WAF, ClamAV, fail2ban, metrics &amp; alert webhooks</li>
             </ul>
@@ -123,8 +129,12 @@
               <p>Sites, subdomains, aliases, redirects, reverse proxies. Let’s Encrypt with renewal status per host.</p>
             </article>
             <article class="card">
-              <h3>Mail</h3>
-              <p>Mailboxes, forwarding, SPF/DKIM/DMARC helpers, delivery logs. Per-domain isolation for clients.</p>
+              <h3>Mail &amp; newsletter</h3>
+              <p>Mailboxes, SPF/DKIM/DMARC, delivery logs, plus built-in newsletters — subscribers, campaigns, tracking pixel, and GDPR export.</p>
+            </article>
+            <article class="card">
+              <h3>Site tools</h3>
+              <p>Per-domain hub: deliverability score, autoresponders, Git deploy + webhooks, WordPress toolkit, staging, Redis, SSH keys, invoices, and tickets.</p>
             </article>
             <article class="card">
               <h3>DNS</h3>
@@ -158,6 +168,32 @@
               <h3>Trust &amp; privacy</h3>
               <p>TOTP two-factor login, local activity log with retention, privacy report export — no third-party analytics on the panel.</p>
             </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="demo" class="alt-bg">
+        <div class="container">
+          <p class="section-label">Live demo</p>
+          <h2 class="section-title">See the panel before you install</h2>
+          <p class="section-lead">
+            Open <a href="https://demo.qadbak.com/login" rel="noopener"><strong>demo.qadbak.com</strong></a> for a
+            read-only tour of the real Qadbak UI — domains, mail, newsletters, Site tools, app store, and server admin.
+            Credentials are prefilled on the login page. Changes are blocked so the demo stays stable for everyone.
+          </p>
+          <div class="grid-2">
+            <article class="card">
+              <h3>What you can explore</h3>
+              <p>Dashboard, domain DNS/SSL/files, mail accounts &amp; newsletter, Site tools tabs, backups UI, security, and Premium-gated screens (visible to demo admin).</p>
+            </article>
+            <article class="card">
+              <h3>Run your own copy</h3>
+              <p>Clone the repo, run the installer on Ubuntu 22.04/24.04, or enable the demo host on your VPS with <span class="code-chip">sudo bash scripts/apply-demo-vhost.sh</span> — see <code>docs/DEMO.md</code> on GitHub.</p>
+            </article>
+          </div>
+          <div class="hero-cta" style="margin-top: 2rem">
+            <a href="https://demo.qadbak.com/login" class="btn btn-primary btn-lg" rel="noopener">Open live demo</a>
+            <a href="#install" class="btn btn-secondary btn-lg">Install guide</a>
           </div>
         </div>
       </section>
@@ -317,6 +353,10 @@
             <article class="card">
               <h3>Website health</h3>
               <p>Public probe plus origin checks — hints for Cloudflare 502/523 and one-click repair on the server.</p>
+            </article>
+            <article class="card">
+              <h3>Site tools</h3>
+              <p>Deliverability dashboard, Git deploy with webhooks, staging promote, bandwidth history, CI pipeline hooks, and light billing — one screen per domain.</p>
             </article>
           </div>
         </div>
@@ -525,6 +565,13 @@
           <div class="faq">
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
+                Is there a live demo?
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="faq-a">Yes — <a href="https://demo.qadbak.com/login" rel="noopener">demo.qadbak.com</a> runs the real panel in <strong>read-only</strong> mode. Use the prefilled <span class="code">demo</span> login to browse domains, mail, newsletters, Site tools, and server admin. To make changes, install Qadbak on your own VPS.</div>
+            </div>
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false">
                 Do I need a license to try Qadbak?
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
@@ -610,6 +657,7 @@
             <li><a href="#security">Security</a></li>
             <li><a href="#pricing">Pricing</a></li>
             <li><a href="https://license.omiiba.dev/buy" rel="noopener">Premium plans</a></li>
+            <li><a href="https://demo.qadbak.com/login" rel="noopener">Live demo</a></li>
             <li><a href="/login">Panel login</a></li>
           </ul>
         </div>

@@ -20,9 +20,25 @@ export default function LoginPage() {
   const [tagline, setTagline] = useState(APP_TAGLINE);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [httpPanel, setHttpPanel] = useState(false);
+  const [demoInfo, setDemoInfo] = useState<{
+    username?: string;
+    password?: string;
+    readOnly?: boolean;
+    showcaseDomain?: string;
+  } | null>(null);
 
   useEffect(() => {
     setHttpPanel(window.location.protocol === "http:");
+    fetch("/api/demo/info")
+      .then((r) => r.json())
+      .then((d: { demo?: boolean; username?: string; password?: string; readOnly?: boolean; showcaseDomain?: string }) => {
+        if (d.demo) {
+          setDemoInfo(d);
+          setUsername(d.username ?? "");
+          setPassword(d.password ?? "");
+        }
+      })
+      .catch(() => {});
     fetch("/api/branding")
       .then((r) => r.json())
       .then(
@@ -98,6 +114,16 @@ export default function LoginPage() {
         />
         <h1 className="text-2xl font-semibold text-panel-text">{brandName}</h1>
         <p className="mt-1 text-sm text-panel-muted">{tagline}</p>
+        {demoInfo ? (
+          <div className="mt-6 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-50">
+            <p className="font-medium">Live demo (read-only)</p>
+            <p className="mt-1 text-amber-100/90">
+              Credentials are prefilled. Explore domains, mail, Site tools, and server admin —
+              changes are blocked. Sample domain:{" "}
+              <code className="text-amber-50">{demoInfo.showcaseDomain ?? "showcase.qadbak.com"}</code>
+            </p>
+          </div>
+        ) : null}
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
           {error && <Alert>{error}</Alert>}
           {!needsTotp && (

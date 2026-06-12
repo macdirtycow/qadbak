@@ -20,10 +20,12 @@ is_ip() {
 
 PANEL_HOST="${PANEL_HOST:-}"
 SERVER_FQDN="${SERVER_FQDN:-}"
+DEMO_HOST=""
 if [[ -f "$QADBAK_DIR/.env.local" ]]; then
   # shellcheck disable=SC1091
-  source <(grep -E '^(QADBAK_PUBLIC_HOST|PANEL_HOST)=' "$QADBAK_DIR/.env.local" 2>/dev/null | sed 's/^/export /') || true
+  source <(grep -E '^(QADBAK_PUBLIC_HOST|PANEL_HOST|QADBAK_DEMO_HOST)=' "$QADBAK_DIR/.env.local" 2>/dev/null | sed 's/^/export /') || true
   PANEL_HOST="${PANEL_HOST:-${QADBAK_PUBLIC_HOST:-}}"
+  DEMO_HOST="${QADBAK_DEMO_HOST:-}"
 fi
 SERVER_FQDN="${SERVER_FQDN:-$(hostname -f 2>/dev/null || hostname)}"
 PANEL_HOST="${PANEL_HOST:-$SERVER_FQDN}"
@@ -35,7 +37,8 @@ if is_ip "$PANEL_HOST"; then
 fi
 
 SSL_CERT_HOST=""
-for candidate in "$PANEL_HOST" "$SERVER_FQDN"; do
+for candidate in "$PANEL_HOST" "$DEMO_HOST" "$SERVER_FQDN"; do
+  [[ -z "$candidate" ]] && continue
   if [[ -f "/etc/letsencrypt/live/$candidate/fullchain.pem" ]]; then
     SSL_CERT_HOST="$candidate"
     break
@@ -79,6 +82,11 @@ if [[ "$PANEL_HOST" == "$SERVER_FQDN" ]]; then
 else
   PANEL_HTTP_NAMES="${PANEL_HOST} www.${PANEL_HOST} ${SERVER_FQDN}"
   PANEL_TLS_NAMES="${PANEL_HOST} ${SERVER_FQDN}"
+fi
+if [[ -n "$DEMO_HOST" ]]; then
+  PANEL_HTTP_NAMES="${PANEL_HTTP_NAMES} ${DEMO_HOST}"
+  PANEL_TLS_NAMES="${PANEL_TLS_NAMES} ${DEMO_HOST}"
+  echo "==> Demo panel hostname: $DEMO_HOST"
 fi
 
 # When apply-nginx-default-deny.sh has been enabled, the deny vhost owns

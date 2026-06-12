@@ -11,6 +11,7 @@ import {
   clientRbacEnabled,
   isClientBlockedPath,
 } from "./middleware/client-rbac";
+import { demoMutationBlocked } from "./middleware/demo-readonly";
 import {
   clientMutationBlocked,
   csrfCheckFailed,
@@ -33,6 +34,7 @@ const PUBLIC_EXACT = new Set([
   "/api/newsletter/unsubscribe",
   "/api/newsletter/track",
   "/api/contact/submit",
+  "/api/demo/info",
   "/landing.css",
   "/landing.js",
   "/favicon.svg",
@@ -130,6 +132,19 @@ export async function middleware(request: NextRequest) {
       audience: JWT_AUDIENCE,
     });
     const role = String(payload.role ?? "");
+    const username = String(payload.username ?? "");
+    if (demoMutationBlocked(pathname, request.method, username)) {
+      return finish(
+        request,
+        NextResponse.json(
+          {
+            error:
+              "Demo panel is read-only. Install Qadbak on your own VPS to make changes.",
+          },
+          { status: 403 },
+        ),
+      );
+    }
     if (role === "client" && clientRbacEnabled()) {
       if (isClientBlockedPath(pathname)) {
         return clientForbiddenResponse(request, pathname);

@@ -265,8 +265,11 @@ marketing-site/   static HTML for qadbak.com + legal pages
 
 ## Marketing site (qadbak.com)
 
-Pricing and legal copy live in `marketing-site/`. The panel serves them at `/` via
+Pricing, feature copy, and **live demo** CTAs live in `marketing-site/`. The panel serves them at `/` via
 `npm run build` (runs `scripts/sync-landing-public.sh` for CSS/JS assets).
+
+**Live demo:** [demo.qadbak.com](https://demo.qadbak.com/login) — enable on your VPS with
+`sudo bash scripts/apply-demo-vhost.sh` ([docs/DEMO.md](docs/DEMO.md)).
 
 **After changing prices or terms**, redeploy so qadbak.com updates:
 

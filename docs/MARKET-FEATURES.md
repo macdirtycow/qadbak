@@ -1,6 +1,6 @@
-# Market competition features (phases 1–8)
+# Market competition features (phases 1–12)
 
-Shipped on `main` for native VPS installs. Each phase has a checklist in `docs/MARKET-PHASE-N.md`.
+Shipped on `main` for native VPS installs. Phases 1–8 have checklists in `docs/MARKET-PHASE-N.md`. Phases 9–12 are **Site tools** (customer UI — no phase labels).
 
 ## Overview
 
@@ -14,6 +14,7 @@ Shipped on `main` for native VPS installs. Each phase has a checklist in `docs/M
 | **6** | Metrics + alerts | [MARKET-PHASE-6.md](./MARKET-PHASE-6.md) | Status, metrics 24h/7d/30d |
 | **7** | Firewall, WAF, ClamAV | [MARKET-PHASE-7.md](./MARKET-PHASE-7.md) | Firewall, Domain security |
 | **8** | REST API v1, integrations | [MARKET-PHASE-8.md](./MARKET-PHASE-8.md) | API keys, OpenAPI |
+| **9–12** | Site tools + newsletter + demo | [PANEL-PHASES-9-12.md](./PANEL-PHASES-9-12.md), [DEMO.md](./DEMO.md) | Domain → Site tools, Mail → Newsletter, [demo.qadbak.com](https://demo.qadbak.com/login) |
 
 The phase roadmap is **not** shown in the customer-facing panel (internal/docs and `scripts/run-market-phases-check.sh` only).
 
@@ -27,6 +28,8 @@ sudo bash scripts/run-market-phase1-check.sh   # phase 1 only
 
 ## Operator highlights
 
+- **Live demo:** `https://demo.qadbak.com/login` — [DEMO.md](./DEMO.md) · enable with `sudo bash scripts/apply-demo-vhost.sh`
+- **Marketing site:** `marketing-site/index.html` — redeploy via `npm run build` on panel host
 - **Panel URLs:** `https://panel.<customer-domain>/login` — [CLOUDFLARE.md](./CLOUDFLARE.md)
 - **After update:** `sudo bash scripts/fix-panel-now.sh`
 - **API:** [api/openapi.yaml](./api/openapi.yaml) · [WHMCS](./integrations/WHMCS-INTEGRATION.md)

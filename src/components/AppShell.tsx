@@ -12,6 +12,7 @@ interface AppShellProps {
   role: "admin" | "client";
   brandName?: string;
   logoUrl?: string | null;
+  demoBanner?: boolean;
 }
 
 export function AppShell({
@@ -20,6 +21,7 @@ export function AppShell({
   role,
   brandName,
   logoUrl,
+  demoBanner,
 }: AppShellProps) {
   const title = brandName ?? APP_NAME;
   const pathname = usePathname();
@@ -88,6 +90,15 @@ export function AppShell({
           </div>
         </div>
       </header>
+      {demoBanner ? (
+        <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-center text-sm text-amber-100">
+          Live demo — read-only. Changes are blocked.{" "}
+          <a href="https://qadbak.com/#install" className="underline hover:text-white">
+            Install on your VPS
+          </a>{" "}
+          to run your own panel.
+        </div>
+      ) : null}
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
       <div className="mx-auto w-full max-w-6xl px-4 pb-8">
         <PanelFooter />
