@@ -18,7 +18,7 @@ Public read-only Qadbak instance so visitors can explore the real UI before inst
 
 The demo account is **admin** so all menus are visible. **Mutations are blocked** (POST/PUT/PATCH/DELETE on `/api/*`) with a clear error message.
 
-Sample domain in the panel: `showcase.qadbak.com` (JSON config for Site tools / newsletter UI).
+Sample domain in the panel: `showcase.qadbak.com` (JSON config for Site tools / newsletter UI). Marked `demoOnly` in `native-domains.json` — **hidden from your real admin** on qadbak.com; the demo user only sees showcase domains, not customer sites.
 
 ## Enable on your VPS (qadbak.com server)
 

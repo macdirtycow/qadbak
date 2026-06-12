@@ -52,6 +52,10 @@ bash "$QADBAK_DIR/scripts/apply-hosting-nginx.sh"
 echo "==> Seed demo user + showcase domain config"
 sudo -u qadbak bash -c "cd '$QADBAK_DIR' && node scripts/seed-demo-panel.mjs"
 
+if [[ -f "$QADBAK_DIR/scripts/prune-stale-hosting.sh" ]]; then
+  bash "$QADBAK_DIR/scripts/prune-stale-hosting.sh" || true
+fi
+
 echo "==> Build + restart panel"
 sudo -u qadbak bash -c "cd '$QADBAK_DIR' && npm run build"
 bash "$QADBAK_DIR/scripts/pm2-restart-qadbak.sh" 2>/dev/null || true

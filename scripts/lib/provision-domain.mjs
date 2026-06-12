@@ -204,11 +204,43 @@ export async function domainCreate(domain, pass, userOpt, extraJson) {
   emit({ ok: true, domain: name, user, home, type, parent: parent || null, plan });
 }
 
+async function removeApacheVhostForDomain(domain) {
+  const name = String(domain).trim().toLowerCase();
+  const candidates = new Set([
+    `/etc/apache2/sites-available/qadbak-${name}.conf`,
+  ]);
+  try {
+    const { stdout } = await exec("bash", [
+      "-c",
+      `grep -rl 'ServerName[[:space:]].*${name}' /etc/apache2/sites-available/ 2>/dev/null || true`,
+    ]);
+    for (const line of stdout.split("\n")) {
+      const p = line.trim();
+      if (p) candidates.add(p);
+    }
+  } catch {
+    /* no matches */
+  }
+  for (const conf of candidates) {
+    try {
+      const base = path.basename(conf);
+      await exec("a2dissite", [base]).catch(() => {});
+      await exec("rm", ["-f", conf, `/etc/apache2/sites-enabled/${base}`]).catch(() => {});
+    } catch {
+      /* */
+    }
+  }
+  await exec("apache2ctl", ["configtest"]).catch(() => {});
+  await exec("systemctl", ["reload", "apache2"]).catch(() => {});
+}
+
 export async function domainDelete(domain) {
   const name = String(domain).trim().toLowerCase();
   const rows = await loadRegistry();
   const hit = rows.find((r) => r.name === name);
   const user = hit?.user ?? defaultUser(name);
+
+  await removeApacheVhostForDomain(name);
 
   const { available, enabled } = nginxCustomerConfPaths(name);
   await exec("rm", ["-f", enabled, available]).catch(() => {});

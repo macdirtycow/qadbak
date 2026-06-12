@@ -48,13 +48,18 @@ async function main() {
   await writeFile(USERS, JSON.stringify(users, null, 2));
 
   const domains = await readJson(DOMAINS, []);
-  if (!domains.find((d) => d.name === SHOWCASE)) {
-    domains.push({
-      name: SHOWCASE,
-      user: UNIX_USER,
-      plan: "Demo",
-      disabled: false,
-    });
+  const existingShowcase = domains.find((d) => d.name === SHOWCASE);
+  const showcaseRow = {
+    name: SHOWCASE,
+    user: UNIX_USER,
+    plan: "Demo",
+    disabled: false,
+    demoOnly: true,
+  };
+  if (existingShowcase) {
+    Object.assign(existingShowcase, showcaseRow);
+  } else {
+    domains.push(showcaseRow);
   }
   await writeFile(DOMAINS, JSON.stringify(domains, null, 2));
 

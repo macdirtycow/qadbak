@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { isDemoUser } from "../demo-mode";
 import type { Role } from "../types";
 import type { HostedDomain } from "../types";
 
@@ -15,6 +16,8 @@ export type NativeDomainRecord = {
   disk_limit?: string;
   parent?: string;
   reseller?: string;
+  /** Shown only to the demo panel user — hidden from production admin. */
+  demoOnly?: boolean;
 };
 
 const REGISTRY = path.join(process.cwd(), "data", "native-domains.json");
@@ -38,6 +41,7 @@ export async function loadNativeDomainRegistry(): Promise<NativeDomainRecord[]> 
         disk_limit: r.disk_limit ? String(r.disk_limit) : undefined,
         parent: r.parent ? String(r.parent) : undefined,
         reseller: r.reseller ? String(r.reseller) : undefined,
+        demoOnly: Boolean(r.demoOnly),
       });
     }
     return out;
@@ -129,12 +133,40 @@ async function enrichDomainDisk(row: NativeDomainRecord): Promise<HostedDomain> 
   };
 }
 
+async function unixHomeExists(user: string): Promise<boolean> {
+  try {
+    await fs.access(`/home/${user.trim()}`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function filterRegistryRows(
+  rows: NativeDomainRecord[],
+  username?: string,
+): Promise<NativeDomainRecord[]> {
+  const demo = isDemoUser(username);
+  const out: NativeDomainRecord[] = [];
+  for (const row of rows) {
+    if (demo) {
+      if (row.demoOnly) out.push(row);
+      continue;
+    }
+    if (row.demoOnly) continue;
+    if (await unixHomeExists(row.user)) out.push(row);
+  }
+  return out;
+}
+
 export async function listDomainsNative(actor: {
   role: Role;
   domains: string[];
+  username?: string;
 }): Promise<HostedDomain[]> {
   let rows = await loadNativeDomainRegistry();
   if (rows.length === 0) rows = await scanHomeDomains();
+  rows = await filterRegistryRows(rows, actor.username);
 
   let mapped = await Promise.all(rows.map((r) => enrichDomainDisk(r)));
 
@@ -147,7 +179,7 @@ export async function listDomainsNative(actor: {
 
 export async function findDomainByNameNative(
   domainName: string,
-  actor: { role: Role; domains: string[] },
+  actor: { role: Role; domains: string[]; username?: string },
 ): Promise<HostedDomain | undefined> {
   const want = domainName.trim().toLowerCase();
   const domains = await listDomainsNative(actor);

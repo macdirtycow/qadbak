@@ -51,6 +51,7 @@ _emit_row() {
   [[ -z "$domain" || -z "$user" ]] && return 0
   _is_valid_domain "$domain" || return 0
   _should_skip_nginx_customer_domain "$domain" && return 0
+  [[ ! -d "/home/$user/public_html" ]] && return 0
   printf '%s\t%s\n' "$domain" "$user"
 }
 
@@ -71,7 +72,7 @@ list_customer_domains_tsv() {
         [[ -n "${SEEN[$domain]:-}" ]] && continue
         SEEN[$domain]=1
         _emit_row "$domain" "$user"
-      done < <(jq -r '.[] | select(.name and .user) | [.name,.user] | @tsv' "$reg" 2>/dev/null)
+      done < <(jq -r '.[] | select(.name and .user and (.demoOnly != true)) | [.name,.user] | @tsv' "$reg" 2>/dev/null)
     else
       while IFS=$'\t' read -r domain user; do
         [[ -z "$domain" || -z "$user" ]] && continue
@@ -82,7 +83,7 @@ list_customer_domains_tsv() {
         const fs=require('fs');
         const rows=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
         for (const r of rows) {
-          if (r && r.name && r.user) console.log(r.name+'\t'+r.user);
+          if (r && r.name && r.user && !r.demoOnly) console.log(r.name+'\t'+r.user);
         }
       " "$reg" 2>/dev/null || true)
     fi
