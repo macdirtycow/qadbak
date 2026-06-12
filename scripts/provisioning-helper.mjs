@@ -152,6 +152,50 @@ import {
   planDelete,
 } from "./lib/provision-resellers.mjs";
 import {
+  dmarcGet,
+  dmarcSet,
+  mailboxAutoreplyList,
+  mailboxAutoreplySet,
+  mailBouncesList,
+  newsletterStatsGet,
+  newsletterTrackRecord,
+} from "./lib/provision-panel-phase1.mjs";
+import {
+  analyticsSummary,
+  gitDeployGet,
+  gitDeploySet,
+  gitDeployRun,
+  wpToolkitStatus,
+  wpToolkitUpdate,
+  maintenanceGet,
+  maintenanceSet,
+  contactFormGet,
+  contactFormSet,
+  contactFormSubmit,
+} from "./lib/provision-panel-phase2.mjs";
+import {
+  stagingGet,
+  stagingSync,
+  bandwidthUsage,
+  redisGet,
+  redisSet,
+  sshKeysList,
+  sshKeysAdd,
+  sshKeysDelete,
+  awstatsConfig,
+} from "./lib/provision-panel-phase3.mjs";
+import {
+  ticketsList,
+  ticketsCreate,
+  ticketsReply,
+  billingInvoicesList,
+  billingInvoiceCreate,
+  nodesHealth,
+  nodesRegister,
+  carddavStatus,
+  carddavContactUpsert,
+} from "./lib/provision-panel-phase4.mjs";
+import {
   newsletterGet,
   newsletterSet,
   newsletterSubscribersList,
@@ -235,7 +279,7 @@ async function main() {
       await dbList(args[0]);
       break;
     case "db-create":
-      await dbCreate(args[0], args[1], args[2]);
+      await dbCreate(args[0], args[1], args[2], args[3]);
       break;
     case "db-pass":
       await dbPass(args[0], args[1], args[2]);
@@ -653,6 +697,114 @@ async function main() {
       break;
     case "newsletter-public-unsubscribe":
       await newsletterPublicUnsubscribe(args[0], args[1]);
+      break;
+    case "dmarc-get":
+      await dmarcGet(args[0]);
+      break;
+    case "dmarc-set":
+      await dmarcSet(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "mailbox-autoreply-list":
+      await mailboxAutoreplyList(args[0]);
+      break;
+    case "mailbox-autoreply-set":
+      await mailboxAutoreplySet(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "mail-bounces-list":
+      await mailBouncesList(args[0]);
+      break;
+    case "newsletter-stats-get":
+      await newsletterStatsGet(args[0]);
+      break;
+    case "newsletter-track-record":
+      await newsletterTrackRecord(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "analytics-summary":
+      await analyticsSummary(args[0]);
+      break;
+    case "git-deploy-get":
+      await gitDeployGet(args[0]);
+      break;
+    case "git-deploy-set":
+      await gitDeploySet(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "git-deploy-run":
+      await gitDeployRun(args[0]);
+      break;
+    case "wp-toolkit-status":
+      await wpToolkitStatus(args[0]);
+      break;
+    case "wp-toolkit-update":
+      await wpToolkitUpdate(args[0]);
+      break;
+    case "maintenance-get":
+      await maintenanceGet(args[0]);
+      break;
+    case "maintenance-set":
+      await maintenanceSet(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "contact-form-get":
+      await contactFormGet(args[0]);
+      break;
+    case "contact-form-set":
+      await contactFormSet(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "contact-form-submit":
+      await contactFormSubmit(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "staging-get":
+      await stagingGet(args[0]);
+      break;
+    case "staging-sync":
+      await stagingSync(args[0]);
+      break;
+    case "bandwidth-usage":
+      await bandwidthUsage(args[0]);
+      break;
+    case "redis-get":
+      await redisGet(args[0]);
+      break;
+    case "redis-set":
+      await redisSet(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "ssh-keys-list":
+      await sshKeysList(args[0]);
+      break;
+    case "ssh-keys-add":
+      await sshKeysAdd(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "ssh-keys-delete":
+      await sshKeysDelete(args[0], args[1]);
+      break;
+    case "awstats-config":
+      await awstatsConfig(args[0]);
+      break;
+    case "tickets-list":
+      await ticketsList(args[0]);
+      break;
+    case "tickets-create":
+      await ticketsCreate(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "tickets-reply":
+      await ticketsReply(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "billing-invoices-list":
+      await billingInvoicesList(args[0]);
+      break;
+    case "billing-invoice-create":
+      await billingInvoiceCreate(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
+      break;
+    case "nodes-health":
+      await nodesHealth();
+      break;
+    case "nodes-register":
+      await nodesRegister(args[0] || "{}");
+      break;
+    case "carddav-status":
+      await carddavStatus(args[0]);
+      break;
+    case "carddav-contact-upsert":
+      await carddavContactUpsert(args[0], args.length > 1 ? args.slice(1).join(" ") : "{}");
       break;
     default:
       emit({ ok: false, error: `Unknown command: ${cmd}` });

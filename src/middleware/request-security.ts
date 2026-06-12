@@ -11,6 +11,7 @@ const CSRF_EXEMPT_PREFIXES = [
   "/api/branding",
   "/api/v1/",
   "/api/newsletter/",
+  "/api/contact/",
 ] as const;
 
 function isCsrfExempt(pathname: string): boolean {

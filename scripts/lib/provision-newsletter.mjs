@@ -408,6 +408,8 @@ export async function newsletterCampaignQueue(domain, campaignId) {
       campaign.bodyText || campaign.bodyHtml,
       unsubUrl,
     );
+    const trackBase = `${urls.subscribe.replace("/subscribe", "/track")}`;
+    const pixel = `<img src="${trackBase}?domain=${encodeURIComponent(domain)}&kind=open&c=${encodeURIComponent(id)}&e=${encodeURIComponent(sub.email)}" width="1" height="1" alt="" />`;
     return {
       campaignId: id,
       subscriberId: sub.id,
@@ -415,7 +417,7 @@ export async function newsletterCampaignQueue(domain, campaignId) {
       from,
       fromName: settings.fromName || undefined,
       subject: campaign.subject,
-      html: withFooter.html,
+      html: `${withFooter.html}${pixel}`,
       text: withFooter.text,
     };
   });

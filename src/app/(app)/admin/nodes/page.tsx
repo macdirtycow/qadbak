@@ -8,7 +8,7 @@ export default async function AdminNodesPage() {
       <div>
         <h1 className="text-2xl font-semibold text-white">Nodes</h1>
         <p className="mt-1 text-sm text-panel-muted">
-          Multi-server control plane (phase 7). Health checks use each node&apos;s agent.
+          Multi-server control plane. Health checks use each node&apos;s agent.
         </p>
       </div>
       <AdminNodesView />

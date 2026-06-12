@@ -137,10 +137,10 @@ export async function createDatabaseNative(
   domain: string,
   name: string,
   pass: string,
-  _type: string,
+  type: string,
   actor: Actor,
 ): Promise<void> {
-  await runDomainHelper(actor, domain, "db-create", name, pass);
+  await runDomainHelper(actor, domain, "db-create", name, pass, type || "mysql");
 }
 
 export async function updateDatabasePasswordNative(

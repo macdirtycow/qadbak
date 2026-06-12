@@ -31,6 +31,8 @@ const PUBLIC_EXACT = new Set([
   "/api/newsletter/subscribe",
   "/api/newsletter/confirm",
   "/api/newsletter/unsubscribe",
+  "/api/newsletter/track",
+  "/api/contact/submit",
   "/landing.css",
   "/landing.js",
   "/favicon.svg",

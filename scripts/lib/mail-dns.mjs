@@ -156,6 +156,12 @@ export async function mailDnsHints(domain) {
         value: ip ? `v=spf1 mx a ip4:${ip} ~all` : "v=spf1 mx a ~all",
         note: "SPF",
       },
+      {
+        type: "TXT",
+        name: "_dmarc",
+        value: `v=DMARC1; p=none; rua=mailto:dmarc@${d}; fo=1`,
+        note: "DMARC (start with p=none, tighten later)",
+      },
     ],
     ports: "Inbound SMTP: TCP 25 · Submission: 587 · IMAP: 993 (TLS)",
     externalProviders: EXTERNAL_MAIL_PROVIDERS,

@@ -8,7 +8,7 @@ function independentHostingFromEnv(): boolean {
   return prov === "native" || (prov === "hybrid" && fallbackOff);
 }
 
-export type FeaturePhase = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type FeaturePhase = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export interface DomainFeature {
   id: string;
@@ -361,6 +361,19 @@ export const DOMAIN_FEATURES: DomainFeature[] = [
       client: ["list-shared-addresses"],
     },
   },
+  {
+    id: "tools",
+    phase: 9,
+    label: "Site tools",
+    description:
+      "Deliverability, analytics, deployments, staging, support tickets, and more",
+    path: "tools",
+    navOrder: 20,
+    programs: {
+      admin: ["list-domains"],
+      client: ["list-domains"],
+    },
+  },
 ];
 
 /** Server-wide legacy hosting API programs (phase 7, admin only). */
@@ -399,7 +412,7 @@ export const ADMIN_CLOUD_PROGRAMS = [
   "list-global-features",
 ] as const;
 
-export const IMPLEMENTED_PHASE: FeaturePhase = 8;
+export const IMPLEMENTED_PHASE: FeaturePhase = 12;
 
 /** Primary server admin — no server admin embed menus (phase 4). */
 export const ADMIN_NAV = [
