@@ -6,4 +6,8 @@ DOMAIN="${1:?domain required}"
 SCOPE="${2:-full}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 export QADBAK_DIR="${QADBAK_DIR:-$(dirname "$SCRIPT_DIR")}"
-exec sudo -n "$SCRIPT_DIR/run-provisioning-helper.sh" backup-create "$DOMAIN" "$SCOPE"
+HELPER="$SCRIPT_DIR/run-provisioning-helper.sh"
+if [[ "$(id -u)" -eq 0 ]]; then
+  exec "$HELPER" backup-create "$DOMAIN" "$SCOPE"
+fi
+exec sudo -n "$HELPER" backup-create "$DOMAIN" "$SCOPE"

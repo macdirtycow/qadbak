@@ -119,6 +119,16 @@ if [[ "$(id -u)" -eq 0 ]]; then
   fi
 fi
 
+if [[ "$(id -u)" -eq 0 ]]; then
+  echo "==> Backup schedules (enable automatic + refresh stale)"
+  if sudo -u "$USER" sudo -n "$ROOT/scripts/run-provisioning-helper.sh" backup-schedule-ensure-all '{"runStale":true,"staleDays":1}' 2>/dev/null; then
+    echo "    OK — automatic backups enabled on qadbak crontab"
+  else
+    echo "    WARN: backup-schedule-ensure-all failed — run:" >&2
+    echo "    sudo -u $USER sudo -n $ROOT/scripts/run-provisioning-helper.sh backup-schedule-ensure-all '{\"runStale\":true}'" >&2
+  fi
+fi
+
 echo "==> Restart (load .env.local into pm2)"
 run_as_qadbak "cd '$ROOT' && bash scripts/pm2-restart-qadbak.sh"
 

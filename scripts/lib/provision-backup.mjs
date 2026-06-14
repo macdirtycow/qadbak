@@ -21,6 +21,7 @@ import {
   resolveDomainUser,
   domainConfigDir,
   QADBAK_DIR,
+  loadRegistry,
   readDomainConfigJson,
   writeDomainConfigJson,
 } from "./provisioning-common.mjs";
@@ -70,10 +71,14 @@ function backupsDir(home) {
   return path.join(home, "backups");
 }
 
+function qadbakCronUser() {
+  return process.env.QADBAK_USER?.trim() || "qadbak";
+}
+
 async function loadSchedule(domain) {
   const cfg = await readDomainConfigJson(domain, BACKUP_CFG, {
     schedule: "0 3 * * *",
-    enabled: false,
+    enabled: true,
     retain: 7,
   });
   return {
@@ -111,23 +116,83 @@ function stripBackupCronLines(text) {
     .replace(/\n+$/, "");
 }
 
-async function syncBackupCron(domain) {
-  const { user } = await resolveDomainUser(domain);
-  const sched = await loadSchedule(domain);
-  let body = stripBackupCronLines(await readCrontab(user));
-  if (sched.enabled) {
-    const line = `${sched.schedule} ${RUN_BACKUP} ${domain} scheduled # ${CRON_MARKER}`;
-    body = body ? `${body}\n${line}\n` : `${line}\n`;
+/** Remove legacy per-domain-user backup cron lines (broken: domain users lack sudo). */
+async function migrateDomainUserBackupCrons() {
+  const rows = await loadRegistry();
+  for (const row of rows) {
+    const user = String(row.user || "").trim();
+    if (!user) continue;
+    try {
+      let body = stripBackupCronLines(await readCrontab(user));
+      if (!body.trim()) {
+        try {
+          await exec("crontab", ["-r", "-u", user]);
+        } catch {
+          /* no crontab */
+        }
+      } else {
+        await writeCrontab(user, `${body}\n`);
+      }
+    } catch {
+      /* */
+    }
+  }
+}
+
+/** Install all enabled domain backup jobs on the qadbak user crontab (has NOPASSWD sudo). */
+async function syncAllBackupCrons() {
+  await migrateDomainUserBackupCrons();
+  const cronUser = qadbakCronUser();
+  const rows = await loadRegistry();
+  let body = stripBackupCronLines(await readCrontab(cronUser));
+  const lines = [];
+  for (const row of rows) {
+    const domain = String(row.name || "").trim();
+    if (!domain || row.demoOnly) continue;
+    const sched = await loadSchedule(domain);
+    if (sched.enabled) {
+      lines.push(
+        `${sched.schedule} ${RUN_BACKUP} ${domain} scheduled # ${CRON_MARKER}:${domain}`,
+      );
+    }
+  }
+  if (lines.length) {
+    body = body ? `${body}\n${lines.join("\n")}\n` : `${lines.join("\n")}\n`;
   }
   if (!body.trim()) {
     try {
-      await exec("crontab", ["-r", "-u", user]);
+      await exec("crontab", ["-r", "-u", cronUser]);
     } catch {
       /* no crontab */
     }
   } else {
-    await writeCrontab(user, body);
+    await writeCrontab(cronUser, body);
   }
+}
+
+async function syncBackupCron(_domain) {
+  await syncAllBackupCrons();
+}
+
+async function applyBackupSchedule(
+  domain,
+  { forceEnable = false, runIfStale = false, staleDays = 1 } = {},
+) {
+  await resolveDomainUser(domain);
+  const sched = await loadSchedule(domain);
+  if (forceEnable && !sched.enabled) {
+    sched.enabled = true;
+    await saveSchedule(domain, sched);
+  }
+  let backupCreated = false;
+  if (runIfStale) {
+    const age = await backupNewestAgeDays(domain);
+    if (age === null || age >= staleDays) {
+      await backupCreate(domain, "full");
+      backupCreated = true;
+    }
+  }
+  return { schedule: sched, backupCreated };
 }
 
 async function pruneOldBackups(home, retain) {
@@ -538,7 +603,7 @@ export async function backupScheduleSet(domain, jsonArg) {
     retain: body.retain !== undefined ? Number(body.retain) : prev.retain,
   };
   await saveSchedule(domain, next);
-  await syncBackupCron(domain);
+  await syncAllBackupCrons();
   emit({ ok: true, schedule: next });
 }
 
@@ -546,8 +611,63 @@ export async function backupScheduleToggle(domain, enabled) {
   const sched = await loadSchedule(domain);
   sched.enabled = enabled === "true" || enabled === "1" || enabled === true;
   await saveSchedule(domain, sched);
-  await syncBackupCron(domain);
+  await syncAllBackupCrons();
   emit({ ok: true, schedule: sched });
+}
+
+export async function ensureBackupSchedule(domain, jsonArg) {
+  let body = {};
+  try {
+    body = JSON.parse(jsonArg || "{}");
+  } catch {
+    fail("invalid JSON");
+  }
+  const result = await setupBackupSchedule(domain, {
+    forceEnable: body.forceEnable !== false,
+    runIfStale: Boolean(body.runIfStale),
+    staleDays: Number(body.staleDays) > 0 ? Number(body.staleDays) : 1,
+  });
+  emit({ ok: true, domain, ...result });
+}
+
+export async function setupBackupSchedule(
+  domain,
+  { forceEnable = false, runIfStale = false, staleDays = 1 } = {},
+) {
+  const result = await applyBackupSchedule(domain, { forceEnable, runIfStale, staleDays });
+  await syncAllBackupCrons();
+  return result;
+}
+
+export async function backupScheduleEnsureAll(jsonArg) {
+  let body = {};
+  try {
+    body = JSON.parse(jsonArg || "{}");
+  } catch {
+    fail("invalid JSON");
+  }
+  const runStale = body.runStale !== false;
+  const staleDays = Number(body.staleDays) > 0 ? Number(body.staleDays) : 1;
+  const rows = await loadRegistry();
+  const results = [];
+  for (const row of rows) {
+    const domain = String(row.name || "").trim();
+    if (!domain || row.demoOnly) continue;
+    try {
+      const result = await setupBackupSchedule(domain, {
+        forceEnable: true,
+        runIfStale: runStale,
+        staleDays,
+      });
+      results.push({ domain, ...result });
+    } catch (e) {
+      results.push({
+        domain,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+  emit({ ok: true, domains: results.length, results });
 }
 
 const POLICY_CFG = "backup-policy.json";

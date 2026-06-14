@@ -201,6 +201,16 @@ export async function domainCreate(domain, pass, userOpt, extraJson) {
     }
   }
 
+  try {
+    const { setupBackupSchedule } = await import("./provision-backup.mjs");
+    await setupBackupSchedule(name, { forceEnable: true, runIfStale: true });
+  } catch (err) {
+    jstep("shell", `Backup schedule setup non-fatal for ${name}`, {
+      ok: false,
+      errorMessage: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   emit({ ok: true, domain: name, user, home, type, parent: parent || null, plan });
 }
 

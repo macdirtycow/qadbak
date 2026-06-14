@@ -31,6 +31,8 @@ import {
   backupScheduleGet,
   backupScheduleSet,
   backupScheduleToggle,
+  ensureBackupSchedule,
+  backupScheduleEnsureAll,
   backupListRemote,
   backupPullRemote,
   backupPullRemoteAndRestore,
@@ -369,6 +371,12 @@ async function main() {
       break;
     case "backup-schedule-toggle":
       await backupScheduleToggle(args[0], args[1]);
+      break;
+    case "backup-schedule-ensure":
+      await ensureBackupSchedule(args[0], args[1] || "{}");
+      break;
+    case "backup-schedule-ensure-all":
+      await backupScheduleEnsureAll(args[0] || "{}");
       break;
     case "cron-list":
       await cronList(args[0]);
