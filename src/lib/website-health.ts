@@ -23,6 +23,8 @@ export interface WebsiteProbeResult {
   servingApacheDefault?: boolean;
   /** Local probe could not run; public URL is OK. */
   inferredFromPublic?: boolean;
+  /** Public hostname does not resolve yet (registrar DNS). */
+  dnsPending?: boolean;
 }
 
 export interface WebsiteHealthReport {
@@ -121,6 +123,17 @@ function parseCurlHeaderBlock(raw: string): Record<string, string> {
   return headers;
 }
 
+function isDnsPendingError(message: string | undefined): boolean {
+  const err = String(message ?? "").toLowerCase();
+  return (
+    err.includes("enotfound") ||
+    err.includes("getaddrinfo") ||
+    err.includes("could not resolve") ||
+    err.includes("nxdomain") ||
+    err.includes("name or service not known")
+  );
+}
+
 function isNetworkProbeError(message: string | undefined): boolean {
   const err = String(message ?? "").toLowerCase();
   return (
@@ -204,17 +217,20 @@ async function probeHttp(
     const body = await res.text().catch(() => "");
     return analyzeHttpResponse(res.status, body, res.headers, domain);
   } catch (e) {
+    const msg = e instanceof Error ? e.message : "No HTTP response";
     return {
       ok: false,
-      error: e instanceof Error ? e.message : "No HTTP response",
+      error: msg,
+      dnsPending: isDnsPendingError(msg),
     };
   }
 }
 
-/** curl with Host header — matches fix-domain-website.sh (works when Node fetch cannot reach :80). */
-async function probeLocalWithCurl(
+/** curl probe — optional Host override for origin checks on 127.0.0.1. */
+async function probeUrlWithCurl(
   url: string,
   domain: string,
+  forceHost: boolean,
 ): Promise<WebsiteProbeResult | null> {
   const bodyPath = path.join(
     tmpdir(),
@@ -225,24 +241,28 @@ async function probeLocalWithCurl(
     `qadbak-probe-h-${randomBytes(8).toString("hex")}.txt`,
   );
   try {
-    const { stdout } = await execFileAsync(
-      "curl",
-      [
-        "-sS",
-        "--max-time",
-        "10",
-        "-o",
-        bodyPath,
-        "-D",
-        hdrPath,
-        "-w",
-        "%{http_code}",
-        "-H",
-        `Host: ${domain}`,
-        url,
-      ],
-      { timeout: 15_000, maxBuffer: 1024 * 1024 },
-    );
+    const args = [
+      "-sS",
+      "--max-time",
+      "12",
+      "-o",
+      bodyPath,
+      "-D",
+      hdrPath,
+      "-w",
+      "%{http_code}",
+      "-L",
+      "--max-redirs",
+      "3",
+    ];
+    if (forceHost) {
+      args.push("-H", `Host: ${domain}`);
+    }
+    args.push(url);
+    const { stdout } = await execFileAsync("curl", args, {
+      timeout: 18_000,
+      maxBuffer: 1024 * 1024,
+    });
     const status = Number.parseInt(String(stdout).trim(), 10) || 0;
     if (!status) return null;
     const body = await readFile(bodyPath, "utf8").catch(() => "");
@@ -251,12 +271,25 @@ async function probeLocalWithCurl(
     const lastBlock = blocks[blocks.length - 1] ?? hdrRaw;
     const headerMap = parseCurlHeaderBlock(lastBlock);
     return analyzeHttpResponse(status, body, headerMap, domain);
-  } catch {
-    return null;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "No HTTP response";
+    return {
+      ok: false,
+      error: msg,
+      dnsPending: isDnsPendingError(msg),
+    };
   } finally {
     await unlink(bodyPath).catch(() => {});
     await unlink(hdrPath).catch(() => {});
   }
+}
+
+/** curl with Host header — matches fix-domain-website.sh (works when Node fetch cannot reach :80). */
+async function probeLocalWithCurl(
+  url: string,
+  domain: string,
+): Promise<WebsiteProbeResult | null> {
+  return probeUrlWithCurl(url, domain, true);
 }
 
 async function probeLocalWebsite(domain: string): Promise<WebsiteProbeResult> {
@@ -275,6 +308,21 @@ async function probeLocalWebsite(domain: string): Promise<WebsiteProbeResult> {
 }
 
 async function probePublicWebsite(domain: string): Promise<WebsiteProbeResult> {
+  for (const url of [`https://${domain}/`, `http://${domain}/`]) {
+    const curl = await probeUrlWithCurl(url, domain, false);
+    if (
+      curl &&
+      (curl.ok ||
+        curl.status ||
+        curl.servingPanelLanding ||
+        curl.cloudflare523 ||
+        curl.cloudflare502 ||
+        curl.servingApacheDefault ||
+        curl.dnsPending)
+    ) {
+      return curl;
+    }
+  }
   const https = await probeHttp(`https://${domain}/`, domain, domain);
   if (
     https.ok ||
@@ -282,17 +330,24 @@ async function probePublicWebsite(domain: string): Promise<WebsiteProbeResult> {
     https.servingPanelLanding ||
     https.cloudflare523 ||
     https.cloudflare502 ||
-    https.servingApacheDefault
+    https.servingApacheDefault ||
+    https.dnsPending
   ) {
     return https;
   }
-  return probeHttp(`http://${domain}/`, domain, domain);
+  const http = await probeHttp(`http://${domain}/`, domain, domain);
+  if (!http.dnsPending && isDnsPendingError(https.error)) {
+    return { ...http, dnsPending: true, error: https.error };
+  }
+  return http;
 }
 
 function buildIssues(
   localProbe: WebsiteProbeResult,
   publicProbe: WebsiteProbeResult,
   validation: { valid: boolean; messages: string[] },
+  domain: string,
+  originIp: string,
 ): string[] {
   const issues: string[] = [];
 
@@ -357,6 +412,17 @@ function buildIssues(
       localProbe.ok
         ? "Website is reachable locally and on the internet."
         : "Website is live on the internet (public URL). Files in public_html are being served.",
+    );
+  } else if (
+    localProbe.ok &&
+    publicProbe.dnsPending &&
+    !publicProbe.cloudflare523 &&
+    !publicProbe.cloudflare502
+  ) {
+    issues.push(
+      originIp
+        ? `Site is ready on this server. Public DNS does not resolve yet — at your registrar set A records @ and www → ${originIp}, or use nameservers ns1.${domain} (BIND on this VPS).`
+        : `Site is ready on this server. Public DNS does not resolve yet — point the domain to this VPS (set QADBAK_ORIGIN_IP in .env.local for the exact IP).`,
     );
   } else if (
     localProbe.ok &&
@@ -470,7 +536,7 @@ export async function getWebsiteHealth(
     localProbe,
     publicProbe,
     cloudflare: {
-      issues: buildIssues(localProbe, publicProbe, validation),
+      issues: buildIssues(localProbe, publicProbe, validation, domain, originIp),
       dnsChecklist,
     },
     stack,

@@ -201,17 +201,33 @@ export async function domainCreate(domain, pass, userOpt, extraJson) {
     }
   }
 
+  await bootstrapDomainServices(name, type);
+
+  emit({ ok: true, domain: name, user, home, type, parent: parent || null, plan });
+}
+
+async function bootstrapDomainServices(name, type) {
+  if (type === "alias") return;
   try {
     const { setupBackupSchedule } = await import("./provision-backup.mjs");
     await setupBackupSchedule(name, { forceEnable: true, runIfStale: true });
+    jinfo(`Automatic backup enabled for ${name}`);
   } catch (err) {
     jstep("shell", `Backup schedule setup non-fatal for ${name}`, {
       ok: false,
       errorMessage: err instanceof Error ? err.message : String(err),
     });
   }
-
-  emit({ ok: true, domain: name, user, home, type, parent: parent || null, plan });
+  try {
+    const { sslIssue } = await import("./provision-ssl.mjs");
+    await sslIssue(name, name);
+    jinfo(`SSL certificate requested for ${name}`);
+  } catch (err) {
+    jstep("shell", `SSL issue non-fatal for ${name} (DNS may not be live yet)`, {
+      ok: false,
+      errorMessage: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 async function removeApacheVhostForDomain(domain) {

@@ -15,6 +15,7 @@ import { PanelError } from "@/lib/errors";
 import { getProvisioner } from "@/lib/provisioner";
 import {
   consumeLastJournalSteps,
+  runProvisioningHelper,
   runWithJournalStore,
 } from "@/lib/provisioner/native-exec";
 import { isIndependentMode } from "@/lib/provisioner/native-stub";
@@ -235,6 +236,27 @@ async function doCreateDomain(request: Request) {
       }
     }
 
+    try {
+      await runProvisioningHelper(
+        "backup-schedule-ensure",
+        domainName,
+        JSON.stringify({ forceEnable: true, runIfStale: true }),
+      );
+      journal.infoStep(`Automatic backup schedule ensured for ${domainName}.`);
+    } catch (err) {
+      journal.warnStep(
+        `Backup schedule ensure failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
+    const originIp =
+      process.env.QADBAK_ORIGIN_IP?.trim() ||
+      process.env.QADBAK_SERVER_IP?.trim() ||
+      "";
+    const dnsNote = originIp
+      ? `Point @ and www A records to ${originIp}, or set nameservers to ns1.${domainName} if DNS is hosted on this VPS. Until DNS is live, the public URL check stays pending while the site works on the server.`
+      : `Configure DNS at your registrar so ${domainName} points to this VPS (set QADBAK_ORIGIN_IP in .env.local).`;
+
     if (premiumNote) {
       journal.warnStep(`Premium note: ${premiumNote}`);
     }
@@ -245,6 +267,7 @@ async function doCreateDomain(request: Request) {
       ok: true,
       domain: created.name,
       hostingNote,
+      dnsNote,
       premiumNote,
       unixPassword: unixPassGenerated ? unixPass : undefined,
       clientUsername,

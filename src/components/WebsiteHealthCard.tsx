@@ -12,6 +12,7 @@ type Probe = {
   cloudflare502?: boolean;
   servingApacheDefault?: boolean;
   inferredFromPublic?: boolean;
+  dnsPending?: boolean;
 };
 
 type Health = {
@@ -275,7 +276,9 @@ export function WebsiteHealthCard({
                         : "text-amber-300"
                 }
               >
-                {health.publicProbe.servingApacheDefault
+                {health.publicProbe.dnsPending
+                  ? "DNS not live yet — site is ready on this server"
+                  : health.publicProbe.servingApacheDefault
                   ? "Ubuntu/Apache default page — not your site"
                   : health.publicProbe.cloudflare502
                   ? `Cloudflare 502 — HTTP ${health.publicProbe.status ?? ""}`
