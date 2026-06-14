@@ -68,5 +68,7 @@ export const SITE_TOOLS_WRITE = [
   "ticket-notify",
   "billing-invoice-create",
   "invoice-mark-sent",
+  "invoice-pdf-generate",
+  "invoice-payment-link",
   "carddav-contact-upsert",
 ] as const;

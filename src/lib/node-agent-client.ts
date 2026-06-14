@@ -82,3 +82,29 @@ export async function agentLegacyApiCall(
   }
   return { status: data.status ?? 200, body: data.body ?? "" };
 }
+
+export async function agentProvisionDomain(
+  node: QadbakNode,
+  payload: { domain: string; user?: string; plan?: string; pass?: string },
+): Promise<Record<string, unknown>> {
+  const token = nodeAgentToken();
+  const agentUrl = node.agentUrl?.replace(/\/$/, "");
+  if (!agentUrl || !token) {
+    throw new Error("Node agent URL or QADBAK_NODE_AGENT_TOKEN not configured");
+  }
+  const res = await fetch(`${agentUrl}/v1/provision/domain`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(300_000),
+    cache: "no-store",
+  });
+  const data = (await res.json()) as Record<string, unknown> & { error?: string };
+  if (!res.ok || data.ok !== true) {
+    throw new Error(data.error ?? `Remote provision failed (${res.status})`);
+  }
+  return data;
+}

@@ -7,6 +7,7 @@ import {
 } from "@/lib/provisioner/native-exec";
 import { requireDomainApi } from "@/lib/domain-api";
 import { getProvisioner } from "@/lib/provisioner";
+import { runDomainTool } from "@/lib/panel-tools";
 
 type Params = { params: Promise<{ domain: string }> };
 
@@ -68,12 +69,24 @@ export async function POST(request: Request, { params }: Params) {
 export async function PATCH(request: Request, { params }: Params) {
   try {
     const { session, domain } = await requireDomainApi((await params).domain);
-    const body = (await request.json()) as { user?: string; pass?: string };
-    if (!body.user || !body.pass) {
-      return jsonError("User and new password are required.");
+    const body = (await request.json()) as { user?: string; pass?: string; quotaMb?: number };
+    if (!body.user) {
+      return jsonError("User is required.");
     }
-    await getProvisioner().updateMailboxPassword(domain, body.user, body.pass, session);
-    await auditLog(session.username, "modify-user", domain, body.user);
+    if (body.quotaMb !== undefined && body.quotaMb > 0) {
+      await runDomainTool(domain, "mailbox-quota-set", {
+        user: body.user,
+        quotaMb: body.quotaMb,
+      });
+      await auditLog(session.username, "modify-mail", domain, body.user);
+    }
+    if (body.pass) {
+      await getProvisioner().updateMailboxPassword(domain, body.user, body.pass, session);
+      await auditLog(session.username, "modify-user", domain, body.user);
+    }
+    if (!body.pass && !(body.quotaMb !== undefined && body.quotaMb > 0)) {
+      return jsonError("Provide pass and/or quotaMb.");
+    }
     return jsonOk({ ok: true });
   } catch (err) {
     return handleApiError(err);

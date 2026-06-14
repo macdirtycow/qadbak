@@ -40,6 +40,8 @@ export interface HostedMailbox {
   "values.real"?: string;
   quota?: string;
   "values.quota"?: string;
+  quotaUsedMb?: string;
+  quotaLimitMb?: number | null;
   [key: string]: unknown;
 }
 

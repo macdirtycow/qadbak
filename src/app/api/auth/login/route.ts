@@ -13,6 +13,7 @@ import {
 } from "@/lib/session";
 import { verifyTotpCode } from "@/lib/totp";
 import { requireAdminTotp } from "@/lib/security-config";
+import { getPanelPolicy } from "@/lib/panel-policy";
 import { findUserById, findUserByUsername, verifyPassword } from "@/lib/users";
 
 async function authFailureDelay(): Promise<void> {
@@ -93,6 +94,14 @@ export async function POST(request: Request) {
     if (user.role === "admin" && requireAdminTotp() && !user.totpSecret) {
       return jsonError(
         "Administrator sign-in requires two-factor authentication. Enable TOTP under Account → Security.",
+        403,
+      );
+    }
+
+    const panelPolicy = await getPanelPolicy();
+    if (user.role === "client" && panelPolicy.requireClientTotp && !user.totpSecret) {
+      return jsonError(
+        "Your hosting provider requires two-factor authentication. Enable TOTP under Account → Security before signing in.",
         403,
       );
     }

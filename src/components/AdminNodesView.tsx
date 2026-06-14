@@ -13,6 +13,10 @@ export function AdminNodesView() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [provisioner, setProvisioner] = useState<"native" | "hybrid">("native");
+  const [clusterPing, setClusterPing] = useState(false);
+  const [provisionDomain, setProvisionDomain] = useState("");
+  const [provisionNodeId, setProvisionNodeId] = useState("");
+  const [provisioning, setProvisioning] = useState(false);
   const [form, setForm] = useState({ id: "", name: "", agentUrl: "" });
 
   const load = useCallback(async () => {
@@ -55,6 +59,42 @@ export function AdminNodesView() {
       setError(err instanceof Error ? err.message : "Error.");
     } finally {
       setAdding(false);
+    }
+  }
+
+  async function pingCluster() {
+    setClusterPing(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/nodes/ping-cluster", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Cluster ping failed.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error.");
+    } finally {
+      setClusterPing(false);
+    }
+  }
+
+  async function remoteProvision(e: React.FormEvent) {
+    e.preventDefault();
+    if (!provisionNodeId || !provisionDomain) return;
+    setProvisioning(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/nodes/provision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nodeId: provisionNodeId, domain: provisionDomain }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Provision failed.");
+      setProvisionDomain("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error.");
+    } finally {
+      setProvisioning(false);
     }
   }
 
@@ -110,9 +150,52 @@ export function AdminNodesView() {
             })}
           </ul>
         )}
-        <Button type="button" variant="secondary" className="mt-4" onClick={load} disabled={loading}>
-          Refresh health
-        </Button>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button type="button" variant="secondary" onClick={load} disabled={loading}>
+            Refresh health
+          </Button>
+          <Button type="button" variant="secondary" onClick={pingCluster} disabled={clusterPing}>
+            {clusterPing ? "Pinging…" : "Cluster ping"}
+          </Button>
+        </div>
+      </Card>
+
+      <Card>
+        <h2 className="font-medium text-white">Remote provision</h2>
+        <p className="mt-1 text-sm text-panel-muted">
+          Create a domain on a remote node via the node agent (native provisioning).
+        </p>
+        <form onSubmit={remoteProvision} className="mt-4 grid gap-3 sm:max-w-lg">
+          <label className="block text-sm">
+            <span className="text-panel-muted">Node</span>
+            <select
+              className="mt-1 w-full rounded border border-panel-border bg-panel-card px-3 py-2 text-white"
+              value={provisionNodeId}
+              onChange={(e) => setProvisionNodeId(e.target.value)}
+              required
+            >
+              <option value="">Select node…</option>
+              {nodes.filter((n) => n.id !== defaultNodeId).map((n) => (
+                <option key={n.id} value={n.id}>
+                  {n.name} ({n.id})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-sm">
+            <span className="text-panel-muted">Domain name</span>
+            <input
+              className="mt-1 w-full rounded border border-panel-border bg-panel-card px-3 py-2 text-white"
+              value={provisionDomain}
+              onChange={(e) => setProvisionDomain(e.target.value)}
+              placeholder="client.example.com"
+              required
+            />
+          </label>
+          <Button type="submit" disabled={provisioning}>
+            {provisioning ? "Provisioning…" : "Provision on remote node"}
+          </Button>
+        </form>
       </Card>
 
       <Card>

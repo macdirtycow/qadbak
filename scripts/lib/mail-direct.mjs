@@ -39,7 +39,7 @@ async function unixUserExists(name) {
 export async function mailListDirect(domain) {
   const layout = await layoutForDomain(domain);
   let mailboxes = await listMailboxesFromLayout(layout);
-  mailboxes = await enrichMailboxesWithUsage(layout, mailboxes);
+  mailboxes = await enrichMailboxesWithUsage(layout, mailboxes, domain);
   emit({ ok: true, mailboxes, source: "postfix-dovecot", layout: { aliasMap: layout.aliasMap } });
 }
 

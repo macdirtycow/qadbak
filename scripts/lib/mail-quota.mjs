@@ -1,10 +1,17 @@
 import { resolveMailboxMaildir } from "./mail-layout.mjs";
 import { kbToDisplayMb, pathSizeKb } from "./disk-usage.mjs";
+import { readDomainConfigJson } from "./provisioning-common.mjs";
 
 /** Add Maildir usage (MB) per mailbox for the panel list. */
-export async function enrichMailboxesWithUsage(layout, mailboxes) {
+export async function enrichMailboxesWithUsage(layout, mailboxes, domain) {
   const owner = layout.owner;
   const home = layout.home;
+  const quotaCfg = domain
+    ? await readDomainConfigJson(domain, "mailbox-quotas.json", { limits: {} }).catch(() => ({
+        limits: {},
+      }))
+    : { limits: {} };
+  const limits = quotaCfg.limits ?? {};
   const out = [];
 
   for (const m of mailboxes) {
@@ -19,10 +26,12 @@ export async function enrichMailboxesWithUsage(layout, mailboxes) {
         usedMb = "0";
       }
     }
+    const limit = limits[local];
     out.push({
       ...m,
       quotaUsedMb: usedMb,
-      quota: usedMb,
+      quota: limit?.quotaMb ? String(limit.quotaMb) : usedMb,
+      quotaLimitMb: limit?.quotaMb ?? null,
     });
   }
 

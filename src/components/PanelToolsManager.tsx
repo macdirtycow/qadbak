@@ -4,6 +4,7 @@ import { Alert, Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { useDomainNavReset } from "@/hooks/useDomainNavReset";
 import { useCallback, useEffect, useState } from "react";
 import { DomainPageHeader } from "./DomainPageHeader";
+import { MiniBarChart } from "./MiniBarChart";
 
 type SectionId = "deliverability" | "website" | "staging" | "support";
 
@@ -39,6 +40,11 @@ export function PanelToolsManager({
   const [invoiceDesc, setInvoiceDesc] = useState("");
   const [invoiceAmount, setInvoiceAmount] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  const [tplName, setTplName] = useState("");
+  const [tplSubject, setTplSubject] = useState("");
+  const [tplBody, setTplBody] = useState("");
+  const [segName, setSegName] = useState("");
+  const [segFilter, setSegFilter] = useState("active");
 
   const call = useCallback(
     async (action: string, payload?: Record<string, unknown>) => {
@@ -339,25 +345,87 @@ export function PanelToolsManager({
           </Card>
           <Card>
             <h2 className="font-medium text-white">Newsletter templates</h2>
-            <ul className="mt-2 text-xs text-panel-muted">
+            <ul className="mt-2 space-y-1 text-xs text-panel-muted">
               {(
-                (data["newsletter-templates-list"] as { templates?: { id: string; name: string }[] })
-                  ?.templates ?? []
+                (data["newsletter-templates-list"] as {
+                  templates?: { id: string; name: string; subject?: string }[];
+                })?.templates ?? []
               ).map((t) => (
-                <li key={t.id}>{t.name}</li>
+                <li key={t.id}>
+                  {t.name}
+                  {t.subject ? ` — ${t.subject}` : ""}
+                </li>
               ))}
             </ul>
+            <div className="mt-3 space-y-2">
+              <Input placeholder="Template name" value={tplName} onChange={(e) => setTplName(e.target.value)} />
+              <Input placeholder="Subject" value={tplSubject} onChange={(e) => setTplSubject(e.target.value)} />
+              <Textarea
+                rows={3}
+                placeholder="HTML body"
+                value={tplBody}
+                onChange={(e) => setTplBody(e.target.value)}
+              />
+              <Button
+                variant="secondary"
+                disabled={loading || !tplName}
+                onClick={async () => {
+                  await call("newsletter-template-save", {
+                    name: tplName,
+                    subject: tplSubject,
+                    bodyHtml: tplBody,
+                  });
+                  setTplName("");
+                  setTplSubject("");
+                  setTplBody("");
+                  setSuccess("Template saved.");
+                  await call("newsletter-templates-list");
+                }}
+              >
+                Save template
+              </Button>
+            </div>
           </Card>
           <Card>
             <h2 className="font-medium text-white">Newsletter segments</h2>
-            <ul className="mt-2 text-xs text-panel-muted">
+            <ul className="mt-2 space-y-1 text-xs text-panel-muted">
               {(
-                (data["newsletter-segments-list"] as { segments?: { id: string; name: string }[] })
-                  ?.segments ?? []
+                (data["newsletter-segments-list"] as {
+                  segments?: { id: string; name: string; filter?: string }[];
+                })?.segments ?? []
               ).map((s) => (
-                <li key={s.id}>{s.name}</li>
+                <li key={s.id}>
+                  {s.name} ({s.filter ?? "active"})
+                </li>
               ))}
             </ul>
+            <div className="mt-3 space-y-2">
+              <Input placeholder="Segment name" value={segName} onChange={(e) => setSegName(e.target.value)} />
+              <select
+                className="qadbak-field w-full"
+                value={segFilter}
+                onChange={(e) => setSegFilter(e.target.value)}
+              >
+                <option value="active">Active subscribers</option>
+                <option value="all">All subscribers</option>
+                <option value="unsubscribed">Unsubscribed</option>
+              </select>
+              <Button
+                variant="secondary"
+                disabled={loading || !segName}
+                onClick={async () => {
+                  await call("newsletter-segment-save", {
+                    name: segName,
+                    filter: segFilter,
+                  });
+                  setSegName("");
+                  setSuccess("Segment saved.");
+                  await call("newsletter-segments-list");
+                }}
+              >
+                Save segment
+              </Button>
+            </div>
           </Card>
         </div>
       )}
@@ -367,23 +435,23 @@ export function PanelToolsManager({
           <Card>
             <h2 className="font-medium text-white">Website analytics</h2>
             <p className="mt-2 text-sm text-panel-muted">{analytics?.hits ?? 0} hits (log window)</p>
-            <ul className="mt-2 text-xs text-slate-400">
+            <MiniBarChart
+              className="mt-3"
+              points={(analyticsHist?.points ?? []).slice(-7).map((p) => ({
+                label: p.at.slice(5),
+                value: p.hits,
+              }))}
+            />
+            <ul className="mt-3 text-xs text-slate-400">
               {analytics?.topPages?.slice(0, 5).map((p) => (
                 <li key={p.path}>
                   {p.path} ({p.count})
                 </li>
               ))}
             </ul>
-            <ul className="mt-2 text-xs text-panel-muted">
-              {analyticsHist?.points?.slice(-7).map((p) => (
-                <li key={p.at}>
-                  {p.at}: {p.hits} hits
-                </li>
-              ))}
-            </ul>
           </Card>
-          <Card>
-            <h2 className="font-medium text-white">Git deploy</h2>
+          <Card className="lg:col-span-2">
+            <h2 className="font-medium text-white">Git deploy & webhook</h2>
             <Input
               className="mt-2"
               placeholder="https://github.com/user/repo.git"
@@ -439,19 +507,29 @@ export function PanelToolsManager({
               </Button>
             </div>
             <p className="mt-2 text-xs text-panel-muted">
-              Webhook: POST /api/domains/{domain}/git-webhook with header X-Qadbak-Deploy-Secret
+              Webhook URL:{" "}
+              <code className="text-white">
+                POST /api/domains/{domain}/git-webhook
+              </code>
+              {" · "}
+              Header <code className="text-white">X-Qadbak-Deploy-Secret</code>
+              {gitCfg?.config?.webhookSecret ? (
+                <span className="text-emerald-400"> · secret configured</span>
+              ) : (
+                <span className="text-amber-400"> · no secret yet</span>
+              )}
             </p>
-            <ul className="mt-2 max-h-24 overflow-auto text-xs text-slate-400">
+            <div className="mt-3 max-h-32 overflow-auto rounded border border-panel-border/60 bg-panel-bg/40 p-2 font-mono text-xs text-slate-400">
               {(
                 (data["git-deploy-log"] as { log?: { at: string; action: string }[] })?.log ?? []
               )
                 .slice(-5)
                 .map((e) => (
-                  <li key={e.at}>
+                  <div key={e.at}>
                     {e.at}: {e.action}
-                  </li>
+                  </div>
                 ))}
-            </ul>
+            </div>
           </Card>
           <Card>
             <h2 className="font-medium text-white">WordPress toolkit</h2>
@@ -652,6 +730,13 @@ export function PanelToolsManager({
               Disk: {Math.round((bandwidth?.diskBytes ?? 0) / 1024 / 1024)} MB · Traffic:{" "}
               {Math.round((traffic?.bytes ?? 0) / 1024 / 1024)} MB (logs)
             </p>
+            <MiniBarChart
+              className="mt-3"
+              points={(traffic?.points ?? bandwidth?.history ?? []).slice(-7).map((p) => ({
+                label: String(p.at).slice(5),
+                value: Math.round(("bytes" in p ? p.bytes : 0) / 1024 / 1024),
+              }))}
+            />
           </Card>
           <Card>
             <h2 className="font-medium text-white">Subdomain</h2>
@@ -791,16 +876,35 @@ export function PanelToolsManager({
             >
               Create ticket
             </Button>
-            <ul className="mt-3 text-sm text-panel-muted">
+            <ul className="mt-3 space-y-2 text-sm text-panel-muted">
               {tickets?.tickets?.slice(0, 5).map((t) => (
-                <li key={t.id}>
-                  {t.subject} — {t.status}
+                <li key={t.id} className="flex flex-wrap items-center gap-2">
+                  <span>
+                    {t.subject} — {t.status}
+                  </span>
+                  {t.status === "open" && (
+                    <Button
+                      variant="secondary"
+                      className="!py-0.5 !text-xs"
+                      onClick={async () => {
+                        await call("ticket-notify", {
+                          mailbox: "info",
+                          subject: t.subject,
+                          body: `New support ticket: ${t.subject}`,
+                        });
+                        setSuccess("Notification email sent to info@" + domain);
+                      }}
+                      disabled={loading}
+                    >
+                      Notify mailbox
+                    </Button>
+                  )}
                 </li>
               ))}
             </ul>
           </Card>
           <Card>
-            <h2 className="font-medium text-white">Invoices (light)</h2>
+            <h2 className="font-medium text-white">Invoices & payments</h2>
             <Input
               className="mt-2"
               placeholder="Description"
@@ -827,19 +931,50 @@ export function PanelToolsManager({
             >
               Create invoice
             </Button>
-            <ul className="mt-3 text-sm text-panel-muted">
+            <ul className="mt-3 space-y-2 text-sm text-panel-muted">
               {invoices?.invoices?.slice(0, 5).map((i) => (
                 <li key={i.id} className="flex flex-wrap items-center gap-2">
                   <span>
                     {i.description} — €{i.amount} ({i.status})
                   </span>
+                  <Button
+                    variant="secondary"
+                    className="!py-0.5 !text-xs"
+                    onClick={async () => {
+                      const r = await call("invoice-pdf-generate", { invoiceId: i.id });
+                      const html = (r as { html?: string }).html ?? "";
+                      const w = window.open("", "_blank");
+                      if (w) {
+                        w.document.write(html);
+                        w.document.close();
+                      }
+                      setSuccess("Invoice PDF opened — use Print → Save as PDF.");
+                    }}
+                    disabled={loading}
+                  >
+                    PDF
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="!py-0.5 !text-xs"
+                    onClick={async () => {
+                      const r = await call("invoice-payment-link", { invoiceId: i.id });
+                      const url = (r as { paymentUrl?: string }).paymentUrl;
+                      if (url) window.open(url, "_blank");
+                      setSuccess("Payment link created.");
+                      await call("billing-invoices-list");
+                    }}
+                    disabled={loading}
+                  >
+                    Pay link
+                  </Button>
                   {i.status === "draft" && (
                     <Button
                       variant="secondary"
                       className="!py-0.5 !text-xs"
                       onClick={async () => {
                         await call("invoice-mark-sent", { invoiceId: i.id });
-                        setSuccess("Invoice marked sent.");
+                        setSuccess("Invoice marked sent — customer can be billed.");
                         await call("billing-invoices-list");
                       }}
                       disabled={loading}

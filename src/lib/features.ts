@@ -427,6 +427,8 @@ export const ADMIN_NAV = [
   { path: "/admin/audit", label: "Activity log" },
   { path: "/admin/apps", label: "App store" },
   { path: "/admin/nodes", label: "Nodes" },
+  { path: "/admin/cron", label: "System cron" },
+  { path: "/admin/awstats", label: "AWStats" },
   { path: "/admin/policy", label: "Panel policy" },
   { path: "/admin/server", label: "Services" },
   { path: "/admin/stack", label: "Stack config" },

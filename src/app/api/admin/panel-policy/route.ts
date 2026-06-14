@@ -7,7 +7,13 @@ export async function GET() {
   try {
     await requireAdmin();
     const raw = await runGlobalTool("panel-policy-get");
-    return jsonOk(raw);
+    const policy =
+      (raw as { policy?: { requireClientTotp?: boolean } }).policy ??
+      (raw as { requireClientTotp?: boolean });
+    return jsonOk({
+      requireClientTotp: Boolean(policy.requireClientTotp),
+      policy: { requireClientTotp: Boolean(policy.requireClientTotp) },
+    });
   } catch (err) {
     return handleApiError(err);
   }

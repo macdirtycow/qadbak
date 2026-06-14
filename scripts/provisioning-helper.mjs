@@ -190,6 +190,18 @@ import {
   mailboxAutoreplyApply,
 } from "./lib/provision-panel-complete.mjs";
 import {
+  systemCronList,
+  systemAwstatsSummary,
+  domainHealthBatch,
+  nodesRemoteProvision,
+} from "./lib/provision-admin-native.mjs";
+import {
+  invoicePdfGenerate,
+  invoicePaymentLink,
+  mailboxQuotaSet,
+  mailboxQuotasGet,
+} from "./lib/provision-billing.mjs";
+import {
   dmarcGet,
   dmarcSet,
   mailboxAutoreplyList,
@@ -957,6 +969,36 @@ async function main() {
       break;
     case "panel-policy-set":
       await panelPolicySet(args[0] || "{}");
+      break;
+    case "system-cron-list":
+      await systemCronList();
+      break;
+    case "system-awstats-summary":
+      await systemAwstatsSummary();
+      break;
+    case "domain-health-batch":
+      await domainHealthBatch();
+      break;
+    case "nodes-remote-provision":
+      await nodesRemoteProvision(args[0] || "{}");
+      break;
+    case "invoice-pdf-generate": {
+      const p = parseJsonArg(1);
+      await invoicePdfGenerate(args[0], JSON.stringify(p));
+      break;
+    }
+    case "invoice-payment-link": {
+      const p = parseJsonArg(1);
+      await invoicePaymentLink(args[0], JSON.stringify(p));
+      break;
+    }
+    case "mailbox-quota-set": {
+      const p = parseJsonArg(1);
+      await mailboxQuotaSet(args[0], JSON.stringify(p));
+      break;
+    }
+    case "mailbox-quotas-get":
+      await mailboxQuotasGet(args[0]);
       break;
     default:
       emit({ ok: false, error: `Unknown command: ${cmd}` });

@@ -1,5 +1,6 @@
 "use client";
 
+import { ClientOnboardingWizard } from "@/components/ClientOnboardingWizard";
 import { DomainPanelClientCard } from "@/components/DomainPanelClientCard";
 import { DomainQuickLinks } from "@/components/DomainQuickLinks";
 import { formatDomainDisk } from "@/lib/format-quota";
@@ -79,6 +80,8 @@ export function DomainDetail({
       {error && <p className="text-sm text-red-300">{error}</p>}
 
       <WebsiteHealthCard domain={domain.name} isAdmin={isAdmin} />
+
+      {!isAdmin && <ClientOnboardingWizard domain={domain.name} isAdmin={isAdmin} />}
 
       {isAdmin && premiumPanelClient && (
         <DomainPanelClientCard domain={domain.name} />

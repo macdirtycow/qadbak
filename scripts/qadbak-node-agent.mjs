@@ -150,6 +150,49 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === "POST" && url.pathname === "/v1/provision/domain") {
+      const raw = await readBody(req);
+      const payload = raw ? JSON.parse(raw) : {};
+      const domain = String(payload.domain ?? "").trim();
+      const user = String(payload.user ?? domain.split(".")[0] ?? "").trim();
+      const plan = String(payload.plan ?? "Default").trim();
+      if (!domain) {
+        json(res, 400, { ok: false, error: "domain required" });
+        return;
+      }
+      const { spawn } = await import("node:child_process");
+      const helper = path.join(ROOT, "scripts", "provisioning-helper.mjs");
+      const pass = payload.pass || `Qd${Math.random().toString(36).slice(2, 10)}!`;
+      const child = spawn(process.execPath, [
+        helper,
+        "domain-create",
+        domain,
+        user,
+        plan,
+        pass,
+      ]);
+      let stdout = "";
+      let stderr = "";
+      child.stdout.on("data", (c) => { stdout += c; });
+      child.stderr.on("data", (c) => { stderr += c; });
+      const code = await new Promise((resolve) => child.on("close", resolve));
+      let parsed = {};
+      try {
+        parsed = JSON.parse(stdout.trim().split("\n").pop() || "{}");
+      } catch {
+        /* */
+      }
+      if (code !== 0 || !parsed.ok) {
+        json(res, 500, {
+          ok: false,
+          error: parsed.error || stderr || `domain-create exit ${code}`,
+        });
+        return;
+      }
+      json(res, 200, { ok: true, domain, user, plan, result: parsed });
+      return;
+    }
+
     json(res, 404, { ok: false, error: "Not found" });
   } catch (e) {
     json(res, 500, { ok: false, error: e instanceof Error ? e.message : String(e) });

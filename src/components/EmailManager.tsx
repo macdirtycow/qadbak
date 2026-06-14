@@ -38,6 +38,8 @@ export function EmailManager({
   const [confirmTyped, setConfirmTyped] = useState("");
   const [resetUser, setResetUser] = useState<string | null>(null);
   const [resetPass, setResetPass] = useState("");
+  const [quotaUser, setQuotaUser] = useState<string | null>(null);
+  const [quotaMb, setQuotaMb] = useState("");
   const [mailHost, setMailHost] = useState("");
 
   useDomainNavReset(domain, () => {
@@ -147,6 +149,30 @@ export function EmailManager({
     }
   }
 
+  async function saveQuota() {
+    if (!quotaUser || !quotaMb) return;
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch(`/api/domains/${enc}/users`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user: quotaUser, quotaMb: parseInt(quotaMb, 10) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Quota update failed.");
+      setSuccess(`Quota for ${quotaUser} set to ${quotaMb} MB.`);
+      setQuotaUser(null);
+      setQuotaMb("");
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -173,6 +199,10 @@ export function EmailManager({
       {success && <Alert variant="success">{success}</Alert>}
 
       <p className="text-sm text-panel-muted">
+        <Link href={`/domains/${enc}/security`} className="text-panel-link hover:underline">
+          Spam filter (domain)
+        </Link>
+        {" · "}
         DNS for mail on this server or an external provider (Google, Microsoft, …):{" "}
         <Link
           href={`/domains/${enc}/mail/settings`}
@@ -239,7 +269,7 @@ export function EmailManager({
             <tr>
               <th className="px-6 py-3">Mailbox</th>
               <th className="px-6 py-3">Name</th>
-              <th className="px-6 py-3">Quota (MB)</th>
+              <th className="px-6 py-3">Usage / limit (MB)</th>
               <th className="px-6 py-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -254,8 +284,24 @@ export function EmailManager({
                   <td className="px-6 py-4 text-panel-muted">{u.real ?? "—"}</td>
                   <td className="px-6 py-4 font-mono text-panel-muted tabular-nums">
                     {formatMailboxUsedMb(u)}
+                    {(u as HostedMailbox & { quotaLimitMb?: number }).quotaLimitMb
+                      ? ` / ${(u as HostedMailbox & { quotaLimitMb?: number }).quotaLimitMb}`
+                      : ""}
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setQuotaUser(name);
+                        setQuotaMb(
+                          String(
+                            (u as HostedMailbox & { quotaLimitMb?: number }).quotaLimitMb ?? "",
+                          ),
+                        );
+                      }}
+                    >
+                      Quota
+                    </Button>
                     <Link
                       href={`/domains/${enc}/mail/${encodeURIComponent(name)}`}
                       className="inline-flex items-center rounded-lg border border-panel-border px-3 py-1.5 text-sm text-panel-link hover:bg-panel-border/30"
@@ -286,6 +332,29 @@ export function EmailManager({
           </p>
         )}
       </Card>
+
+      {quotaUser && (
+        <Card>
+          <h2 className="text-lg font-medium text-white">
+            Mailbox quota — {quotaUser}@{domain}
+          </h2>
+          <div className="mt-4 flex max-w-md gap-2">
+            <Input
+              type="number"
+              min={1}
+              placeholder="Limit in MB"
+              value={quotaMb}
+              onChange={(e) => setQuotaMb(e.target.value)}
+            />
+            <Button onClick={saveQuota} disabled={loading || !quotaMb}>
+              Save
+            </Button>
+            <Button variant="ghost" onClick={() => setQuotaUser(null)}>
+              Cancel
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {resetUser && (
         <Card>

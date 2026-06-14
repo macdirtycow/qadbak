@@ -1,3 +1,4 @@
+import { DashboardDomainOverview } from "@/components/DashboardDomainOverview";
 import { AdminDashboardPanel } from "@/components/AdminDashboardPanel";
 import { ServerConfigButton } from "@/components/ServerConfigButton";
 import { Badge, Card } from "@/components/ui";
@@ -56,6 +57,8 @@ export default async function DashboardPage() {
           <p className="mt-2 text-3xl font-semibold text-amber-400">{disabled}</p>
         </Card>
       </div>
+
+      <DashboardDomainOverview />
 
       <Card>
         <h2 className="text-lg font-medium text-white">Recent domains</h2>

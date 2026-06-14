@@ -17,7 +17,9 @@ export function AdminPanelPolicyView() {
       const res = await fetch("/api/admin/panel-policy");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not load policy.");
-      setRequireClientTotp(Boolean(data.requireClientTotp));
+      setRequireClientTotp(
+        Boolean(data.requireClientTotp ?? data.policy?.requireClientTotp),
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error.");
     } finally {
