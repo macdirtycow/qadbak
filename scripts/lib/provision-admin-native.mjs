@@ -1,7 +1,8 @@
 import { execFile } from "node:child_process";
-import { readdir, access, stat } from "node:fs/promises";
+import { access } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { backupNewestAgeDays } from "./provision-backup.mjs";
 import {
   emit,
   fail,
@@ -104,24 +105,6 @@ async function sslDaysLeft(domain) {
   return best;
 }
 
-async function backupAgeDays(domain) {
-  const dir = path.join(QADBAK_DIR, "data", "backups", domain);
-  try {
-    const names = await readdir(dir);
-    let newest = 0;
-    for (const name of names) {
-      if (!name.endsWith(".tar.gz") && !name.endsWith(".zip")) continue;
-      const full = path.join(dir, name);
-      const { mtimeMs } = await stat(full);
-      if (mtimeMs > newest) newest = mtimeMs;
-    }
-    if (!newest) return null;
-    return Math.floor((Date.now() - newest) / 86_400_000);
-  } catch {
-    return null;
-  }
-}
-
 export async function domainHealthBatch() {
   const registry = await loadRegistry();
   const domains = Array.isArray(registry) ? registry : [];
@@ -129,11 +112,17 @@ export async function domainHealthBatch() {
   for (const row of domains) {
     const name = String(row.name || row.domain || "").trim();
     if (!name) continue;
+    if (row.demoOnly === true) continue;
     const disabled = row.disabled === true || row.disabled === "1" || row.disabled === 1;
     const diskUsed = parseFloat(String(row.disk_used ?? row.diskUsed ?? "0")) || 0;
     const diskLimit = parseFloat(String(row.disk_limit ?? row.diskLimit ?? "0")) || null;
     const sslDays = await sslDaysLeft(name);
-    const backupAge = await backupAgeDays(name);
+    let backupAge = null;
+    try {
+      backupAge = await backupNewestAgeDays(name);
+    } catch {
+      backupAge = null;
+    }
     const actions = [];
     if (sslDays !== null && sslDays <= 14) {
       actions.push({

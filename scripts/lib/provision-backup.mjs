@@ -149,6 +149,20 @@ async function pruneOldBackups(home, retain) {
   }
 }
 
+/** Newest local backup age in days, or null when none exist under /home/{user}/backups. */
+export async function backupNewestAgeDays(domain) {
+  const { home } = await resolveDomainUser(domain);
+  const dir = backupsDir(home);
+  let newest = 0;
+  for (const name of await readdir(dir).catch(() => [])) {
+    if (!name.endsWith(".tar.gz")) continue;
+    const st = await stat(path.join(dir, name));
+    if (st.mtimeMs > newest) newest = st.mtimeMs;
+  }
+  if (!newest) return null;
+  return Math.floor((Date.now() - newest) / 86_400_000);
+}
+
 export async function backupList(domain) {
   const { home } = await resolveDomainUser(domain);
   const dir = backupsDir(home);
