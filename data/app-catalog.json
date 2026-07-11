@@ -291,6 +291,22 @@
     "etaSeconds": 75
   },
   {
+    "id": "jellyfin",
+    "name": "jellyfin",
+    "label": "Jellyfin",
+    "desc": "Private film & series server — Docker on media.yourdomain with HTTPS",
+    "version": "latest",
+    "minPhp": "8.0",
+    "requiresDb": false,
+    "category": "media",
+    "icon": "🎬",
+    "tagline": "Stream your own films on your VPS",
+    "featured": true,
+    "intentMode": "full",
+    "installer": "jellyfin-install",
+    "etaSeconds": 180
+  },
+  {
     "id": "mybb",
     "name": "mybb",
     "label": "MyBB",

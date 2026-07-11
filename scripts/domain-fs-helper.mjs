@@ -273,6 +273,34 @@ async function readFile(absPath) {
   });
 }
 
+async function streamFile(absPath, payload) {
+  const resolved = await assertHomePath(absPath);
+  const st = await fs.stat(resolved);
+  if (!st.isFile()) fail("Not a file.");
+  const size = st.size;
+  const start = Math.max(0, Number(payload.start ?? 0));
+  let end = payload.end !== undefined ? Number(payload.end) : size - 1;
+  if (!Number.isFinite(start) || start < 0 || start >= size) fail("Range not satisfiable.");
+  if (!Number.isFinite(end) || end >= size) end = size - 1;
+  if (end < start) fail("Range not satisfiable.");
+
+  const fh = await fs.open(resolved, "r");
+  try {
+    const chunk = Buffer.alloc(256 * 1024);
+    let pos = start;
+    while (pos <= end) {
+      const toRead = Math.min(chunk.length, end - pos + 1);
+      const { bytesRead } = await fh.read(chunk, 0, toRead, pos);
+      if (bytesRead <= 0) break;
+      process.stdout.write(chunk.subarray(0, bytesRead));
+      pos += bytesRead;
+    }
+  } finally {
+    await fh.close();
+  }
+  process.exit(0);
+}
+
 async function writeFile(absPath, content) {
   const parent = path.dirname(absPath);
   await assertHomePath(parent);
@@ -425,6 +453,11 @@ async function main() {
     case "read":
       await readFile(target);
       break;
+    case "stream": {
+      const payload = payloadRaw ? JSON.parse(payloadRaw) : {};
+      await streamFile(target, payload);
+      break;
+    }
     case "write": {
       const payload = payloadRaw ? JSON.parse(payloadRaw) : {};
       if (payload.content === undefined) fail("content required");

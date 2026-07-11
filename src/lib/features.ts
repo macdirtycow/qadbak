@@ -302,6 +302,18 @@ export const DOMAIN_FEATURES: DomainFeature[] = [
     },
   },
   {
+    id: "media",
+    phase: 5,
+    label: "Media library",
+    description: "Upload folder, disk usage, and Jellyfin streaming link",
+    path: "media",
+    navOrder: 11,
+    programs: {
+      admin: ["list-domains"],
+      client: ["list-domains"],
+    },
+  },
+  {
     id: "runtimes",
     phase: 5,
     label: "Runtimes",

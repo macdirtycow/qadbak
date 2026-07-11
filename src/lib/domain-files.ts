@@ -281,6 +281,11 @@ export function mimeForFile(name: string): string {
     zip: "application/zip",
     txt: "text/plain",
     php: "application/x-php",
+    mp4: "video/mp4",
+    webm: "video/webm",
+    ogv: "video/ogg",
+    m4v: "video/mp4",
+    mov: "video/quicktime",
   };
   return map[ext] ?? "application/octet-stream";
 }

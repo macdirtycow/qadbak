@@ -79,6 +79,15 @@ test.describe("admin", () => {
     await page.goto("/admin/apps");
     await expect(page.getByRole("heading", { name: "App store" })).toBeVisible();
     await expect(page.getByText(/installable apps/i)).toBeVisible();
+    await expect(page.getByText("Jellyfin")).toBeVisible();
+  });
+
+  test("media library page loads", async ({ page }) => {
+    await login(page, ADMIN.user, ADMIN.pass);
+    await page.goto("/domains/example.com/media");
+    await expect(page.getByRole("heading", { name: "Media library" })).toBeVisible();
+    await expect(page.getByText(/upload folder/i)).toBeVisible();
+    await expect(page.getByText("Quick player")).toBeVisible();
   });
 });
 

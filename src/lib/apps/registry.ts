@@ -5,6 +5,7 @@ import {
 } from "./catalog";
 import type { AppTemplate, AppTemplateSummary } from "./types";
 import { createCatalogTemplate } from "./templates/from-catalog";
+import { jellyfinTemplate } from "./templates/jellyfin";
 import { wordpressTemplate } from "./templates/wordpress";
 
 let cache: {
@@ -25,7 +26,7 @@ async function loadRegistry(): Promise<{
   }
   const catalog = await loadAppCatalog();
   const fromCatalog = catalogEntriesWithIntent(catalog).map(createCatalogTemplate);
-  const templates = [wordpressTemplate, ...fromCatalog];
+  const templates = [wordpressTemplate, jellyfinTemplate, ...fromCatalog];
   cache = { templates, catalog, at: now };
   return { templates, catalog };
 }
@@ -57,12 +58,12 @@ export async function listCatalog(): Promise<AppCatalogEntry[]> {
 
 /** Sync helpers for rare cases — prefer async in server components. */
 export function listTemplatesSync(): AppTemplateSummary[] {
-  if (!cache) return [toSummary(wordpressTemplate)];
+  if (!cache) return [toSummary(wordpressTemplate), toSummary(jellyfinTemplate)];
   return cache.templates.map(toSummary);
 }
 
 export function getTemplateSync(id: string): AppTemplate | undefined {
-  if (!cache) return id === "wordpress" ? wordpressTemplate : undefined;
+  if (!cache) return id === "wordpress" ? wordpressTemplate : id === "jellyfin" ? jellyfinTemplate : undefined;
   return cache.templates.find((t) => t.id === id);
 }
 

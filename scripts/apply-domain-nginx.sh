@@ -95,7 +95,7 @@ write_site_server() {
   fi
 
   if [[ -f "$PROXY_JSON" ]] && command -v jq &>/dev/null; then
-    while IFS=$'\t' read -r ppath pdest; do
+    while IFS=$'\t' read -r ppath pdest pws; do
       [[ -z "$ppath" || -z "$pdest" ]] && continue
       loc="${ppath%/}/"
       echo "    location ${loc} {"
@@ -105,8 +105,12 @@ write_site_server() {
       echo "        proxy_set_header X-Real-IP \$remote_addr;"
       echo "        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;"
       echo "        proxy_set_header X-Forwarded-Proto \$scheme;"
+      if [[ "$pws" == "true" ]]; then
+        echo "        proxy_set_header Upgrade \$http_upgrade;"
+        echo "        proxy_set_header Connection \"upgrade\";"
+      fi
       echo "    }"
-    done < <(jq -r '.[] | [.path,.dest] | @tsv' "$PROXY_JSON" 2>/dev/null)
+    done < <(jq -r '.[] | [.path,.dest,(.websocket // false)] | @tsv' "$PROXY_JSON" 2>/dev/null)
   fi
 
   if [[ -f "$REDIR_JSON" ]] && command -v jq &>/dev/null; then

@@ -140,6 +140,7 @@ import {
   cloudCredentialsSave,
 } from "./lib/cloud-credentials.mjs";
 import { appInstallWordpress } from "./lib/provision-app-wordpress.mjs";
+import { jellyfinInstall, jellyfinListVideos, jellyfinSetMediaPath, jellyfinStatus, jellyfinStreamResolve } from "./lib/provision-jellyfin.mjs";
 import {
   securityGet,
   securitySetSpam,
@@ -579,6 +580,21 @@ async function main() {
       break;
     case "app-install-wordpress":
       await appInstallWordpress(args[0], args[1], args[2], args[3], args[4]);
+      break;
+    case "jellyfin-install":
+      await jellyfinInstall(args[0], args[1]);
+      break;
+    case "jellyfin-status":
+      await jellyfinStatus(args[0]);
+      break;
+    case "jellyfin-set-media-path":
+      await jellyfinSetMediaPath(args[0], args[1]);
+      break;
+    case "jellyfin-list-videos":
+      await jellyfinListVideos(args[0]);
+      break;
+    case "jellyfin-stream-resolve":
+      await jellyfinStreamResolve(args[0], args[1]);
       break;
     case "script-delete":
       await scriptDelete(args[0], args[1]);
