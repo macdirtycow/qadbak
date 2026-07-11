@@ -31,11 +31,21 @@ else
   echo "  FAIL /api/health"
   exit 1
 fi
+
+INSTALL_MODE=""
+MOCK_MODE=""
+if [[ -f "$ROOT/.env.local" ]]; then
+  INSTALL_MODE="$(grep '^QADBAK_INSTALL_MODE=' "$ROOT/.env.local" 2>/dev/null | cut -d= -f2- || true)"
+  MOCK_MODE="$(grep '^QADBAK_LEGACY_API_MOCK=' "$ROOT/.env.local" 2>/dev/null | cut -d= -f2- | tr '[:upper:]' '[:lower:]' || true)"
+fi
 PROV="$(echo "$HEALTH" | python3 -c "import sys,json; print(json.load(sys.stdin).get('provisioner',''))" 2>/dev/null || true)"
-if [[ "$PROV" == "native" ]]; then
+
+if [[ "$INSTALL_MODE" == "panel-only" && "$MOCK_MODE" == "true" ]]; then
+  echo "  OK   panel-only mock mode"
+elif [[ "$PROV" == "native" ]]; then
   echo "  OK   provisioner=native"
 elif echo "$HEALTH" | grep -q '"mock":true'; then
-  echo "  FAIL health still in mock mode on server" >&2
+  echo "  FAIL health still in mock mode on native server" >&2
   exit 1
 else
   echo "  OK   live mode (not mock)"
@@ -70,7 +80,7 @@ else
   echo "  WARN run-install-e2e.sh missing" >&2
 fi
 
-if [[ -f "$ROOT/scripts/check-native-mail.sh" ]]; then
+if [[ -f "$ROOT/scripts/check-native-mail.sh" ]] && [[ "$INSTALL_MODE" != "panel-only" ]]; then
   FIRST_DOMAIN="$(grep -o '"name":"[^"]*"' "$ROOT/data/native-domains.json" 2>/dev/null | head -1 | sed 's/"name":"//;s/"//')"
   if [[ -n "$FIRST_DOMAIN" ]]; then
     echo ""

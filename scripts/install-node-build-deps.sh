@@ -12,9 +12,19 @@ if command -v make &>/dev/null && command -v g++ &>/dev/null; then
   exit 0
 fi
 
-echo "==> Installing build-essential (make, g++) for node-pty"
-export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq
-apt-get install -y build-essential python3
+# shellcheck source=lib/linux-distro.sh
+source "$(dirname "$0")/lib/linux-distro.sh"
+qadbak_load_os_release || true
+
+echo "==> Installing build tools (make, g++) for node-pty"
+if qadbak_has_apt; then
+  qadbak_pkg_update
+  qadbak_pkg_install build-essential python3
+elif [[ "$QADBAK_PKG_MGR" == "dnf" ]] && command -v dnf &>/dev/null; then
+  dnf groupinstall -y "Development Tools" || dnf install -y gcc-c++ make python3
+else
+  echo "WARN: install make and g++ manually for the native terminal (node-pty)" >&2
+  exit 0
+fi
 
 echo "OK — node-pty can compile on this server"

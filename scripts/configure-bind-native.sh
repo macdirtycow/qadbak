@@ -8,12 +8,12 @@ set -euo pipefail
 }
 
 export DEBIAN_FRONTEND=noninteractive
-# shellcheck source=lib/ubuntu-release.sh
-source "$(dirname "$0")/lib/ubuntu-release.sh"
-qadbak_detect_ubuntu_release || true
+# shellcheck source=lib/linux-distro.sh
+source "$(dirname "$0")/lib/linux-distro.sh"
+qadbak_detect_linux_distro || true
 BIND_PKGS="$(qadbak_bind_apt_packages 2>/dev/null || echo "bind9 bind9-utils")"
 
-apt-get install -y -qq $BIND_PKGS 2>/dev/null || apt-get install -y -qq bind9 bind9-utils
+qadbak_pkg_install $BIND_PKGS 2>/dev/null || qadbak_pkg_install bind9 bind9-utils
 
 mkdir -p /var/lib/bind
 chmod 755 /var/lib/bind

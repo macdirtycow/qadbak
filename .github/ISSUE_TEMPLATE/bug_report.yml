@@ -24,7 +24,8 @@ body:
     attributes:
       label: Install mode
       options:
-        - "Native (fresh install via install/qadbak-install.sh)"
+        - "Native full stack (install/qadbak-install.sh)"
+        - "Panel-only (install/qadbak-install-panel.sh)"
         - "Native (migrated from another panel)"
         - "Local dev (npm run dev)"
         - "Other / not sure"
@@ -32,13 +33,15 @@ body:
       required: true
 
   - type: dropdown
-    id: ubuntu
+    id: os-version
     attributes:
-      label: Ubuntu version
+      label: Linux OS
       options:
-        - "22.04 LTS"
-        - "24.04 LTS"
-        - "Other (please describe in extra context)"
+        - "Ubuntu 22.04 LTS"
+        - "Ubuntu 24.04 LTS"
+        - "Ubuntu 26.04 LTS"
+        - "Debian 12"
+        - "Other (panel-only / describe in extra context)"
     validations:
       required: true
 

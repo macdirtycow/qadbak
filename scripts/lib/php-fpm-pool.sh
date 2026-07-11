@@ -9,7 +9,7 @@ php_fpm_detect_version() {
     return 0
   fi
   local v
-  for v in 8.4 8.3 8.2 8.1 8.0; do
+  for v in 8.5 8.4 8.3 8.2 8.1 8.0; do
     if [[ -d "/etc/php/${v}/fpm" ]]; then
       echo "$v"
       return 0

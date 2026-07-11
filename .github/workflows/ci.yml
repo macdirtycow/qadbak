@@ -11,6 +11,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  linux-support:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux distro unit tests
+        run: bash scripts/test-linux-distro.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Panel-only preflight (Node on runner)
+        run: bash scripts/check-linux-support.sh --panel-only
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -31,7 +43,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [linux-support, build]
     steps:
       - uses: actions/checkout@v4
 

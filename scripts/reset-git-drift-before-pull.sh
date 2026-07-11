@@ -6,6 +6,7 @@ cd "$ROOT"
 for rel in \
   package-lock.json \
   scripts/install-native-stack.sh \
+  scripts/lib/linux-distro.sh \
   scripts/lib/ubuntu-release.sh \
   scripts/run-domain-fs-helper.sh \
   scripts/run-stack-helper.sh \

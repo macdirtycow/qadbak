@@ -1,29 +1,28 @@
 #!/usr/bin/env bash
-# Qadbak-first hosting stack packages. Safe on fresh Ubuntu; idempotent on upgraded servers.
+# Qadbak-first hosting stack packages. Safe on fresh Ubuntu/Debian; idempotent on upgraded servers.
 set -euo pipefail
 
 QADBAK_DIR="${QADBAK_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
-# shellcheck source=lib/ubuntu-release.sh
-source "$(dirname "$0")/lib/ubuntu-release.sh"
+# shellcheck source=lib/linux-distro.sh
+source "$(dirname "$0")/lib/linux-distro.sh"
 
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Run as root: sudo bash scripts/install-native-stack.sh" >&2
   exit 1
 fi
 
-qadbak_detect_ubuntu_release || {
-  echo "Qadbak native stack requires Ubuntu 22.04 or 24.04 LTS." >&2
+qadbak_detect_linux_distro || {
+  echo "Qadbak native stack requires Ubuntu 22.04/24.04/26.04 LTS or Debian 12." >&2
   exit 1
 }
 
 BIND_PKGS="$(qadbak_bind_apt_packages)"
 PHP_EXTRA="$(qadbak_php_extra_apt_packages)"
 
-echo "==> Native stack packages ($(qadbak_ubuntu_release_label))"
-export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq
+echo "==> Native stack packages ($(qadbak_linux_release_label))"
+qadbak_pkg_update
 # shellcheck disable=SC2086
-apt-get install -y -qq \
+qadbak_pkg_install \
   nginx \
   apache2 \
   mariadb-server \

@@ -7,7 +7,8 @@
 Admin and client UI for domains, mail, DNS, TLS, databases, backups, and cron — on **your** server. Open-source core; Premium for resellers, webmail, and white-label.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04%20%7C%2024.04-E95420?logo=ubuntu&logoColor=white)](docs/UBUNTU-24-LTS.md)
+[![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04%20%7C%2024.04%20%7C%2026.04-E95420?logo=ubuntu&logoColor=white)](docs/LINUX-SUPPORT.md)
+[![Debian](https://img.shields.io/badge/Debian-12-D70A53?logo=debian&logoColor=white)](docs/LINUX-SUPPORT.md)
 [![Node](https://img.shields.io/badge/Node-20%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=next.js)](https://nextjs.org)
 [![Premium from €2.50](https://img.shields.io/badge/Premium-from%20%E2%82%AC2.50-14b8a6)](https://qadbak.com/#pricing)
@@ -135,7 +136,7 @@ node scripts/hash-password.mjs your-password
 
 ## Install on a VPS
 
-**Requirements:** Ubuntu 22.04 or 24.04 LTS, root, a DNS A-record pointing at your panel host, 1 GB+ RAM.
+**Requirements (full stack):** Ubuntu 22.04/24.04/26.04 or Debian 12, root, DNS A-record, 1 GB+ RAM. **Panel-only:** any Linux with Node 20+ — see [docs/LINUX-SUPPORT.md](docs/LINUX-SUPPORT.md).
 
 ```bash
 git clone https://github.com/macdirtycow/qadbak.git /opt/qadbak

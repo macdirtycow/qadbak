@@ -1,23 +1,36 @@
 # Qadbak installer
 
-One-shot setup for **Ubuntu 22.04 or 24.04 LTS**: hosting stack + independent Qadbak panel.
+## Full native stack
 
-## Requirements
+One-shot setup for **Ubuntu 22.04/24.04/26.04** or **Debian 12**: hosting stack + independent Qadbak panel.
 
-- Ubuntu 22.04 or 24.04 LTS VPS (see [docs/UBUNTU-24-LTS.md](../docs/UBUNTU-24-LTS.md))
+See [docs/LINUX-SUPPORT.md](../docs/LINUX-SUPPORT.md).
+
+### Requirements
+
+- Ubuntu 22.04/24.04/26.04 or Debian 12 VPS
 - Root access
 - DNS **A record** for panel hostname → server IP
 - 1+ GB RAM (2+ GB recommended)
 
-## Run
+### Run
 
 ```bash
 git clone https://github.com/macdirtycow/qadbak.git /opt/qadbak
 cd /opt/qadbak
+sudo bash scripts/check-linux-support.sh
 sudo bash install/qadbak-install.sh
 ```
 
 See [docs/QADBAK-NATIVE-INSTALL.md](../docs/QADBAK-NATIVE-INSTALL.md).
+
+## Panel-only (any Linux + Node 20+)
+
+UI without nginx/mail/BIND on this host — mock demo or hybrid remote API.
+
+```bash
+sudo bash install/qadbak-install-panel.sh
+```
 
 ## After install
 
@@ -40,13 +53,11 @@ Installer writes `/opt/qadbak/.env.local` with `QADBAK_PROVISIONER=native` and f
 
 The installer targets **fresh VPS** setups. If an old GPL panel is still on the box, switch to native mode first (`apply-phase8-independent.sh`), verify the panel, then remove packages manually — see [docs/MIGRATE-FROM-LEGACY-HOSTING.md](../docs/MIGRATE-FROM-LEGACY-HOSTING.md).
 
-## Resume a failed install
-
-If `qadbak-install.sh` stops mid-way (typically on a sudoers verify step), fix
-the reported issue, then resume without rebuilding npm dependencies:
+Resume after failure:
 
 ```bash
-sudo bash /opt/qadbak/install/qadbak-install-resume.sh
+sudo bash install/qadbak-install-resume.sh          # full native stack
+sudo bash install/qadbak-install-panel-resume.sh    # panel-only
 ```
 
 ## Uninstall

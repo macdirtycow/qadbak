@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { access, mkdir, writeFile } from "node:fs/promises";
 import { promisify } from "node:util";
 import path from "node:path";
 import { dnsAdd } from "./provision-dns.mjs";
@@ -43,18 +43,12 @@ async function uidGid(user) {
 }
 
 async function ensureDocker() {
-  try {
-    await exec("docker", ["version"], { timeout: 30_000 });
-    return;
-  } catch {
-    /* install below */
+  const script = path.join(QADBAK_DIR, "scripts", "lib", "ensure-docker.sh");
+  if (!(await access(script).catch(() => false))) {
+    fail(`Missing ${script}`);
   }
   try {
-    await exec("apt-get", ["update"], { timeout: 120_000 });
-    await exec("apt-get", ["install", "-y", "docker.io", "docker-compose-v2"], {
-      timeout: 600_000,
-    });
-    await exec("systemctl", ["enable", "--now", "docker"], { timeout: 60_000 });
+    await exec("bash", [script], { timeout: 600_000 });
   } catch (e) {
     fail(
       `Docker is required for Jellyfin: ${e instanceof Error ? e.message : String(e)}`,

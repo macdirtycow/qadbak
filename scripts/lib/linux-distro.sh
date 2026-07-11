@@ -1,0 +1,178 @@
+#!/usr/bin/env bash
+# Linux distro detection for Qadbak install scripts.
+# Supported native stack: Ubuntu 22.04/24.04/26.04 LTS, Debian 12 (Bookworm).
+# shellcheck shell=bash
+
+QADBAK_OS_ID="${QADBAK_OS_ID:-}"
+QADBAK_OS_VERSION_ID="${QADBAK_OS_VERSION_ID:-}"
+QADBAK_OS_CODENAME="${QADBAK_OS_CODENAME:-}"
+QADBAK_OS_PRETTY_NAME="${QADBAK_OS_PRETTY_NAME:-}"
+QADBAK_PKG_MGR="${QADBAK_PKG_MGR:-}"
+
+qadbak_load_os_release() {
+  QADBAK_OS_ID=""
+  QADBAK_OS_VERSION_ID=""
+  QADBAK_OS_CODENAME=""
+  QADBAK_OS_PRETTY_NAME=""
+  QADBAK_PKG_MGR=""
+  local release_file="${QADBAK_OS_RELEASE_FILE:-/etc/os-release}"
+  if [[ ! -f "$release_file" ]]; then
+    return 1
+  fi
+  # shellcheck disable=SC1090
+  . "$release_file"
+  QADBAK_OS_ID="${ID:-}"
+  QADBAK_OS_VERSION_ID="${VERSION_ID:-}"
+  QADBAK_OS_CODENAME="${VERSION_CODENAME:-}"
+  QADBAK_OS_PRETTY_NAME="${PRETTY_NAME:-$ID}"
+  case "$QADBAK_OS_ID" in
+    ubuntu | debian) QADBAK_PKG_MGR=apt ;;
+    rhel | centos | rocky | almalinux | fedora) QADBAK_PKG_MGR=dnf ;;
+    alpine) QADBAK_PKG_MGR=apk ;;
+    *) QADBAK_PKG_MGR=unknown ;;
+  esac
+  return 0
+}
+
+qadbak_os_is_supported_native() {
+  case "${QADBAK_OS_ID}:${QADBAK_OS_VERSION_ID}" in
+    ubuntu:22.04 | ubuntu:24.04 | ubuntu:26.04 | debian:12) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# Full native hosting stack (nginx, mail, BIND, …).
+qadbak_detect_linux_distro() {
+  qadbak_load_os_release || return 1
+  if qadbak_os_is_supported_native; then
+    return 0
+  fi
+  echo "WARN: ${QADBAK_OS_PRETTY_NAME:-Unknown OS} is not in the tested native list (Ubuntu 22.04/24.04/26.04, Debian 12)" >&2
+  return 1
+}
+
+# Ubuntu-only check (legacy scripts).
+qadbak_detect_ubuntu_release() {
+  qadbak_load_os_release || return 1
+  if [[ "$QADBAK_OS_ID" != "ubuntu" ]]; then
+    return 1
+  fi
+  case "$QADBAK_OS_VERSION_ID" in
+    22.04 | 24.04 | 26.04) return 0 ;;
+    *)
+      echo "WARN: Ubuntu $QADBAK_OS_VERSION_ID is not in the tested LTS list (22.04, 24.04, 26.04)" >&2
+      return 1
+      ;;
+  esac
+}
+
+qadbak_linux_release_label() {
+  if [[ -n "$QADBAK_OS_VERSION_ID" ]]; then
+    echo "${QADBAK_OS_ID^} ${QADBAK_OS_VERSION_ID} (${QADBAK_OS_CODENAME})"
+  else
+    echo "${QADBAK_OS_ID:-Linux}"
+  fi
+}
+
+# Backward-compatible alias used in older scripts/docs.
+qadbak_ubuntu_release_label() {
+  qadbak_linux_release_label
+}
+
+qadbak_has_apt() {
+  [[ "$QADBAK_PKG_MGR" == "apt" ]] && command -v apt-get &>/dev/null
+}
+
+qadbak_pkg_update() {
+  if qadbak_has_apt; then
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -qq
+    return 0
+  fi
+  return 1
+}
+
+qadbak_pkg_install() {
+  if qadbak_has_apt; then
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get install -y -qq "$@"
+    return 0
+  fi
+  if [[ "$QADBAK_PKG_MGR" == "dnf" ]] && command -v dnf &>/dev/null; then
+    dnf install -y "$@"
+    return 0
+  fi
+  echo "No supported package manager to install: $*" >&2
+  return 1
+}
+
+# bind9utils (Jammy) vs bind9-utils (Noble/Debian)
+qadbak_bind_apt_packages() {
+  if apt-cache show bind9utils &>/dev/null 2>&1; then
+    echo "bind9 bind9utils"
+  else
+    echo "bind9 bind9-utils"
+  fi
+}
+
+qadbak_php_extra_apt_packages() {
+  case "${QADBAK_OS_ID}:${QADBAK_OS_VERSION_ID}" in
+    ubuntu:26.04)
+      echo "php8.4-fpm php8.4-cli php8.4-mysql php8.4-curl php8.4-xml php8.4-mbstring php8.4-zip"
+      ;;
+    ubuntu:24.04)
+      echo "php8.3-fpm php8.3-cli php8.3-mysql php8.3-curl php8.3-xml php8.3-mbstring php8.3-zip"
+      ;;
+    ubuntu:22.04)
+      echo "php8.1-fpm php8.1-cli"
+      ;;
+    debian:12)
+      echo "php8.2-fpm php8.2-cli php8.2-mysql php8.2-curl php8.2-xml php8.2-mbstring php8.2-zip"
+      ;;
+    *) echo "" ;;
+  esac
+}
+
+qadbak_install_nodejs() {
+  local major="${1:-20}"
+  if command -v node &>/dev/null; then
+    local ver
+    ver="$(node -v | cut -d. -f1 | tr -d v)"
+    if [[ "$ver" -ge "$major" ]]; then
+      return 0
+    fi
+  fi
+  case "$QADBAK_OS_ID" in
+    ubuntu | debian)
+      curl -fsSL "https://deb.nodesource.com/setup_${major}.x" | bash -
+      qadbak_pkg_install nodejs
+      ;;
+    *)
+      echo "Install Node.js ${major}+ on this system, then re-run." >&2
+      return 1
+      ;;
+  esac
+}
+
+# awscli (v1) exists on Jammy; Noble/Debian removed it — try apt, then snap, else warn.
+qadbak_install_aws_cli() {
+  if command -v aws &>/dev/null; then
+    echo "  OK   aws CLI already on PATH"
+    return 0
+  fi
+  if apt-cache show awscli &>/dev/null 2>&1; then
+    if qadbak_pkg_install awscli 2>/dev/null; then
+      apt-mark manual awscli 2>/dev/null || true
+      echo "  OK   awscli (apt)"
+      return 0
+    fi
+  fi
+  if command -v snap &>/dev/null && snap install aws-cli --classic 2>/dev/null; then
+    ln -sf /snap/bin/aws /usr/local/bin/aws 2>/dev/null || true
+    echo "  OK   aws-cli (snap)"
+    return 0
+  fi
+  echo "  WARN aws CLI not installed (optional — S3 backup tab needs it)" >&2
+  echo "       Install later: snap install aws-cli --classic" >&2
+  return 0
+}

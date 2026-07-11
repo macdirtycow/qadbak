@@ -15,13 +15,21 @@ FAILED=0
 echo "==> Qadbak v1 preflight ($ROOT)"
 echo ""
 
-if [[ -f scripts/lib/ubuntu-release.sh ]]; then
+if [[ -f scripts/lib/linux-distro.sh ]]; then
+  # shellcheck source=lib/linux-distro.sh
+  source scripts/lib/linux-distro.sh
+  if qadbak_detect_linux_distro; then
+    pass "$(qadbak_linux_release_label)"
+  else
+    warn "OS not Ubuntu/Debian LTS — native stack may differ (see docs/LINUX-SUPPORT.md)"
+  fi
+elif [[ -f scripts/lib/ubuntu-release.sh ]]; then
   # shellcheck source=lib/ubuntu-release.sh
   source scripts/lib/ubuntu-release.sh
   if qadbak_detect_ubuntu_release; then
-    pass "$(qadbak_ubuntu_release_label)"
+    pass "$(qadbak_linux_release_label)"
   else
-    warn "OS not Ubuntu 22.04/24.04 — native stack may differ"
+    warn "OS not Ubuntu 22.04/24.04/26.04 — native stack may differ"
   fi
 fi
 echo ""

@@ -1,12 +1,15 @@
 # Qadbak native install (phase 6)
 
-Fresh Ubuntu VPS **without** a legacy GPL control panel on the same machine.
+Fresh **Ubuntu or Debian** VPS **without** a legacy GPL control panel on the same machine.
+
+**Supported:** Ubuntu 22.04/24.04/26.04 LTS, Debian 12 — see [LINUX-SUPPORT.md](./LINUX-SUPPORT.md).
 
 ## When to use
 
 | Scenario | Installer |
 |----------|-----------|
-| New VPS, Qadbak-first | `sudo bash install/qadbak-install.sh` |
+| New VPS, Qadbak-first (full stack) | `sudo bash install/qadbak-install.sh` |
+| Panel UI only (mock or remote API) | `sudo bash install/qadbak-install-panel.sh` |
 | Existing VPS with legacy panel | [MIGRATE-FROM-LEGACY-HOSTING.md](./MIGRATE-FROM-LEGACY-HOSTING.md) |
 | Import domains from remote API | Set `QADBAK_LEGACY_API_URL` in `.env.local` (hybrid only) |
 

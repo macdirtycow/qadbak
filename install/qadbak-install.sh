@@ -9,6 +9,9 @@ QADBAK_USER="${QADBAK_USER:-qadbak}"
 NODE_MAJOR="${NODE_MAJOR:-20}"
 export QADBAK_NATIVE_INSTALL=1
 
+# shellcheck source=../scripts/lib/linux-distro.sh
+source "$(dirname "$0")/../scripts/lib/linux-distro.sh"
+
 NATIVE_FEATURES="${QADBAK_NATIVE_FEATURES:-ssl,dns,mail,db,domain,backup,cron,aliases,redirects,features,logs,php,ftp,limits,lifecycle,mail-settings,mail-logs,imap,protected,shared,proxies,scripts,security,resellers}"
 
 if [[ "$(id -u)" -ne 0 ]]; then
@@ -40,10 +43,10 @@ else
   fi
 fi
 
-if [[ -f "$(dirname "$0")/../scripts/check-ubuntu-support.sh" ]]; then
+if [[ -f "$(dirname "$0")/../scripts/check-linux-support.sh" ]]; then
   echo ""
-  bash "$(dirname "$0")/../scripts/check-ubuntu-support.sh" || {
-    echo "Fix Ubuntu support issues above before continuing." >&2
+  bash "$(dirname "$0")/../scripts/check-linux-support.sh" || {
+    echo "Fix Linux support issues above before continuing." >&2
     exit 1
   }
 fi
@@ -84,14 +87,13 @@ if [[ "$ADD_CLIENT" =~ ^[Yy]$ ]]; then
   echo
 fi
 
-apt-get update -qq
+qadbak_pkg_update || apt-get update -qq
 bash "$(dirname "$0")/../scripts/install-native-stack.sh"
 
-apt-get install -y -qq curl git nginx certbot python3-certbot-nginx
-if ! command -v node &>/dev/null || [[ "$(node -v | cut -d. -f1 | tr -d v)" -lt "$NODE_MAJOR" ]]; then
-  curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
-  apt-get install -y -qq nodejs
-fi
+qadbak_pkg_install curl git nginx certbot python3-certbot-nginx || \
+  apt-get install -y -qq curl git nginx certbot python3-certbot-nginx
+qadbak_load_os_release || true
+qadbak_install_nodejs "$NODE_MAJOR"
 command -v pm2 &>/dev/null || npm install -g pm2
 
 if ! id "$QADBAK_USER" &>/dev/null; then
