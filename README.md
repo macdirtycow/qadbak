@@ -7,6 +7,7 @@
 Admin and client UI for domains, mail, DNS, TLS, databases, backups, and cron — on **your** server. Open-source core; Premium for resellers, webmail, and white-label.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Release](https://img.shields.io/github/v/release/macdirtycow/qadbak?label=release)](https://github.com/macdirtycow/qadbak/releases)
 [![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04%20%7C%2024.04%20%7C%2026.04-E95420?logo=ubuntu&logoColor=white)](docs/LINUX-SUPPORT.md)
 [![Debian](https://img.shields.io/badge/Debian-12-D70A53?logo=debian&logoColor=white)](docs/LINUX-SUPPORT.md)
 [![Node](https://img.shields.io/badge/Node-20%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org)
