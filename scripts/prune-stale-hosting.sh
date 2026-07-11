@@ -26,7 +26,14 @@ if [[ -f "$REG" ]] && command -v node >/dev/null 2>&1; then
     for (const r of rows) {
       if (!r || !r.name || !r.user) continue;
       if (r.demoOnly) {
-        kept.push(r);
+        const home = path.join('/home', r.user);
+        try {
+          fs.accessSync(home);
+          kept.push(r);
+        } catch {
+          removed++;
+          console.log('    DROP demoOnly ' + r.name + ' (no unix home ' + home + ')');
+        }
         continue;
       }
       const home = path.join('/home', r.user);

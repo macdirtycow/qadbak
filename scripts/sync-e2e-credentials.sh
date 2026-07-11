@@ -45,6 +45,17 @@ if [[ -z "$ADMIN_PASS" ]]; then
   exit 1
 fi
 
+QADBAK_NODE="${QADBAK_NODE_BIN:-$(command -v node)}"
+if [[ -x "$QADBAK_NODE" && -f "$ROOT/scripts/verify-admin-password.mjs" ]]; then
+  if ! QADBAK_DIR="$ROOT" "$QADBAK_NODE" "$ROOT/scripts/verify-admin-password.mjs" "$ADMIN_USER" "$ADMIN_PASS" 2>/dev/null; then
+    echo "E2E password does not match data/users.json for $ADMIN_USER." >&2
+    echo "  Set the real panel password in $LOCAL:" >&2
+    echo "    QADBAK_E2E_ADMIN_PASS=your-actual-login-password" >&2
+    echo "  Then re-run: sudo bash $ROOT/scripts/sync-e2e-credentials.sh" >&2
+    exit 1
+  fi
+fi
+
 umask 077
 cat >"$ENV_FILE" <<EOF
 E2E_ADMIN_USER=$ADMIN_USER

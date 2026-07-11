@@ -32,13 +32,13 @@ php_version_for_domain() {
 
 list_domain_users() {
   if command -v jq &>/dev/null; then
-    jq -r '.[] | [.name,.user] | @tsv' "$REG" 2>/dev/null
+    jq -r '.[] | select(.name and .user and (.demoOnly != true)) | [.name,.user] | @tsv' "$REG" 2>/dev/null
     return 0
   fi
   node -e "
     const rows=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));
     for (const r of rows) {
-      if (r && r.name && r.user) console.log(r.name+'\t'+r.user);
+      if (r && r.name && r.user && !r.demoOnly) console.log(r.name+'\t'+r.user);
     }
   " "$REG"
 }
@@ -46,6 +46,10 @@ list_domain_users() {
 count=0
 while IFS=$'\t' read -r domain user; do
   [[ -z "$domain" || -z "$user" ]] && continue
+  if ! id "$user" &>/dev/null; then
+    echo "    SKIP $domain — unix user $user does not exist" >&2
+    continue
+  fi
   ver="$(php_version_for_domain "$domain")"
   echo "==> $domain ($user) PHP-FPM"
   bash "$QADBAK_DIR/scripts/apply-php-fpm-pool.sh" "$user" "${ver:-}" "/home/${user}" \

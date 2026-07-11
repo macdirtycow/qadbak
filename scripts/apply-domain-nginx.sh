@@ -28,7 +28,16 @@ source "$QADBAK_DIR/scripts/lib/nginx-customer-vhost.sh"
 # shellcheck source=lib/ensure-home-web-access.sh
 source "$QADBAK_DIR/scripts/lib/ensure-home-web-access.sh"
 
-[[ -d "$PUB" ]] || mkdir -p "$PUB" && chown -R "${USER}:${USER}" "/home/${USER}"
+if ! id "$USER" &>/dev/null; then
+  echo "SKIP — unix user does not exist: $USER (domain $DOMAIN)" >&2
+  exit 1
+fi
+
+[[ -d "$PUB" ]] || mkdir -p "$PUB"
+chown -R "${USER}:${USER}" "/home/${USER}" 2>/dev/null || {
+  echo "SKIP — cannot chown /home/${USER} for $DOMAIN" >&2
+  exit 1
+}
 ensure_home_web_access "$USER"
 
 PHP_VER="$(php_fpm_domain_version "$DOMAIN" "$QADBAK_DIR")"
