@@ -105,6 +105,84 @@ async function sslDaysLeft(domain) {
   return best;
 }
 
+function isDnsPendingError(message) {
+  const err = String(message ?? "").toLowerCase();
+  return (
+    err.includes("enotfound") ||
+    err.includes("getaddrinfo") ||
+    err.includes("could not resolve") ||
+    err.includes("nxdomain") ||
+    err.includes("name or service not known") ||
+    err.includes("nodename nor servname")
+  );
+}
+
+function apacheBackendBase() {
+  const raw =
+    process.env.QADBAK_APACHE_BACKEND?.trim() ||
+    process.env.APACHE_BACKEND?.trim() ||
+    "127.0.0.1:8080";
+  if (raw.startsWith("http://") || raw.startsWith("https://")) {
+    return raw.replace(/\/+$/, "");
+  }
+  return `http://${raw.replace(/\/+$/, "")}`;
+}
+
+async function curlStatus(url, extraArgs = []) {
+  const { stdout } = await exec(
+    "curl",
+    [
+      "-sS",
+      "--max-time",
+      "10",
+      "-o",
+      "/dev/null",
+      "-w",
+      "%{http_code}",
+      "-L",
+      "--max-redirs",
+      "3",
+      ...extraArgs,
+      url,
+    ],
+    { maxBuffer: 1024 * 1024 },
+  );
+  return Number.parseInt(String(stdout).trim(), 10) || 0;
+}
+
+async function probeWebsiteHealth(domain) {
+  const localUrl = apacheBackendBase();
+  let localOk = false;
+  try {
+    const status = await curlStatus(localUrl, ["-H", `Host: ${domain}`]);
+    localOk = status >= 200 && status < 500;
+  } catch {
+    localOk = false;
+  }
+
+  let publicOk = null;
+  let dnsPending = false;
+  try {
+    const status = await curlStatus(`https://${domain}`);
+    publicOk = status >= 200 && status < 500;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    dnsPending = isDnsPendingError(msg);
+    publicOk = false;
+  }
+
+  let websiteOk = null;
+  if (localOk && (publicOk || dnsPending)) {
+    websiteOk = true;
+  } else if (!localOk) {
+    websiteOk = false;
+  } else if (localOk && !publicOk && !dnsPending) {
+    websiteOk = false;
+  }
+
+  return { localOk, publicOk, dnsPending, websiteOk };
+}
+
 export async function domainHealthBatch() {
   const registry = await loadRegistry();
   const domains = Array.isArray(registry) ? registry : [];
@@ -123,6 +201,21 @@ export async function domainHealthBatch() {
     } catch {
       backupAge = null;
     }
+
+    let website = {
+      localOk: false,
+      publicOk: null,
+      dnsPending: false,
+      websiteOk: null,
+    };
+    if (!disabled) {
+      try {
+        website = await probeWebsiteHealth(name);
+      } catch {
+        website = { localOk: false, publicOk: false, dnsPending: false, websiteOk: false };
+      }
+    }
+
     const actions = [];
     if (sslDays !== null && sslDays <= 14) {
       actions.push({
@@ -145,6 +238,22 @@ export async function domainHealthBatch() {
         severity: diskUsed / diskLimit > 0.95 ? "error" : "warning",
       });
     }
+    if (!disabled && website.dnsPending) {
+      actions.push({
+        label: "DNS not live yet — site ready on server",
+        href: `/domains/${encodeURIComponent(name)}/dns`,
+        severity: "info",
+      });
+    } else if (!disabled && website.websiteOk === false) {
+      actions.push({
+        label: website.localOk
+          ? "Public website unreachable"
+          : "Website not responding on server",
+        href: `/domains/${encodeURIComponent(name)}`,
+        severity: website.localOk ? "warning" : "error",
+      });
+    }
+
     items.push({
       domain: name,
       disabled,
@@ -152,12 +261,64 @@ export async function domainHealthBatch() {
       backupAgeDays: backupAge,
       diskUsedMb: diskUsed,
       diskLimitMb: diskLimit,
-      websiteOk: disabled ? false : null,
+      websiteOk: disabled ? false : website.websiteOk,
+      dnsPending: website.dnsPending,
+      localWebsiteOk: website.localOk,
       mailOk: true,
       actions,
     });
   }
   emit({ ok: true, domains: items });
+}
+
+export async function systemNetworkSummary() {
+  const interfaces = [];
+  let defaultRoute = "";
+  let primaryIpv4 = "";
+  try {
+    const { stdout } = await exec("ip", ["-j", "addr"], { maxBuffer: 2 * 1024 * 1024 });
+    const parsed = JSON.parse(stdout);
+    for (const iface of parsed) {
+      if (!iface || iface.ifname === "lo") continue;
+      const addrs = (iface.addr_info ?? [])
+        .filter((a) => a.family === "inet" || a.family === "inet6")
+        .map((a) => ({
+          family: a.family,
+          address: a.local,
+          prefix: a.prefixlen,
+          scope: a.scope,
+        }));
+      interfaces.push({
+        name: iface.ifname,
+        state: iface.operstate ?? "unknown",
+        addresses: addrs,
+      });
+      for (const a of addrs) {
+        if (a.family === "inet" && a.scope === "global" && !primaryIpv4) {
+          primaryIpv4 = a.address;
+        }
+      }
+    }
+  } catch (e) {
+    fail(e instanceof Error ? e.message : String(e));
+  }
+  try {
+    const { stdout } = await exec("ip", ["route", "show", "default"], { maxBuffer: 65536 });
+    defaultRoute = stdout.trim().split("\n")[0] ?? "";
+  } catch {
+    defaultRoute = "";
+  }
+  emit({
+    ok: true,
+    interfaces,
+    defaultRoute,
+    primaryIpv4,
+    originIp:
+      process.env.QADBAK_ORIGIN_IP?.trim() ||
+      process.env.QADBAK_SERVER_IP?.trim() ||
+      primaryIpv4 ||
+      "",
+  });
 }
 
 export async function nodesRemoteProvision(payloadJson) {

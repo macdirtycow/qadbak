@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 type ActionItem = {
   label: string;
   href: string;
-  severity: "warning" | "error";
+  severity: "warning" | "error" | "info";
 };
 
 type DomainOverview = {
@@ -18,6 +18,8 @@ type DomainOverview = {
   diskUsedMb: number;
   diskLimitMb: number | null;
   websiteOk: boolean | null;
+  dnsPending?: boolean;
+  localWebsiteOk?: boolean;
   mailOk: boolean;
   actions: ActionItem[];
 };
@@ -51,16 +53,25 @@ export function DashboardDomainOverview() {
   );
   const urgent = actions.filter((a) => a.severity === "error");
   const warnings = actions.filter((a) => a.severity === "warning");
+  const info = actions.filter((a) => a.severity === "info");
 
   return (
     <div className="space-y-6">
-      {(urgent.length > 0 || warnings.length > 0) && (
+      {(urgent.length > 0 || warnings.length > 0 || info.length > 0) && (
         <Card>
           <h2 className="text-lg font-medium text-white">Action needed</h2>
           <ul className="mt-4 space-y-2 text-sm">
-            {[...urgent, ...warnings].slice(0, 8).map((a) => (
+            {[...urgent, ...warnings, ...info].slice(0, 8).map((a) => (
               <li key={`${a.domain}-${a.label}`} className="flex flex-wrap items-center gap-2">
-                <Badge tone={a.severity === "error" ? "danger" : "warning"}>
+                <Badge
+                  tone={
+                    a.severity === "error"
+                      ? "danger"
+                      : a.severity === "warning"
+                        ? "warning"
+                        : "default"
+                  }
+                >
                   {a.domain}
                 </Badge>
                 <Link href={a.href} className="text-panel-link hover:underline">
@@ -104,6 +115,24 @@ export function DashboardDomainOverview() {
                     : d.backupAgeDays > 7
                       ? "warning"
                       : "success";
+              const websiteTone = d.disabled
+                ? "warning"
+                : d.dnsPending
+                  ? "default"
+                  : d.websiteOk === false
+                    ? "danger"
+                    : d.websiteOk === true
+                      ? "success"
+                      : "default";
+              const websiteLabel = d.disabled
+                ? "Off"
+                : d.dnsPending
+                  ? "DNS pending"
+                  : d.websiteOk === false
+                    ? "Down"
+                    : d.websiteOk === true
+                      ? "OK"
+                      : "—";
               return (
                 <div
                   key={d.domain}
@@ -117,10 +146,18 @@ export function DashboardDomainOverview() {
                       {d.domain}
                     </Link>
                     <Badge tone={d.disabled ? "warning" : "success"}>
-                      {d.disabled ? "Off" : "OK"}
+                      {d.disabled ? "Off" : "Active"}
                     </Badge>
                   </div>
                   <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-panel-muted">
+                    <div>
+                      <dt>Website</dt>
+                      <dd>
+                        <Badge tone={websiteTone as "success" | "warning" | "danger" | "default"}>
+                          {websiteLabel}
+                        </Badge>
+                      </dd>
+                    </div>
                     <div>
                       <dt>SSL</dt>
                       <dd>

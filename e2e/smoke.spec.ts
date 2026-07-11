@@ -67,6 +67,19 @@ test.describe("admin", () => {
     await page.goto("/admin");
     await expect(page.getByRole("heading", { name: "Server admin" })).toBeVisible();
   });
+
+  test("networking page loads", async ({ page }) => {
+    await login(page, ADMIN.user, ADMIN.pass);
+    await page.goto("/admin/networking");
+    await expect(page.getByRole("heading", { name: "Networking" })).toBeVisible();
+  });
+
+  test("app store loads installable apps", async ({ page }) => {
+    await login(page, ADMIN.user, ADMIN.pass);
+    await page.goto("/admin/apps");
+    await expect(page.getByRole("heading", { name: "App store" })).toBeVisible();
+    await expect(page.getByText(/installable apps/i)).toBeVisible();
+  });
 });
 
 test.describe("client RBAC", () => {

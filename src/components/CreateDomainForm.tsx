@@ -31,6 +31,9 @@ export function CreateDomainForm({
   } | null>(null);
   const [unixPassword, setUnixPassword] = useState("");
   const [journalId, setJournalId] = useState("");
+  const [dnsNote, setDnsNote] = useState("");
+  const [hostingNote, setHostingNote] = useState("");
+  const [premiumNote, setPremiumNote] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -41,6 +44,9 @@ export function CreateDomainForm({
     setClientCredentials(null);
     setUnixPassword("");
     setJournalId("");
+    setDnsNote("");
+    setHostingNote("");
+    setPremiumNote("");
     try {
       const res = await fetch("/api/domains", {
         method: "POST",
@@ -67,8 +73,22 @@ export function CreateDomainForm({
       if (typeof data.journalId === "string") {
         setJournalId(data.journalId);
       }
+      if (typeof data.dnsNote === "string") {
+        setDnsNote(data.dnsNote);
+      }
+      if (typeof data.hostingNote === "string") {
+        setHostingNote(data.hostingNote);
+      }
+      if (typeof data.premiumNote === "string") {
+        setPremiumNote(data.premiumNote);
+      }
       setSuccess(`Domain ${domain} created.`);
-      if (!data.clientAccount && !data.unixPassword && !data.journalId) {
+      if (
+        !data.clientAccount &&
+        !data.unixPassword &&
+        !data.journalId &&
+        !data.dnsNote
+      ) {
         setTimeout(() => {
           router.push(`/domains/${encodeURIComponent(domain)}`);
           router.refresh();
@@ -91,6 +111,26 @@ export function CreateDomainForm({
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
         {error && <Alert>{error}</Alert>}
         {success && <Alert variant="success">{success}</Alert>}
+        {hostingNote && (
+          <Alert variant="info">
+            <p className="text-sm">{hostingNote}</p>
+          </Alert>
+        )}
+        {dnsNote && (
+          <Alert variant="info">
+            <p className="font-medium text-white">DNS — next step</p>
+            <p className="mt-2 text-sm">{dnsNote}</p>
+            <p className="mt-2 text-xs text-panel-muted">
+              Until DNS propagates, the site may already work on this server. Check
+              Domains → Overview → Website health for local vs public status.
+            </p>
+          </Alert>
+        )}
+        {premiumNote && (
+          <Alert>
+            <p className="text-sm">{premiumNote}</p>
+          </Alert>
+        )}
         <div>
           <Label>Type</Label>
           <select
@@ -262,6 +302,18 @@ export function CreateDomainForm({
               Continue to domain
             </Button>
           </Alert>
+        )}
+        {dnsNote && !clientCredentials && !unixPassword && (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              router.push(`/domains/${encodeURIComponent(domain)}`);
+              router.refresh();
+            }}
+          >
+            Continue to domain
+          </Button>
         )}
         <Button type="submit" disabled={loading}>
           {loading ? "Working…" : "Create domain"}

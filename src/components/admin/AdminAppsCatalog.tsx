@@ -14,6 +14,9 @@ const CATEGORY_ORDER: AppCategory[] = [
   "forum",
   "analytics",
   "surveys",
+  "media",
+  "finance",
+  "support",
   "tools",
 ];
 
@@ -262,7 +265,11 @@ function AppStoreCard({
           <span className="shrink-0 rounded-full bg-panel-accent/25 px-2.5 py-1 text-xs font-medium text-panel-accent">
             Install
           </span>
-        ) : null}
+        ) : (
+          <span className="shrink-0 rounded-full bg-panel-border px-2.5 py-1 text-xs text-panel-muted">
+            Domain Apps
+          </span>
+        )}
       </div>
       <h3 className="mt-4 text-xl font-semibold text-white">{app.label}</h3>
       <p className="mt-2 flex-1 text-sm leading-relaxed text-panel-muted">
@@ -287,8 +294,19 @@ function AppStoreCard({
     </article>
   );
 
-  if (app.comingSoon || !hasIntent) {
+  if (app.comingSoon) {
     return body;
+  }
+
+  if (!hasIntent) {
+    return (
+      <Link
+        href="/domains"
+        className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-panel-accent rounded-xl"
+      >
+        {body}
+      </Link>
+    );
   }
 
   return (

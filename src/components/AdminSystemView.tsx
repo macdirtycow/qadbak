@@ -119,6 +119,20 @@ export function AdminSystemView({
           </Button>
         </div>
       </Card>
+
+      <Card>
+        <h2 className="text-lg font-medium text-white">Networking</h2>
+        <p className="mt-2 text-sm text-panel-muted">
+          Interface addresses and the public IP for customer DNS records live on a
+          dedicated native page — no server-admin embed.
+        </p>
+        <a
+          href="/admin/networking"
+          className="mt-4 inline-block text-sm text-panel-link hover:underline"
+        >
+          Open networking →
+        </a>
+      </Card>
     </div>
   );
 }

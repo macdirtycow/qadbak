@@ -39,7 +39,8 @@ export default async function AdminStatusPage() {
       <div>
         <h1 className="text-2xl font-semibold text-white">System status</h1>
         <p className="mt-1 text-sm text-panel-muted">
-          CPU, memory, disk, firewall, and service health — native Qadbak.
+          CPU, memory, disk, firewall, service health, and metrics history — native
+          Qadbak (no server-admin embed).
         </p>
       </div>
       <AdminHostMetrics initialMetrics={metrics} initialError={metricsError} />

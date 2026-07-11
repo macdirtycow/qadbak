@@ -195,6 +195,7 @@ import {
   systemCronList,
   systemAwstatsSummary,
   domainHealthBatch,
+  systemNetworkSummary,
   nodesRemoteProvision,
 } from "./lib/provision-admin-native.mjs";
 import {
@@ -986,6 +987,9 @@ async function main() {
       break;
     case "domain-health-batch":
       await domainHealthBatch();
+      break;
+    case "system-network-summary":
+      await systemNetworkSummary();
       break;
     case "nodes-remote-provision":
       await nodesRemoteProvision(args[0] || "{}");
