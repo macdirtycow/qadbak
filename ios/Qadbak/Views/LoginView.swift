@@ -11,65 +11,85 @@ struct LoginView: View {
     @State private var localError: String?
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Panel server") {
-                    TextField("https://panel.example.com", text: $serverURL)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                    if let url = appState.serverURL {
-                        Text(url.absoluteString)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+        QBScreenContainer {
+            ScrollView {
+                VStack(spacing: 28) {
+                    VStack(spacing: 14) {
+                        QadbakLogoMark(size: 64)
+                        Text("Qadbak")
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .foregroundStyle(QadbakPalette.text)
+                        Text("Manage your domains from iPhone and iPad — like Jellyfin, but for hosting.")
+                            .font(.subheadline)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(QadbakPalette.muted)
+                            .padding(.horizontal, 8)
                     }
-                }
+                    .padding(.top, 24)
 
-                if showTotp {
-                    Section("Two-factor code") {
-                        TextField("6-digit code", text: $totpCode)
-                            .keyboardType(.numberPad)
-                    }
-                } else {
-                    Section("Account") {
-                        TextField("Username", text: $username)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                        SecureField("Password", text: $password)
-                    }
-                }
+                    QBGlassCard {
+                        VStack(alignment: .leading, spacing: 18) {
+                            QBScreenHeader(
+                                title: showTotp ? "Two-factor" : "Sign in",
+                                subtitle: showTotp
+                                    ? "Enter the 6-digit code from your authenticator app."
+                                    : "Connect to your panel server, then sign in."
+                            )
 
-                if let localError {
-                    Section {
-                        ErrorBanner(message: localError)
-                    }
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
-                }
+                            if !showTotp {
+                                QBTextField(
+                                    label: "Panel URL",
+                                    placeholder: "https://panel.example.com",
+                                    text: $serverURL,
+                                    keyboard: .URL
+                                )
+                                if let url = appState.serverURL {
+                                    Text("Saved: \(url.absoluteString)")
+                                        .font(.caption)
+                                        .foregroundStyle(QadbakPalette.muted)
+                                }
+                                QBTextField(label: "Username", placeholder: "admin", text: $username)
+                                QBTextField(label: "Password", placeholder: "••••••••", text: $password, secure: true)
+                            } else {
+                                QBTextField(
+                                    label: "Authenticator code",
+                                    placeholder: "123456",
+                                    text: $totpCode,
+                                    keyboard: .numberPad
+                                )
+                            }
 
-                Section {
-                    Button(showTotp ? "Verify & sign in" : "Sign in") {
-                        Task { await submit() }
+                            if let localError {
+                                ErrorBanner(message: localError)
+                            }
+
+                            QBPrimaryButton(
+                                title: showTotp ? "Verify & continue" : "Sign in",
+                                loading: appState.isLoading,
+                                disabled: !canSubmit
+                            ) {
+                                Task { await submit() }
+                            }
+                        }
                     }
-                    .disabled(appState.isLoading || !canSubmit)
                 }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 32)
             }
-            .navigationTitle("Qadbak")
-            .onAppear {
-                if serverURL.isEmpty, let saved = appState.serverURL?.absoluteString {
-                    serverURL = saved
-                }
-                if username.isEmpty, let saved = KeychainStore().loadUsername() {
-                    username = saved
-                }
+        }
+        .preferredColorScheme(.dark)
+        .onAppear {
+            if serverURL.isEmpty, let saved = appState.serverURL?.absoluteString {
+                serverURL = saved
+            }
+            if username.isEmpty, let saved = KeychainStore().loadUsername() {
+                username = saved
             }
         }
     }
 
     private var canSubmit: Bool {
-        if showTotp {
-            return totpCode.count >= 6
-        }
+        if showTotp { return totpCode.count >= 6 }
         return !username.isEmpty && !password.isEmpty && !serverURL.isEmpty
     }
 

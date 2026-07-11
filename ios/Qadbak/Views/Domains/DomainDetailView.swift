@@ -4,72 +4,119 @@ struct DomainDetailView: View {
     @Environment(AppState.self) private var appState
     let domain: HostedDomain
 
+    private let actionColumns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+    ]
+
     var body: some View {
-        List {
-            if appState.clientOwnDomainsOnly {
-                Section {
-                    Label(
-                        "Client account — only your assigned domains are shown.",
-                        systemImage: "person.crop.circle.badge.checkmark"
-                    )
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                hero
+                if appState.clientOwnDomainsOnly {
+                    clientBanner
                 }
-            }
-
-            Section {
-                LabeledContent("Domain", value: domain.name)
-                if let plan = domain.plan, !plan.isEmpty {
-                    LabeledContent("Plan", value: plan)
-                }
-                if let user = domain.user, !user.isEmpty {
-                    LabeledContent("Unix user", value: user)
-                }
-                if let used = domain.diskUsed, let limit = domain.diskLimit {
-                    LabeledContent("Disk", value: "\(used) / \(limit)")
-                }
-                if domain.disabled == true {
-                    Label("Hosting disabled", systemImage: "pause.circle.fill")
-                        .foregroundStyle(.orange)
-                }
-            }
-
-            Section("Manage") {
-                NavigationLink {
-                    DnsRecordsView(domainName: domain.name)
-                } label: {
-                    Label("DNS records", systemImage: "network")
-                }
-                NavigationLink {
-                    MailAccountsView(domainName: domain.name)
-                } label: {
-                    Label("Mail accounts", systemImage: "envelope")
-                }
-                if appState.webmailEnabled {
-                    NavigationLink {
-                        MailAccountsView(domainName: domain.name, openWebmail: true)
-                    } label: {
-                        Label("Webmail", systemImage: "envelope.open")
+                infoCard
+                Text("Manage")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(QadbakPalette.muted)
+                    .textCase(.uppercase)
+                    .tracking(0.8)
+                LazyVGrid(columns: actionColumns, spacing: 12) {
+                    actionLink(DnsRecordsView(domainName: domain.name)) {
+                        QBActionTile(title: "DNS", subtitle: "Records", icon: "network", tint: QadbakPalette.glow)
+                    }
+                    actionLink(MailAccountsView(domainName: domain.name)) {
+                        QBActionTile(title: "Mail", subtitle: "Accounts", icon: "envelope", tint: Color.cyan)
+                    }
+                    if appState.webmailEnabled {
+                        actionLink(MailAccountsView(domainName: domain.name, openWebmail: true)) {
+                            QBActionTile(title: "Webmail", subtitle: "Inbox", icon: "envelope.open", tint: Color.mint)
+                        }
+                    }
+                    actionLink(FilesBrowserView(domainName: domain.name)) {
+                        QBActionTile(title: "Files", subtitle: "Browser", icon: "folder", tint: Color.orange)
+                    }
+                    actionLink(SslCertificatesView(domainName: domain.name)) {
+                        QBActionTile(title: "SSL", subtitle: "Certificates", icon: "lock.shield", tint: QadbakPalette.success)
+                    }
+                    actionLink(BackupsView(domainName: domain.name)) {
+                        QBActionTile(title: "Backups", subtitle: "Run & schedule", icon: "externaldrive", tint: QadbakPalette.warning)
                     }
                 }
-                NavigationLink {
-                    FilesBrowserView(domainName: domain.name)
-                } label: {
-                    Label("Files", systemImage: "folder")
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+        }
+        .background(QadbakPalette.bg)
+        .navigationTitle(domain.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(QadbakPalette.bg.opacity(0.95), for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .preferredColorScheme(.dark)
+    }
+
+    private var hero: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(domain.name)
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundStyle(QadbakPalette.text)
+            if domain.disabled == true {
+                Label("Hosting paused", systemImage: "pause.circle.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(QadbakPalette.warning)
+            } else {
+                Text("Tap a module below to manage this domain.")
+                    .font(.subheadline)
+                    .foregroundStyle(QadbakPalette.muted)
+            }
+        }
+    }
+
+    private var clientBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "person.crop.circle.badge.checkmark")
+            Text("Client account — you only see domains assigned to you.")
+                .font(.caption)
+        }
+        .foregroundStyle(QadbakPalette.accent)
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(QadbakPalette.glow.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private var infoCard: some View {
+        QBGlassCard {
+            VStack(alignment: .leading, spacing: 10) {
+                if let plan = domain.plan, !plan.isEmpty {
+                    row("Plan", plan)
                 }
-                NavigationLink {
-                    SslCertificatesView(domainName: domain.name)
-                } label: {
-                    Label("SSL certificates", systemImage: "lock.shield")
+                if let user = domain.user, !user.isEmpty {
+                    row("Unix user", user)
                 }
-                NavigationLink {
-                    BackupsView(domainName: domain.name)
-                } label: {
-                    Label("Backups", systemImage: "externaldrive")
+                if let used = domain.diskUsed, let limit = domain.diskLimit {
+                    row("Disk", "\(used) / \(limit)")
                 }
             }
         }
-        .navigationTitle(domain.name)
-        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func row(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label)
+                .foregroundStyle(QadbakPalette.muted)
+            Spacer()
+            Text(value)
+                .foregroundStyle(QadbakPalette.text)
+                .fontWeight(.medium)
+        }
+        .font(.subheadline)
+    }
+
+    private func actionLink<D: View, L: View>(_ destination: D, @ViewBuilder label: () -> L) -> some View {
+        NavigationLink(destination: destination) {
+            label()
+        }
+        .buttonStyle(.plain)
     }
 }

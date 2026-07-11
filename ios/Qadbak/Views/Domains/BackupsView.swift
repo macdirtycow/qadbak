@@ -12,75 +12,72 @@ struct BackupsView: View {
     @State private var successMessage: String?
 
     var body: some View {
-        List {
-            Section {
-                Button {
-                    Task { await startBackup() }
-                } label: {
-                    HStack {
-                        Label("Run backup now", systemImage: "play.circle.fill")
-                        Spacer()
-                        if isStarting {
-                            ProgressView()
+        ZStack {
+            QadbakPalette.bg.ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    if let errorMessage { ErrorBanner(message: errorMessage) }
+                    if let successMessage { SuccessBanner(message: successMessage) }
+                    QBGlassCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("On-demand backup")
+                                .font(.headline)
+                                .foregroundStyle(QadbakPalette.text)
+                            Text("Start a full backup of this domain now.")
+                                .font(.caption)
+                                .foregroundStyle(QadbakPalette.muted)
+                            QBPrimaryButton(title: "Run backup now", loading: isStarting, disabled: !canBackup) {
+                                Task { await startBackup() }
+                            }
+                        }
+                    }
+                    Text("Scheduled")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(QadbakPalette.muted)
+                        .textCase(.uppercase)
+                    if isLoading && scheduled.isEmpty {
+                        ProgressView().tint(QadbakPalette.accent)
+                    } else if scheduled.isEmpty {
+                        Text("No scheduled backups configured.")
+                            .font(.subheadline)
+                            .foregroundStyle(QadbakPalette.muted)
+                    } else {
+                        ForEach(scheduled) { backup in
+                            backupCard(backup)
                         }
                     }
                 }
-                .disabled(!canBackup || isStarting)
-            } footer: {
-                Text("Starts an on-demand backup for this domain.")
-            }
-
-            Section("Scheduled backups") {
-                if scheduled.isEmpty {
-                    Text("No scheduled backups configured.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(scheduled) { backup in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(backup.id)
-                                    .font(.headline)
-                                Spacer()
-                                Text(backup.isEnabled ? "On" : "Off")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(backup.isEnabled ? .green : .secondary)
-                            }
-                            if let schedule = backup.schedule, !schedule.isEmpty {
-                                Text(schedule)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-                            if let dest = backup.dest, !dest.isEmpty {
-                                Text(dest)
-                                    .font(.caption)
-                                    .foregroundStyle(.tertiary)
-                            }
-                        }
-                        .padding(.vertical, 2)
-                    }
-                }
+                .padding(20)
             }
         }
         .navigationTitle("Backups")
-        .safeAreaInset(edge: .top) {
-            VStack(spacing: 8) {
-                if let errorMessage {
-                    ErrorBanner(message: errorMessage)
-                }
-                if let successMessage {
-                    SuccessBanner(message: successMessage)
-                }
-            }
-            .padding(.horizontal)
-            .padding(.top, 8)
-        }
-        .overlay {
-            if isLoading && scheduled.isEmpty {
-                ProgressView("Loading backups…")
-            }
-        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(QadbakPalette.bg, for: .navigationBar)
         .refreshable { await load() }
         .task { await load() }
+        .preferredColorScheme(.dark)
+    }
+
+    private func backupCard(_ backup: ScheduledBackup) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(backup.id)
+                    .font(.headline)
+                    .foregroundStyle(QadbakPalette.text)
+                Spacer()
+                Text(backup.isEnabled ? "On" : "Off")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(backup.isEnabled ? QadbakPalette.success : QadbakPalette.muted)
+            }
+            if let schedule = backup.schedule {
+                Text(schedule).font(.caption).foregroundStyle(QadbakPalette.muted)
+            }
+            if let dest = backup.dest {
+                Text(dest).font(.caption2).foregroundStyle(QadbakPalette.muted.opacity(0.8))
+            }
+        }
+        .padding(14)
+        .background(QadbakPalette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func load() async {

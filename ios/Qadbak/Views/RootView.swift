@@ -6,13 +6,16 @@ struct RootView: View {
     var body: some View {
         Group {
             if appState.isLoading && !appState.isSignedIn {
-                ProgressView("Connecting…")
+                QBScreenContainer {
+                    QBLoadingState(message: "Restoring session…")
+                }
             } else if appState.isSignedIn {
                 DomainListView()
             } else {
                 LoginView()
             }
         }
-        .tint(QadbakTheme.accent)
+        .tint(QadbakPalette.accent)
+        .preferredColorScheme(.dark)
     }
 }

@@ -16,70 +16,57 @@ struct WebmailView: View {
     }
 
     var body: some View {
-        Group {
-            if !appState.webmailEnabled {
-                ContentUnavailableView(
-                    "Premium webmail",
-                    systemImage: "envelope.badge.shield.half.filled",
-                    description: Text("Built-in webmail requires Qadbak Premium (webmail-ui) on your server.")
-                )
-            } else if isLoading && messages.isEmpty {
-                ProgressView("Loading INBOX…")
-            } else if let errorMessage, messages.isEmpty {
-                ContentUnavailableView(
-                    "Webmail unavailable",
-                    systemImage: "envelope.badge",
-                    description: Text(errorMessage)
-                )
-            } else if messages.isEmpty {
-                ContentUnavailableView(
-                    "Inbox empty",
-                    systemImage: "tray",
-                    description: Text("No messages in INBOX for \(accountEmail).")
-                )
-            } else {
-                List(messages) { message in
-                    Button {
-                        selectedMessage = message
-                    } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(message.subject ?? "(no subject)")
-                                .font(.headline)
-                                .lineLimit(2)
-                            Text(message.from ?? "—")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                            if let date = message.date, !date.isEmpty {
-                                Text(date)
-                                    .font(.caption)
-                                    .foregroundStyle(.tertiary)
-                            }
+        ZStack {
+            QadbakPalette.bg.ignoresSafeArea()
+            VStack(spacing: 0) {
+                Text(accountEmail)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(QadbakPalette.muted)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(QadbakPalette.card.opacity(0.6))
+                Group {
+                    if !appState.webmailEnabled {
+                        QBEmptyState(
+                            title: "Premium webmail",
+                            message: "Requires Qadbak Premium (webmail-ui) on your server.",
+                            icon: "envelope.badge.shield.half.filled"
+                        )
+                    } else if isLoading && messages.isEmpty {
+                        QBLoadingState(message: "Loading INBOX…")
+                    } else if let errorMessage, messages.isEmpty {
+                        VStack(spacing: 12) {
+                            ErrorBanner(message: errorMessage)
+                            QBEmptyState(title: "Unavailable", message: "Could not load messages.", icon: "envelope.badge")
                         }
-                        .padding(.vertical, 2)
+                        .padding(20)
+                    } else if messages.isEmpty {
+                        QBEmptyState(title: "Inbox empty", message: "No messages for \(accountEmail).", icon: "tray")
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 8) {
+                                ForEach(messages) { message in
+                                    Button { selectedMessage = message } label: { messageRow(message) }
+                                        .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(20)
+                        }
                     }
                 }
             }
         }
         .navigationTitle("Webmail")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(QadbakPalette.bg, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showCompose = true
-                } label: {
+                Button { showCompose = true } label: {
                     Image(systemName: "square.and.pencil")
+                        .foregroundStyle(QadbakPalette.accent)
                 }
                 .disabled(!appState.webmailEnabled)
             }
-        }
-        .safeAreaInset(edge: .top) {
-            Text(accountEmail)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
-                .background(.bar)
         }
         .refreshable { await load() }
         .task { await load() }
@@ -90,16 +77,33 @@ struct WebmailView: View {
                     Task { await load() }
                 }
             }
+            .preferredColorScheme(.dark)
         }
         .sheet(item: $selectedMessage) { message in
             NavigationStack {
-                WebmailMessageView(
-                    domainName: domainName,
-                    mailboxUser: mailboxUser,
-                    messageId: message.id
-                )
+                WebmailMessageView(domainName: domainName, mailboxUser: mailboxUser, messageId: message.id)
+            }
+            .preferredColorScheme(.dark)
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    private func messageRow(_ message: MailMessageSummary) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(message.subject ?? "(no subject)")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(QadbakPalette.text)
+                .lineLimit(2)
+            Text(message.from ?? "—")
+                .font(.caption)
+                .foregroundStyle(QadbakPalette.muted)
+            if let date = message.date, !date.isEmpty {
+                Text(date).font(.caption2).foregroundStyle(QadbakPalette.muted.opacity(0.7))
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(QadbakPalette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func load() async {
@@ -107,11 +111,8 @@ struct WebmailView: View {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
-        do {
-            messages = try await api.listMailMessages(domainName, user: mailboxUser)
-        } catch {
-            errorMessage = error.localizedDescription
-        }
+        do { messages = try await api.listMailMessages(domainName, user: mailboxUser) }
+        catch { errorMessage = error.localizedDescription }
     }
 }
 
@@ -128,41 +129,47 @@ struct WebmailMessageView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        Group {
+        ZStack {
+            QadbakPalette.bg.ignoresSafeArea()
             if isLoading && message == nil {
-                ProgressView()
+                ProgressView().tint(QadbakPalette.accent)
             } else if let message {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 14) {
                         Text(message.subject ?? "(no subject)")
-                            .font(.title3.weight(.semibold))
-                        LabeledContent("From", value: message.from ?? "—")
-                        if let to = message.to, !to.isEmpty {
-                            LabeledContent("To", value: to)
-                        }
-                        if let date = message.date, !date.isEmpty {
-                            LabeledContent("Date", value: date)
-                        }
-                        Divider()
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(QadbakPalette.text)
+                        metaRow("From", message.from ?? "—")
+                        if let to = message.to, !to.isEmpty { metaRow("To", to) }
+                        if let date = message.date, !date.isEmpty { metaRow("Date", date) }
+                        Divider().overlay(QadbakPalette.border)
                         Text(message.bodyText ?? "")
                             .font(.body)
+                            .foregroundStyle(QadbakPalette.text.opacity(0.9))
                             .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .padding()
+                    .padding(20)
                 }
             } else if let errorMessage {
-                ContentUnavailableView("Message", systemImage: "envelope", description: Text(errorMessage))
+                QBEmptyState(title: "Message", message: errorMessage, icon: "envelope")
             }
         }
         .navigationTitle("Message")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Close") { dismiss() }
+                Button("Close") { dismiss() }.foregroundStyle(QadbakPalette.accent)
             }
         }
         .task { await load() }
+    }
+
+    private func metaRow(_ label: String, _ value: String) -> some View {
+        HStack(alignment: .top) {
+            Text(label).foregroundStyle(QadbakPalette.muted).frame(width: 48, alignment: .leading)
+            Text(value).foregroundStyle(QadbakPalette.text)
+        }
+        .font(.subheadline)
     }
 
     private func load() async {
@@ -170,11 +177,8 @@ struct WebmailMessageView: View {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
-        do {
-            message = try await api.fetchMailMessage(domainName, user: mailboxUser, messageId: messageId)
-        } catch {
-            errorMessage = error.localizedDescription
-        }
+        do { message = try await api.fetchMailMessage(domainName, user: mailboxUser, messageId: messageId) }
+        catch { errorMessage = error.localizedDescription }
     }
 }
 
@@ -193,35 +197,30 @@ struct WebmailComposeView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        Form {
-            Section("Send as \(mailboxUser)@\(domainName)") {
-                TextField("To", text: $to)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .keyboardType(.emailAddress)
-                TextField("Subject", text: $subject)
-                TextField("Message", text: $bodyText, axis: .vertical)
-                    .lineLimit(6 ... 12)
-            }
-            if let errorMessage {
-                Section {
-                    ErrorBanner(message: errorMessage)
+        ZStack {
+            QadbakPalette.bg.ignoresSafeArea()
+            ScrollView {
+                VStack(spacing: 16) {
+                    Text("Send as \(mailboxUser)@\(domainName)")
+                        .font(.caption)
+                        .foregroundStyle(QadbakPalette.muted)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    QBTextField(label: "To", placeholder: "name@example.com", text: $to, keyboard: .emailAddress)
+                    QBTextField(label: "Subject", placeholder: "Subject", text: $subject)
+                    QBTextField(label: "Message", placeholder: "Write your message…", text: $bodyText)
+                    if let errorMessage { ErrorBanner(message: errorMessage) }
+                    QBPrimaryButton(title: "Send", loading: isSending, disabled: to.isEmpty) {
+                        Task { await send() }
+                    }
                 }
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
-            }
-            Section {
-                Button("Send") {
-                    Task { await send() }
-                }
-                .disabled(isSending || to.isEmpty)
+                .padding(20)
             }
         }
         .navigationTitle("Compose")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+                Button("Cancel") { dismiss() }.foregroundStyle(QadbakPalette.accent)
             }
         }
     }
@@ -232,17 +231,9 @@ struct WebmailComposeView: View {
         errorMessage = nil
         defer { isSending = false }
         do {
-            try await api.sendMail(
-                domainName,
-                user: mailboxUser,
-                to: to,
-                subject: subject,
-                body: bodyText
-            )
+            try await api.sendMail(domainName, user: mailboxUser, to: to, subject: subject, body: bodyText)
             onSent()
             dismiss()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
+        } catch { errorMessage = error.localizedDescription }
     }
 }

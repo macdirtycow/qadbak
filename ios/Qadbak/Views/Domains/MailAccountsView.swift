@@ -10,56 +10,82 @@ struct MailAccountsView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        Group {
-            if isLoading && users.isEmpty {
-                ProgressView("Loading mail accounts…")
-            } else if let errorMessage, users.isEmpty {
-                ContentUnavailableView(
-                    "Could not load mail",
-                    systemImage: "envelope.badge",
-                    description: Text(errorMessage)
-                )
-            } else if users.isEmpty {
-                ContentUnavailableView(
-                    "No mail accounts",
-                    systemImage: "envelope",
-                    description: Text("Create mailboxes in the web panel.")
-                )
-            } else {
-                List(users) { user in
-                    let mailbox = user.user ?? user.email?.components(separatedBy: "@").first ?? ""
-                    if openWebmail, !mailbox.isEmpty, appState.webmailEnabled {
-                        NavigationLink {
-                            WebmailView(domainName: domainName, mailboxUser: mailbox)
-                        } label: {
-                            mailRow(user)
+        ZStack {
+            QadbakPalette.bg.ignoresSafeArea()
+            Group {
+                if isLoading && users.isEmpty {
+                    QBLoadingState(message: "Loading mail accounts…")
+                } else if let errorMessage, users.isEmpty {
+                    VStack(spacing: 12) {
+                        ErrorBanner(message: errorMessage)
+                        QBEmptyState(title: "Unavailable", message: "Could not load mail accounts.", icon: "envelope.badge")
+                    }
+                    .padding(20)
+                } else if users.isEmpty {
+                    QBEmptyState(
+                        title: "No mail accounts",
+                        message: "Create mailboxes in the web panel first.",
+                        icon: "envelope"
+                    )
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 10) {
+                            ForEach(users) { user in
+                                mailRow(user)
+                            }
                         }
-                    } else {
-                        mailRow(user)
+                        .padding(20)
                     }
                 }
             }
         }
-        .navigationTitle(openWebmail ? "Webmail accounts" : "Mail")
+        .navigationTitle(openWebmail ? "Webmail" : "Mail")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(QadbakPalette.bg, for: .navigationBar)
         .refreshable { await load() }
         .task { await load() }
+        .preferredColorScheme(.dark)
     }
 
     @ViewBuilder
     private func mailRow(_ user: MailUser) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(user.displayName)
-                .font(.headline)
-            Text(user.address.contains("@") ? user.address : "\(user.address)@\(domainName)")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            if let quota = user.quota, !quota.isEmpty {
-                Text("Quota: \(quota)")
+        let mailbox = user.user ?? user.email?.components(separatedBy: "@").first ?? ""
+        let content = HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.cyan.opacity(0.15))
+                    .frame(width: 40, height: 40)
+                Image(systemName: "envelope.fill")
+                    .foregroundStyle(.cyan)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(user.displayName)
+                    .font(.headline)
+                    .foregroundStyle(QadbakPalette.text)
+                Text(user.address.contains("@") ? user.address : "\(user.address)@\(domainName)")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(QadbakPalette.muted)
+            }
+            Spacer()
+            if openWebmail, appState.webmailEnabled, !mailbox.isEmpty {
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(QadbakPalette.muted)
             }
         }
-        .padding(.vertical, 2)
+        .padding(14)
+        .background(QadbakPalette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+        if openWebmail, !mailbox.isEmpty, appState.webmailEnabled {
+            NavigationLink {
+                WebmailView(domainName: domainName, mailboxUser: mailbox)
+            } label: {
+                content
+            }
+            .buttonStyle(.plain)
+        } else {
+            content
+        }
     }
 
     private func load() async {

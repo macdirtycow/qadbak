@@ -1,6 +1,8 @@
 # Qadbak iOS app
 
-Native **SwiftUI** client for iPhone and iPad (Phases A–C).
+> **Standalone repo:** [github.com/macdirtycow/qadbak-ios](https://github.com/macdirtycow/qadbak-ios)
+
+Native **SwiftUI** client for iPhone and iPad (Phases A–C). Source of truth for the app lives in the `qadbak-ios` repository; this folder is kept in sync for panel development.
 
 ## Open in Xcode
 
@@ -50,3 +52,23 @@ ios/
 ```
 
 API reference: [`docs/MOBILE-IOS-APP.md`](../docs/MOBILE-IOS-APP.md)
+
+## IPA (sideload / ESign / DefianceSign)
+
+Build an **unsigned** Release IPA for on-device signing:
+
+```bash
+bash ios/scripts/build-ipa.sh
+```
+
+Output: `ios/build/Qadbak-1.0.0.ipa` (arm64, iOS 17+).
+
+### Install on iPhone
+
+1. Copy the `.ipa` to your iPhone (AirDrop, Files, etc.).
+2. Open your signing app (e.g. **ESign**, **DefianceSign**).
+3. Import your **.p12** certificate + **.mobileprovision**.
+4. Import the IPA → **Sign** → **Install**.
+5. Trust the profile under **Settings → General → VPN & Device Management**.
+
+**Note:** Widget and push use App Groups / push entitlements. If signing fails, remove those entitlements in the signer or use a developer certificate that includes `com.qadbak.panel` and `group.com.qadbak.panel`.

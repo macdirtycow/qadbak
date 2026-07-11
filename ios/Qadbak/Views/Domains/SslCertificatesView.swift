@@ -11,73 +11,72 @@ struct SslCertificatesView: View {
     @State private var successMessage: String?
 
     var body: some View {
-        Group {
-            if isLoading && certs.isEmpty {
-                ProgressView("Loading certificates…")
-            } else if certs.isEmpty {
-                ContentUnavailableView(
-                    "No certificates",
-                    systemImage: "lock.slash",
-                    description: Text("Issue a Let's Encrypt certificate for this domain.")
-                )
-            } else {
-                List(certs) { cert in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(cert.host ?? domainName)
-                            .font(.headline)
-                        if let issuer = cert.issuer, !issuer.isEmpty {
-                            Text(issuer)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                        HStack {
-                            if let expiry = cert.expiry, !expiry.isEmpty {
-                                Text("Expires \(expiry)")
-                            }
-                            if let type = cert.type, !type.isEmpty {
-                                Text(type)
-                                    .font(.caption)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(.secondary.opacity(0.15), in: Capsule())
+        ZStack {
+            QadbakPalette.bg.ignoresSafeArea()
+            VStack(spacing: 16) {
+                if let errorMessage { ErrorBanner(message: errorMessage).padding(.horizontal, 20) }
+                if let successMessage { SuccessBanner(message: successMessage).padding(.horizontal, 20) }
+                if isLoading && certs.isEmpty {
+                    QBLoadingState(message: "Loading certificates…")
+                } else if certs.isEmpty {
+                    QBEmptyState(
+                        title: "No certificates",
+                        message: "Issue a Let's Encrypt certificate for HTTPS.",
+                        icon: "lock.slash"
+                    )
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 10) {
+                            ForEach(certs) { cert in
+                                certCard(cert)
                             }
                         }
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .padding(20)
                     }
-                    .padding(.vertical, 2)
                 }
+                QBPrimaryButton(title: "Renew certificate", loading: isRenewing) {
+                    Task { await renew() }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
             }
         }
         .navigationTitle("SSL")
-        .safeAreaInset(edge: .top) {
-            VStack(spacing: 8) {
-                if let errorMessage {
-                    ErrorBanner(message: errorMessage)
-                }
-                if let successMessage {
-                    SuccessBanner(message: successMessage)
-                }
-            }
-            .padding(.horizontal)
-            .padding(.top, 8)
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    Task { await renew() }
-                } label: {
-                    if isRenewing {
-                        ProgressView()
-                    } else {
-                        Text("Renew")
-                    }
-                }
-                .disabled(isRenewing)
-            }
-        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(QadbakPalette.bg, for: .navigationBar)
         .refreshable { await load() }
         .task { await load() }
+        .preferredColorScheme(.dark)
+    }
+
+    private func certCard(_ cert: SslCert) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(cert.host ?? domainName)
+                .font(.headline)
+                .foregroundStyle(QadbakPalette.text)
+            if let issuer = cert.issuer {
+                Text(issuer)
+                    .font(.subheadline)
+                    .foregroundStyle(QadbakPalette.muted)
+            }
+            HStack {
+                if let expiry = cert.expiry {
+                    Label(expiry, systemImage: "calendar")
+                }
+                if let type = cert.type {
+                    Text(type)
+                        .font(.caption2)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(QadbakPalette.border.opacity(0.4), in: Capsule())
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(QadbakPalette.muted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(QadbakPalette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func load() async {
@@ -85,11 +84,8 @@ struct SslCertificatesView: View {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
-        do {
-            certs = try await api.listSsl(domainName)
-        } catch {
-            errorMessage = error.localizedDescription
-        }
+        do { certs = try await api.listSsl(domainName) }
+        catch { errorMessage = error.localizedDescription }
     }
 
     private func renew() async {
@@ -100,7 +96,7 @@ struct SslCertificatesView: View {
         defer { isRenewing = false }
         do {
             try await api.renewSsl(domainName)
-            successMessage = "Certificate request started. This may take a few minutes."
+            successMessage = "Certificate request started — may take a few minutes."
             await load()
         } catch {
             errorMessage = error.localizedDescription

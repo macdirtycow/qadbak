@@ -12,67 +12,42 @@ struct DnsRecordsView: View {
     @State private var showAdd = false
 
     var body: some View {
-        Group {
-            if isLoading && records.isEmpty {
-                ProgressView("Loading DNS…")
-            } else if records.isEmpty {
-                ContentUnavailableView(
-                    "No records",
-                    systemImage: "network.slash",
-                    description: Text("Add your first DNS record.")
-                )
-            } else {
-                List {
-                    ForEach(records) { record in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(record.type)
-                                    .font(.caption.weight(.semibold))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(QadbakTheme.accent.opacity(0.15), in: Capsule())
-                                Text(record.name)
-                                    .font(.headline)
-                            }
-                            Text(record.value)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                            if let ttl = record.ttl, !ttl.isEmpty {
-                                Text("TTL \(ttl)")
-                                    .font(.caption2)
-                                    .foregroundStyle(.tertiary)
+        ZStack {
+            QadbakPalette.bg.ignoresSafeArea()
+            Group {
+                if isLoading && records.isEmpty {
+                    QBLoadingState(message: "Loading DNS…")
+                } else if records.isEmpty {
+                    QBEmptyState(
+                        title: "No DNS records",
+                        message: "Add your first record for this domain.",
+                        icon: "network.slash"
+                    )
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 10) {
+                            ForEach(records) { record in
+                                dnsCard(record)
                             }
                         }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button("Delete", role: .destructive) {
-                                recordToDelete = record
-                            }
-                        }
+                        .padding(20)
                     }
                 }
             }
         }
         .navigationTitle("DNS")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(QadbakPalette.bg, for: .navigationBar)
+        .safeAreaInset(edge: .top) { banners }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showAdd = true
                 } label: {
-                    Image(systemName: "plus")
+                    Image(systemName: "plus.circle.fill")
+                        .foregroundStyle(QadbakPalette.accent)
                 }
             }
-        }
-        .safeAreaInset(edge: .top) {
-            VStack(spacing: 8) {
-                if let errorMessage {
-                    ErrorBanner(message: errorMessage)
-                }
-                if let successMessage {
-                    SuccessBanner(message: successMessage)
-                }
-            }
-            .padding(.horizontal)
-            .padding(.top, 8)
         }
         .refreshable { await load() }
         .task { await load() }
@@ -83,25 +58,66 @@ struct DnsRecordsView: View {
                     Task { await load() }
                 }
             }
+            .preferredColorScheme(.dark)
         }
-        .confirmationDialog(
-            "Delete DNS record?",
-            isPresented: Binding(
-                get: { recordToDelete != nil },
-                set: { if !$0 { recordToDelete = nil } }
-            ),
-            titleVisibility: .visible
-        ) {
+        .confirmationDialog("Delete DNS record?", isPresented: Binding(
+            get: { recordToDelete != nil },
+            set: { if !$0 { recordToDelete = nil } }
+        )) {
             Button("Delete", role: .destructive) {
                 if let record = recordToDelete {
                     Task { await delete(record) }
                 }
             }
             Button("Cancel", role: .cancel) { recordToDelete = nil }
-        } message: {
-            if let record = recordToDelete {
-                Text("\(record.type) \(record.name) → \(record.value)")
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    @ViewBuilder
+    private var banners: some View {
+        VStack(spacing: 8) {
+            if let errorMessage { ErrorBanner(message: errorMessage) }
+            if let successMessage { SuccessBanner(message: successMessage) }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+    }
+
+    private func dnsCard(_ record: DnsRecord) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(record.type)
+                    .font(.caption.weight(.bold))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(QadbakPalette.glow.opacity(0.25), in: Capsule())
+                    .foregroundStyle(QadbakPalette.primary)
+                Text(record.name)
+                    .font(.headline)
+                    .foregroundStyle(QadbakPalette.text)
+                Spacer()
+                Button(role: .destructive) {
+                    recordToDelete = record
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.caption)
+                }
             }
+            Text(record.value)
+                .font(.subheadline)
+                .foregroundStyle(QadbakPalette.muted)
+            if let ttl = record.ttl, !ttl.isEmpty {
+                Text("TTL \(ttl)")
+                    .font(.caption2)
+                    .foregroundStyle(QadbakPalette.muted.opacity(0.7))
+            }
+        }
+        .padding(14)
+        .background(QadbakPalette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(QadbakPalette.border.opacity(0.5), lineWidth: 1)
         }
     }
 
@@ -119,13 +135,9 @@ struct DnsRecordsView: View {
 
     private func delete(_ record: DnsRecord) async {
         guard let api = appState.api else { return }
-        isLoading = true
         errorMessage = nil
         successMessage = nil
-        defer {
-            isLoading = false
-            recordToDelete = nil
-        }
+        defer { recordToDelete = nil }
         do {
             try await api.deleteDns(domainName, record: record)
             successMessage = "DNS record removed."
@@ -153,34 +165,30 @@ struct AddDnsRecordView: View {
     private let recordTypes = ["A", "AAAA", "CNAME", "MX", "TXT", "NS", "SRV"]
 
     var body: some View {
-        Form {
-            Section("Record") {
-                TextField("Name (@ for root)", text: $name)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                Picker("Type", selection: $type) {
-                    ForEach(recordTypes, id: \.self) { t in
-                        Text(t).tag(t)
+        ZStack {
+            QadbakPalette.bg.ignoresSafeArea()
+            ScrollView {
+                VStack(spacing: 18) {
+                    QBTextField(label: "Name (@ = root)", placeholder: "@", text: $name)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Type")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(QadbakPalette.muted)
+                        Picker("Type", selection: $type) {
+                            ForEach(recordTypes, id: \.self) { t in
+                                Text(t).tag(t)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    QBTextField(label: "Value", placeholder: "203.0.113.10", text: $value)
+                    QBTextField(label: "TTL", placeholder: "3600", text: $ttl, keyboard: .numberPad)
+                    if let errorMessage { ErrorBanner(message: errorMessage) }
+                    QBPrimaryButton(title: "Save record", loading: isSaving, disabled: value.isEmpty) {
+                        Task { await save() }
                     }
                 }
-                TextField("Value", text: $value)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                TextField("TTL", text: $ttl)
-                    .keyboardType(.numberPad)
-            }
-            if let errorMessage {
-                Section {
-                    ErrorBanner(message: errorMessage)
-                }
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
-            }
-            Section {
-                Button("Save record") {
-                    Task { await save() }
-                }
-                .disabled(isSaving || value.isEmpty)
+                .padding(20)
             }
         }
         .navigationTitle("Add DNS")
@@ -188,6 +196,7 @@ struct AddDnsRecordView: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { dismiss() }
+                    .foregroundStyle(QadbakPalette.accent)
             }
         }
     }

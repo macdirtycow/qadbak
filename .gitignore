@@ -24,6 +24,7 @@ data/update-jobs/
 data/pre-update-backups/
 *.log
 .DS_Store
+ios/build/
 /test-results/
 /playwright-report/
 /blob-report/
