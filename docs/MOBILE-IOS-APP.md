@@ -109,6 +109,7 @@ Use existing panel routes with `Authorization: Bearer`. Same RBAC as the web UI 
 | Renew LE cert | `POST` | `/api/domains/{domain}/ssl` |
 | Backups list | `GET` | `/api/domains/{domain}/backups` |
 | Trigger backup | `POST` | `/api/domains/{domain}/backups` |
+| Download backup | `GET` | `/api/domains/{domain}/backups/download?name=…` |
 | Backup schedule | `PATCH` | `/api/domains/{domain}/backups` |
 
 OpenAPI for mobile auth: [`docs/api/openapi-mobile.yaml`](api/openapi-mobile.yaml).
@@ -155,6 +156,14 @@ Cached in App Group `group.com.qadbak.panel` for the **Qadbak** home screen widg
 ### Premium client accounts
 
 When the server has Premium `client-rbac`, client users only see domains assigned to their account (enforced server-side). The app shows a client badge and hides admin-only flows.
+
+### iCloud backup copies (iOS)
+
+The app can download `.tar.gz` archives from the panel and save them to the user's **iCloud Drive**:
+
+**Files → iCloud Drive → Qadbak Backups → {domain}/**
+
+Requires iCloud sign-in on the device, **iCloud Drive** enabled, and the `iCloud.com.qadbak.panel` container on the app's provisioning profile. Large backups may take several minutes over cellular — use Wi‑Fi when possible.
 
 ## Local test
 

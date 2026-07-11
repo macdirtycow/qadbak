@@ -538,6 +538,16 @@ struct ScheduledBackup: Decodable, Identifiable, Hashable {
         guard let enabled else { return true }
         return enabled == "1" || enabled.lowercased() == "true" || enabled.lowercased() == "yes"
     }
+
+    var isScheduleConfig: Bool { id == "schedule" }
+
+    var isArchive: Bool {
+        !isScheduleConfig && (id.hasSuffix(".tar.gz") || id.contains(".tar."))
+    }
+
+    var archiveFileName: String? {
+        isArchive ? id : nil
+    }
 }
 
 struct BackupsResponse: Decodable {

@@ -44,6 +44,7 @@
 		A10000010000000000000038 /* TerminalWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000038 /* TerminalWebView.swift */; };
 		A10000010000000000000039 /* TermuxExtraKeysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000039 /* TermuxExtraKeysView.swift */; };
 		A10000010000000000000040 /* terminal.html in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000040 /* terminal.html */; };
+		A10000010000000000000041 /* BackupICloudService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000041 /* BackupICloudService.swift */; };
 		B10000010000000000000001 /* QadbakWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000001 /* QadbakWidget.swift */; };
 		B10000010000000000000002 /* QadbakWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000002 /* QadbakWidgetBundle.swift */; };
 		B10000010000000000000004 /* QadbakLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000005 /* QadbakLiveActivity.swift */; };
@@ -91,6 +92,7 @@
 		A20000010000000000000038 /* TerminalWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWebView.swift; sourceTree = "<group>"; };
 		A20000010000000000000039 /* TermuxExtraKeysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermuxExtraKeysView.swift; sourceTree = "<group>"; };
 		A20000010000000000000040 /* terminal.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = terminal.html; sourceTree = "<group>"; };
+		A20000010000000000000041 /* BackupICloudService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupICloudService.swift; sourceTree = "<group>"; };
 		B20000010000000000000001 /* QadbakWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakWidget.swift; sourceTree = "<group>"; };
 		B20000010000000000000002 /* QadbakWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakWidgetBundle.swift; sourceTree = "<group>"; };
 		B20000010000000000000005 /* QadbakLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakLiveActivity.swift; sourceTree = "<group>"; };
@@ -208,6 +210,7 @@
 				A20000010000000000000004 /* KeychainStore.swift */,
 				A20000010000000000000005 /* APIClient.swift */,
 				A20000010000000000000006 /* QadbakAPI.swift */,
+				A20000010000000000000041 /* BackupICloudService.swift */,
 				A20000010000000000000018 /* PushNotificationService.swift */,
 				A20000010000000000000019 /* WidgetSummaryStore.swift */,
 				A20000010000000000000024 /* BiometricGate.swift */,
@@ -410,6 +413,7 @@
 				A10000010000000000000004 /* KeychainStore.swift in Sources */,
 				A10000010000000000000005 /* APIClient.swift in Sources */,
 				A10000010000000000000006 /* QadbakAPI.swift in Sources */,
+				A10000010000000000000041 /* BackupICloudService.swift in Sources */,
 				A10000010000000000000007 /* RootView.swift in Sources */,
 				A10000010000000000000008 /* LoginView.swift in Sources */,
 				A10000010000000000000009 /* DomainListView.swift in Sources */,

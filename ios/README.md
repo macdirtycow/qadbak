@@ -12,7 +12,7 @@ open ios/Qadbak.xcodeproj
 
 1. Select the **Qadbak** scheme.
 2. Set your **Development Team** (Signing & Capabilities) on both **Qadbak** and **QadbakWidgetExtension**.
-3. Enable **App Groups** (`group.com.qadbak.panel`) and **Push Notifications** on the main target.
+3. Enable **App Groups** (`group.com.qadbak.panel`), **Push Notifications**, and **iCloud** (CloudDocuments + container `iCloud.com.qadbak.panel`) on the main target.
 4. Run on simulator or device (iOS 17+).
 
 ## Features
@@ -20,6 +20,7 @@ open ios/Qadbak.xcodeproj
 ### Phase B (MVP)
 - Login + TOTP, domain list/detail
 - DNS editor, mail accounts, SSL renew, backup trigger
+- **iCloud** — download server backup archives to iCloud Drive
 
 ### Phase C (App Store)
 - **Push** — APNs token registration with the panel

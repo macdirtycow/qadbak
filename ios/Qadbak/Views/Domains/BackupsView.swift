@@ -8,8 +8,17 @@ struct BackupsView: View {
     @State private var canBackup = true
     @State private var isLoading = false
     @State private var isStarting = false
+    @State private var savingArchiveId: String?
     @State private var errorMessage: String?
     @State private var successMessage: String?
+
+    private var scheduleRows: [ScheduledBackup] {
+        scheduled.filter(\.isScheduleConfig)
+    }
+
+    private var archiveRows: [ScheduledBackup] {
+        scheduled.filter(\.isArchive)
+    }
 
     var body: some View {
         ZStack {
@@ -18,12 +27,13 @@ struct BackupsView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     if let errorMessage { ErrorBanner(message: errorMessage) }
                     if let successMessage { SuccessBanner(message: successMessage) }
+
                     QBGlassCard {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("On-demand backup")
                                 .font(.headline)
                                 .foregroundStyle(QadbakPalette.text)
-                            Text("Start a full backup of this domain now.")
+                            Text("Start a full backup of this domain on your server.")
                                 .font(.caption)
                                 .foregroundStyle(QadbakPalette.muted)
                             QBPrimaryButton(title: "Run backup now", loading: isStarting, disabled: !canBackup) {
@@ -31,19 +41,26 @@ struct BackupsView: View {
                             }
                         }
                     }
-                    Text("Scheduled")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(QadbakPalette.muted)
-                        .textCase(.uppercase)
+
+                    iCloudSection
+
+                    if !scheduleRows.isEmpty {
+                        sectionHeader("Schedule")
+                        ForEach(scheduleRows) { backup in
+                            scheduleCard(backup)
+                        }
+                    }
+
+                    sectionHeader("Archives")
                     if isLoading && scheduled.isEmpty {
                         ProgressView().tint(QadbakPalette.accent)
-                    } else if scheduled.isEmpty {
-                        Text("No scheduled backups configured.")
+                    } else if archiveRows.isEmpty {
+                        Text("No backup archives yet. Run a backup first.")
                             .font(.subheadline)
                             .foregroundStyle(QadbakPalette.muted)
                     } else {
-                        ForEach(scheduled) { backup in
-                            backupCard(backup)
+                        ForEach(archiveRows) { backup in
+                            archiveCard(backup)
                         }
                     }
                 }
@@ -58,10 +75,36 @@ struct BackupsView: View {
         .preferredColorScheme(.dark)
     }
 
-    private func backupCard(_ backup: ScheduledBackup) -> some View {
+    private var iCloudSection: some View {
+        QBGlassCard {
+            VStack(alignment: .leading, spacing: 8) {
+                Label("iCloud Drive", systemImage: "icloud.fill")
+                    .font(.headline)
+                    .foregroundStyle(QadbakPalette.text)
+                if BackupICloudService.iCloudAvailable {
+                    Text("Save server backups to Files → iCloud Drive → Qadbak Backups.")
+                        .font(.caption)
+                        .foregroundStyle(QadbakPalette.muted)
+                } else {
+                    Text("Sign in to iCloud and enable iCloud Drive to save backups from this device.")
+                        .font(.caption)
+                        .foregroundStyle(QadbakPalette.warning)
+                }
+            }
+        }
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(QadbakPalette.muted)
+            .textCase(.uppercase)
+    }
+
+    private func scheduleCard(_ backup: ScheduledBackup) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(backup.id)
+                Text("Automatic")
                     .font(.headline)
                     .foregroundStyle(QadbakPalette.text)
                 Spacer()
@@ -75,6 +118,49 @@ struct BackupsView: View {
             if let dest = backup.dest {
                 Text(dest).font(.caption2).foregroundStyle(QadbakPalette.muted.opacity(0.8))
             }
+        }
+        .padding(14)
+        .background(QadbakPalette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private func archiveCard(_ backup: ScheduledBackup) -> some View {
+        let isSaving = savingArchiveId == backup.id
+        return VStack(alignment: .leading, spacing: 10) {
+            Text(backup.id)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(QadbakPalette.text)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+            if let dest = backup.dest {
+                Text(dest)
+                    .font(.caption)
+                    .foregroundStyle(QadbakPalette.muted)
+            }
+            if let kind = backup.schedule {
+                Text(kind)
+                    .font(.caption2)
+                    .foregroundStyle(QadbakPalette.muted.opacity(0.85))
+            }
+            Button {
+                Task { await saveArchiveToICloud(backup) }
+            } label: {
+                HStack(spacing: 8) {
+                    if isSaving {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(QadbakPalette.primary)
+                    } else {
+                        Image(systemName: "icloud.and.arrow.up")
+                    }
+                    Text(isSaving ? "Downloading…" : "Save to iCloud")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(QadbakPalette.glow.opacity(0.35), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .foregroundStyle(QadbakPalette.primary)
+            }
+            .disabled(isSaving || !BackupICloudService.iCloudAvailable)
         }
         .padding(14)
         .background(QadbakPalette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
@@ -109,9 +195,32 @@ struct BackupsView: View {
         do {
             LiveActivityManager.update(title: "Running backup", detail: "Backup in progress…", progress: 0.5)
             try await api.startBackup(domainName)
-            successMessage = "Backup started."
+            successMessage = "Backup started on server."
             LiveActivityManager.end(success: true, message: "Backup started on server.")
             await load()
+        } catch {
+            errorMessage = error.localizedDescription
+            LiveActivityManager.end(success: false, message: error.localizedDescription)
+        }
+    }
+
+    private func saveArchiveToICloud(_ backup: ScheduledBackup) async {
+        guard let api = appState.api, let archiveName = backup.archiveFileName else { return }
+        savingArchiveId = backup.id
+        errorMessage = nil
+        successMessage = nil
+        LiveActivityManager.start(
+            domain: domainName,
+            kind: "backup",
+            title: "Saving to iCloud",
+            detail: archiveName
+        )
+        defer { savingArchiveId = nil }
+        do {
+            let service = api.makeBackupICloudService()
+            _ = try await service.downloadAndSaveToICloud(domain: domainName, archiveName: archiveName)
+            successMessage = "Saved to iCloud Drive → Qadbak Backups → \(domainName)."
+            LiveActivityManager.end(success: true, message: "Backup saved to iCloud.")
         } catch {
             errorMessage = error.localizedDescription
             LiveActivityManager.end(success: false, message: error.localizedDescription)

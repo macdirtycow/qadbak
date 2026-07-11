@@ -225,6 +225,17 @@ final class QadbakAPI {
         let _: OkResponse = try await client.request("POST", path: domainPath(domain, "/backups"))
     }
 
+    func makeBackupICloudService() -> BackupICloudService {
+        BackupICloudService(
+            baseURL: baseURL,
+            tokenProvider: tokenProvider,
+            refreshHandler: { [weak self] in
+                guard let self else { throw APIError.unauthorized }
+                try await self.performRefresh()
+            }
+        )
+    }
+
     func widgetSummary() async throws -> WidgetSummary {
         try await client.request("GET", path: "/api/mobile/v1/widgets/summary")
     }
