@@ -3,6 +3,7 @@ import SwiftUI
 struct LoginView: View {
     @Environment(AppState.self) private var appState
     @State private var serverURL = ""
+    @State private var serverLabel = ""
     @State private var username = ""
     @State private var password = ""
     @State private var totpCode = ""
@@ -10,6 +11,7 @@ struct LoginView: View {
     @State private var showTotp = false
     @State private var localError: String?
     @State private var connectionStatus: String?
+    @State private var showServerSwitcher = false
 
     var body: some View {
         QBScreenContainer {
@@ -20,7 +22,7 @@ struct LoginView: View {
                         Text("Qadbak")
                             .font(.system(size: 32, weight: .bold, design: .rounded))
                             .foregroundStyle(QadbakPalette.text)
-                        Text("Manage your domains from iPhone and iPad — like Jellyfin, but for hosting.")
+                        Text("Manage test and production panels — switch servers in one tap.")
                             .font(.subheadline)
                             .multilineTextAlignment(.center)
                             .foregroundStyle(QadbakPalette.muted)
@@ -28,16 +30,27 @@ struct LoginView: View {
                     }
                     .padding(.top, 24)
 
+                    if !appState.savedServers.isEmpty {
+                        savedServersSection
+                    }
+
                     QBGlassCard {
                         VStack(alignment: .leading, spacing: 18) {
                             QBScreenHeader(
                                 title: showTotp ? "Two-factor" : "Sign in",
                                 subtitle: showTotp
                                     ? "Enter the 6-digit code from your authenticator app."
-                                    : "Connect to your panel server, then sign in."
+                                    : appState.addingNewServer
+                                        ? "Add a new panel server. Sessions are stored in the Keychain."
+                                        : "Connect to your panel server, then sign in."
                             )
 
                             if !showTotp {
+                                QBTextField(
+                                    label: "Server label (optional)",
+                                    placeholder: "Production",
+                                    text: $serverLabel
+                                )
                                 QBTextField(
                                     label: "Panel URL",
                                     placeholder: "https://qadbak.com",
@@ -47,11 +60,6 @@ struct LoginView: View {
                                 Text("Use https://qadbak.com — no www, no /login.")
                                     .font(.caption)
                                     .foregroundStyle(QadbakPalette.muted)
-                                if let url = appState.serverURL {
-                                    Text("Saved: \(url.absoluteString)")
-                                        .font(.caption)
-                                        .foregroundStyle(QadbakPalette.muted)
-                                }
                                 if let connectionStatus {
                                     Text(connectionStatus)
                                         .font(.caption)
@@ -95,16 +103,74 @@ struct LoginView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $showServerSwitcher) {
+            ServerSwitcherView()
+        }
         .onAppear {
-            if serverURL.isEmpty, let saved = appState.serverURL?.absoluteString {
-                serverURL = saved
-            } else if !serverURL.isEmpty {
-                if let normalized = try? AppState.normalizePanelURL(serverURL) {
-                    serverURL = normalized.absoluteString
-                }
+            prefillFromActiveServer()
+        }
+        .onChange(of: appState.activeServerId) { _, _ in
+            prefillFromActiveServer()
+        }
+    }
+
+    private var savedServersSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Your servers")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(QadbakPalette.muted)
+                    .textCase(.uppercase)
+                Spacer()
+                Button("Manage") { showServerSwitcher = true }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(QadbakPalette.accent)
             }
-            if username.isEmpty, let saved = KeychainStore().loadUsername() {
-                username = saved
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(appState.savedServers) { server in
+                        Button {
+                            Task { await quickSwitch(server) }
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(server.label)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(QadbakPalette.text)
+                                Text(server.displayHost)
+                                    .font(.caption2)
+                                    .foregroundStyle(QadbakPalette.muted)
+                                if appState.hasStoredSession(for: server) {
+                                    Label("Keychain", systemImage: "lock.shield")
+                                        .font(.caption2)
+                                        .foregroundStyle(QadbakPalette.success)
+                                }
+                            }
+                            .padding(12)
+                            .background(QadbakPalette.card, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .overlay {
+                                if appState.activeServerId == server.id {
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .strokeBorder(QadbakPalette.glow.opacity(0.5), lineWidth: 1)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Button {
+                        Task { await appState.prepareAddServer() }
+                        serverURL = ""
+                        serverLabel = ""
+                        username = ""
+                        password = ""
+                    } label: {
+                        Label("Add", systemImage: "plus")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(QadbakPalette.accent)
+                            .padding(12)
+                            .background(QadbakPalette.card.opacity(0.7), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
     }
@@ -112,6 +178,36 @@ struct LoginView: View {
     private var canSubmit: Bool {
         if showTotp { return totpCode.count >= 6 }
         return !username.isEmpty && !password.isEmpty && !serverURL.isEmpty
+    }
+
+    private func prefillFromActiveServer() {
+        if let server = appState.activeServer {
+            if serverURL.isEmpty || !appState.addingNewServer {
+                serverURL = server.serverURL
+                serverLabel = server.label
+            }
+            if username.isEmpty, let saved = server.username {
+                username = saved
+            }
+        } else if serverURL.isEmpty, let saved = appState.serverURL?.absoluteString {
+            serverURL = saved
+        }
+        if !serverURL.isEmpty, let normalized = try? AppState.normalizePanelURL(serverURL) {
+            serverURL = normalized.absoluteString
+        }
+    }
+
+    private func quickSwitch(_ server: SavedServer) async {
+        localError = nil
+        do {
+            try await appState.switchToServer(server)
+        } catch {
+            appState.activeServerId = server.id
+            serverURL = server.serverURL
+            serverLabel = server.label
+            username = server.username ?? ""
+            localError = error.localizedDescription
+        }
     }
 
     private func submit() async {
@@ -122,10 +218,19 @@ struct LoginView: View {
             if !showTotp {
                 connectionStatus = try await appState.checkPanelConnection()
             }
+            let label = serverLabel.trimmingCharacters(in: .whitespacesAndNewlines)
             if showTotp {
-                try await appState.completeTotp(loginToken: totpLoginToken, code: totpCode)
+                try await appState.completeTotp(
+                    loginToken: totpLoginToken,
+                    code: totpCode,
+                    serverLabel: label.nilIfEmpty
+                )
             } else {
-                try await appState.login(username: username, password: password)
+                try await appState.login(
+                    username: username,
+                    password: password,
+                    serverLabel: label.nilIfEmpty
+                )
             }
         } catch let err as APIError {
             switch err {
@@ -142,5 +247,11 @@ struct LoginView: View {
         } catch {
             localError = error.localizedDescription
         }
+    }
+}
+
+private extension String {
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
     }
 }

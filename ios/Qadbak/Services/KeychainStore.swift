@@ -1,53 +1,116 @@
 import Foundation
 import Security
 
+/// Secure per-server credential storage using the iOS Keychain.
 final class KeychainStore {
     private let service = "com.qadbak.panel"
 
-    func saveServerURL(_ url: URL) {
-        save(key: "serverURL", value: url.absoluteString)
+    // MARK: - Server profiles
+
+    func loadServers() -> [SavedServer] {
+        guard let data = loadData(key: "savedServers"),
+              let servers = try? JSONDecoder().decode([SavedServer].self, from: data) else {
+            return []
+        }
+        return servers.sorted { $0.lastUsedAt > $1.lastUsedAt }
     }
 
-    func loadServerURL() -> URL? {
-        guard let raw = load(key: "serverURL") else { return nil }
-        return URL(string: raw)
+    func saveServers(_ servers: [SavedServer]) {
+        guard let data = try? JSONEncoder().encode(servers) else { return }
+        saveData(key: "savedServers", data: data, secure: false)
     }
 
-    func saveRefreshToken(_ token: String) {
-        save(key: "refreshToken", value: token)
+    func loadActiveServerId() -> String? {
+        load(key: "activeServerId")
     }
 
-    func loadRefreshToken() -> String? {
-        load(key: "refreshToken")
+    func saveActiveServerId(_ id: String?) {
+        if let id {
+            save(key: "activeServerId", value: id, secure: false)
+        } else {
+            delete(key: "activeServerId")
+        }
     }
 
-    func deleteRefreshToken() {
+    // MARK: - Per-server refresh tokens (device-only, requires unlock)
+
+    func saveRefreshToken(_ token: String, serverId: String) {
+        save(key: tokenKey(serverId), value: token, secure: true)
+    }
+
+    func loadRefreshToken(serverId: String) -> String? {
+        load(key: tokenKey(serverId), secure: true)
+    }
+
+    func deleteRefreshToken(serverId: String) {
+        delete(key: tokenKey(serverId))
+    }
+
+    func hasRefreshToken(serverId: String) -> Bool {
+        loadRefreshToken(serverId: serverId) != nil
+    }
+
+    // MARK: - Migration from single-server storage
+
+    func migrateLegacyIfNeeded() -> SavedServer? {
+        guard loadServers().isEmpty else { return nil }
+        guard let rawURL = load(key: "serverURL"),
+              let url = URL(string: rawURL),
+              let token = load(key: "refreshToken", secure: true) ?? load(key: "refreshToken", secure: false) else {
+            return nil
+        }
+        let server = SavedServer(
+            id: UUID().uuidString,
+            label: url.host ?? "Panel",
+            serverURL: url.absoluteString,
+            username: load(key: "username", secure: false),
+            lastUsedAt: Date()
+        )
+        saveServers([server])
+        saveActiveServerId(server.id)
+        saveRefreshToken(token, serverId: server.id)
+        delete(key: "serverURL")
         delete(key: "refreshToken")
+        delete(key: "username")
+        return server
     }
 
-    func saveUsername(_ username: String) {
-        save(key: "username", value: username)
+    // MARK: - Keychain primitives
+
+    private func tokenKey(_ serverId: String) -> String {
+        "refreshToken.\(serverId)"
     }
 
-    func loadUsername() -> String? {
-        load(key: "username")
+    private func save(key: String, value: String, secure: Bool) {
+        saveData(key: key, data: Data(value.utf8), secure: secure)
     }
 
-    private func save(key: String, value: String) {
-        let data = Data(value.utf8)
+    private func saveData(key: String, data: Data, secure: Bool) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: key,
         ]
         SecItemDelete(query as CFDictionary)
+
         var add = query
         add[kSecValueData as String] = data
-        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        add[kSecAttrAccessible as String] = secure
+            ? kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+            : kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        if secure, let access = accessControl() {
+            add[kSecAttrAccessControl as String] = access
+            add.removeValue(forKey: kSecAttrAccessible as String)
+        }
         SecItemAdd(add as CFDictionary, nil)
     }
 
-    private func load(key: String) -> String? {
+    private func load(key: String, secure: Bool = false) -> String? {
+        guard let data = loadData(key: key) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    private func loadData(key: String) -> Data? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -58,7 +121,7 @@ final class KeychainStore {
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
         guard status == errSecSuccess, let data = item as? Data else { return nil }
-        return String(data: data, encoding: .utf8)
+        return data
     }
 
     private func delete(key: String) {
@@ -68,5 +131,14 @@ final class KeychainStore {
             kSecAttrAccount as String: key,
         ]
         SecItemDelete(query as CFDictionary)
+    }
+
+    private func accessControl() -> SecAccessControl? {
+        SecAccessControlCreateWithFlags(
+            nil,
+            kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+            .userPresence,
+            nil
+        )
     }
 }

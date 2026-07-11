@@ -7,6 +7,7 @@ struct DomainListView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var navigationPath = NavigationPath()
+    @State private var showServerSwitcher = false
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -35,22 +36,37 @@ struct DomainListView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    HStack(spacing: 8) {
+                        Button {
+                            showServerSwitcher = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "server.rack")
+                                if let server = appState.activeServer {
+                                    Text(server.label)
+                                        .font(.caption.weight(.semibold))
+                                        .lineLimit(1)
+                                }
+                            }
+                            .foregroundStyle(QadbakPalette.accent)
+                        }
+                        if appState.isClientAccount {
+                            Text("Client")
+                                .font(.caption2.weight(.bold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .foregroundStyle(QadbakPalette.accent)
+                                .background(QadbakPalette.glow.opacity(0.2), in: Capsule())
+                        }
+                    }
+                }
                 ToolbarItem(placement: .principal) {
                     HStack(spacing: 8) {
                         QadbakLogoMark(size: 28)
                         Text("Qadbak")
                             .font(.headline.weight(.bold))
                             .foregroundStyle(QadbakPalette.text)
-                    }
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    if appState.isClientAccount {
-                        Text("Client")
-                            .font(.caption2.weight(.bold))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .foregroundStyle(QadbakPalette.accent)
-                            .background(QadbakPalette.glow.opacity(0.2), in: Capsule())
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -67,6 +83,9 @@ struct DomainListView: View {
                                 .font(.caption)
                         }
                         Divider()
+                        Button("Switch server") {
+                            showServerSwitcher = true
+                        }
                         Button("Sign out", role: .destructive) {
                             Task { await appState.logout() }
                         }
@@ -76,6 +95,9 @@ struct DomainListView: View {
                             .foregroundStyle(QadbakPalette.accent)
                     }
                 }
+            }
+            .sheet(isPresented: $showServerSwitcher) {
+                ServerSwitcherView()
             }
             .toolbarBackground(QadbakPalette.bg.opacity(0.9), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
@@ -98,8 +120,15 @@ struct DomainListView: View {
     private var header: some View {
         QBScreenHeader(
             title: "Your domains",
-            subtitle: appState.username.map { "Signed in as \($0)" }
+            subtitle: headerSubtitle
         )
+    }
+
+    private var headerSubtitle: String? {
+        if let user = appState.username, let server = appState.activeServer {
+            return "\(user) · \(server.label)"
+        }
+        return appState.username.map { "Signed in as \($0)" }
     }
 
     @ViewBuilder
