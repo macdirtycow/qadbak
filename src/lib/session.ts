@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies, headers } from "next/headers";
 import type { NextRequest, NextResponse } from "next/server";
@@ -87,6 +88,7 @@ export async function createMobileAccessToken(
     .setIssuer(JWT_ISSUER)
     .setAudience(JWT_AUDIENCE)
     .setIssuedAt()
+    .setJti(randomUUID())
     .setExpirationTime(`${MOBILE_ACCESS_TTL_SEC}s`)
     .sign(secretKey());
 }

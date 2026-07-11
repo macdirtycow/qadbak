@@ -86,7 +86,7 @@ test.describe("admin", () => {
     await login(page, ADMIN.user, ADMIN.pass);
     await page.goto("/domains/example.com/media");
     await expect(page.getByRole("heading", { name: "Media library" })).toBeVisible();
-    await expect(page.getByText(/upload folder/i)).toBeVisible();
+    await expect(page.getByLabel("Upload folder (inside home)")).toBeVisible();
     await expect(page.getByText("Quick player")).toBeVisible();
   });
 });
