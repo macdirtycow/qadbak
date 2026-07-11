@@ -60,6 +60,9 @@ struct DomainDetailView: View {
                     actionLink(BackupsView(domainName: domain.name)) {
                         QBActionTile(title: "Backups", subtitle: "Run now", icon: "externaldrive", tint: QadbakPalette.warning)
                     }
+                    actionLink(DomainTerminalView(domainName: domain.name)) {
+                        QBActionTile(title: "Terminal", subtitle: "Shell", icon: "terminal", tint: Color.indigo)
+                    }
                 }
             }
             .padding(.horizontal, 20)

@@ -5,6 +5,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# Xcode lives in a non-standard path on this Mac; override with DEVELOPER_DIR if needed.
+if [[ -z "${DEVELOPER_DIR:-}" ]]; then
+  XCODE_BETA="$HOME/Desktop/katwijk huiselijk geweld bronnen/Xcode-beta.app/Contents/Developer"
+  if [[ -d "$XCODE_BETA" ]]; then
+    export DEVELOPER_DIR="$XCODE_BETA"
+  fi
+fi
+
 TEAM_ID="${DEVELOPMENT_TEAM:-2PP6UH4PWA}"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Qadbak/Info.plist)"
 BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Qadbak/Info.plist)"

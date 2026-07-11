@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css" />
+  <style>
+    html, body { margin: 0; padding: 0; background: #0f1419; height: 100%; overflow: hidden; }
+    #term { position: absolute; inset: 0; }
+    .xterm { padding: 6px; }
+  </style>
+</head>
+<body>
+  <div id="term"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+  <script>
+    let term = null;
+    let fitAddon = null;
+    let ws = null;
+    let ctrlActive = false;
+    let altActive = false;
+
+    function postStatus(state, detail) {
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.qadbak) {
+        window.webkit.messageHandlers.qadbak.postMessage({ type: 'status', state, detail: detail || '' });
+      }
+    }
+
+    function sendResize() {
+      if (!term || !ws || ws.readyState !== WebSocket.OPEN) return;
+      ws.send(JSON.stringify({ t: 'resize', cols: term.cols, rows: term.rows }));
+    }
+
+    function connectSession(session) {
+      if (!session || !session.wsUrl || !session.token) {
+        postStatus('error', session && session.error ? session.error : 'Missing terminal session.');
+        return;
+      }
+      disconnect();
+      term = new Terminal({
+        cursorBlink: true,
+        fontSize: 13,
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
+        theme: { background: '#0f1419', foreground: '#e6edf3', cursor: '#58a6ff' },
+        scrollback: 5000,
+      });
+      fitAddon = new FitAddon.FitAddon();
+      term.loadAddon(fitAddon);
+      term.open(document.getElementById('term'));
+      fitAddon.fit();
+      sendResize();
+
+      const protocols = (session.wsProtocols && session.wsProtocols.length === 2)
+        ? session.wsProtocols
+        : ['qadbak-terminal', session.token];
+      ws = new WebSocket(session.wsUrl, protocols);
+      ws.binaryType = 'arraybuffer';
+
+      ws.onopen = () => {
+        postStatus('connected');
+        sendResize();
+      };
+      ws.onmessage = (ev) => {
+        if (typeof ev.data === 'string') term.write(ev.data);
+        else term.write(new Uint8Array(ev.data));
+      };
+      ws.onerror = () => postStatus('error', 'WebSocket error.');
+      ws.onclose = () => postStatus('closed');
+
+      term.onData((data) => {
+        if (ws && ws.readyState === WebSocket.OPEN) ws.send(data);
+      });
+
+      window.addEventListener('resize', () => {
+        if (fitAddon) { fitAddon.fit(); sendResize(); }
+      });
+    }
+
+    function disconnect() {
+      if (ws) { try { ws.close(); } catch (_) {} ws = null; }
+      if (term) { try { term.dispose(); } catch (_) {} term = null; fitAddon = null; }
+      ctrlActive = false;
+      altActive = false;
+    }
+
+    function sendRaw(text) {
+      if (ws && ws.readyState === WebSocket.OPEN) ws.send(text);
+    }
+
+    function applyModifier(base, ch) {
+      if (ctrlActive) {
+        const code = ch.toUpperCase().charCodeAt(0);
+        if (code >= 65 && code <= 90) return String.fromCharCode(code - 64);
+        if (ch === '[') return '\u001b';
+        if (ch === '\\') return '\u001c';
+        if (ch === ']') return '\u001d';
+        if (ch === '^') return '\u001e';
+        if (ch === '_') return '\u001f';
+      }
+      if (altActive) return '\u001b' + ch;
+      return ch;
+    }
+
+    window.qadbakTerminal = {
+      connect(sessionJson) {
+        try {
+          connectSession(typeof sessionJson === 'string' ? JSON.parse(sessionJson) : sessionJson);
+        } catch (e) {
+          postStatus('error', String(e));
+        }
+      },
+      disconnect,
+      fit() {
+        if (fitAddon) { fitAddon.fit(); sendResize(); }
+      },
+      sendKey(key) {
+        const map = {
+          ESC: '\u001b',
+          TAB: '\t',
+          ENTER: '\r',
+          BKSP: '\u007f',
+          HOME: '\u001b[H',
+          END: '\u001b[F',
+          PGUP: '\u001b[5~',
+          PGDN: '\u001b[6~',
+          INS: '\u001b[2~',
+          DEL: '\u001b[3~',
+          UP: '\u001b[A',
+          DOWN: '\u001b[B',
+          RIGHT: '\u001b[C',
+          LEFT: '\u001b[D',
+          BACKSLASH: '\\',
+          QUOTE: '"',
+          APOSTROPHE: "'",
+        };
+        if (key === 'CTRL') { ctrlActive = !ctrlActive; postStatus('modifiers', JSON.stringify({ ctrl: ctrlActive, alt: altActive })); return; }
+        if (key === 'ALT') { altActive = !altActive; postStatus('modifiers', JSON.stringify({ ctrl: ctrlActive, alt: altActive })); return; }
+        let out = map[key];
+        if (!out) out = applyModifier('', key);
+        if (out) sendRaw(out);
+        if ((ctrlActive || altActive) && key !== 'CTRL' && key !== 'ALT') {
+          ctrlActive = false;
+          altActive = false;
+          postStatus('modifiers', JSON.stringify({ ctrl: false, alt: false }));
+        }
+      },
+      sendText(text) {
+        sendRaw(text);
+      },
+    };
+    postStatus('ready');
+  </script>
+</body>
+</html>

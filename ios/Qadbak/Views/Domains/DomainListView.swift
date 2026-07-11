@@ -8,6 +8,12 @@ struct DomainListView: View {
     @State private var errorMessage: String?
     @State private var navigationPath = NavigationPath()
     @State private var showServerSwitcher = false
+    @State private var showAddDomain = false
+
+    private enum AdminRoute: Hashable {
+        case panelUpdates
+        case serverTerminal
+    }
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -77,7 +83,16 @@ struct DomainListView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
+                    HStack(spacing: 12) {
+                        if appState.isAdmin {
+                            Button {
+                                showAddDomain = true
+                            } label: {
+                                Image(systemName: "plus")
+                                    .foregroundStyle(QadbakPalette.accent)
+                            }
+                        }
+                        Menu {
                         if let user = appState.username {
                             Text(user)
                         }
@@ -94,6 +109,24 @@ struct DomainListView: View {
                                 .font(.caption.weight(.semibold))
                         }
                         Divider()
+                        if appState.isAdmin {
+                            Button {
+                                showAddDomain = true
+                            } label: {
+                                Label("Add domain", systemImage: "plus.circle")
+                            }
+                            Button {
+                                navigationPath.append(AdminRoute.panelUpdates)
+                            } label: {
+                                Label("Panel updates", systemImage: "arrow.triangle.2.circlepath")
+                            }
+                            Button {
+                                navigationPath.append(AdminRoute.serverTerminal)
+                            } label: {
+                                Label("Server terminal", systemImage: "terminal")
+                            }
+                        }
+                        Divider()
                         Link(destination: URL(string: "https://license.omiiba.dev/buy")!) {
                             Label("Support Qadbak", systemImage: "heart.fill")
                         }
@@ -108,7 +141,16 @@ struct DomainListView: View {
                             .font(.title3)
                             .foregroundStyle(QadbakPalette.accent)
                     }
+                    }
                 }
+            }
+            .sheet(isPresented: $showAddDomain) {
+                NavigationStack {
+                    AddDomainView {
+                        Task { await reload() }
+                    }
+                }
+                .preferredColorScheme(.dark)
             }
             .sheet(isPresented: $showServerSwitcher) {
                 ServerSwitcherView()
@@ -117,6 +159,14 @@ struct DomainListView: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .navigationDestination(for: HostedDomain.self) { domain in
                 DomainDetailView(domain: domain)
+            }
+            .navigationDestination(for: AdminRoute.self) { route in
+                switch route {
+                case .panelUpdates:
+                    PanelUpdatesView()
+                case .serverTerminal:
+                    DomainTerminalView(domainName: "", adminShell: true)
+                }
             }
             .task { await reload() }
             .onChange(of: appState.pendingPushDomain) { _, domain in

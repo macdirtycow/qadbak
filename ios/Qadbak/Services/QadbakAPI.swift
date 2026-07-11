@@ -104,6 +104,53 @@ final class QadbakAPI {
         return res.domains
     }
 
+    func createDomain(_ request: CreateDomainRequest) async throws -> CreateDomainResponse {
+        try await client.request("POST", path: "/api/domains", body: request)
+    }
+
+    func domainTerminalSession(_ domain: String) async throws -> TerminalSessionInfo {
+        try await client.request("GET", path: domainPath(domain, "/terminal/ws-token"))
+    }
+
+    func adminTerminalSession() async throws -> TerminalSessionInfo {
+        try await client.request("GET", path: "/api/admin/terminal/ws-token")
+    }
+
+    func qadbakUpdateStatus() async throws -> UpdatesStatusResponse {
+        try await client.request("GET", path: "/api/admin/updates/qadbak")
+    }
+
+    func refreshQadbakUpdateStatus() async throws -> UpdatesStatusResponse {
+        try await client.request("POST", path: "/api/admin/updates/qadbak", body: UpdateActionBody(action: "refresh"))
+    }
+
+    func upgradeQadbakPanel() async throws -> UpgradeStartResponse {
+        try await client.request("POST", path: "/api/admin/updates/qadbak", body: UpdateActionBody(action: "upgrade"))
+    }
+
+    func pollUpdateJob(_ jobId: String) async throws -> UpdateJobResponse {
+        try await client.request(
+            "GET",
+            path: adminPath("/api/admin/updates/qadbak", query: [URLQueryItem(name: "jobId", value: jobId)])
+        )
+    }
+
+    func linuxUpdateStatus() async throws -> UpdatesStatusResponse {
+        try await client.request("GET", path: "/api/admin/updates/linux")
+    }
+
+    func upgradeLinuxPackages() async throws -> UpgradeStartResponse {
+        try await client.request("POST", path: "/api/admin/updates/linux", body: UpdateActionBody(action: "upgrade"))
+    }
+
+    func panelControlStatus() async throws -> PanelControlResponse {
+        try await client.request("GET", path: "/api/admin/panel-control")
+    }
+
+    func panelControlAction(_ action: String) async throws -> PanelControlResponse {
+        try await client.request("POST", path: "/api/admin/panel-control", body: PanelControlBody(action: action))
+    }
+
     func domainDetail(_ domain: String) async throws -> DomainDetailResponse {
         try await client.request("GET", path: domainPath(domain))
     }
@@ -296,15 +343,26 @@ final class QadbakAPI {
         )
     }
 
-    private func domainPath(_ domain: String, _ suffix: String = "", query: [URLQueryItem] = []) -> String {
-        let domainEnc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
+    private func domainPath(
+        _ domain: String,
+        _ suffix: String = "",
+        query: [URLQueryItem] = []
+    ) -> String {
+        adminPath("/api/domains/\(domainEncoded(domain))\(suffix)", query: query)
+    }
+
+    private func adminPath(_ path: String, query: [URLQueryItem] = []) -> String {
         var components = URLComponents()
-        components.path = "/api/domains/\(domainEnc)\(suffix)"
+        components.path = path
         if !query.isEmpty {
             components.queryItems = query
         }
         let queryString = components.percentEncodedQuery.map { "?\($0)" } ?? ""
         return components.path + queryString
+    }
+
+    private func domainEncoded(_ domain: String) -> String {
+        domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
     }
 }
 
@@ -368,4 +426,12 @@ private struct SendMailBody: Encodable {
     let body: String
     let inReplyTo: String
     let references: String
+}
+
+private struct UpdateActionBody: Encodable {
+    let action: String
+}
+
+private struct PanelControlBody: Encodable {
+    let action: String
 }

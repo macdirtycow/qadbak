@@ -56,6 +56,10 @@ final class AppState {
         license?.premiumActive == true
     }
 
+    var isAdmin: Bool {
+        role == "admin"
+    }
+
     var isSignedIn: Bool {
         accessToken != nil && serverURL != nil
     }

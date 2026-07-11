@@ -549,3 +549,104 @@ struct BackupsResponse: Decodable {
 struct OkResponse: Decodable {
     let ok: Bool?
 }
+
+struct CreateDomainRequest: Encodable {
+    let domain: String
+    let pass: String?
+    let user: String?
+    let plan: String?
+    let parent: String?
+    let type: String?
+    let createClientAccount: Bool?
+    let createPanelVhost: Bool?
+}
+
+struct CreateDomainResponse: Decodable {
+    let ok: Bool?
+    let domain: String?
+    let hostingNote: String?
+    let dnsNote: String?
+    let premiumNote: String?
+    let unixPassword: String?
+    let clientUsername: String?
+    let clientPassword: String?
+    let panelUrl: String?
+    let journalId: String?
+}
+
+struct TerminalSessionInfo: Decodable {
+    let available: Bool?
+    let backendReady: Bool?
+    let token: String?
+    let wsUrl: String?
+    let wsProtocols: [String]?
+    let unixUser: String?
+    let shellUser: String?
+    let domain: String?
+    let error: String?
+}
+
+struct QadbakUpdateStatus: Decodable {
+    let isGit: Bool?
+    let commit: String?
+    let branch: String?
+    let behind: Int?
+    let upToDate: Bool?
+    let checkedAt: String?
+    let message: String?
+    let error: String?
+}
+
+struct UpdatesStatusResponse: Decodable {
+    let available: Bool?
+    let error: String?
+    let qadbak: QadbakUpdateStatus?
+    let linux: LinuxUpdateStatus?
+}
+
+struct LinuxUpdateStatus: Decodable {
+    let updatedAt: String?
+    let upgradable: Int?
+    let security: Int?
+    let rebootRequired: Bool?
+    let summaryLine: String?
+}
+
+struct UpdateJob: Decodable {
+    let id: String?
+    let type: String?
+    let status: String?
+    let startedAt: String?
+    let finishedAt: String?
+    let exitCode: Int?
+}
+
+struct UpdateJobResponse: Decodable {
+    let job: UpdateJob?
+    let log: String?
+    let available: Bool?
+    let qadbak: QadbakUpdateStatus?
+}
+
+struct UpgradeStartResponse: Decodable {
+    let job: UpdateJob?
+    let backupDir: String?
+    let copied: Bool?
+}
+
+struct PanelControlResponse: Decodable {
+    let available: Bool?
+    let error: String?
+    let ok: Bool?
+    let action: String?
+    let output: String?
+    let processes: [PanelProcess]?
+}
+
+struct PanelProcess: Decodable, Identifiable {
+    var id: String { name ?? UUID().uuidString }
+    let name: String?
+    let status: String?
+    let cpu: String?
+    let memory: String?
+}
