@@ -37,6 +37,10 @@ for row in "${ROWS[@]}"; do
   domain="${row%%$'\t'*}"
   user="${row#*$'\t'}"
   [[ -z "$domain" || -z "$user" ]] && continue
+  if ! id "$user" &>/dev/null; then
+    echo "    SKIP $domain — unix user $user does not exist"
+    continue
+  fi
   PUB="/home/$user/public_html"
   if [[ ! -d "$PUB" ]]; then
     echo "    SKIP $domain — no $PUB" >&2

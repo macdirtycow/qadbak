@@ -51,6 +51,7 @@ _emit_row() {
   [[ -z "$domain" || -z "$user" ]] && return 0
   _is_valid_domain "$domain" || return 0
   _should_skip_nginx_customer_domain "$domain" && return 0
+  id "$user" &>/dev/null || return 0
   [[ ! -d "/home/$user/public_html" ]] && return 0
   printf '%s\t%s\n' "$domain" "$user"
 }

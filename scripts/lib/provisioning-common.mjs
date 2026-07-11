@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { readFile, access, writeFile, mkdir } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
 import path from "node:path";
 
 export const QADBAK_DIR = process.env.QADBAK_DIR || "/opt/qadbak";
@@ -40,6 +41,12 @@ export async function loadRegistry() {
 export async function saveRegistry(rows) {
   await mkdir(path.dirname(REGISTRY), { recursive: true });
   await writeFile(REGISTRY, `${JSON.stringify(rows, null, 2)}\n`, "utf8");
+}
+
+export function unixUserExists(name) {
+  const user = String(name || "").trim();
+  if (!user) return false;
+  return spawnSync("id", ["-u", user], { stdio: "ignore" }).status === 0;
 }
 
 export async function resolveDomainUser(domain) {

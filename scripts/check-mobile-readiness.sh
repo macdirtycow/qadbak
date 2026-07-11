@@ -12,9 +12,15 @@ MAILBOX="${2:-info}"
 ENV_FILE="$ROOT/.env.local"
 FAIL=0
 
-warn() { echo "  WARN: $*" >&2; FAIL=1; }
+warn() { echo "  WARN: $*" >&2; }
 ok() { echo "  OK: $*"; }
 miss() { echo "  MISSING: $*" >&2; FAIL=1; }
+note() { echo "  note: $*"; }
+
+premium_env_has_feature() {
+  local feature="$1" line="$2"
+  echo "$line" | grep -qE "(^QADBAK_PREMIUM_FEATURES=|,)$feature(,|$)"
+}
 
 [[ "$(id -u)" -eq 0 ]] || {
   echo "Run as root: sudo bash scripts/check-mobile-readiness.sh [domain] [mailbox]" >&2
@@ -30,26 +36,49 @@ if curl -sf "${QADBAK_LICENSE_SERVER:-https://license.omiiba.dev}/health" >/dev/
   ok "license server reachable"
 else
   warn "cannot reach license server"
+  FAIL=1
 fi
 
 echo ""
-echo "==> Premium features (.env.local)"
+echo "==> Premium features"
 ALL_FEATURES=(
   white-label client-rbac multi-tenant-clients panel-client-vhost
   admin-updates php-fpm-isolation dashboard-panel-control offsite-backup webmail-ui
 )
-if [[ -f "$ENV_FILE" ]]; then
+FEATURES_CSV="$(IFS=,; echo "${ALL_FEATURES[*]}")"
+LICENSE_FILE="$ROOT/data/license.json"
+if [[ -f "$LICENSE_FILE" ]]; then
+  while IFS= read -r line; do
+    case "$line" in
+      OK:*) ok "premium feature: ${line#OK:}" ;;
+      MISSING:*) miss "premium feature: ${line#MISSING:}" ;;
+      INACTIVE:*) miss "license not active (${line#INACTIVE:})" ;;
+    esac
+  done < <(node -e "
+    const fs = require('fs');
+    const need = process.argv[1].split(',');
+    const j = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+    if (j.status !== 'active') {
+      console.log('INACTIVE:' + (j.status || 'unknown'));
+      process.exit(0);
+    }
+    for (const f of need) {
+      if (!(j.features || []).includes(f)) console.log('MISSING:' + f);
+      else console.log('OK:' + f);
+    }
+  " "$FEATURES_CSV" "$LICENSE_FILE")
+elif [[ -f "$ENV_FILE" ]]; then
   PREMIUM_LINE="$(grep '^QADBAK_PREMIUM_FEATURES=' "$ENV_FILE" 2>/dev/null || true)"
   if [[ -n "$PREMIUM_LINE" ]]; then
     for f in "${ALL_FEATURES[@]}"; do
-      if echo "$PREMIUM_LINE" | grep -qE "(^|,)$f(,|$)"; then
+      if premium_env_has_feature "$f" "$PREMIUM_LINE"; then
         ok "premium feature: $f"
       else
         miss "premium feature: $f"
       fi
     done
   else
-    miss "QADBAK_PREMIUM_FEATURES not set"
+    miss "QADBAK_PREMIUM_FEATURES not set (activate Premium first)"
   fi
 else
   miss ".env.local not found"
@@ -66,31 +95,34 @@ if command -v doveadm >/dev/null 2>&1; then
   ok "doveadm installed"
 else
   warn "doveadm not found — Dovecot may be missing"
+  FAIL=1
 fi
 
 echo ""
-echo "==> APNs push"
+echo "==> APNs push (optional)"
 for key in QADBAK_APNS_KEY_ID QADBAK_APNS_TEAM_ID; do
   if grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
     ok "$key set"
   else
-    warn "$key not set (push alerts disabled)"
+    note "$key not set (push alerts disabled)"
   fi
 done
 if grep -qE '^QADBAK_APNS_KEY_(PATH|P8)=' "$ENV_FILE" 2>/dev/null; then
   ok "APNs signing key configured"
 else
-  warn "QADBAK_APNS_KEY_PATH or QADBAK_APNS_KEY_P8 not set"
+  note "QADBAK_APNS_KEY_PATH or QADBAK_APNS_KEY_P8 not set"
 fi
 
 echo ""
 echo "==> Live files browser"
 if grep -q '^QADBAK_LIVE_FILES=false' "$ENV_FILE" 2>/dev/null; then
   warn "QADBAK_LIVE_FILES=false — iOS files module disabled"
+  FAIL=1
 elif [[ -x "$ROOT/scripts/configure-domain-fs-sudo.sh" ]]; then
   ok "live files enabled (run configure-domain-fs-sudo.sh if listing fails)"
 else
   warn "configure-domain-fs-sudo.sh missing"
+  FAIL=1
 fi
 
 echo ""
@@ -99,7 +131,7 @@ for f in mobile-refresh-tokens.json mobile-push-tokens.json; do
   if [[ -f "$ROOT/data/$f" ]]; then
     ok "data/$f present"
   else
-    echo "  note: data/$f will be created on first mobile login/push"
+    note "data/$f will be created on first mobile login/push"
   fi
 done
 

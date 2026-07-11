@@ -15,25 +15,22 @@ echo "==> Prune stale Apache vhosts"
 bash "$ROOT/scripts/lib/prune-apache-vhosts.sh"
 
 if [[ -f "$REG" ]] && command -v node >/dev/null 2>&1; then
-  echo "==> Prune orphan native-domains.json rows (no /home/user, not demoOnly)"
+  echo "==> Prune orphan native-domains.json rows (no unix user / no /home/user)"
   sudo -u qadbak node -e "
     const fs = require('fs');
     const path = require('path');
+    const { spawnSync } = require('child_process');
     const reg = process.argv[1];
     const rows = JSON.parse(fs.readFileSync(reg, 'utf8'));
     const kept = [];
     let removed = 0;
+    const userExists = (u) =>
+      spawnSync('id', ['-u', String(u)], { stdio: 'ignore' }).status === 0;
     for (const r of rows) {
       if (!r || !r.name || !r.user) continue;
-      if (r.demoOnly) {
-        const home = path.join('/home', r.user);
-        try {
-          fs.accessSync(home);
-          kept.push(r);
-        } catch {
-          removed++;
-          console.log('    DROP demoOnly ' + r.name + ' (no unix home ' + home + ')');
-        }
+      if (!userExists(r.user)) {
+        removed++;
+        console.log('    DROP ' + r.name + ' (unix user ' + r.user + ' missing)');
         continue;
       }
       const home = path.join('/home', r.user);

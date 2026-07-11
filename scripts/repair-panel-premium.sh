@@ -14,6 +14,7 @@ ALL_FEATURES=(
   white-label client-rbac multi-tenant-clients panel-client-vhost
   admin-updates php-fpm-isolation dashboard-panel-control offsite-backup webmail-ui
 )
+FEATURES_CSV="$(IFS=,; echo "${ALL_FEATURES[*]}")"
 
 [[ "$(id -u)" -eq 0 ]] || {
   echo "Run as root: sudo bash scripts/repair-panel-premium.sh [domain]" >&2
@@ -45,7 +46,7 @@ if [[ -f "$ROOT/data/license.json" ]]; then
     for (const f of need) {
       if (!(j.features||[]).includes(f)) console.log('  MISSING feature:', f);
     }
-  " "$ROOT/data/license.json" "${ALL_FEATURES[*]}"
+  " "$ROOT/data/license.json" "$FEATURES_CSV"
 else
   echo "  No license.json — activate a key first."
 fi
@@ -67,6 +68,29 @@ if [[ -f "$ROOT/scripts/configure-license-heartbeat-timer.sh" ]]; then
   echo ""
   echo "==> Systemd license heartbeat timer (every 6h fallback)"
   bash "$ROOT/scripts/configure-license-heartbeat-timer.sh" || true
+fi
+
+echo ""
+echo "==> Sync QADBAK_PREMIUM_FEATURES from license.json"
+if [[ -f "$ROOT/data/license.json" ]]; then
+  sudo -u "$USER" node -e "
+    const fs = require('fs');
+    const path = require('path');
+    const root = process.argv[1];
+    const lic = JSON.parse(fs.readFileSync(path.join(root, 'data', 'license.json'), 'utf8'));
+    const features = lic.features || [];
+    if (!features.length) process.exit(0);
+    const envPath = path.join(root, '.env.local');
+    let content = fs.readFileSync(envPath, 'utf8');
+    const line = 'QADBAK_PREMIUM_FEATURES=' + features.join(',');
+    if (/^QADBAK_PREMIUM_FEATURES=/m.test(content)) {
+      content = content.replace(/^QADBAK_PREMIUM_FEATURES=.*$/m, line);
+    } else {
+      content = content.trimEnd() + '\\n' + line + '\\n';
+    }
+    fs.writeFileSync(envPath, content);
+    console.log('  OK — synced ' + features.length + ' feature(s)');
+  " "$ROOT" 2>/dev/null || echo "  WARN: could not sync premium features to .env.local" >&2
 fi
 
 echo ""
@@ -123,7 +147,9 @@ fi
 
 if [[ -f "$ROOT/scripts/check-mobile-readiness.sh" ]]; then
   echo ""
-  bash "$ROOT/scripts/check-mobile-readiness.sh" ${DOMAIN:+"$DOMAIN"}
+  bash "$ROOT/scripts/check-mobile-readiness.sh" ${DOMAIN:+"$DOMAIN"} || {
+    echo "  WARN: mobile readiness check reported issues (optional APNs may be unset)" >&2
+  }
 fi
 
 echo ""

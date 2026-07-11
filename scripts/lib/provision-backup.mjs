@@ -19,6 +19,7 @@ import {
   emit,
   fail,
   resolveDomainUser,
+  unixUserExists,
   domainConfigDir,
   QADBAK_DIR,
   loadRegistry,
@@ -653,6 +654,10 @@ export async function backupScheduleEnsureAll(jsonArg) {
   for (const row of rows) {
     const domain = String(row.name || "").trim();
     if (!domain || row.demoOnly) continue;
+    if (!unixUserExists(row.user)) {
+      results.push({ domain, skipped: true, reason: "unix user missing" });
+      continue;
+    }
     try {
       const result = await setupBackupSchedule(domain, {
         forceEnable: true,
