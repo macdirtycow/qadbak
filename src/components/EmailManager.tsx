@@ -190,7 +190,7 @@ export function EmailManager({
           <Link href={`/domains/${enc}/mail/imap`} className="text-accent hover:underline">
             IMAP
           </Link>{" "}
-          tab or <strong className="text-white">Webmail</strong> per mailbox to read and send mail. For external clients: IMAP port 993, SMTP submission
+          tab or <strong className="text-white">Qmail</strong> per mailbox to read and send mail. For external clients: IMAP port 993, SMTP submission
           port 587 (same mailbox password).
         </p>
       </div>
@@ -306,7 +306,7 @@ export function EmailManager({
                       href={`/domains/${enc}/mail/${encodeURIComponent(name)}`}
                       className="inline-flex items-center rounded-lg border border-panel-border px-3 py-1.5 text-sm text-panel-link hover:bg-panel-border/30"
                     >
-                      Webmail
+                      Qmail
                     </Link>
                     <Button
                       variant="secondary"

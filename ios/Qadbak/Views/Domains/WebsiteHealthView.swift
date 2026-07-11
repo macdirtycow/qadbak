@@ -182,10 +182,6 @@ struct WebsiteHealthView: View {
 
     private func restartWebsite() async {
         guard let api = appState.api else { return }
-        guard await BiometricGate.authenticate(reason: "Confirm restart website on \(domainName)") else {
-            errorMessage = "Face ID required to restart the website."
-            return
-        }
         isRestarting = true
         errorMessage = nil
         LiveActivityManager.start(

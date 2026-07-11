@@ -369,7 +369,7 @@ export function ImapMailboxesManager({
     <div className="space-y-6">
       <DomainPageHeader
         domain={domain}
-        title={webmailMode ? `Webmail — ${user || "mailbox"}` : "IMAP mailboxes"}
+        title={webmailMode ? `Qmail — ${user || "mailbox"}` : "IMAP mailboxes"}
       />
       <p className="text-sm text-panel-muted">
         Browse folders and read mail via{" "}
@@ -418,11 +418,11 @@ export function ImapMailboxesManager({
               href={`/domains/${enc}/mail/${encodeURIComponent(user)}`}
               className="inline-flex items-center rounded-lg border border-panel-border bg-panel-accent/10 px-3 py-2 text-sm font-medium text-white hover:bg-panel-accent/25"
             >
-              Open webmail
+              Open Qmail
             </Link>
           ) : (
             <span className="text-xs text-panel-muted">
-              Enter a mailbox user, then open webmail
+              Enter a mailbox user, then open Qmail
             </span>
           )}
           {sourceLabel && <Badge>{sourceLabel}</Badge>}

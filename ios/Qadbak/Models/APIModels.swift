@@ -301,9 +301,11 @@ struct MailMessageSummary: Decodable, Identifiable, Hashable {
     let from: String?
     let to: String?
     let date: String?
+    let preview: String?
+    let size: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, subject, from, to, date
+        case id, subject, from, to, date, preview, size, bodyText
     }
 
     init(from decoder: Decoder) throws {
@@ -319,6 +321,10 @@ struct MailMessageSummary: Decodable, Identifiable, Hashable {
         from = try? c.decode(String.self, forKey: .from)
         to = try? c.decode(String.self, forKey: .to)
         date = try? c.decode(String.self, forKey: .date)
+        size = try? c.decode(String.self, forKey: .size)
+        let explicitPreview = try? c.decode(String.self, forKey: .preview)
+        let bodyPreview = try? c.decode(String.self, forKey: .bodyText)
+        preview = explicitPreview ?? bodyPreview
     }
 }
 
@@ -328,13 +334,44 @@ struct MailMessageDetailResponse: Decodable {
 }
 
 struct MailMessageDetail: Decodable {
-    let id: String?
+    let id: String
     let subject: String?
     let from: String?
     let to: String?
     let cc: String?
     let date: String?
     let bodyText: String?
+    let messageId: String?
+    let replyTo: String?
+    let references: String?
+    let rawHeaders: String?
+    let size: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, subject, from, to, cc, date, bodyText, messageId, replyTo, references, rawHeaders, size
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        if let s = try? c.decode(String.self, forKey: .id) {
+            id = s
+        } else if let n = try? c.decode(Int.self, forKey: .id) {
+            id = String(n)
+        } else {
+            id = ""
+        }
+        subject = try? c.decode(String.self, forKey: .subject)
+        from = try? c.decode(String.self, forKey: .from)
+        to = try? c.decode(String.self, forKey: .to)
+        cc = try? c.decode(String.self, forKey: .cc)
+        date = try? c.decode(String.self, forKey: .date)
+        bodyText = try? c.decode(String.self, forKey: .bodyText)
+        messageId = try? c.decode(String.self, forKey: .messageId)
+        replyTo = try? c.decode(String.self, forKey: .replyTo)
+        references = try? c.decode(String.self, forKey: .references)
+        rawHeaders = try? c.decode(String.self, forKey: .rawHeaders)
+        size = try? c.decode(String.self, forKey: .size)
+    }
 }
 
 struct SendMailResponse: Decodable {

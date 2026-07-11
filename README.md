@@ -76,7 +76,7 @@ Three prompts (hostname, admin password, Let's Encrypt email) and you're done.
 |--------|-------------|
 | **Client portal & RBAC** | End customers manage only their domains. |
 | **Panel vhost provisioning** | Separate panel URLs per reseller brand. |
-| **Webmail** | Built-in IMAP webmail in the panel. |
+| **Qmail** | Built-in IMAP mail in the panel and iOS app. |
 | **White-label** | Logo, colours, product name. |
 | **License admin** | View activations, move VPS, heartbeat status. |
 | **Admin updates** | Pull/rebuild panel from the UI; **Ubuntu LTS release upgrade** (22→24→26). |

@@ -167,8 +167,13 @@ if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/configure-bind-native.sh" ]]; 
 fi
 if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/repair-panel-webmail.sh" ]]; then
   echo ""
-  echo "==> Webmail (IMAP / Dovecot)"
+  echo "==> Qmail (IMAP / Dovecot)"
   bash "$ROOT/scripts/repair-panel-webmail.sh" 2>/dev/null || true
+fi
+if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/repair-panel-premium.sh" ]]; then
+  echo ""
+  echo "==> Premium + mobile app (Qmail, push, license sync)"
+  bash "$ROOT/scripts/repair-panel-premium.sh" || echo "    WARN: repair-panel-premium.sh failed" >&2
 fi
 if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/apply-phase8-independent.sh" ]]; then
   echo "Re-apply native flags: sudo bash $ROOT/scripts/apply-phase8-independent.sh"

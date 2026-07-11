@@ -573,6 +573,9 @@ export async function issueDevPremiumToken(
     artifactVersion: "dev",
   };
   await writeStoredLicense(stored);
+  const { syncPremiumFeaturesEnv } = await import("./premium/env-sync");
+  const { effectivePremiumFeatures } = await import("./premium/effective-features");
+  await syncPremiumFeaturesEnv(effectivePremiumFeatures(stored));
   return stored;
 }
 

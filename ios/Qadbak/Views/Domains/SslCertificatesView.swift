@@ -90,10 +90,6 @@ struct SslCertificatesView: View {
 
     private func renew() async {
         guard let api = appState.api else { return }
-        guard await BiometricGate.authenticate(reason: "Confirm SSL renewal for \(domainName)") else {
-            errorMessage = "Face ID required to renew SSL."
-            return
-        }
         isRenewing = true
         errorMessage = nil
         successMessage = nil

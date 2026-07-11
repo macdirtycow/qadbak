@@ -39,13 +39,15 @@ struct DomainDetailView: View {
                     actionLink(MailAccountsView(domainName: domain.name)) {
                         QBActionTile(title: "Mail", subtitle: "Accounts", icon: "envelope", tint: Color.cyan)
                     }
-                    actionLink(MailAccountsView(domainName: domain.name, openWebmail: true)) {
-                        QBActionTile(
-                            title: "Webmail",
-                            subtitle: appState.webmailEnabled ? "Inbox" : "Premium",
-                            icon: appState.webmailEnabled ? "envelope.open" : "lock.fill",
-                            tint: appState.webmailEnabled ? Color.mint : QadbakPalette.muted
-                        )
+                    if appState.webmailEnabled {
+                        actionLink(MailAccountsView(domainName: domain.name, openWebmail: true)) {
+                            QBActionTile(
+                                title: "Qmail",
+                                subtitle: "Inbox",
+                                icon: "envelope.open",
+                                tint: Color.mint
+                            )
+                        }
                     }
                     if appState.filesEnabled {
                         actionLink(FilesBrowserView(domainName: domain.name)) {

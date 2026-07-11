@@ -2,13 +2,15 @@ import "server-only";
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { apnsConfigured, sendApnsNotification } from "./mobile-apns";
-import { listAllMobilePushTokens } from "./mobile-push";
+import { listAllMobilePushTokens, type MobilePushToken } from "./mobile-push";
 import { runGlobalTool } from "./panel-tools";
+import { loadUsers } from "./users";
 
 type HealthRow = {
   domain: string;
   disabled?: boolean;
   sslDaysLeft?: number | null;
+  backupAgeDays?: number | null;
   containersStopped?: string[];
 };
 
@@ -18,6 +20,7 @@ type AlertState = {
 
 const STATE_PATH = path.join(process.cwd(), "data", "mobile-push-alert-state.json");
 const DEDUP_MS = 24 * 60 * 60 * 1000;
+const BACKUP_STALE_DAYS = 7;
 
 let cache: AlertState | null = null;
 let mtimeMs = 0;
@@ -55,30 +58,45 @@ function shouldSend(state: AlertState, key: string): boolean {
   return Number.isNaN(ts) || Date.now() - ts >= DEDUP_MS;
 }
 
+async function tokensForDomain(domain: string): Promise<MobilePushToken[]> {
+  const [tokens, users] = await Promise.all([
+    listAllMobilePushTokens(),
+    loadUsers(),
+  ]);
+  const byId = new Map(users.map((u) => [u.id, u]));
+  const target = domain.toLowerCase();
+  return tokens.filter((row) => {
+    const user = byId.get(row.userId);
+    if (!user) return false;
+    if (user.role === "admin") return true;
+    return user.domains.some((d) => d.toLowerCase() === target);
+  });
+}
+
 async function broadcastAlert(
+  domain: string,
   title: string,
   body: string,
   category: string,
   data: Record<string, string>,
 ): Promise<number> {
-  const tokens = await listAllMobilePushTokens();
+  const tokens = await tokensForDomain(domain);
   if (!tokens.length) return 0;
   let delivered = 0;
   await Promise.all(
     tokens.map(async (row) => {
-      const ok = await sendApnsNotification(row.token, {
-        title,
-        body,
-        category,
-        data,
-      }, row.bundleId);
+      const ok = await sendApnsNotification(
+        row.token,
+        { title, body, category, data },
+        row.bundleId,
+      );
       if (ok) delivered += 1;
     }),
   );
   return delivered;
 }
 
-/** Evaluate SSL + container alerts and deliver APNs to registered devices. */
+/** Evaluate SSL, backup, and container alerts; deliver APNs to eligible devices. */
 export async function evaluateMobilePushAlerts(): Promise<{
   sent: string[];
   delivered: number;
@@ -107,10 +125,29 @@ export async function evaluateMobilePushAlerts(): Promise<{
             ? `SSL certificate expired on ${domain}.`
             : `SSL certificate expires in ${row.sslDaysLeft} day(s) on ${domain}.`;
         const n = await broadcastAlert(
+          domain,
           "SSL certificate expiring",
           body,
           "ssl_expiry",
           { type: "ssl_expiry", domain },
+        );
+        if (n > 0) {
+          state.sent[key] = now;
+          sent.push(key);
+          delivered += n;
+        }
+      }
+    }
+
+    if (row.backupAgeDays != null && row.backupAgeDays > BACKUP_STALE_DAYS) {
+      const key = `backup:${domain}:${row.backupAgeDays}`;
+      if (shouldSend(state, key)) {
+        const n = await broadcastAlert(
+          domain,
+          "Backup overdue",
+          `No recent backup on ${domain} (${row.backupAgeDays} days old).`,
+          "backup_stale",
+          { type: "backup_stale", domain },
         );
         if (n > 0) {
           state.sent[key] = now;
@@ -126,6 +163,7 @@ export async function evaluateMobilePushAlerts(): Promise<{
       if (shouldSend(state, key)) {
         const label = stopped.length === 1 ? stopped[0] : stopped.join(", ");
         const n = await broadcastAlert(
+          domain,
           "Container stopped",
           `Container stopped on ${domain}: ${label}.`,
           "container_stopped",

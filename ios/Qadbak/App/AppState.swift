@@ -19,6 +19,10 @@ final class AppState {
     var activeServerId: String?
     var addingNewServer = false
 
+    private var backgroundSince: Date?
+    private var lastUnlockedAt: Date?
+    private let lockAfterBackgroundSeconds: TimeInterval = 45
+
     private let keychain = KeychainStore()
     private(set) var api: QadbakAPI?
 
@@ -36,7 +40,7 @@ final class AppState {
     }
 
     var webmailEnabled: Bool {
-        capabilities?.webmail ?? true
+        capabilities?.webmail ?? false
     }
 
     var filesEnabled: Bool {
@@ -53,6 +57,20 @@ final class AppState {
 
     func unlock() {
         requiresUnlock = false
+        lastUnlockedAt = Date()
+    }
+
+    func noteEnteredBackground() {
+        backgroundSince = Date()
+    }
+
+    func noteEnteredForeground() {
+        defer { backgroundSince = nil }
+        guard isSignedIn, let since = backgroundSince else { return }
+        let away = Date().timeIntervalSince(since)
+        guard away >= lockAfterBackgroundSeconds else { return }
+        if let last = lastUnlockedAt, Date().timeIntervalSince(last) < 10 { return }
+        requiresUnlock = true
     }
 
     func handlePushNavigation(domain: String?) {
@@ -65,6 +83,7 @@ final class AppState {
 
     init() {
         reloadServers()
+        keychain.migrateSecureTokensIfNeeded()
         restoreSession()
     }
 

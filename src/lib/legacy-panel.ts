@@ -280,8 +280,8 @@ export const LEGACY_PANEL_DOMAIN_MODULES: LegacyPanelModule[] = [
   },
   {
     id: "account-panel-mail",
-    label: "Webmail",
-    description: "Webmail as domain owner",
+    label: "Qmail",
+    description: "Qmail as domain owner",
     path: "/mail/",
     category: "Mail",
     accountPanel: true,

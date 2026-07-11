@@ -1,6 +1,7 @@
 import { auditLog } from "@/lib/audit";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
 import { requireDomainApi } from "@/lib/domain-api";
+import { isPremiumFeatureEnabled } from "@/lib/premium/server";
 import {
   nativeFeatureEnabled,
   nativeImapEnabled,
@@ -12,6 +13,9 @@ type Params = { params: Promise<{ domain: string }> };
 export async function POST(request: Request, { params }: Params) {
   try {
     const { session, domain } = await requireDomainApi((await params).domain);
+    if (!(await isPremiumFeatureEnabled("webmail-ui"))) {
+      return jsonError("Qmail requires Premium (webmail-ui feature).", 402);
+    }
     if (!nativeImapEnabled() && !nativeFeatureEnabled("mail")) {
       return jsonError("Native mail send is not enabled on this server.", 503);
     }

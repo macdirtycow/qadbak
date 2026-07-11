@@ -13,9 +13,9 @@ export default async function WebmailPage({ params }: Props) {
   if (!(await isPremiumFeatureEnabled("webmail-ui"))) {
     return (
       <div className="max-w-lg space-y-4 rounded-lg border border-panel-border bg-panel-surface p-6">
-        <h1 className="text-xl font-semibold text-white">Webmail</h1>
+        <h1 className="text-xl font-semibold text-white">Qmail</h1>
         <p className="text-panel-muted">
-          Built-in IMAP webmail is a Premium feature. The free core still supports
+          Built-in IMAP mail (Qmail) is a Premium feature. The free core still supports
           mailboxes, forwarding, and delivery logs — use your own mail client or
           activate Premium in Server admin → License.
         </p>

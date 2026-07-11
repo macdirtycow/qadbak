@@ -115,7 +115,7 @@ export function MailSettingsManager({
         )}
         {dns?.onThisServer && (
           <p className="mt-3 text-sm text-panel-muted">
-            <strong className="text-white">Clients & webmail:</strong> IMAP{" "}
+            <strong className="text-white">Clients & Qmail:</strong> IMAP{" "}
             <code className="text-white">{mailHost}</code> port 993, SMTP submission port
             587, same password as in{" "}
             <Link href={`/domains/${enc}/mail/accounts`} className="text-panel-link hover:underline">

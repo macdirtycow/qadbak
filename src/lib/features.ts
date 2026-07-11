@@ -33,7 +33,7 @@ export const DOMAIN_FEATURES: DomainFeature[] = [
     id: "mail",
     phase: 1,
     label: "Mail",
-    description: "Accounts, webmail, settings, and delivery logs",
+    description: "Accounts, Qmail, settings, and delivery logs",
     path: "mail",
     navOrder: 10,
     programs: {

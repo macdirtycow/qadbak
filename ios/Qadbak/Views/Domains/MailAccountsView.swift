@@ -39,7 +39,7 @@ struct MailAccountsView: View {
                 }
             }
         }
-        .navigationTitle(openWebmail ? "Webmail" : "Mail")
+        .navigationTitle(openWebmail ? "Qmail" : "Mail")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(QadbakPalette.bg, for: .navigationBar)
         .refreshable { await load() }
@@ -78,7 +78,7 @@ struct MailAccountsView: View {
 
         if openWebmail, !mailbox.isEmpty {
             NavigationLink {
-                WebmailView(domainName: domainName, mailboxUser: mailbox)
+                QmailView(domainName: domainName, mailboxUser: mailbox)
             } label: {
                 content
             }

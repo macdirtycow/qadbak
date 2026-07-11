@@ -30,7 +30,6 @@ struct AppLockView: View {
             }
             .padding(32)
         }
-        .task { await unlock() }
         .preferredColorScheme(.dark)
     }
 
@@ -40,7 +39,7 @@ struct AppLockView: View {
             errorMessage = nil
             onUnlock()
         } else {
-            errorMessage = "Authentication failed. Try again."
+            errorMessage = "Authentication failed. Tap Unlock to try again."
         }
     }
 }

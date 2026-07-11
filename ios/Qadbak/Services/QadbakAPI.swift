@@ -277,12 +277,22 @@ final class QadbakAPI {
         to: String,
         subject: String,
         body: String,
-        cc: String = ""
+        cc: String = "",
+        inReplyTo: String = "",
+        references: String = ""
     ) async throws {
         let _: SendMailResponse = try await client.request(
             "POST",
             path: domainPath(domain, "/mailboxes/send"),
-            body: SendMailBody(user: user, to: to, cc: cc, subject: subject, body: body)
+            body: SendMailBody(
+                user: user,
+                to: to,
+                cc: cc,
+                subject: subject,
+                body: body,
+                inReplyTo: inReplyTo,
+                references: references
+            )
         )
     }
 
@@ -356,4 +366,6 @@ private struct SendMailBody: Encodable {
     let cc: String
     let subject: String
     let body: String
+    let inReplyTo: String
+    let references: String
 }

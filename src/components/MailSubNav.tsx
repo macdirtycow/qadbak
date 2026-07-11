@@ -54,7 +54,7 @@ export function MailSubNav({
       })}
       {inWebmailUser && (
         <span className="self-center px-2 text-xs text-panel-muted">
-          Webmail
+          Qmail
         </span>
       )}
     </nav>

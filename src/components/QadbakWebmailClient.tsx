@@ -78,7 +78,7 @@ export function QadbakWebmailClient({
           </div>
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold text-white">
-              Qadbak Mail
+              Qmail
             </h1>
             <p className="truncate text-xs text-panel-muted">{accountEmail}</p>
           </div>

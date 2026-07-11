@@ -96,10 +96,6 @@ struct BackupsView: View {
 
     private func startBackup() async {
         guard let api = appState.api else { return }
-        guard await BiometricGate.authenticate(reason: "Confirm backup for \(domainName)") else {
-            errorMessage = "Face ID required to start a backup."
-            return
-        }
         isStarting = true
         errorMessage = nil
         successMessage = nil

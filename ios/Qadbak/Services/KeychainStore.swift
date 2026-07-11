@@ -50,6 +50,13 @@ final class KeychainStore {
         loadRefreshToken(serverId: serverId) != nil
     }
 
+    func migrateSecureTokensIfNeeded() {
+        for server in loadServers() {
+            guard let token = loadRefreshToken(serverId: server.id) else { continue }
+            saveRefreshToken(token, serverId: server.id)
+        }
+    }
+
     // MARK: - Migration from single-server storage
 
     func migrateLegacyIfNeeded() -> SavedServer? {
@@ -98,10 +105,6 @@ final class KeychainStore {
         add[kSecAttrAccessible as String] = secure
             ? kSecAttrAccessibleWhenUnlockedThisDeviceOnly
             : kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        if secure, let access = accessControl() {
-            add[kSecAttrAccessControl as String] = access
-            add.removeValue(forKey: kSecAttrAccessible as String)
-        }
         SecItemAdd(add as CFDictionary, nil)
     }
 
@@ -131,14 +134,5 @@ final class KeychainStore {
             kSecAttrAccount as String: key,
         ]
         SecItemDelete(query as CFDictionary)
-    }
-
-    private func accessControl() -> SecAccessControl? {
-        SecAccessControlCreateWithFlags(
-            nil,
-            kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-            .userPresence,
-            nil
-        )
     }
 }

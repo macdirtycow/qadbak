@@ -80,7 +80,7 @@ export default async function MailHubPage({ params }: Props) {
       </div>
 
       <div>
-        <h2 className="mb-3 text-sm font-medium text-panel-muted">Webmail</h2>
+        <h2 className="mb-3 text-sm font-medium text-panel-muted">Qmail</h2>
         {error && (
           <p className="mb-3 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             {error}

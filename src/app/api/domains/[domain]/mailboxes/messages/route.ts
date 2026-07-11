@@ -11,7 +11,7 @@ export async function GET(request: Request, { params }: Params) {
   try {
     const { session, domain } = await requireDomainApi((await params).domain);
     if (!(await isPremiumFeatureEnabled("webmail-ui"))) {
-      return jsonError("Built-in webmail requires Premium (webmail-ui feature).", 402);
+      return jsonError("Qmail requires Premium (webmail-ui feature).", 402);
     }
     const sp = new URL(request.url).searchParams;
     const user = sp.get("user") ?? "";
@@ -19,7 +19,7 @@ export async function GET(request: Request, { params }: Params) {
 
     if (!nativeImapEnabled()) {
       return jsonError(
-        "IMAP webmail requires Dovecot. Add imap to QADBAK_NATIVE_FEATURES in .env.local, then restart the panel.",
+        "IMAP (Qmail) requires Dovecot. Add imap to QADBAK_NATIVE_FEATURES in .env.local, then restart the panel.",
         501,
       );
     }

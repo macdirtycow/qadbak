@@ -1,6 +1,7 @@
 import { auditLog } from "@/lib/audit";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
 import { requireDomainApi } from "@/lib/domain-api";
+import { isPremiumFeatureEnabled } from "@/lib/premium/server";
 import { getProvisioner } from "@/lib/provisioner";
 import { nativeImapEnabled } from "@/lib/provisioner/native-features";
 import { runProvisioningHelper } from "@/lib/provisioner/native-exec";
@@ -13,6 +14,10 @@ export async function GET(request: Request, { params }: Params) {
   try {
     const { session, domain } = await requireDomainApi((await params).domain);
     const user = new URL(request.url).searchParams.get("user") ?? "";
+
+    if (user.trim() && !(await isPremiumFeatureEnabled("webmail-ui"))) {
+      return jsonError("Qmail requires Premium (webmail-ui feature).", 402);
+    }
 
     if (nativeImapEnabled()) {
       const raw = await runProvisioningHelper("imap-list", domain, user);

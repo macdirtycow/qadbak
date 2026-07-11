@@ -1,6 +1,7 @@
 import { handleApiError, jsonOk } from "@/lib/api";
+import { liveFilesActive } from "@/lib/domain-files-service";
+import { apnsConfigured } from "@/lib/mobile-apns";
 import { MOBILE_ACCESS_TTL_SEC } from "@/lib/mobile-auth-constants";
-import { clientRbacEnabled } from "@/middleware/client-rbac";
 import { isPremiumFeatureEnabled } from "@/lib/premium/server";
 import { requireSession } from "@/lib/session";
 
@@ -8,8 +9,12 @@ import { requireSession } from "@/lib/session";
 export async function GET() {
   try {
     const session = await requireSession();
-    const clientRbac = clientRbacEnabled();
-    const premiumWebmail = await isPremiumFeatureEnabled("webmail-ui");
+    const [clientRbac, premiumWebmail, filesActive] = await Promise.all([
+      isPremiumFeatureEnabled("client-rbac"),
+      isPremiumFeatureEnabled("webmail-ui"),
+      liveFilesActive(),
+    ]);
+    const push = apnsConfigured();
     return jsonOk({
       username: session.username,
       role: session.role,
@@ -18,9 +23,9 @@ export async function GET() {
       clientRbac,
       premiumWebmail,
       capabilities: {
-        push: true,
+        push,
         widgets: true,
-        files: true,
+        files: filesActive,
         webmail: premiumWebmail,
         clientOwnDomainsOnly: session.role === "client" && clientRbac,
       },
