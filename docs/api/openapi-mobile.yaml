@@ -1,0 +1,299 @@
+openapi: 3.0.3
+info:
+  title: Qadbak Mobile API
+  version: 1.0.0
+  description: |
+    Native app authentication and session endpoints for the Qadbak iOS client.
+    Domain operations reuse existing `/api/domains/*` routes with `Authorization: Bearer`.
+servers:
+  - url: https://panel.example.com
+paths:
+  /api/auth/mobile:
+    post:
+      summary: Mobile sign-in (password or TOTP step)
+      operationId: mobileLogin
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [username, password]
+                  properties:
+                    username:
+                      type: string
+                    password:
+                      type: string
+                    deviceLabel:
+                      type: string
+                - type: object
+                  required: [loginToken, totp]
+                  properties:
+                    loginToken:
+                      type: string
+                    totp:
+                      type: string
+                    deviceLabel:
+                      type: string
+      responses:
+        "200":
+          description: Tokens issued or TOTP challenge
+        "401":
+          description: Invalid credentials or expired challenge
+  /api/auth/mobile/refresh:
+    post:
+      summary: Rotate refresh token and issue new access token
+      operationId: mobileRefresh
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+                deviceLabel:
+                  type: string
+      responses:
+        "200":
+          description: New token pair
+        "401":
+          description: Refresh token invalid
+  /api/auth/mobile/logout:
+    post:
+      summary: Revoke refresh token(s)
+      operationId: mobileLogout
+      security:
+        - mobileBearer: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+                allDevices:
+                  type: boolean
+      responses:
+        "200":
+          description: Revoked
+  /api/mobile/v1/me:
+    get:
+      summary: Current session (username, role, domains, capabilities)
+      operationId: mobileMe
+      security:
+        - mobileBearer: []
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Not logged in
+  /api/mobile/v1/widgets/summary:
+    get:
+      summary: Health snapshot for home screen widgets
+      operationId: mobileWidgetSummary
+      security:
+        - mobileBearer: []
+      responses:
+        "200":
+          description: OK
+  /api/mobile/v1/push/register:
+    post:
+      summary: Register APNs device token
+      operationId: mobilePushRegister
+      security:
+        - mobileBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                bundleId:
+                  type: string
+                deviceLabel:
+                  type: string
+      responses:
+        "200":
+          description: Registered
+    delete:
+      summary: Unregister push token
+      operationId: mobilePushUnregister
+      security:
+        - mobileBearer: []
+      responses:
+        "200":
+          description: Unregistered
+  /api/domains/{domain}/files:
+    get:
+      summary: List files in domain home
+      operationId: mobileListFiles
+      security:
+        - mobileBearer: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: dir
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+  /api/domains/{domain}/mailboxes/messages:
+    get:
+      summary: List IMAP messages (Premium webmail-ui)
+      operationId: mobileListMailMessages
+      security:
+        - mobileBearer: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: folder
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "402":
+          description: Premium required
+  /api/domains:
+    get:
+      summary: List domains visible to the signed-in user
+      operationId: mobileListDomains
+      security:
+        - mobileBearer: []
+      responses:
+        "200":
+          description: OK
+  /api/domains/{domain}/dns:
+    get:
+      summary: List DNS records
+      operationId: mobileGetDns
+      security:
+        - mobileBearer: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Add DNS record
+      operationId: mobileAddDns
+      security:
+        - mobileBearer: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+  /api/domains/{domain}/ssl:
+    get:
+      summary: List SSL certificates
+      operationId: mobileListSsl
+      security:
+        - mobileBearer: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Request Let's Encrypt certificate
+      operationId: mobileRenewSsl
+      security:
+        - mobileBearer: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+  /api/domains/{domain}/backups:
+    get:
+      summary: List scheduled backups
+      operationId: mobileListBackups
+      security:
+        - mobileBearer: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Start on-demand backup
+      operationId: mobileStartBackup
+      security:
+        - mobileBearer: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+  /api/domains/{domain}/users:
+    get:
+      summary: List mail accounts
+      operationId: mobileListMailUsers
+      security:
+        - mobileBearer: []
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+components:
+  securitySchemes:
+    mobileBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token from POST /api/auth/mobile

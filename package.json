@@ -18,6 +18,7 @@
     "start": "next start",
     "lint": "next lint",
     "test-api": "bash scripts/test-api.sh",
+    "test:mobile-auth": "bash scripts/test-mobile-auth.sh",
     "preflight": "bash scripts/v1-test-preflight.sh",
     "post-install": "bash scripts/post-install-verify.sh",
     "update": "bash scripts/update-qadbak.sh",

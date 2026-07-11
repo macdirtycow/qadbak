@@ -7,6 +7,7 @@ const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const CSRF_EXEMPT_PREFIXES = [
   "/api/auth/login",
   "/api/auth/logout",
+  "/api/auth/mobile",
   "/api/health",
   "/api/branding",
   "/api/v1/",
@@ -45,6 +46,9 @@ export function csrfCheckFailed(request: NextRequest): boolean {
   const { pathname } = request.nextUrl;
   if (!pathname.startsWith("/api/")) return false;
   if (isCsrfExempt(pathname)) return false;
+
+  const auth = request.headers.get("authorization")?.trim();
+  if (auth && /^Bearer\s+\S+/i.test(auth)) return false;
 
   const expected = requestOrigin(request);
   if (!expected) return true;

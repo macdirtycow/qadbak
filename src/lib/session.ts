@@ -1,14 +1,16 @@
 import { SignJWT, jwtVerify } from "jose";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import type { NextRequest, NextResponse } from "next/server";
 import type { SessionPayload } from "./types";
 
 import {
   JWT_AUDIENCE,
   JWT_ISSUER,
+  bearerTokenFromAuthorizationHeader,
   sessionCookieName,
   sessionCookieNames,
 } from "./session-cookies";
+import { MOBILE_ACCESS_TTL_SEC } from "./mobile-auth-constants";
 import {
   sessionMaxAgeSec,
   sessionSameSite,
@@ -76,6 +78,19 @@ export async function createSession(payload: SessionPayload): Promise<string> {
     .sign(secretKey());
 }
 
+/** Short-lived JWT for native apps (same claims as browser session). */
+export async function createMobileAccessToken(
+  payload: SessionPayload,
+): Promise<string> {
+  return new SignJWT({ ...payload, typ: "mobile-access" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuer(JWT_ISSUER)
+    .setAudience(JWT_AUDIENCE)
+    .setIssuedAt()
+    .setExpirationTime(`${MOBILE_ACCESS_TTL_SEC}s`)
+    .sign(secretKey());
+}
+
 export async function signLoginTotpChallenge(userId: string): Promise<string> {
   return new SignJWT({ typ: "totp-login", userId })
     .setProtectedHeader({ alg: "HS256" })
@@ -121,6 +136,10 @@ export async function getSession(): Promise<SessionPayload | null> {
   for (const name of sessionCookieNames()) {
     token = jar.get(name)?.value;
     if (token) break;
+  }
+  if (!token) {
+    const hdrs = await headers();
+    token = bearerTokenFromAuthorizationHeader(hdrs.get("authorization")) ?? undefined;
   }
   if (!token) return null;
   return verifySessionToken(token);

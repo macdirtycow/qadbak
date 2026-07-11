@@ -15,6 +15,59 @@ async function loginApi(
   return res;
 }
 
+test.describe("mobile auth (Bearer)", () => {
+  test("login returns tokens and can list domains without Origin", async ({
+    request,
+  }) => {
+    const login = await request.post("/api/auth/mobile", {
+      data: { username: ADMIN.user, password: ADMIN.pass, deviceLabel: "e2e" },
+    });
+    expect(login.status()).toBe(200);
+    const body = await login.json();
+    if (body.requiresTotp) {
+      test.skip();
+      return;
+    }
+    expect(body.accessToken).toBeTruthy();
+    expect(body.refreshToken).toMatch(/^qmr_/);
+    expect(body.tokenType).toBe("Bearer");
+
+    const me = await request.get("/api/mobile/v1/me", {
+      headers: { Authorization: `Bearer ${body.accessToken}` },
+    });
+    expect(me.status()).toBe(200);
+
+    const domains = await request.get("/api/domains", {
+      headers: { Authorization: `Bearer ${body.accessToken}` },
+    });
+    expect(domains.status()).toBe(200);
+
+    const refresh = await request.post("/api/auth/mobile/refresh", {
+      data: { refreshToken: body.refreshToken },
+    });
+    expect(refresh.status()).toBe(200);
+    const refreshed = await refresh.json();
+    expect(refreshed.accessToken).toBeTruthy();
+    expect(refreshed.accessToken).not.toBe(body.accessToken);
+  });
+
+  test("Bearer POST bypasses CSRF Origin check", async ({ request }) => {
+    const login = await request.post("/api/auth/mobile", {
+      data: { username: ADMIN.user, password: ADMIN.pass },
+    });
+    const body = await login.json();
+    if (body.requiresTotp) {
+      test.skip();
+      return;
+    }
+    const res = await request.post("/api/domains/example.com/ssl", {
+      headers: { Authorization: `Bearer ${body.accessToken}` },
+      data: { host: "example.com" },
+    });
+    expect(res.status()).not.toBe(403);
+  });
+});
+
 test.describe("CSRF protection", () => {
   test("blocks mutating API without Origin", async ({ request }) => {
     await loginApi(request, ADMIN.user, ADMIN.pass);

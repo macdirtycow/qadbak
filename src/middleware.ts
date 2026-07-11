@@ -5,6 +5,7 @@ import { installFingerprintTag } from "./lib/install-salt";
 import {
   JWT_AUDIENCE,
   JWT_ISSUER,
+  bearerTokenFromAuthorizationHeader,
   sessionCookieNames,
 } from "./lib/session-cookies";
 import {
@@ -27,6 +28,8 @@ const PUBLIC_EXACT = new Set([
   "/refund",
   "/terms",
   "/api/auth/login",
+  "/api/auth/mobile",
+  "/api/auth/mobile/refresh",
   "/api/health",
   "/api/branding",
   "/api/newsletter/subscribe",
@@ -45,9 +48,20 @@ function isPublicPath(pathname: string): boolean {
   if (PUBLIC_EXACT.has(pathname)) return true;
   if (/\/git-webhook$/.test(pathname)) return true;
   if (pathname.startsWith("/api/branding")) return true;
+  if (pathname.startsWith("/api/auth/mobile")) return true;
   if (pathname.startsWith("/_next")) return true;
   if (pathname.startsWith("/assets/")) return true;
   return false;
+}
+
+function sessionTokenFromRequest(request: NextRequest): string | undefined {
+  for (const name of sessionCookieNames()) {
+    const value = request.cookies.get(name)?.value;
+    if (value) return value;
+  }
+  return bearerTokenFromAuthorizationHeader(
+    request.headers.get("authorization"),
+  ) ?? undefined;
 }
 
 function isApiV1Path(pathname: string): boolean {
@@ -106,11 +120,7 @@ export async function middleware(request: NextRequest) {
     return finish(request, NextResponse.next());
   }
 
-  let token: string | undefined;
-  for (const name of sessionCookieNames()) {
-    token = request.cookies.get(name)?.value;
-    if (token) break;
-  }
+  let token = sessionTokenFromRequest(request);
   const secret = getSecret();
 
   if (!token || !secret) {

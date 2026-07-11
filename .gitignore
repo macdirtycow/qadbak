@@ -9,6 +9,8 @@ data/branding.json
 data/branding/
 data/users.json
 data/api-keys.json
+data/mobile-refresh-tokens.json
+data/mobile-push-tokens.json
 data/cloud-credentials.json
 data/api-rate-buckets.json
 data/rate-buckets/

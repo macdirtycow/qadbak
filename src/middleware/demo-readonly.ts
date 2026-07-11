@@ -3,6 +3,8 @@ import { demoReadOnlyEnabled, isDemoUser } from "@/lib/demo-mode";
 const DEMO_AUTH_ALLOW = new Set([
   "/api/auth/login",
   "/api/auth/logout",
+  "/api/auth/mobile",
+  "/api/auth/mobile/refresh",
   "/api/demo/info",
 ]);
 
