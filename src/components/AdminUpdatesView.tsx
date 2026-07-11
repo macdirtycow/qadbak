@@ -1,7 +1,11 @@
 "use client";
 
 import { Alert, Button, Card } from "@/components/ui";
-import type { LinuxUpdateStatus, QadbakUpdateStatus } from "@/lib/updates-helper";
+import type {
+  LinuxUpdateStatus,
+  QadbakUpdateStatus,
+  UbuntuReleaseStatus,
+} from "@/lib/updates-helper";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 function formatTime(iso?: string) {
@@ -18,10 +22,15 @@ export function AdminUpdatesView() {
   const [setupError, setSetupError] = useState("");
   const [error, setError] = useState("");
   const [linux, setLinux] = useState<LinuxUpdateStatus | null>(null);
+  const [ubuntuRelease, setUbuntuRelease] = useState<UbuntuReleaseStatus | null>(
+    null,
+  );
   const [qadbak, setQadbak] = useState<QadbakUpdateStatus | null>(null);
   const [linuxJobId, setLinuxJobId] = useState<string | null>(null);
+  const [ubuntuJobId, setUbuntuJobId] = useState<string | null>(null);
   const [qadbakJobId, setQadbakJobId] = useState<string | null>(null);
   const [linuxLog, setLinuxLog] = useState("");
+  const [ubuntuLog, setUbuntuLog] = useState("");
   const [qadbakLog, setQadbakLog] = useState("");
   const [backupNote, setBackupNote] = useState("");
   const [loading, setLoading] = useState(true);
@@ -42,6 +51,20 @@ export function AdminUpdatesView() {
     setLinux(data.linux ?? null);
   }, []);
 
+  const loadUbuntuRelease = useCallback(async (refresh = false) => {
+    const q = refresh ? "?refresh=1" : "";
+    const res = await fetch(`/api/admin/updates/ubuntu-release${q}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Ubuntu release status failed.");
+    if (data.available === false) {
+      setAvailable(false);
+      setSetupError(data.error ?? "Updates helper unavailable.");
+      return;
+    }
+    setAvailable(true);
+    setUbuntuRelease(data.ubuntuRelease ?? null);
+  }, []);
+
   const loadQadbak = useCallback(async () => {
     const res = await fetch("/api/admin/updates/qadbak");
     const data = await res.json();
@@ -58,24 +81,26 @@ export function AdminUpdatesView() {
     setLoading(true);
     setError("");
     try {
-      await Promise.all([loadLinux(), loadQadbak()]);
+      await Promise.all([loadLinux(), loadUbuntuRelease(), loadQadbak()]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error.");
     } finally {
       setLoading(false);
     }
-  }, [loadLinux, loadQadbak]);
+  }, [loadLinux, loadUbuntuRelease, loadQadbak]);
 
   useEffect(() => {
     loadAll();
   }, [loadAll]);
 
   const pollJob = useCallback(
-    async (kind: "linux" | "qadbak", jobId: string) => {
+    async (kind: "linux" | "ubuntu" | "qadbak", jobId: string) => {
       const url =
         kind === "linux"
           ? `/api/admin/updates/linux?jobId=${encodeURIComponent(jobId)}`
-          : `/api/admin/updates/qadbak?jobId=${encodeURIComponent(jobId)}`;
+          : kind === "ubuntu"
+            ? `/api/admin/updates/ubuntu-release?jobId=${encodeURIComponent(jobId)}`
+            : `/api/admin/updates/qadbak?jobId=${encodeURIComponent(jobId)}`;
       const res = await fetch(url);
       const data = await res.json();
       if (!res.ok) return;
@@ -85,6 +110,12 @@ export function AdminUpdatesView() {
           setLinuxJobId(null);
           await loadLinux(true);
         }
+      } else if (kind === "ubuntu") {
+        setUbuntuLog(data.log ?? "");
+        if (data.job?.status !== "running") {
+          setUbuntuJobId(null);
+          await loadUbuntuRelease(true);
+        }
       } else {
         setQadbakLog(data.log ?? "");
         if (data.job?.status !== "running") {
@@ -93,11 +124,11 @@ export function AdminUpdatesView() {
         }
       }
     },
-    [loadLinux, loadQadbak],
+    [loadLinux, loadUbuntuRelease, loadQadbak],
   );
 
   useEffect(() => {
-    const active = linuxJobId ?? qadbakJobId;
+    const active = linuxJobId ?? ubuntuJobId ?? qadbakJobId;
     if (!active) {
       if (pollRef.current) clearInterval(pollRef.current);
       pollRef.current = null;
@@ -105,6 +136,7 @@ export function AdminUpdatesView() {
     }
     const tick = () => {
       if (linuxJobId) void pollJob("linux", linuxJobId);
+      if (ubuntuJobId) void pollJob("ubuntu", ubuntuJobId);
       if (qadbakJobId) void pollJob("qadbak", qadbakJobId);
     };
     tick();
@@ -112,11 +144,12 @@ export function AdminUpdatesView() {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [linuxJobId, qadbakJobId, pollJob]);
+  }, [linuxJobId, ubuntuJobId, qadbakJobId, pollJob]);
 
   async function post(
-    endpoint: "linux" | "qadbak",
+    endpoint: "linux" | "ubuntu" | "qadbak",
     action: "refresh" | "upgrade",
+    extra?: { targetVersion?: string },
   ) {
     const key = `${endpoint}-${action}`;
     setActing(key);
@@ -125,7 +158,7 @@ export function AdminUpdatesView() {
       const res = await fetch(`/api/admin/updates/${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, ...extra }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Action failed.");
@@ -134,6 +167,12 @@ export function AdminUpdatesView() {
         if (data.job?.id) {
           setLinuxJobId(data.job.id);
           setLinuxLog("Upgrade started…\n");
+        }
+      } else if (endpoint === "ubuntu") {
+        if (data.ubuntuRelease) setUbuntuRelease(data.ubuntuRelease);
+        if (data.job?.id) {
+          setUbuntuJobId(data.job.id);
+          setUbuntuLog("Ubuntu release upgrade started…\n");
         }
       } else {
         if (data.qadbak) setQadbak(data.qadbak);
@@ -231,6 +270,123 @@ export function AdminUpdatesView() {
         {linuxLog && (
           <pre className="mt-4 max-h-48 overflow-auto rounded-lg border border-panel-border bg-panel-bg p-3 text-xs text-panel-muted">
             {linuxLog}
+          </pre>
+        )}
+      </Card>
+
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-medium text-white">Ubuntu release upgrade</h2>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              disabled={loading || !available || !!ubuntuJobId}
+              onClick={() => post("ubuntu", "refresh")}
+            >
+              {acting === "ubuntu-refresh" ? "Checking…" : "Check upgrade path"}
+            </Button>
+            <Button
+              variant="danger"
+              disabled={
+                loading ||
+                !available ||
+                !!ubuntuJobId ||
+                !ubuntuRelease?.supported ||
+                !ubuntuRelease?.nextTarget ||
+                !ubuntuRelease?.preflightOk
+              }
+              onClick={() => {
+                const target = ubuntuRelease?.nextTarget;
+                if (!target) return;
+                const steps =
+                  ubuntuRelease?.finalTarget &&
+                  ubuntuRelease.current?.version === "22.04"
+                    ? `\n\nNote: reaching ${ubuntuRelease.finalTarget.version} requires two upgrades (22.04 → 24.04 → 26.04). This run only upgrades to ${target.version}.`
+                    : "";
+                if (
+                  !window.confirm(
+                    `Upgrade this server from Ubuntu ${ubuntuRelease?.current?.version ?? "?"} to ${target.version} (${target.codename})?\n\nThe panel will go offline for 30–90+ minutes. Customer sites and mail may be interrupted. A reboot is scheduled automatically when finished.${steps}`,
+                  )
+                ) {
+                  return;
+                }
+                void post("ubuntu", "upgrade", { targetVersion: target.version });
+              }}
+            >
+              {acting === "ubuntu-upgrade" || ubuntuJobId
+                ? "Upgrading Ubuntu…"
+                : ubuntuRelease?.nextTarget
+                  ? `Upgrade to ${ubuntuRelease.nextTarget.version}`
+                  : "Upgrade Ubuntu"}
+            </Button>
+          </div>
+        </div>
+        <p className="mt-1 text-sm text-panel-muted">
+          In-place LTS upgrade via <code className="text-xs">do-release-upgrade</code>.
+          One step at a time: 22.04→24.04, then 24.04→26.04. Install pending package
+          updates first (card above).
+        </p>
+        {ubuntuRelease && (
+          <ul className="mt-4 space-y-2 text-sm">
+            {!ubuntuRelease.supported && (
+              <li className="text-amber-400">
+                {ubuntuRelease.reason ??
+                  (ubuntuRelease.installMode === "panel-only"
+                    ? "Panel-only hosts cannot run OS release upgrades."
+                    : "Ubuntu release upgrade not available on this host.")}
+              </li>
+            )}
+            {ubuntuRelease.current && (
+              <li>
+                <span className="text-panel-muted">Current: </span>
+                <span className="text-white">
+                  {ubuntuRelease.current.pretty || ubuntuRelease.current.version}
+                </span>
+              </li>
+            )}
+            {ubuntuRelease.nextTarget ? (
+              <li>
+                <span className="text-panel-muted">Next step: </span>
+                <span className="text-white">{ubuntuRelease.nextTarget.label}</span>
+                <span className="text-panel-muted">
+                  {" "}
+                  · release offered:{" "}
+                  {ubuntuRelease.upgradeAvailable ? "yes" : "not yet / check failed"}
+                </span>
+              </li>
+            ) : (
+              <li className="text-emerald-400">
+                No further LTS in-place upgrade from Qadbak on this version.
+              </li>
+            )}
+            {ubuntuRelease.finalTarget && ubuntuRelease.current?.version === "22.04" && (
+              <li className="text-panel-muted">
+                To reach {ubuntuRelease.finalTarget.label}: upgrade to 24.04 first,
+                reboot, then run this again for 26.04.
+              </li>
+            )}
+            {ubuntuRelease.preflightIssues.length > 0 && (
+              <li>
+                <span className="text-panel-muted">Preflight: </span>
+                <ul className="mt-1 list-disc pl-5 text-amber-400">
+                  {ubuntuRelease.preflightIssues.map((issue) => (
+                    <li key={issue}>{issue}</li>
+                  ))}
+                </ul>
+              </li>
+            )}
+            {ubuntuRelease.preflightOk && ubuntuRelease.nextTarget && (
+              <li className="text-emerald-400">Preflight passed — ready to upgrade.</li>
+            )}
+            <li className="text-panel-muted">
+              Disk free on /: {ubuntuRelease.diskFreeMb ?? "—"} MB · Checked:{" "}
+              {formatTime(ubuntuRelease.checkedAt)}
+            </li>
+          </ul>
+        )}
+        {ubuntuLog && (
+          <pre className="mt-4 max-h-64 overflow-auto rounded-lg border border-panel-border bg-panel-bg p-3 text-xs text-panel-muted">
+            {ubuntuLog}
           </pre>
         )}
       </Card>

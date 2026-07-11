@@ -11,6 +11,7 @@ import { promisify } from "node:util";
 
 const exec = promisify(execFile);
 const QADBAK_DIR = process.env.QADBAK_DIR || "/opt/qadbak";
+const QADBAK_USER = process.env.QADBAK_USER || "qadbak";
 const DATA_DIR = path.join(QADBAK_DIR, "data");
 const CACHE_PATH = path.join(DATA_DIR, "linux-update-cache.json");
 const JOBS_DIR = path.join(DATA_DIR, "update-jobs");
@@ -207,6 +208,95 @@ exit $EC
   });
   child.unref();
   return { jobId, type, status: "running" };
+}
+
+async function cmdUbuntuReleaseStatus() {
+  const script = path.join(QADBAK_DIR, "scripts", "ubuntu-release-upgrade.sh");
+  if (!(await exists(script))) {
+    return {
+      ubuntuRelease: {
+        supported: false,
+        reason: "ubuntu-release-upgrade.sh not found — git pull first.",
+        checkedAt: new Date().toISOString(),
+      },
+    };
+  }
+  const cache = await readJson(CACHE_PATH);
+  const rebootRequired = await exists("/var/run/reboot-required");
+  let raw = "";
+  try {
+    raw = await run("bash", [script, "status-json"], { timeout: 120_000 });
+  } catch (e) {
+    return {
+      ubuntuRelease: {
+        supported: false,
+        reason: e.message?.slice(0, 300) ?? "status check failed",
+        checkedAt: new Date().toISOString(),
+      },
+    };
+  }
+  const status = JSON.parse(raw.trim());
+  let preflight = null;
+  if (status.nextTarget?.version) {
+    try {
+      const pfRaw = await run(
+        "bash",
+        [script, "preflight", status.nextTarget.version],
+        { timeout: 300_000 },
+      );
+      preflight = JSON.parse(pfRaw.trim());
+    } catch (e) {
+      preflight = {
+        preflightOk: false,
+        issues: [e.message?.slice(0, 200) ?? "preflight failed"],
+      };
+    }
+  }
+  return {
+    ubuntuRelease: {
+      ...status,
+      packageUpdatesPending: cache?.upgradable ?? preflight?.packageUpdatesPending ?? 0,
+      rebootRequired: rebootRequired || Boolean(preflight?.rebootRequired),
+      preflightOk: preflight?.preflightOk ?? false,
+      preflightIssues: preflight?.issues ?? status.issues ?? [],
+      checkedAt: new Date().toISOString(),
+    },
+  };
+}
+
+async function cmdUbuntuReleaseStart(target) {
+  if (!target || !/^\d{2}\.\d{2}$/.test(target)) {
+    fail("Invalid target Ubuntu version.");
+  }
+  const script = path.join(QADBAK_DIR, "scripts", "ubuntu-release-upgrade.sh");
+  if (!(await exists(script))) {
+    fail("ubuntu-release-upgrade.sh not found.");
+  }
+  let preflight;
+  try {
+    const pfRaw = await run("bash", [script, "preflight", target], {
+      timeout: 300_000,
+    });
+    preflight = JSON.parse(pfRaw.trim());
+  } catch (e) {
+    fail(`Preflight failed: ${e.message ?? e}`);
+  }
+  if (!preflight.preflightOk) {
+    fail(
+      `Preflight failed: ${(preflight.issues ?? []).join(" ") || "see admin UI"}`,
+    );
+  }
+  const jobId = `ubuntu-release-${Date.now()}`;
+  await startNohupJob(
+    jobId,
+    "ubuntu-release-upgrade",
+    `export DEBIAN_FRONTEND=noninteractive
+export PYTHONUNBUFFERED=1
+export NEEDRESTART_MODE=a
+bash ${JSON.stringify(script)} run ${JSON.stringify(target)}
+`,
+  );
+  return { job: { id: jobId, type: "ubuntu-release-upgrade", status: "running" } };
 }
 
 async function cmdLinuxUpgradeStart() {
@@ -407,7 +497,7 @@ async function main() {
   const [cmd, arg] = process.argv.slice(2);
   if (!cmd) {
     fail(
-      "Usage: ping | linux-status | linux-refresh | linux-upgrade-start | qadbak-status | qadbak-upgrade-start | job-status JOB_ID",
+      "Usage: ping | linux-status | linux-refresh | linux-upgrade-start | ubuntu-release-status | ubuntu-release-start VERSION | qadbak-status | qadbak-upgrade-start | job-status JOB_ID",
     );
   }
   let result;
@@ -423,6 +513,12 @@ async function main() {
       break;
     case "linux-upgrade-start":
       result = await cmdLinuxUpgradeStart();
+      break;
+    case "ubuntu-release-status":
+      result = await cmdUbuntuReleaseStatus();
+      break;
+    case "ubuntu-release-start":
+      result = await cmdUbuntuReleaseStart(arg);
       break;
     case "qadbak-status":
       result = await cmdQadbakStatus();

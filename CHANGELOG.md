@@ -5,6 +5,14 @@ All notable changes to Qadbak are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-06-15
+
+### Added
+
+- **Ubuntu LTS release upgrade** in Admin → Updates — in-place upgrade 22.04→24.04 or 24.04→26.04 via `do-release-upgrade`, with preflight checks, live job log, and automatic stack repair + reboot
+- `scripts/ubuntu-release-upgrade.sh` and `scripts/post-ubuntu-release-upgrade.sh`
+- API route `/api/admin/updates/ubuntu-release`
+
 ## [1.0.0] - 2026-06-15
 
 First stable release after 334 commits of active development.
@@ -36,4 +44,5 @@ sudo bash install/qadbak-install-panel.sh
 
 See [docs/LINUX-SUPPORT.md](docs/LINUX-SUPPORT.md) and [docs/QADBAK-NATIVE-INSTALL.md](docs/QADBAK-NATIVE-INSTALL.md).
 
+[1.1.0]: https://github.com/macdirtycow/qadbak/releases/tag/v1.1.0
 [1.0.0]: https://github.com/macdirtycow/qadbak/releases/tag/v1.0.0

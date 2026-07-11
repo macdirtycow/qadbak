@@ -58,8 +58,21 @@ assert_native_supported "ubuntu 22.04 native" "yes"
 assert_eq "ubuntu 22.04 php extra includes 8.1" "php8.1-fpm php8.1-cli" "$(qadbak_php_extra_apt_packages)"
 
 with_os_release 'ID=ubuntu
-VERSION_ID=26.04
+VERSION_ID=22.04
+VERSION_CODENAME=jammy
+PRETTY_NAME="Ubuntu 22.04 LTS"'
+assert_eq "ubuntu 22.04 next lts" "24.04" "$(qadbak_ubuntu_next_lts_version)"
+
+with_os_release 'ID=ubuntu
+VERSION_ID=24.04
 VERSION_CODENAME=noble
+PRETTY_NAME="Ubuntu 24.04 LTS"'
+assert_eq "ubuntu 24.04 next lts" "26.04" "$(qadbak_ubuntu_next_lts_version)"
+assert_eq "ubuntu 24.04 codename" "noble" "$(qadbak_ubuntu_lts_codename 24.04)"
+
+with_os_release 'ID=ubuntu
+VERSION_ID=26.04
+VERSION_CODENAME=resolute
 PRETTY_NAME="Ubuntu 26.04 LTS"'
 assert_native_supported "ubuntu 26.04 native" "yes"
 assert_eq "ubuntu 26.04 php extra includes 8.4" "php8.4-fpm php8.4-cli php8.4-mysql php8.4-curl php8.4-xml php8.4-mbstring php8.4-zip" "$(qadbak_php_extra_apt_packages)"

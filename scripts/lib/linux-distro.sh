@@ -79,6 +79,39 @@ qadbak_ubuntu_release_label() {
   qadbak_linux_release_label
 }
 
+# Next in-place LTS upgrade (one hop only — 22.04→24.04, 24.04→26.04).
+qadbak_ubuntu_next_lts_version() {
+  if [[ -z "$QADBAK_OS_VERSION_ID" ]]; then
+    qadbak_load_os_release || return 1
+  fi
+  [[ "$QADBAK_OS_ID" == "ubuntu" ]] || return 1
+  case "$QADBAK_OS_VERSION_ID" in
+    22.04) echo "24.04" ;;
+    24.04) echo "26.04" ;;
+    *) return 1 ;;
+  esac
+}
+
+qadbak_ubuntu_lts_codename() {
+  case "$1" in
+    22.04) echo "jammy" ;;
+    24.04) echo "noble" ;;
+    26.04) echo "resolute" ;;
+    *) echo "" ;;
+  esac
+}
+
+qadbak_ubuntu_lts_label() {
+  local ver="$1"
+  local code
+  code="$(qadbak_ubuntu_lts_codename "$ver")"
+  if [[ -n "$code" ]]; then
+    echo "Ubuntu ${ver} LTS (${code})"
+  else
+    echo "Ubuntu ${ver}"
+  fi
+}
+
 qadbak_has_apt() {
   [[ "$QADBAK_PKG_MGR" == "apt" ]] && command -v apt-get &>/dev/null
 }

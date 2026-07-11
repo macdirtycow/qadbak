@@ -77,6 +77,28 @@ The `/api/health` endpoint reports `installMode` and parsed `os` from `/etc/os-r
 
 26.04 is included in the supported list with PHP **8.4** packages. Test on release images before production cutover; package names may shift slightly.
 
+## Ubuntu LTS release upgrade (panel)
+
+From **Admin → Updates** you can run an in-place LTS upgrade on native Ubuntu VPS hosts:
+
+| From | To (one step) |
+|------|----------------|
+| 22.04 | 24.04 |
+| 24.04 | 26.04 |
+
+To go **22.04 → 26.04**, run two upgrades: 22→24, reboot, then 24→26 from the same page.
+
+**Before you start**
+
+1. Full backup of customer data (or snapshot the VPS).
+2. Install all pending **Linux packages** from the Updates tab.
+3. Reboot if `/var/run/reboot-required` is set.
+4. Ensure at least ~4 GB free on `/`.
+
+The panel runs `do-release-upgrade` non-interactively, repairs the Qadbak stack (`post-ubuntu-release-upgrade.sh`), and schedules a reboot when needed. Expect **30–90+ minutes** of downtime.
+
+Not available on **panel-only** installs or **Debian** (use Debian's own upgrade path outside Qadbak).
+
 ## Not yet supported (native stack)
 
 | Distro | Status |

@@ -17,6 +17,33 @@ export type LinuxUpdateStatus = {
   summaryLine: string;
 };
 
+export type UbuntuReleaseTarget = {
+  version: string;
+  codename: string;
+  label: string;
+};
+
+export type UbuntuReleaseStatus = {
+  supported: boolean;
+  reason?: string;
+  installMode?: string;
+  current?: {
+    version: string;
+    codename: string;
+    pretty: string;
+  };
+  nextTarget?: UbuntuReleaseTarget | null;
+  finalTarget?: UbuntuReleaseTarget | null;
+  upgradeAvailable: boolean;
+  checkSummary?: string;
+  packageUpdatesPending: number;
+  rebootRequired: boolean;
+  preflightOk: boolean;
+  preflightIssues: string[];
+  diskFreeMb?: number;
+  checkedAt: string;
+};
+
 export type QadbakUpdateStatus = {
   isGit: boolean;
   commit?: string;
@@ -42,6 +69,7 @@ type HelperPayload = {
   ok?: boolean;
   error?: string;
   linux?: LinuxUpdateStatus;
+  ubuntuRelease?: UbuntuReleaseStatus;
   fromCache?: boolean;
   qadbak?: QadbakUpdateStatus;
   job?: UpdateJobMeta;
@@ -95,6 +123,27 @@ export async function getLinuxUpdateStatus(refresh = false): Promise<{
 export async function startLinuxUpgrade(): Promise<UpdateJobMeta> {
   await requirePremiumFeature("admin-updates");
   const r = await runUpdateHelper(["linux-upgrade-start"]);
+  if (!r.job) throw new Error("No job started.");
+  return r.job;
+}
+
+export async function getUbuntuReleaseStatus(refresh = false): Promise<{
+  ubuntuRelease: UbuntuReleaseStatus;
+}> {
+  await requirePremiumFeature("admin-updates");
+  if (refresh) {
+    await runUpdateHelper(["linux-refresh"]);
+  }
+  const r = await runUpdateHelper(["ubuntu-release-status"]);
+  if (!r.ubuntuRelease) throw new Error("No Ubuntu release status returned.");
+  return { ubuntuRelease: r.ubuntuRelease };
+}
+
+export async function startUbuntuReleaseUpgrade(
+  targetVersion: string,
+): Promise<UpdateJobMeta> {
+  await requirePremiumFeature("admin-updates");
+  const r = await runUpdateHelper(["ubuntu-release-start", targetVersion]);
   if (!r.job) throw new Error("No job started.");
   return r.job;
 }
