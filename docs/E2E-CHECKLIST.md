@@ -1,35 +1,46 @@
-# E2E checklist (v1 exit)
+# Post-install QA checklist
 
-Run on a **dedicated test VPS** only (`QADBAK_LEGACY_API_MOCK=false`). Not on your live production server or any other production host.
+Use on a **test VPS** or right after a fresh install — not as a daily routine on busy production hosts.
 
-Setup: [V1-TEST-SERVER.md](./V1-TEST-SERVER.md) · Preflight: `npm run preflight`  
-Automated on **install** (real panel): `post-install-verify.sh` — [E2E-PLAYWRIGHT.md](./E2E-PLAYWRIGHT.md)  
-Automated **local** (mock): `npm run test:e2e`
+**Automated on install:** `sudo bash /opt/qadbak/scripts/post-install-verify.sh` (preflight + `/api/health` + Playwright E2E).  
+**Local dev (mock):** `npm run test:e2e`  
+Details: [E2E-PLAYWRIGHT.md](./E2E-PLAYWRIGHT.md) · Native install: [QADBAK-NATIVE-INSTALL.md](./QADBAK-NATIVE-INSTALL.md)
 
 ## Admin
 
 - [ ] Login at `/login`
-- [ ] Dashboard lists domains matching legacy hosting API
+- [ ] Dashboard loads
 - [ ] Create primary domain at `/domains/new`
-- [ ] Create sub-server at `/domains/new?type=sub`
+- [ ] Create subdomain at `/domains/new?type=sub`
 - [ ] Create alias at `/domains/new?type=alias`
-- [ ] `/admin/status` — server admin dashboard embed loads
-- [ ] `/admin/system-menu` → open a module embed
-- [ ] Resellers / plans / cloud / license pages load
+- [ ] `/admin` — Server admin loads
+- [ ] `/admin/status` — services overview
+- [ ] Premium: `/admin/updates`, resellers, license pages load
 
 ## Per domain
 
 - [ ] Overview `/domains/[domain]`
 - [ ] Email: list, create mailbox
 - [ ] DNS: view, add record
-- [ ] SSL: list certs
-- [ ] Files: embed file manager (live) or mock browser
-- [ ] Terminal: embed xterm
-- [ ] Backups: list schedules
+- [ ] SSL: Let's Encrypt issue or renew
+- [ ] Files: file manager lists domain home
+- [ ] Terminal: shell session starts
+- [ ] Backups: list / download
 - [ ] Lifecycle: disable domain (test domain only)
 
-## Client
+## Mail (native stack)
+
+- [ ] `sudo bash scripts/test-mail-send.sh DOMAIN info you@example.com`
+- [ ] `sudo bash scripts/test-mail-receive.sh DOMAIN info`
+- [ ] SPF/DKIM/DMARC helpers visible in panel
+
+## Client (if created at install)
 
 - [ ] Login as client with scoped `domains`
 - [ ] Only assigned domains visible
 - [ ] Cannot access `/admin`
+
+## Mobile / Premium (optional)
+
+- [ ] `sudo bash scripts/check-mobile-readiness.sh DOMAIN info`
+- [ ] iOS app sign-in against `https://panel-host` — [MOBILE-IOS-APP.md](./MOBILE-IOS-APP.md)

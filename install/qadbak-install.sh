@@ -275,6 +275,10 @@ if [[ -n "${QADBAK_LICENSE_KEY:-}" ]]; then
     echo "  OK — Premium license active on this server"
     sudo -u "$QADBAK_USER" bash -c "set -a && source '$ENV_FILE' && set +a && node '$QADBAK_DIR/scripts/qadbak-license-cli.mjs' heartbeat" 2>/dev/null || true
     bash "$QADBAK_DIR/scripts/pm2-restart-qadbak.sh" 2>/dev/null || true
+    if [[ -f "$QADBAK_DIR/scripts/repair-panel-premium.sh" ]]; then
+      echo "==> Premium + mobile app setup"
+      bash "$QADBAK_DIR/scripts/repair-panel-premium.sh" || echo "  WARN: repair-panel-premium.sh failed" >&2
+    fi
   else
     echo "  WARN: license activation failed on install." >&2
     echo "    Common fixes:" >&2
@@ -298,6 +302,11 @@ echo " Panel: https://$PANEL_HOST/login"
 [[ -n "$PANEL_ALT_PORT" ]] && echo "        http://${ORIGIN_IP}:${PANEL_ALT_PORT}/login"
 echo " User:  $QB_USER"
 echo " Re-verify: sudo bash $QADBAK_DIR/scripts/post-install-verify.sh"
+echo " Updates:   sudo bash $QADBAK_DIR/scripts/update-qadbak.sh"
 [[ "$ADD_CLIENT" =~ ^[Yy]$ ]] && echo " Client: $CLIENT_USER"
 [[ "$VERIFY_OK" -eq 1 ]] && echo " Post-install: PASSED" || echo " Post-install: check warnings above"
+echo ""
+echo " Optional: sudo bash $QADBAK_DIR/scripts/configure-ufw-qadbak.sh"
+echo " iOS app:  docs/MOBILE-IOS-APP.md (HTTPS + Premium)"
+echo " Guide:    docs/QADBAK-NATIVE-INSTALL.md"
 echo "============================================"

@@ -29,6 +29,14 @@ E2E_ADMIN_USER="${E2E_ADMIN_USER:-${QADBAK_E2E_ADMIN_USER:-admin}}"
 E2E_ADMIN_PASS="${E2E_ADMIN_PASS:-${QADBAK_E2E_ADMIN_PASS:-}}"
 E2E_ADMIN_PASS="${E2E_ADMIN_PASS//$'\r'/}"
 
+if [[ -z "${E2E_ALLOW_MOCK:-}" ]] && [[ -f "$ROOT/.env.local" ]]; then
+  INSTALL_MODE="$(grep '^QADBAK_INSTALL_MODE=' "$ROOT/.env.local" 2>/dev/null | cut -d= -f2- || true)"
+  MOCK_MODE="$(grep '^QADBAK_LEGACY_API_MOCK=' "$ROOT/.env.local" 2>/dev/null | cut -d= -f2- | tr '[:upper:]' '[:lower:]' || true)"
+  if [[ "$INSTALL_MODE" == "panel-only" && "$MOCK_MODE" == "true" ]]; then
+    export E2E_ALLOW_MOCK=1
+  fi
+fi
+
 if [[ -z "$E2E_ADMIN_PASS" ]] && [[ "$(id -u)" -eq 0 ]]; then
   bash "$ROOT/scripts/sync-e2e-credentials.sh" 2>/dev/null || \
     bash "$ROOT/scripts/ensure-install-test-env.sh" 2>/dev/null || true
@@ -92,7 +100,8 @@ if ! compgen -G "$PW_CACHE/chromium"* >/dev/null 2>&1; then
 fi
 
 echo "==> Install E2E → $E2E_BASE_URL (user $E2E_ADMIN_USER)"
-run_as_user env E2E_INSTALL_VERIFY=1 E2E_BASE_URL="$E2E_BASE_URL" E2E_PORT="$E2E_PORT" \
+run_as_user env E2E_INSTALL_VERIFY=1 E2E_ALLOW_MOCK="${E2E_ALLOW_MOCK:-}" \
+  E2E_BASE_URL="$E2E_BASE_URL" E2E_PORT="$E2E_PORT" \
   E2E_ADMIN_USER="$E2E_ADMIN_USER" E2E_ADMIN_PASS="$E2E_ADMIN_PASS" \
   E2E_CLIENT_USER="${E2E_CLIENT_USER:-}" E2E_CLIENT_PASS="${E2E_CLIENT_PASS:-}" \
   bash -c "cd '$ROOT' && npx playwright test e2e/install-verify.spec.ts"

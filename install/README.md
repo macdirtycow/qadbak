@@ -32,16 +32,36 @@ UI without nginx/mail/BIND on this host — mock demo or hybrid remote API.
 sudo bash install/qadbak-install-panel.sh
 ```
 
+Mock mode is for UI development only. Production hosting uses the full native installer above.
+
 ## After install
 
 ```bash
+# Stay current (pull, rebuild, pm2 restart, license heartbeat)
 sudo bash /opt/qadbak/scripts/update-qadbak.sh
+
+# Re-run automated checks
+sudo bash /opt/qadbak/scripts/post-install-verify.sh
 
 # Panel unreachable (Cloudflare 520) after update:
 sudo bash /opt/qadbak/scripts/fix-panel-now.sh
 curl -s http://127.0.0.1:3000/api/health
-bash /opt/qadbak/scripts/audit-vm-dependency.sh
 ```
+
+**Optional (recommended on production VPS):**
+
+```bash
+# UFW: SSH + 80/443 (+ optional alt panel port)
+sudo bash /opt/qadbak/scripts/configure-ufw-qadbak.sh
+
+# Premium on an existing Core install
+sudo bash /opt/qadbak/scripts/buy-premium.sh QAD-XXXX-YYYY-ZZZZ-WWWW
+
+# iOS app readiness (HTTPS + Premium + Qmail)
+sudo bash /opt/qadbak/scripts/check-mobile-readiness.sh YOUR_DOMAIN info
+```
+
+Manual QA checklist: [docs/E2E-CHECKLIST.md](../docs/E2E-CHECKLIST.md). iOS app: [docs/MOBILE-IOS-APP.md](../docs/MOBILE-IOS-APP.md).
 
 ## Environment
 

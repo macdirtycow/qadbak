@@ -13,7 +13,7 @@
 #   1. Pull latest Qadbak (carries any unreleased Core + Premium fixes)
 #   2. Rebuild + restart pm2 as the qadbak user
 #   3. Activate the key against license.omiiba.dev
-#   4. Print the post-install summary with the URL to open
+#   4. Run repair-panel-premium (Qmail, mobile API, license sync)
 #
 # Idempotent: safe to re-run if any step fails.
 
@@ -45,13 +45,13 @@ fi
 
 step() { echo ""; echo "==> $*"; }
 
-step "1/3 Pull latest Qadbak"
+step "1/4 Pull latest Qadbak"
 cd "$ROOT"
 bash "$ROOT/scripts/reset-git-drift-before-pull.sh"
 bash "$ROOT/scripts/git-sync-origin.sh"
 bash "$ROOT/scripts/fix-qadbak-ownership.sh"
 
-step "2/3 Rebuild and restart"
+step "2/4 Rebuild and restart"
 sudo -u "$USER" bash -c "cd '$ROOT' && npm install && npm run build"
 sudo -u "$USER" bash "$ROOT/scripts/pm2-restart-qadbak.sh"
 
@@ -59,7 +59,7 @@ sudo -u "$USER" bash "$ROOT/scripts/pm2-restart-qadbak.sh"
 # license server and writes to data/license.json which the panel reads.
 sleep 2
 
-step "3/3 Activate license"
+step "3/4 Activate license"
 ACTIVATE_OUT=$(sudo -u "$USER" bash -c "cd '$ROOT' && node scripts/qadbak-license-cli.mjs activate '$KEY'" 2>&1) || {
   echo "$ACTIVATE_OUT" >&2
   echo "License activation failed. Common causes:" >&2
@@ -69,10 +69,16 @@ ACTIVATE_OUT=$(sudo -u "$USER" bash -c "cd '$ROOT' && node scripts/qadbak-licens
 }
 echo "$ACTIVATE_OUT"
 
+step "4/4 Premium + mobile app setup"
+if [[ -f "$ROOT/scripts/repair-panel-premium.sh" ]]; then
+  bash "$ROOT/scripts/repair-panel-premium.sh" || echo "  WARN: repair-panel-premium.sh failed" >&2
+fi
+
 echo ""
 echo "──────────────────────────────────────────────────────────────"
 echo "  Premium is now active on this server."
 echo ""
 echo "  Open:   https://$(hostname -f)/admin/license"
 echo "  Try:    /admin/updates, /admin/clients, /admin/resellers"
+echo "  iOS:    docs/MOBILE-IOS-APP.md — TestFlight via support@omiiba.dev"
 echo "──────────────────────────────────────────────────────────────"

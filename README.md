@@ -42,7 +42,7 @@ cd /opt/qadbak
 sudo bash install/qadbak-install.sh
 ```
 
-Three prompts (hostname, admin password, Let's Encrypt email) and you're done.
+Three prompts to start (hostname, admin password, Let's Encrypt email) — then mail hostname, public IP, and optional Premium license and demo client. Post-install verification runs automatically.
 
 ## Features
 
@@ -151,11 +151,11 @@ The installer:
 2. Clones Qadbak to `/opt/qadbak`, runs `npm install && npm run build`.
 3. Creates the system user `qadbak`, sets up pm2 + systemd.
 4. Generates a `SESSION_SECRET`, writes `/opt/qadbak/.env.local`.
-5. Asks once for your admin password and writes `data/users.json`.
+5. Asks for panel hostname, mail hostname, public IP, admin password, optional Premium license, optional demo client.
 6. Optionally issues a Let's Encrypt certificate for the panel host.
 7. Runs `post-install-verify.sh` (preflight + API + optional Playwright E2E).
 
-When it's done, open `https://your-panel-host/login`.
+When it's done, open `https://your-panel-host/login`. Optional: `sudo bash scripts/configure-ufw-qadbak.sh` for UFW. Native iOS app (beta): [docs/MOBILE-IOS-APP.md](docs/MOBILE-IOS-APP.md).
 
 ### Panel-only (any Linux + Node 20+)
 

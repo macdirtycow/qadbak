@@ -69,7 +69,11 @@ bash "$QADBAK_DIR/scripts/pm2-restart-qadbak.sh"
 env PATH="$PATH:/usr/bin" pm2 startup systemd -u "$QADBAK_USER" --hp "$QADBAK_DIR" | tail -1 | bash || true
 
 if [[ -n "${QADBAK_LICENSE_KEY:-}" ]]; then
-  sudo -u "$QADBAK_USER" node "$QADBAK_DIR/scripts/qadbak-license-cli.mjs" activate "$QADBAK_LICENSE_KEY" || true
+  if sudo -u "$QADBAK_USER" node "$QADBAK_DIR/scripts/qadbak-license-cli.mjs" activate "$QADBAK_LICENSE_KEY"; then
+    if [[ -f "$QADBAK_DIR/scripts/repair-panel-premium.sh" ]]; then
+      bash "$QADBAK_DIR/scripts/repair-panel-premium.sh" || true
+    fi
+  fi
 fi
 
 bash "$QADBAK_DIR/scripts/post-install-verify.sh"

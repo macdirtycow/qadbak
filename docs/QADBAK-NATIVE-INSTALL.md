@@ -72,3 +72,21 @@ sudo bash scripts/apply-all-php-fpm-pools.sh   # existing domains
 New domains: pool + nginx vhost are applied on create. Change PHP version in the panel → pool and vhost refresh automatically.
 
 See [IMAP-NATIVE.md](./IMAP-NATIVE.md) and [MIGRATE-FROM-LEGACY-HOSTING.md](./MIGRATE-FROM-LEGACY-HOSTING.md).
+
+## Post-install (customers)
+
+After `install/qadbak-install.sh` finishes, verification runs automatically via `scripts/post-install-verify.sh` (API health + optional Playwright E2E).
+
+| Task | Command |
+|------|---------|
+| Stay updated | `sudo bash /opt/qadbak/scripts/update-qadbak.sh` |
+| Re-verify | `sudo bash /opt/qadbak/scripts/post-install-verify.sh` |
+| Firewall (optional) | `sudo bash /opt/qadbak/scripts/configure-ufw-qadbak.sh` |
+| Activate Premium later | `sudo bash /opt/qadbak/scripts/buy-premium.sh YOUR-KEY` |
+| Panel fix (520 / down) | `sudo bash /opt/qadbak/scripts/fix-panel-now.sh` |
+
+**Mail:** open **Domains → Email** for DNS records (MX, SPF, DKIM). Port **25** must be open at your provider and in UFW if you use it.
+
+**iOS app (public beta):** needs HTTPS on the panel, Premium license (Qmail/webmail), and mobile API v1.1+. See [MOBILE-IOS-APP.md](./MOBILE-IOS-APP.md). TestFlight access: `support@omiiba.dev`.
+
+**Manual QA:** [E2E-CHECKLIST.md](./E2E-CHECKLIST.md) — create a test domain, mailbox, and DNS record in the panel.

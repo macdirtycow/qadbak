@@ -23,12 +23,16 @@ async function login(
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 });
 }
 
-test("health reports live (non-mock) mode", async ({ request }) => {
+test("health reports expected provisioner mode", async ({ request }) => {
   const res = await request.get("/api/health");
   expect(res.status()).toBe(200);
   const body = await res.json();
   expect(body.ok).toBe(true);
-  expect(body.mock).toBe(false);
+  if (process.env.E2E_ALLOW_MOCK === "1") {
+    expect(body.mock).toBe(true);
+  } else {
+    expect(body.mock).toBe(false);
+  }
 });
 
 test("marketing and about pages", async ({ page }) => {

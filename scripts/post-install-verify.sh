@@ -66,6 +66,10 @@ if [[ "${QADBAK_SKIP_INSTALL_E2E:-}" == "1" ]]; then
   E2E_OK=1
 elif [[ -f "$ROOT/scripts/run-install-e2e.sh" ]]; then
   echo "==> Playwright E2E (installed panel)"
+  if [[ "$INSTALL_MODE" == "panel-only" && "$MOCK_MODE" == "true" ]]; then
+    export E2E_ALLOW_MOCK=1
+    echo "  panel-only mock — E2E expects mock health"
+  fi
   if [[ "$(id -u)" -ne 0 ]]; then
     echo "  WARN install E2E skipped — Playwright system libs need root (qadbak has no sudo password):" >&2
     echo "    sudo bash $ROOT/scripts/run-install-e2e.sh" >&2
@@ -97,6 +101,17 @@ if [[ "$E2E_OK" -eq 1 ]]; then
 else
   echo " Post-install verification: PASSED (E2E optional — see warning above)"
 fi
-echo " Optional manual checks: docs/E2E-CHECKLIST.md"
-echo "   (create test domain, mail, DNS in the panel)"
+echo ""
+echo " Next steps for customers:"
+echo "   Updates:  sudo bash $ROOT/scripts/update-qadbak.sh"
+echo "   Re-check: sudo bash $ROOT/scripts/post-install-verify.sh"
+if [[ "$INSTALL_MODE" != "panel-only" ]]; then
+  echo "   Firewall (optional): sudo bash $ROOT/scripts/configure-ufw-qadbak.sh"
+  echo "   Mail test: sudo bash $ROOT/scripts/test-mail-send.sh YOUR_DOMAIN info you@example.com"
+fi
+if [[ "$INSTALL_MODE" != "panel-only" ]] || [[ "$MOCK_MODE" != "true" ]]; then
+  echo "   iOS app:    docs/MOBILE-IOS-APP.md (HTTPS + Premium for Qmail)"
+  echo "   Premium:    sudo bash $ROOT/scripts/buy-premium.sh YOUR-LICENSE-KEY"
+fi
+echo "   Manual QA:  docs/E2E-CHECKLIST.md"
 echo "============================================"

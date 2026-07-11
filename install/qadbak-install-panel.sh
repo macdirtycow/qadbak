@@ -189,5 +189,11 @@ else
 fi
 echo " User:  $QB_USER"
 [[ "$VERIFY_OK" -eq 1 ]] && echo " Verify: PASSED" || echo " Verify: check warnings above"
-echo " Docs:  docs/LINUX-SUPPORT.md"
+echo " Updates: sudo bash $QADBAK_DIR/scripts/update-qadbak.sh"
+if [[ "$PROV_MODE" == "2" ]]; then
+  echo " Hybrid: domains come from your remote legacy API"
+else
+  echo " Mock:   UI demo only — use install/qadbak-install.sh for real hosting"
+fi
+echo " Docs:   docs/LINUX-SUPPORT.md"
 echo "============================================"
