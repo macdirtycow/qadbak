@@ -12,6 +12,7 @@ Some advanced modules are gated by a paid license key issued by
 - Multi-tenant client management (clients table, panel-vhost provisioning)
 - Per-user PHP-FPM isolation
 - Live admin updates (Qadbak version upgrades from the panel)
+- Ubuntu LTS release upgrade (22.04→24.04, 24.04→26.04) from Admin → Updates
 - Advanced RBAC
 - Reseller plans
 

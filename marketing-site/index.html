@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Qadbak — Self-hosted hosting control panel for Ubuntu</title>
+    <title>Qadbak — Self-hosted hosting control panel for Linux</title>
     <meta
       name="description"
-      content="Self-hosted hosting panel for Ubuntu: Site tools, newsletters, one-click apps, REST API, offsite backups, WAF, TOTP 2FA, and a live demo at demo.qadbak.com. Premium from €2.50/month."
+      content="Self-hosted hosting panel for Ubuntu and Debian: Jellyfin media, 25 one-click apps, Ubuntu LTS upgrade from the panel, Site tools, REST API, and a live demo at demo.qadbak.com. Premium from €2.50/month."
     />
     <meta name="theme-color" content="#0f1419" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -20,7 +20,7 @@
     <meta property="og:title" content="Qadbak — Hosting control panel" />
     <meta
       property="og:description"
-      content="Run your own panel on Ubuntu — app catalog, API v1, backups, security, and GDPR-friendly admin tools on your VPS."
+      content="Run your own panel on Ubuntu or Debian — Jellyfin, media library, app catalog, API v1, Ubuntu LTS upgrades, and GDPR-friendly admin tools on your VPS."
     />
     <meta property="og:url" content="https://qadbak.com" />
   </head>
@@ -45,6 +45,7 @@
           </nav>
           <div class="nav-actions">
             <a href="https://demo.qadbak.com/login" class="btn btn-secondary" rel="noopener">Live demo</a>
+            <a href="https://github.com/macdirtycow/qadbak/releases" class="btn btn-secondary" rel="noopener">Releases</a>
             <a href="https://github.com/macdirtycow/qadbak" class="btn btn-secondary" rel="noopener">GitHub</a>
             <a href="https://license.omiiba.dev/buy" class="btn btn-primary" rel="noopener">Premium plans</a>
             <button type="button" class="nav-toggle" aria-label="Menu" aria-expanded="false">
@@ -75,7 +76,7 @@
       <section class="hero">
         <div class="container hero-grid">
           <div>
-            <p class="eyebrow">Open-core · Ubuntu 22.04 / 24.04 · Netherlands</p>
+            <p class="eyebrow">Open-core · Ubuntu 22.04 / 24.04 / 26.04 · Debian 12 · v1.1.0</p>
             <h1>Hosting control panel you run on your own VPS.</h1>
             <p class="hero-lead">
               Qadbak replaces cPanel-style workflows on your VPS: sites, mail, DNS, TLS,
@@ -101,10 +102,13 @@
           <aside class="hero-aside">
             <h2>What’s new</h2>
             <ul>
+              <li><strong>Ubuntu LTS upgrade</strong> — 22.04→24.04 or 24.04→26.04 from Admin → Updates (Premium)</li>
+              <li><strong>Media</strong> — Jellyfin one-click, domain media library, HTML5 quick player</li>
+              <li><strong>Linux installs</strong> — native stack on Debian 12 + Ubuntu 26.04; panel-only on any Linux + Node 20+</li>
               <li><strong>Live demo</strong> — <a href="https://demo.qadbak.com/login" rel="noopener">demo.qadbak.com</a> (read-only panel tour)</li>
               <li><strong>Site tools</strong> — deliverability, Git deploy, staging, analytics, support tickets</li>
               <li><strong>Newsletter</strong> — subscribers, campaigns, open/click tracking, GDPR export</li>
-              <li><strong>App store</strong> — 24 one-click apps (CMS, shops, wiki, forums, gallery, helpdesk, finance)</li>
+              <li><strong>App store</strong> — 25 one-click apps (CMS, shops, wiki, forums, Jellyfin, gallery, helpdesk)</li>
               <li>REST API v1 + scoped API keys (WHMCS / Blesta starters)</li>
               <li>Local backups + restore wizard (offsite upload → Premium)</li>
               <li>ModSecurity WAF, ClamAV, fail2ban, metrics &amp; alert webhooks</li>
@@ -161,8 +165,12 @@
               <p>Node, Python, and Docker compose helpers beside PHP-FPM — one pool per customer unix user (Ghost uses Node 18+).</p>
             </article>
             <article class="card">
+              <h3>Media library</h3>
+              <p>Jellyfin one-click (Docker on <span class="code-chip">media.domain</span>), upload folder per domain, disk usage, and an in-panel HTML5 player for MP4/WebM — no extra app required for quick streams.</p>
+            </article>
+            <article class="card">
               <h3>App store</h3>
-              <p>24 installable apps with search, categories, and one-click flow — Server admin → App store or per-domain Apps tab.</p>
+              <p>25 installable apps with search, categories, and one-click flow — Server admin → App store or per-domain Apps tab.</p>
             </article>
             <article class="card">
               <h3>Trust &amp; privacy</h3>
@@ -184,11 +192,11 @@
           <div class="grid-2">
             <article class="card">
               <h3>What you can explore</h3>
-              <p>Dashboard, domain DNS/SSL/files, mail accounts &amp; newsletter, Site tools tabs, backups UI, security, and Premium-gated screens (visible to demo admin).</p>
+              <p>Dashboard, domain DNS/SSL/files, mail accounts &amp; newsletter, Site tools, <strong>Media library</strong>, backups UI, security, and Premium-gated screens (visible to demo admin).</p>
             </article>
             <article class="card">
               <h3>Run your own copy</h3>
-              <p>Clone the repo, run the installer on Ubuntu 22.04/24.04, or enable the demo host on your VPS with <span class="code-chip">sudo bash scripts/apply-demo-vhost.sh</span> — see <code>docs/DEMO.md</code> on GitHub.</p>
+              <p>Clone the repo, run the installer on Ubuntu 22.04/24.04/26.04 or Debian 12, or use panel-only on any Linux with Node 20+. Enable the demo host with <span class="code-chip">sudo bash scripts/apply-demo-vhost.sh</span> — see <code>docs/DEMO.md</code> on GitHub.</p>
             </article>
           </div>
           <div class="hero-cta" style="margin-top: 2rem">
@@ -201,20 +209,20 @@
       <section id="apps" class="alt-bg app-store-section">
         <div class="container">
           <p class="section-label">App store</p>
-          <h2 class="section-title">24 apps you can install today</h2>
+          <h2 class="section-title">25 apps you can install today</h2>
           <p class="section-lead">
             Real installers on your VPS — not placeholders. Browse by category in
             <strong>Server admin → App store</strong>, or pick an app on any domain’s
             <strong>Apps</strong> tab. MySQL is created when needed; every install is journaled.
           </p>
           <p class="section-lead app-store-honesty">
-            <strong>Scope:</strong> 24 maintained apps (CMS, shops, collaboration, education, media, support) —
+            <strong>Scope:</strong> 25 maintained apps (CMS, shops, collaboration, education, media, support) —
             not a Softaculous-scale catalog of hundreds of scripts. We add installers after they
             pass on real Ubuntu VPS installs; use SSH or your own scripts for anything else.
           </p>
           <div class="app-store-hero">
             <div>
-              <p class="app-store-stat">24</p>
+              <p class="app-store-stat">25</p>
               <p class="app-store-stat-label">installable apps</p>
             </div>
             <div>
@@ -251,6 +259,7 @@
             <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">📕</span><div><h3>BookStack</h3><p class="app-chip-cat">Collaboration</p><p>Docs &amp; knowledge base</p></div></article>
             <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">💰</span><div><h3>Firefly III</h3><p class="app-chip-cat">Finance</p><p>Budgeting &amp; expenses</p></div></article>
             <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">🎫</span><div><h3>osTicket</h3><p class="app-chip-cat">Support</p><p>Helpdesk tickets</p></div></article>
+            <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">🎬</span><div><h3>Jellyfin</h3><p class="app-chip-cat">Media</p><p>Movie/TV server · Docker</p></div></article>
             <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">⚙️</span><div><h3>ProcessWire</h3><p class="app-chip-cat">CMS</p><p>Flexible field-based CMS</p></div></article>
           </div>
           <p class="section-lead" style="margin-top: 2rem; margin-bottom: 0">
@@ -355,6 +364,10 @@
               <p>Public probe plus origin checks — hints for Cloudflare 502/523 and one-click repair on the server.</p>
             </article>
             <article class="card">
+              <h3>Ubuntu LTS upgrades</h3>
+              <p>Premium: move 22.04→24.04 or 24.04→26.04 from Admin → Updates — preflight, background job log, stack repair, reboot.</p>
+            </article>
+            <article class="card">
               <h3>Site tools</h3>
               <p>Deliverability dashboard, Git deploy with webhooks, staging promote, bandwidth history, CI pipeline hooks, and light billing — one screen per domain.</p>
             </article>
@@ -412,7 +425,7 @@
                 <td><span class="tag">Premium</span></td>
               </tr>
               <tr>
-                <td>In-panel admin updates</td>
+                <td>In-panel admin updates + Ubuntu LTS upgrade</td>
                 <td>—</td>
                 <td><span class="tag">Premium</span></td>
               </tr>
@@ -427,7 +440,7 @@
                 <td>—</td>
               </tr>
               <tr>
-                <td>App store (24 one-click apps)</td>
+                <td>App store (25 one-click apps)</td>
                 <td><span class="tag tag-free">Included</span></td>
                 <td>—</td>
               </tr>
@@ -512,7 +525,7 @@
                 <tr><td>Client + admin UI</td><td class="yes">Native</td><td>WHM + cPanel</td><td>Yes</td><td>Yes</td></tr>
                 <tr><td>Full backup export</td><td class="yes">Yes</td><td>Add-ons</td><td>Add-ons</td><td>Basic</td></tr>
                 <tr><td>Action journal + undo</td><td class="yes">Mail, DNS</td><td>No</td><td>Limited</td><td>No</td></tr>
-                <tr><td>App store (one-click)</td><td class="yes">24 curated apps</td><td>Softaculous (400+)</td><td>Catalog</td><td>Limited</td></tr>
+                <tr><td>App store (one-click)</td><td class="yes">25 curated apps + Jellyfin</td><td>Softaculous (400+)</td><td>Catalog</td><td>Limited</td></tr>
                 <tr><td>Admin 2FA + privacy report</td><td class="yes">TOTP + local log</td><td>Add-ons</td><td>Varies</td><td>No</td></tr>
               </tbody>
             </table>
@@ -528,12 +541,12 @@
             <div class="step">
               <div class="step-num">1</div>
               <h3>VPS + DNS</h3>
-              <p>Ubuntu 22.04 or 24.04, 1 GB+ RAM. Point your panel hostname A-record to the server.</p>
+              <p>Ubuntu 22.04 / 24.04 / 26.04 or Debian 12, 1 GB+ RAM. Point your panel hostname A-record to the server. Panel-only UI: any Linux + Node 20+.</p>
             </div>
             <div class="step">
               <div class="step-num">2</div>
               <h3>Installer</h3>
-              <p><span class="code">sudo bash install/qadbak-install.sh</span> from the GitHub repo. Stack + panel + TLS.</p>
+              <p><span class="code">sudo bash install/qadbak-install.sh</span> (full stack) or <span class="code">install/qadbak-install-panel.sh</span> (UI only). Pin a release: <span class="code">git checkout v1.1.0</span>.</p>
             </div>
             <div class="step">
               <div class="step-num">3</div>
@@ -586,10 +599,10 @@
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
-                Why only 24 apps — not like Softaculous?
+                Why only 25 apps — not like Softaculous?
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
-              <div class="faq-a">Softaculous bundles hundreds of third-party installers; Qadbak ships a <strong>growing, tested set of 24 apps</strong> (WordPress, Joomla, Drupal, Nextcloud, Moodle, Roundcube, BookStack, Piwigo, osTicket, Firefly III, shops, wikis, forums, surveys, phpMyAdmin, Adminer, …) with real shell installers and journal/rollback on your VPS. That keeps support predictable. Need more? Install manually via SSH, Docker, or your own scripts — the panel still handles the site, mail, and TLS around it.</div>
+              <div class="faq-a">Softaculous bundles hundreds of third-party installers; Qadbak ships a <strong>growing, tested set of 25 apps</strong> (WordPress, Joomla, Drupal, Nextcloud, Moodle, Roundcube, BookStack, Piwigo, Jellyfin, osTicket, Firefly III, shops, wikis, forums, surveys, phpMyAdmin, Adminer, …) with real shell installers and journal/rollback on your VPS. That keeps support predictable. Need more? Install manually via SSH, Docker, or your own scripts — the panel still handles the site, mail, and TLS around it.</div>
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
@@ -617,7 +630,7 @@
                 Which apps can I install with one click?
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
-              <div class="faq-a">Twenty-four apps including WordPress, Joomla, Drupal, Nextcloud, Moodle, Roundcube, BookStack, Piwigo, osTicket, Firefly III, shops, wikis, forums, and more. Open <strong>Server admin → App store</strong> or <strong>Domains → [domain] → Apps</strong>. Ghost needs Node 18+; Grav, DokuWiki, and Adminer need no MySQL; most others use a database created by the panel during install.</div>
+              <div class="faq-a">Twenty-five apps including WordPress, Joomla, Drupal, Nextcloud, Moodle, Roundcube, BookStack, Piwigo, Jellyfin, osTicket, Firefly III, shops, wikis, forums, and more. Open <strong>Server admin → App store</strong> or <strong>Domains → [domain] → Apps</strong>. Ghost needs Node 18+; Grav, DokuWiki, and Adminer need no MySQL; Jellyfin uses Docker; most others use a database created by the panel during install.</div>
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
@@ -625,6 +638,20 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
               <div class="faq-a">Point <span class="code">panel</span> A-record to your VPS. Use SSL mode <strong>Flexible</strong> until Let's Encrypt succeeds, then <strong>Full</strong>. After updates run <span class="code">sudo bash scripts/fix-panel-now.sh</span> on the server — see <a href="https://github.com/macdirtycow/qadbak/blob/main/docs/CLOUDFLARE.md" rel="noopener">docs/CLOUDFLARE.md</a>.</div>
+            </div>
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false">
+                Which Linux versions are supported?
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="faq-a"><strong>Native full stack:</strong> Ubuntu 22.04, 24.04, or 26.04 LTS and Debian 12. <strong>Panel-only:</strong> any Linux with Node.js 20+ (mock demo or hybrid remote API). See <a href="https://github.com/macdirtycow/qadbak/blob/main/docs/LINUX-SUPPORT.md" rel="noopener">LINUX-SUPPORT.md</a> on GitHub.</div>
+            </div>
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false">
+                Can I upgrade Ubuntu from the panel?
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="faq-a">Yes — with <strong>Premium</strong>, native Ubuntu VPS hosts can run an in-place LTS upgrade (22.04→24.04, then 24.04→26.04) from <strong>Admin → Updates</strong>. Snapshot your VPS first; expect 30–90+ minutes downtime and an automatic reboot. Install pending package updates before starting.</div>
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
@@ -676,6 +703,7 @@
         <span>© 2026 Omiiba</span>
         <div class="footer-legal">
           <a href="https://github.com/macdirtycow/qadbak" rel="noopener">Source</a>
+          <a href="https://github.com/macdirtycow/qadbak/releases" rel="noopener">Releases</a>
           <a href="mailto:support@omiiba.dev">support@omiiba.dev</a>
         </div>
       </div>

@@ -23,4 +23,6 @@ Install: [install/qadbak-install.sh](../install/qadbak-install.sh)
 
 Panel-only (no stack): [install/qadbak-install-panel.sh](../install/qadbak-install-panel.sh)
 
+**Ubuntu LTS upgrade:** Premium admins can move 22.04→24.04 or 24.04→26.04 from Admin → Updates — see [LINUX-SUPPORT.md](./LINUX-SUPPORT.md#ubuntu-lts-release-upgrade-panel).
+
 Commercial Premium is delivered via the **license server** after you activate a key in the panel — not via a separate public GitHub repository. See [COMMERCIAL-LICENSING.md](../COMMERCIAL-LICENSING.md).

@@ -6,9 +6,12 @@ Server admins manage the VPS from **Qadbak** — not the server admin dashboard 
 
 | Route | What |
 |-------|------|
+| `/admin/updates` | Qadbak pull/rebuild, apt package updates, **Ubuntu LTS release upgrade** (Premium, native Ubuntu) |
 | `/admin/status` | CPU, RAM, disk, firewall (`/proc`, `df`, `ufw`) + services |
 | `/admin/server` | Start / stop / restart allowlisted systemd units |
 | `/admin/resellers`, `/admin/plans`, … | legacy hosting API API via `getProvisioner()` |
+
+See [LINUX-SUPPORT.md](./LINUX-SUPPORT.md#ubuntu-lts-release-upgrade-panel) for Ubuntu LTS upgrade preflight and downtime notes.
 
 ## Native service control
 

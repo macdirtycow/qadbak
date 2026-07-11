@@ -18,6 +18,14 @@ Shipped on `main` for native VPS installs. Phases 1–8 have checklists in `docs
 
 The phase roadmap is **not** shown in the customer-facing panel (internal/docs and `scripts/run-market-phases-check.sh` only).
 
+## Since v1.0 / v1.1
+
+| Release | Highlights |
+|---------|------------|
+| **v1.1.0** | Ubuntu LTS release upgrade from Admin → Updates (Premium) |
+| **v1.0.0** | Debian 12, Ubuntu 26.04, panel-only Linux install |
+| **v1.0.0** | Jellyfin app, domain media library, HTML5 quick player |
+
 ## Quick verify on a VPS
 
 ```bash
@@ -28,6 +36,8 @@ sudo bash scripts/run-market-phase1-check.sh   # phase 1 only
 
 ## Operator highlights
 
+- **Linux support:** [LINUX-SUPPORT.md](./LINUX-SUPPORT.md) — Debian 12, Ubuntu 26.04, panel-only, [LTS upgrade](./LINUX-SUPPORT.md#ubuntu-lts-release-upgrade-panel)
+- **Media:** [MEDIA-JELLYFIN.md](./MEDIA-JELLYFIN.md) — Jellyfin, library folder, HTML5 player
 - **Live demo:** `https://demo.qadbak.com/login` — [DEMO.md](./DEMO.md) · enable with `sudo bash scripts/apply-demo-vhost.sh`
 - **Marketing site:** `marketing-site/index.html` — redeploy via `npm run build` on panel host
 - **Panel URLs:** `https://panel.<customer-domain>/login` — [CLOUDFLARE.md](./CLOUDFLARE.md)

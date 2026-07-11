@@ -2,7 +2,7 @@
 
 # Qadbak
 
-### Self-hosted hosting control panel for Ubuntu VPS.
+### Self-hosted hosting control panel for Linux VPS.
 
 Admin and client UI for domains, mail, DNS, TLS, databases, backups, and cron — on **your** server. Open-source core; Premium for resellers, webmail, and white-label.
 
@@ -28,7 +28,7 @@ Admin and client UI for domains, mail, DNS, TLS, databases, backups, and cron �
 
 ## What is Qadbak?
 
-Qadbak is a self-hosted hosting control panel. You install it on a fresh Ubuntu VPS,
+Qadbak is a self-hosted hosting control panel. You install it on a fresh **Ubuntu or Debian** VPS,
 sign in, and manage every site, mailbox, DNS record and database from one English
 UI — with a clean split between administrators (who run the host) and clients
 (who only see their own domains).
@@ -62,7 +62,8 @@ Three prompts (hostname, admin password, Let's Encrypt email) and you're done.
 | **Cron** | Scheduled jobs with plain-language editor. |
 | **Security** | ModSecurity WAF toggle, ClamAV scans, admin firewall UI. |
 | **Runtimes** | Node, Python, Docker compose beside PHP-FPM per domain. |
-| **Apps** | One-click catalog installs into `public_html`. |
+| **Media** | Jellyfin one-click (Docker), per-domain media library folder, HTML5 quick player. |
+| **Apps** | 25 one-click catalog installs into `public_html` (incl. Jellyfin). |
 | **Backups+** | Offsite S3/B2/GCS, browse archive, restore single files or DB. |
 | **Monitoring** | Metrics history, alert rules (email / Slack / Telegram). |
 | **API v1** | Bearer keys with scopes — domains, mail, DNS, SSL, suspend, backups. |
@@ -78,7 +79,7 @@ Three prompts (hostname, admin password, Let's Encrypt email) and you're done.
 | **Webmail** | Built-in IMAP webmail in the panel. |
 | **White-label** | Logo, colours, product name. |
 | **License admin** | View activations, move VPS, heartbeat status. |
-| **Admin updates** | Pull and rebuild panel from the UI. |
+| **Admin updates** | Pull/rebuild panel from the UI; **Ubuntu LTS release upgrade** (22→24→26). |
 | **Offsite backups** | Encrypted cloud credentials + per-domain upload policy. |
 
 Website: [qadbak.com](https://qadbak.com) · Market features: [docs/MARKET-FEATURES.md](docs/MARKET-FEATURES.md)
@@ -156,6 +157,14 @@ The installer:
 
 When it's done, open `https://your-panel-host/login`.
 
+### Panel-only (any Linux + Node 20+)
+
+```bash
+sudo bash install/qadbak-install-panel.sh
+```
+
+See [docs/LINUX-SUPPORT.md](docs/LINUX-SUPPORT.md#panel-only).
+
 ### Resume a partial install
 
 ```bash
@@ -167,6 +176,8 @@ sudo bash /opt/qadbak/install/qadbak-install-resume.sh
 ```bash
 cd /opt/qadbak && sudo bash scripts/update-qadbak.sh
 ```
+
+Premium admins can also update from **Admin → Updates** (Qadbak pull/rebuild, apt packages, and Ubuntu LTS release upgrade).
 
 Panel unreachable after update (Cloudflare **520** or `panel.<domain>`):
 
@@ -238,6 +249,8 @@ marketing-site/   static HTML for qadbak.com + legal pages
 
 | File | Contents |
 |------|----------|
+| [docs/LINUX-SUPPORT.md](docs/LINUX-SUPPORT.md) | Ubuntu/Debian native + panel-only + LTS upgrade |
+| [docs/MEDIA-JELLYFIN.md](docs/MEDIA-JELLYFIN.md) | Jellyfin, media library, HTML5 player |
 | [docs/QADBAK-NATIVE-INSTALL.md](docs/QADBAK-NATIVE-INSTALL.md) | Native VPS install in depth |
 | [docs/V1-TEST-SERVER.md](docs/V1-TEST-SERVER.md) | Step-by-step test server |
 | [docs/UBUNTU-24-LTS.md](docs/UBUNTU-24-LTS.md) | Ubuntu version notes |
