@@ -5,18 +5,71 @@ struct QmailView: View {
     @State private var model: QmailViewModel
     @State private var composeDraft: ComposeDraft?
     @State private var showFolderGrid = false
+    @State private var selectedMessage: MailNavTarget?
+    @State private var didInitialLoad = false
 
     init(domainName: String, mailboxUser: String) {
         _model = State(initialValue: QmailViewModel(domainName: domainName, mailboxUser: mailboxUser))
     }
 
     var body: some View {
+        inboxRoot
+            .sheet(item: $selectedMessage) { target in
+                NavigationStack {
+                    QmailMessageDetailView(
+                        domainName: model.domainName,
+                        mailboxUser: model.mailboxUser,
+                        messageId: target.messageId,
+                        folder: target.folder,
+                        selfEmail: model.accountEmail.lowercased()
+                    ) { draft in
+                        selectedMessage = nil
+                        composeDraft = draft
+                    }
+                }
+                .preferredColorScheme(.dark)
+            }
+            .sheet(item: $composeDraft) { draft in
+                NavigationStack {
+                    QmailComposeView(
+                        domainName: model.domainName,
+                        mailboxUser: model.mailboxUser,
+                        draft: draft
+                    ) {
+                        composeDraft = nil
+                        Task { await refresh() }
+                    }
+                }
+                .preferredColorScheme(.dark)
+            }
+            .sheet(isPresented: $showFolderGrid) {
+                NavigationStack {
+                    QmailFolderGridView(model: model) { folder in
+                        showFolderGrid = false
+                        selectedMessage = nil
+                        Task {
+                            guard let api = appState.api else { return }
+                            await model.selectFolder(folder, api: api)
+                        }
+                    }
+                }
+                .preferredColorScheme(.dark)
+            }
+            .task {
+                guard !didInitialLoad else { return }
+                didInitialLoad = true
+                await refresh()
+            }
+            .preferredColorScheme(.dark)
+    }
+
+    private var inboxRoot: some View {
         ZStack {
             QadbakBackground()
             content
         }
         .navigationTitle("Qmail")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(QadbakPalette.bg.opacity(0.95), for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -40,48 +93,7 @@ struct QmailView: View {
             }
         }
         .searchable(text: $model.searchQuery, prompt: "Search in Qmail")
-        .navigationDestination(for: MailNavTarget.self) { target in
-            QmailMessageDetailView(
-                domainName: model.domainName,
-                mailboxUser: model.mailboxUser,
-                messageId: target.messageId,
-                folder: target.folder,
-                selfEmail: model.accountEmail.lowercased()
-            ) { draft in
-                composeDraft = draft
-            }
-        }
-        .sheet(item: $composeDraft) { draft in
-            NavigationStack {
-                QmailComposeView(
-                    domainName: model.domainName,
-                    mailboxUser: model.mailboxUser,
-                    draft: draft
-                ) {
-                    composeDraft = nil
-                    Task { await refresh() }
-                }
-            }
-            .preferredColorScheme(.dark)
-        }
-        .sheet(isPresented: $showFolderGrid) {
-            NavigationStack {
-                QmailFolderGridView(model: model) { folder in
-                    showFolderGrid = false
-                    Task {
-                        guard let api = appState.api else { return }
-                        await model.selectFolder(folder, api: api)
-                    }
-                }
-            }
-            .preferredColorScheme(.dark)
-        }
         .refreshable { await refresh() }
-        .task {
-            await appState.refreshSessionInfo()
-            await refresh()
-        }
-        .preferredColorScheme(.dark)
     }
 
     @ViewBuilder
@@ -143,6 +155,7 @@ struct QmailView: View {
                 Menu {
                     ForEach(model.folders) { folder in
                         Button {
+                            selectedMessage = nil
                             Task {
                                 guard let api = appState.api else { return }
                                 await model.selectFolder(folder.folderQueryValue, api: api)
@@ -196,7 +209,12 @@ struct QmailView: View {
         } else {
             LazyVStack(spacing: 10) {
                 ForEach(model.filteredMessages) { message in
-                    NavigationLink(value: MailNavTarget(messageId: message.id, folder: model.selectedFolder)) {
+                    Button {
+                        selectedMessage = MailNavTarget(
+                            messageId: message.id,
+                            folder: model.selectedFolder
+                        )
+                    } label: {
                         QmailMessageRow(message: message)
                     }
                     .buttonStyle(.plain)
@@ -271,6 +289,7 @@ struct QmailFolderGridView: View {
 
 struct QmailMessageDetailView: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
 
     let domainName: String
     let mailboxUser: String
@@ -331,6 +350,12 @@ struct QmailMessageDetailView: View {
         }
         .navigationTitle("Message")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Close") { dismiss() }
+                    .foregroundStyle(QadbakPalette.accent)
+            }
+        }
         .task { await load() }
     }
 
@@ -355,12 +380,15 @@ struct QmailMessageDetailView: View {
         HStack(spacing: 8) {
             actionButton("Reply", icon: "arrowshape.turn.up.left") {
                 onCompose(MailReplyHelpers.draft(mode: .reply, message: message, selfEmail: selfEmail))
+                dismiss()
             }
             actionButton("Reply all", icon: "arrowshape.turn.up.left.2") {
                 onCompose(MailReplyHelpers.draft(mode: .replyAll, message: message, selfEmail: selfEmail))
+                dismiss()
             }
             actionButton("Forward", icon: "arrowshape.turn.up.right") {
                 onCompose(MailReplyHelpers.draft(mode: .forward, message: message, selfEmail: selfEmail))
+                dismiss()
             }
         }
     }

@@ -153,7 +153,9 @@ enum QmailFormatters {
     }
 }
 
-struct MailNavTarget: Hashable {
+struct MailNavTarget: Hashable, Identifiable {
     let messageId: String
     let folder: String
+
+    var id: String { "\(folder)/\(messageId)" }
 }

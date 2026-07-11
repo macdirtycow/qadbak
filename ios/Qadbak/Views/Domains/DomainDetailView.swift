@@ -106,8 +106,11 @@ struct DomainDetailView: View {
     private var infoCard: some View {
         QBGlassCard {
             VStack(alignment: .leading, spacing: 10) {
+                if appState.premiumActive, let premium = appState.premiumPlanLabel {
+                    row("Qadbak license", premium)
+                }
                 if let plan = domain.plan, !plan.isEmpty {
-                    row("Plan", plan)
+                    row("Hosting plan", formatHostingPlan(plan))
                 }
                 if let user = domain.user, !user.isEmpty {
                     row("Unix user", user)
@@ -117,6 +120,12 @@ struct DomainDetailView: View {
                 }
             }
         }
+    }
+
+    private func formatHostingPlan(_ plan: String) -> String {
+        let trimmed = plan.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.lowercased() == "default" { return "Default" }
+        return trimmed.prefix(1).uppercased() + trimmed.dropFirst()
     }
 
     private func row(_ label: String, _ value: String) -> some View {

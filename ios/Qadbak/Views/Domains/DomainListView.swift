@@ -58,6 +58,13 @@ struct DomainListView: View {
                                 .padding(.vertical, 4)
                                 .foregroundStyle(QadbakPalette.accent)
                                 .background(QadbakPalette.glow.opacity(0.2), in: Capsule())
+                        } else if appState.premiumActive, let plan = appState.premiumPlanLabel {
+                            Text(shortPremiumLabel(plan))
+                                .font(.caption2.weight(.bold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .foregroundStyle(QadbakPalette.success)
+                                .background(QadbakPalette.success.opacity(0.15), in: Capsule())
                         }
                     }
                 }
@@ -82,7 +89,14 @@ struct DomainListView: View {
                             Text(host)
                                 .font(.caption)
                         }
+                        if let plan = appState.premiumPlanLabel {
+                            Text(plan)
+                                .font(.caption.weight(.semibold))
+                        }
                         Divider()
+                        Link(destination: URL(string: "https://license.omiiba.dev/buy")!) {
+                            Label("Support Qadbak", systemImage: "heart.fill")
+                        }
                         Button("Switch server") {
                             showServerSwitcher = true
                         }
@@ -125,10 +139,26 @@ struct DomainListView: View {
     }
 
     private var headerSubtitle: String? {
-        if let user = appState.username, let server = appState.activeServer {
-            return "\(user) · \(server.label)"
+        var parts: [String] = []
+        if let user = appState.username { parts.append(user) }
+        if let server = appState.activeServer?.label { parts.append(server) }
+        if appState.premiumActive, let plan = appState.premiumPlanLabel {
+            parts.append(shortPremiumLabel(plan))
         }
-        return appState.username.map { "Signed in as \($0)" }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    private func shortPremiumLabel(_ label: String) -> String {
+        if let open = label.firstIndex(of: "("),
+           let close = label.lastIndex(of: ")"),
+           open < close {
+            let inner = label[label.index(after: open)..<close].trimmingCharacters(in: .whitespaces)
+            if !inner.isEmpty {
+                return inner.prefix(1).uppercased() + inner.dropFirst()
+            }
+        }
+        if label.lowercased().contains("premium") { return "Premium" }
+        return label
     }
 
     @ViewBuilder
@@ -224,7 +254,7 @@ private struct DomainCard: View {
                     if domain.disabled == true {
                         statusPill("Paused", color: QadbakPalette.warning)
                     }
-                    if let plan = domain.plan, !plan.isEmpty {
+                    if let plan = domain.plan, !plan.isEmpty, plan.lowercased() != "default" {
                         Text(plan)
                             .font(.caption)
                             .foregroundStyle(QadbakPalette.muted)

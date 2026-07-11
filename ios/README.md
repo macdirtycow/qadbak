@@ -43,6 +43,14 @@ npm run test:mobile-auth
 
 Simulator URL: `http://127.0.0.1:3000`
 
+## TestFlight
+
+```bash
+bash ios/scripts/archive-appstore.sh
+```
+
+Then **Xcode → Organizer → Distribute App → TestFlight**. Details: [`docs/APP-STORE.md`](docs/APP-STORE.md).
+
 ## Project layout
 
 ```

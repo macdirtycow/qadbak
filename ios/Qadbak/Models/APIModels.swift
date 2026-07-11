@@ -107,7 +107,35 @@ struct SessionInfo: Decodable {
     let accessTokenTtlSec: Int?
     let clientRbac: Bool?
     let premiumWebmail: Bool?
+    let license: MobileLicenseInfo?
     let capabilities: MobileCapabilities?
+}
+
+struct MobileLicenseInfo: Decodable {
+    let premiumActive: Bool?
+    let plan: String?
+    let label: String?
+    let status: String?
+    let features: [String]?
+
+    var displayPlan: String? {
+        if premiumActive == true {
+            if let label, !label.isEmpty { return label }
+            if let plan, !plan.isEmpty { return formatPlan(plan) }
+            return "Premium"
+        }
+        if let plan, !plan.isEmpty, plan != "Core evaluation" {
+            return formatPlan(plan)
+        }
+        return "Core (evaluation)"
+    }
+
+    private func formatPlan(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return raw }
+        if trimmed.lowercased() == "core evaluation" { return "Core (evaluation)" }
+        return trimmed.prefix(1).uppercased() + trimmed.dropFirst()
+    }
 }
 
 struct MobileCapabilities: Decodable {

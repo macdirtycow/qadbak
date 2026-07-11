@@ -62,11 +62,12 @@ final class QmailViewModel {
     }
 
     func reload(using api: QadbakAPI) async {
-        isLoading = true
+        let hadMessages = !messages.isEmpty
+        if !hadMessages { isLoading = true }
         errorMessage = nil
         premiumBlocked = false
         imapUnavailable = false
-        defer { isLoading = false }
+        defer { if !hadMessages { isLoading = false } }
         do {
             let loadedFolders = try await api.listMailFolders(domainName, user: mailboxUser)
             folders = loadedFolders
@@ -82,9 +83,10 @@ final class QmailViewModel {
     }
 
     func loadMessages(using api: QadbakAPI) async throws {
-        isLoading = true
+        let hadMessages = !messages.isEmpty
+        if !hadMessages { isLoading = true }
         errorMessage = nil
-        defer { isLoading = false }
+        defer { if !hadMessages { isLoading = false } }
         do {
             messages = try await api.listMailMessages(domainName, user: mailboxUser, folder: selectedFolder)
             lastSyncedAt = Date()

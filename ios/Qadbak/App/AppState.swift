@@ -11,6 +11,7 @@ final class AppState {
     var role: String?
     var domains: [String] = []
     var capabilities: MobileCapabilities?
+    var license: MobileLicenseInfo?
     var isLoading = false
     var errorMessage: String?
     var requiresUnlock = false
@@ -45,6 +46,14 @@ final class AppState {
 
     var filesEnabled: Bool {
         capabilities?.files ?? true
+    }
+
+    var premiumPlanLabel: String? {
+        license?.displayPlan
+    }
+
+    var premiumActive: Bool {
+        license?.premiumActive == true
     }
 
     var isSignedIn: Bool {
@@ -115,6 +124,7 @@ final class AppState {
         role = nil
         domains = []
         capabilities = nil
+        license = nil
         api = nil
     }
 
@@ -259,6 +269,7 @@ final class AppState {
         role = nil
         domains = []
         capabilities = nil
+        license = nil
         if !keepServerEntry, let serverId = activeServerId {
             keychain.deleteRefreshToken(serverId: serverId)
         }
@@ -273,6 +284,7 @@ final class AppState {
             role = me.role
             domains = me.domains
             capabilities = me.capabilities
+            license = me.license
             let summary = try await api.widgetSummary()
             WidgetSummaryStore.save(summary)
             touchActiveServer(username: me.username)

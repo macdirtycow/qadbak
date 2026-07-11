@@ -151,37 +151,106 @@ async function curlStatus(url, extraArgs = []) {
   return Number.parseInt(String(stdout).trim(), 10) || 0;
 }
 
-async function probeWebsiteHealth(domain) {
-  const localUrl = apacheBackendBase();
-  let localOk = false;
-  try {
-    const status = await curlStatus(localUrl, ["-H", `Host: ${domain}`]);
-    localOk = status >= 200 && status < 500;
-  } catch {
-    localOk = false;
-  }
+function isNetworkProbeError(message) {
+  const err = String(message ?? "").toLowerCase();
+  return (
+    err.includes("fetch failed") ||
+    err.includes("econnrefused") ||
+    err.includes("enotfound") ||
+    err.includes("etimedout") ||
+    err.includes("couldn't connect") ||
+    err.includes("connection refused") ||
+    err.includes("failed to connect") ||
+    err.includes("no http response") ||
+    err.includes("aborted") ||
+    err.includes("operation timed out")
+  );
+}
 
-  let publicOk = null;
+function localOkStatus(status) {
+  return status >= 200 && status < 500;
+}
+
+async function probeLocalWebsite(domain) {
+  const targets = [
+    "http://127.0.0.1/",
+    `${apacheBackendBase()}/`,
+    "http://[::1]/",
+  ];
+  let lastStatus = 0;
+  let lastError = "";
+  for (const url of targets) {
+    try {
+      const status = await curlStatus(url, ["-H", `Host: ${domain}`]);
+      lastStatus = status;
+      if (localOkStatus(status)) {
+        return { localOk: true, status, inferredFromPublic: false };
+      }
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
+    }
+  }
+  return {
+    localOk: false,
+    status: lastStatus || undefined,
+    error: lastError || undefined,
+    inferredFromPublic: false,
+  };
+}
+
+async function probePublicWebsite(domain) {
+  let lastStatus = 0;
   let dnsPending = false;
-  try {
-    const status = await curlStatus(`https://${domain}`);
-    publicOk = status >= 200 && status < 500;
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    dnsPending = isDnsPendingError(msg);
-    publicOk = false;
+  let lastError = "";
+  for (const url of [`https://${domain}`, `http://${domain}`]) {
+    try {
+      const status = await curlStatus(url);
+      lastStatus = status;
+      if (localOkStatus(status)) {
+        return { publicOk: true, status, dnsPending: false };
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      lastError = msg;
+      if (isDnsPendingError(msg)) dnsPending = true;
+    }
+  }
+  return {
+    publicOk: false,
+    status: lastStatus || undefined,
+    dnsPending,
+    error: lastError || undefined,
+  };
+}
+
+async function probeWebsiteHealth(domain) {
+  const local = await probeLocalWebsite(domain);
+  const pub = await probePublicWebsite(domain);
+  let localOk = local.localOk;
+  let inferredFromPublic = local.inferredFromPublic;
+  const { publicOk, dnsPending } = pub;
+
+  if (
+    publicOk &&
+    !localOk &&
+    (isNetworkProbeError(local.error) || !local.status)
+  ) {
+    localOk = true;
+    inferredFromPublic = true;
   }
 
   let websiteOk = null;
-  if (localOk && (publicOk || dnsPending)) {
+  if (publicOk) {
     websiteOk = true;
-  } else if (!localOk) {
-    websiteOk = false;
+  } else if (localOk && dnsPending) {
+    websiteOk = true;
   } else if (localOk && !publicOk && !dnsPending) {
+    websiteOk = false;
+  } else if (!localOk && !publicOk) {
     websiteOk = false;
   }
 
-  return { localOk, publicOk, dnsPending, websiteOk };
+  return { localOk, publicOk, dnsPending, websiteOk, inferredFromPublic };
 }
 
 async function dockerStoppedApps(domain) {
