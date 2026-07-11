@@ -30,6 +30,9 @@ struct DomainDetailView: View {
                     actionLink(WebsiteHealthView(domainName: domain.name)) {
                         QBActionTile(title: "Health", subtitle: "Website", icon: "heart.text.square", tint: QadbakPalette.danger)
                     }
+                    actionLink(LiveLogsView(domainName: domain.name)) {
+                        QBActionTile(title: "Logs", subtitle: "Live tail", icon: "doc.text.magnifyingglass", tint: Color.teal)
+                    }
                     actionLink(DnsRecordsView(domainName: domain.name)) {
                         QBActionTile(title: "DNS", subtitle: "Records", icon: "network", tint: QadbakPalette.glow)
                     }

@@ -1,4 +1,5 @@
 import Foundation
+import WidgetKit
 
 enum WidgetSummaryStore {
     static let appGroupId = "group.com.qadbak.panel"
@@ -6,8 +7,10 @@ enum WidgetSummaryStore {
 
     struct CachedSummary: Codable {
         let domainCount: Int
+        let websitesRunning: Int
         let sslExpiringSoon: Int
         let backupStale: Int
+        let containersStopped: Int
         let urgentActions: Int
         let topDomain: String?
         let updatedAt: Date
@@ -17,8 +20,10 @@ enum WidgetSummaryStore {
         guard let defaults = UserDefaults(suiteName: appGroupId) else { return }
         let cached = CachedSummary(
             domainCount: summary.domainCount,
+            websitesRunning: summary.websitesRunning ?? summary.domainCount,
             sslExpiringSoon: summary.sslExpiringSoon,
             backupStale: summary.backupStale,
+            containersStopped: summary.containersStopped ?? 0,
             urgentActions: summary.urgentActions,
             topDomain: summary.domains?.first?.domain,
             updatedAt: Date()
@@ -26,6 +31,7 @@ enum WidgetSummaryStore {
         if let data = try? JSONEncoder().encode(cached) {
             defaults.set(data, forKey: key)
         }
+        WidgetCenter.shared.reloadTimelines(ofKind: "QadbakWidget")
     }
 
     static func load() -> CachedSummary? {

@@ -7,10 +7,15 @@ final class PushNotificationService: NSObject, UNUserNotificationCenterDelegate 
     static let shared = PushNotificationService()
 
     private var apiProvider: (() -> QadbakAPI?)?
+    private var appStateProvider: (() -> AppState?)?
     private var lastPushToken: String?
 
-    func configure(apiProvider: @escaping () -> QadbakAPI?) {
+    func configure(
+        apiProvider: @escaping () -> QadbakAPI?,
+        appStateProvider: @escaping () -> AppState? = { nil }
+    ) {
         self.apiProvider = apiProvider
+        self.appStateProvider = appStateProvider
     }
 
     func requestAuthorizationAndRegister() async {
@@ -51,6 +56,17 @@ final class PushNotificationService: NSObject, UNUserNotificationCenterDelegate 
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
         [.banner, .sound]
+    }
+
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse
+    ) async {
+        let userInfo = response.notification.request.content.userInfo
+        let domain = (userInfo["domain"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        await MainActor.run {
+            appStateProvider?()?.handlePushNavigation(domain: domain?.isEmpty == false ? domain : nil)
+        }
     }
 }
 

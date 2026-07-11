@@ -117,3 +117,8 @@ export async function listMobilePushTokensForUser(
   const store = await loadStore();
   return store.tokens.filter((t) => t.userId === userId);
 }
+
+export async function listAllMobilePushTokens(): Promise<MobilePushToken[]> {
+  const store = await loadStore();
+  return store.tokens;
+}

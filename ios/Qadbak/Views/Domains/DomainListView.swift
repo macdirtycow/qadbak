@@ -6,6 +6,7 @@ struct DomainListView: View {
     @State private var summary: WidgetSummary?
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var navigationPath = NavigationPath()
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -13,7 +14,7 @@ struct DomainListView: View {
     ]
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             QBScreenContainer {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
@@ -82,6 +83,13 @@ struct DomainListView: View {
                 DomainDetailView(domain: domain)
             }
             .task { await reload() }
+            .onChange(of: appState.pendingPushDomain) { _, domain in
+                guard let domain, !domain.isEmpty else { return }
+                if let match = domains.first(where: { $0.name.lowercased() == domain.lowercased() }) {
+                    navigationPath.append(match)
+                }
+                appState.pendingPushDomain = nil
+            }
         }
         .preferredColorScheme(.dark)
     }
@@ -122,10 +130,10 @@ struct DomainListView: View {
     private func statsRow(_ summary: WidgetSummary) -> some View {
         LazyVGrid(columns: columns, spacing: 12) {
             QBStatTile(
-                title: "Domains",
-                value: "\(summary.domainCount)",
-                icon: "globe",
-                tone: QadbakPalette.accent
+                title: "Running",
+                value: "\(summary.websitesRunning ?? summary.domainCount)",
+                icon: "checkmark.circle",
+                tone: QadbakPalette.success
             )
             QBStatTile(
                 title: "SSL < 14d",
@@ -134,16 +142,16 @@ struct DomainListView: View {
                 tone: summary.sslExpiringSoon > 0 ? QadbakPalette.warning : QadbakPalette.success
             )
             QBStatTile(
-                title: "Actions",
+                title: "Containers",
+                value: "\(summary.containersStopped ?? 0)",
+                icon: "shippingbox",
+                tone: (summary.containersStopped ?? 0) > 0 ? QadbakPalette.danger : QadbakPalette.success
+            )
+            QBStatTile(
+                title: "Warnings",
                 value: "\(summary.urgentActions)",
                 icon: "bell.badge",
                 tone: summary.urgentActions > 0 ? QadbakPalette.danger : QadbakPalette.muted
-            )
-            QBStatTile(
-                title: "Stale backup",
-                value: "\(summary.backupStale)",
-                icon: "externaldrive",
-                tone: summary.backupStale > 0 ? QadbakPalette.warning : QadbakPalette.success
             )
         }
     }

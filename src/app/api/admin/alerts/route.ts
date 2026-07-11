@@ -28,6 +28,11 @@ export async function POST(request: Request) {
       }
       return jsonOk(result);
     }
+    if (body.action === "mobile-push") {
+      const { evaluateMobilePushAlerts } = await import("@/lib/mobile-push-alerts");
+      const result = await evaluateMobilePushAlerts();
+      return jsonOk(result);
+    }
     return jsonError("Unknown action.", 400);
   } catch (err) {
     return handleApiError(err);

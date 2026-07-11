@@ -10,6 +10,7 @@ type HealthRow = {
   backupAgeDays?: number | null;
   websiteOk?: boolean | null;
   dnsPending?: boolean;
+  containersStopped?: string[];
   actions?: { severity: string }[];
 };
 
@@ -39,6 +40,13 @@ export async function GET() {
     const backupStale = rows.filter(
       (d) => d.backupAgeDays != null && d.backupAgeDays > 7,
     ).length;
+    const websitesRunning = rows.filter(
+      (d) => !d.disabled && d.websiteOk === true,
+    ).length;
+    const containersStopped = rows.reduce(
+      (n, d) => n + (d.containersStopped?.length ?? 0),
+      0,
+    );
     const urgentActions = rows.reduce((n, d) => {
       const actions = d.actions ?? [];
       return (
@@ -50,8 +58,10 @@ export async function GET() {
 
     return jsonOk({
       domainCount: rows.length,
+      websitesRunning,
       sslExpiringSoon,
       backupStale,
+      containersStopped,
       urgentActions,
       updatedAt: new Date().toISOString(),
       domains: rows.slice(0, 8).map((d) => ({
@@ -61,6 +71,7 @@ export async function GET() {
         websiteOk: d.websiteOk ?? null,
         dnsPending: d.dnsPending ?? false,
         disabled: d.disabled ?? false,
+        containersStopped: d.containersStopped ?? [],
       })),
     });
   } catch (err) {

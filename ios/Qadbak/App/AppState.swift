@@ -13,6 +13,8 @@ final class AppState {
     var capabilities: MobileCapabilities?
     var isLoading = false
     var errorMessage: String?
+    var requiresUnlock = false
+    var pendingPushDomain: String?
 
     private let keychain = KeychainStore()
     private(set) var api: QadbakAPI?
@@ -35,6 +37,18 @@ final class AppState {
 
     var isSignedIn: Bool {
         accessToken != nil && serverURL != nil
+    }
+
+    func lock() {
+        requiresUnlock = true
+    }
+
+    func unlock() {
+        requiresUnlock = false
+    }
+
+    func handlePushNavigation(domain: String?) {
+        pendingPushDomain = domain
     }
 
     init() {
@@ -229,6 +243,7 @@ final class AppState {
                 api.setRefreshToken(refresh)
             }
             await refreshSessionInfo()
+            await PushNotificationService.shared.requestAuthorizationAndRegister()
         } catch {
             if !isSignedIn {
                 clearSession()

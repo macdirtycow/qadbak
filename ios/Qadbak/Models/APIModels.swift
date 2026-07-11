@@ -120,8 +120,10 @@ struct MobileCapabilities: Decodable {
 
 struct WidgetSummary: Decodable {
     let domainCount: Int
+    let websitesRunning: Int?
     let sslExpiringSoon: Int
     let backupStale: Int
+    let containersStopped: Int?
     let urgentActions: Int
     let updatedAt: String?
     let domains: [WidgetDomainSummary]?
@@ -135,6 +137,17 @@ struct WidgetDomainSummary: Decodable, Identifiable {
     let websiteOk: Bool?
     let dnsPending: Bool?
     let disabled: Bool?
+    let containersStopped: [String]?
+}
+
+struct WebsiteLogsResponse: Decodable {
+    let log: String?
+    let type: String?
+}
+
+struct RepairWebsiteResponse: Decodable {
+    let ok: Bool?
+    let output: String?
 }
 
 struct DomainFilesListing: Decodable {

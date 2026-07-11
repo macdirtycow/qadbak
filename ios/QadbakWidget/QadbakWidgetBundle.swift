@@ -5,5 +5,6 @@ import SwiftUI
 struct QadbakWidgetBundle: WidgetBundle {
     var body: some Widget {
         QadbakWidget()
+        QadbakLiveActivity()
     }
 }

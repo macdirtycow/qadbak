@@ -28,8 +28,13 @@
 		A10000010000000000000019 /* FilesBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000020 /* FilesBrowserView.swift */; };
 		A10000010000000000000020 /* WebmailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000021 /* WebmailView.swift */; };
 		A10000010000000000000021 /* WebsiteHealthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000023 /* WebsiteHealthView.swift */; };
+		A10000010000000000000022 /* BiometricGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000024 /* BiometricGate.swift */; };
+		A10000010000000000000023 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000025 /* LiveActivityManager.swift */; };
+		A10000010000000000000024 /* LiveLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000026 /* LiveLogsView.swift */; };
+		A10000010000000000000025 /* AppLockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000027 /* AppLockView.swift */; };
 		B10000010000000000000001 /* QadbakWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000001 /* QadbakWidget.swift */; };
 		B10000010000000000000002 /* QadbakWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000002 /* QadbakWidgetBundle.swift */; };
+		B10000010000000000000004 /* QadbakLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000005 /* QadbakLiveActivity.swift */; };
 		B10000010000000000000003 /* QadbakWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B30000010000000000000001 /* QadbakWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -56,9 +61,14 @@
 		A20000010000000000000020 /* FilesBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesBrowserView.swift; sourceTree = "<group>"; };
 		A20000010000000000000021 /* WebmailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebmailView.swift; sourceTree = "<group>"; };
 		A20000010000000000000023 /* WebsiteHealthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebsiteHealthView.swift; sourceTree = "<group>"; };
+		A20000010000000000000024 /* BiometricGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricGate.swift; sourceTree = "<group>"; };
+		A20000010000000000000025 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
+		A20000010000000000000026 /* LiveLogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveLogsView.swift; sourceTree = "<group>"; };
+		A20000010000000000000027 /* AppLockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockView.swift; sourceTree = "<group>"; };
 		A20000010000000000000022 /* Qadbak.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Qadbak.entitlements; sourceTree = "<group>"; };
 		B20000010000000000000001 /* QadbakWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakWidget.swift; sourceTree = "<group>"; };
 		B20000010000000000000002 /* QadbakWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakWidgetBundle.swift; sourceTree = "<group>"; };
+		B20000010000000000000005 /* QadbakLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakLiveActivity.swift; sourceTree = "<group>"; };
 		B20000010000000000000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B20000010000000000000004 /* QadbakWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = QadbakWidget.entitlements; sourceTree = "<group>"; };
 		B30000010000000000000001 /* QadbakWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = QadbakWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -129,6 +139,7 @@
 			isa = PBXGroup;
 			children = (
 				B20000010000000000000001 /* QadbakWidget.swift */,
+				B20000010000000000000005 /* QadbakLiveActivity.swift */,
 				B20000010000000000000002 /* QadbakWidgetBundle.swift */,
 				B20000010000000000000003 /* Info.plist */,
 				B20000010000000000000004 /* QadbakWidget.entitlements */,
@@ -169,6 +180,8 @@
 				A20000010000000000000006 /* QadbakAPI.swift */,
 				A20000010000000000000018 /* PushNotificationService.swift */,
 				A20000010000000000000019 /* WidgetSummaryStore.swift */,
+				A20000010000000000000024 /* BiometricGate.swift */,
+				A20000010000000000000025 /* LiveActivityManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -178,6 +191,7 @@
 			children = (
 				A20000010000000000000007 /* RootView.swift */,
 				A20000010000000000000008 /* LoginView.swift */,
+				A20000010000000000000027 /* AppLockView.swift */,
 				A50000010000000000000009 /* Domains */,
 			);
 			path = Views;
@@ -203,6 +217,7 @@
 				A20000010000000000000020 /* FilesBrowserView.swift */,
 				A20000010000000000000021 /* WebmailView.swift */,
 				A20000010000000000000023 /* WebsiteHealthView.swift */,
+				A20000010000000000000026 /* LiveLogsView.swift */,
 			);
 			path = Domains;
 			sourceTree = "<group>";
@@ -297,6 +312,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B10000010000000000000001 /* QadbakWidget.swift in Sources */,
+				B10000010000000000000004 /* QadbakLiveActivity.swift in Sources */,
 				B10000010000000000000002 /* QadbakWidgetBundle.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -342,6 +358,10 @@
 				A10000010000000000000019 /* FilesBrowserView.swift in Sources */,
 				A10000010000000000000020 /* WebmailView.swift in Sources */,
 				A10000010000000000000021 /* WebsiteHealthView.swift in Sources */,
+				A10000010000000000000022 /* BiometricGate.swift in Sources */,
+				A10000010000000000000023 /* LiveActivityManager.swift in Sources */,
+				A10000010000000000000024 /* LiveLogsView.swift in Sources */,
+				A10000010000000000000025 /* AppLockView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

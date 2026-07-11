@@ -12,4 +12,8 @@ export async function register(): Promise<void> {
     "./src/lib/license-heartbeat-scheduler"
   );
   startHeartbeatScheduler();
+  const { startMobilePushScheduler } = await import(
+    "./src/lib/mobile-push-scheduler"
+  );
+  startMobilePushScheduler();
 }

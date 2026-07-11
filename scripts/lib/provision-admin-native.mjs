@@ -9,6 +9,7 @@ import {
   loadRegistry,
   QADBAK_DIR,
   readDomainConfigJson,
+  resolveDomainUser,
 } from "./provisioning-common.mjs";
 
 const exec = promisify(execFile);
@@ -183,6 +184,58 @@ async function probeWebsiteHealth(domain) {
   return { localOk, publicOk, dnsPending, websiteOk };
 }
 
+async function dockerStoppedApps(domain) {
+  const stopped = [];
+  try {
+    const cfg = await readDomainConfigJson(domain, "runtimes.json", { apps: [] });
+    const dockerApps = (cfg.apps || []).filter((a) => a.type === "docker");
+    if (!dockerApps.length) return stopped;
+    const { user, home } = await resolveDomainUser(domain);
+    for (const app of dockerApps) {
+      const appName = String(app.name || "stack");
+      const compose =
+        app.compose || path.join(home, "apps", appName, "docker-compose.yml");
+      try {
+        const { stdout } = await exec(
+          "sudo",
+          [
+            "-u",
+            user,
+            "docker",
+            "compose",
+            "-f",
+            compose,
+            "ps",
+            "-a",
+            "--format",
+            "{{.Service}}:{{.State}}",
+          ],
+          {
+            cwd: path.dirname(compose),
+            timeout: 60_000,
+            maxBuffer: 256 * 1024,
+          },
+        );
+        for (const line of stdout.split("\n")) {
+          const idx = line.indexOf(":");
+          if (idx < 0) continue;
+          const svc = line.slice(0, idx).trim();
+          const state = line.slice(idx + 1).trim().toLowerCase();
+          if (!svc) continue;
+          if (!state.includes("running")) {
+            stopped.push(`${appName}/${svc}`);
+          }
+        }
+      } catch {
+        /* docker unavailable for this app */
+      }
+    }
+  } catch {
+    /* no runtimes config */
+  }
+  return [...new Set(stopped)];
+}
+
 export async function domainHealthBatch() {
   const registry = await loadRegistry();
   const domains = Array.isArray(registry) ? registry : [];
@@ -254,6 +307,15 @@ export async function domainHealthBatch() {
       });
     }
 
+    const containersStopped = disabled ? [] : await dockerStoppedApps(name);
+    if (containersStopped.length) {
+      actions.push({
+        label: `Container stopped: ${containersStopped.join(", ")}`,
+        href: `/domains/${encodeURIComponent(name)}`,
+        severity: "error",
+      });
+    }
+
     items.push({
       domain: name,
       disabled,
@@ -265,6 +327,7 @@ export async function domainHealthBatch() {
       dnsPending: website.dnsPending,
       localWebsiteOk: website.localOk,
       mailOk: true,
+      containersStopped,
       actions,
     });
   }

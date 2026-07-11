@@ -22,7 +22,10 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSAppTransportSecurity</key>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Qadbak uses Face ID to unlock the app and confirm sensitive actions like restarting websites or starting backups.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>

@@ -96,16 +96,29 @@ struct BackupsView: View {
 
     private func startBackup() async {
         guard let api = appState.api else { return }
+        guard await BiometricGate.authenticate(reason: "Confirm backup for \(domainName)") else {
+            errorMessage = "Face ID required to start a backup."
+            return
+        }
         isStarting = true
         errorMessage = nil
         successMessage = nil
+        LiveActivityManager.start(
+            domain: domainName,
+            kind: "backup",
+            title: "Running backup",
+            detail: domainName
+        )
         defer { isStarting = false }
         do {
+            LiveActivityManager.update(title: "Running backup", detail: "Backup in progress…", progress: 0.5)
             try await api.startBackup(domainName)
             successMessage = "Backup started."
+            LiveActivityManager.end(success: true, message: "Backup started on server.")
             await load()
         } catch {
             errorMessage = error.localizedDescription
+            LiveActivityManager.end(success: false, message: error.localizedDescription)
         }
     }
 }

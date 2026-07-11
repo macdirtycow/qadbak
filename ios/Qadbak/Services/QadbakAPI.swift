@@ -112,6 +112,17 @@ final class QadbakAPI {
         try await client.request("GET", path: domainPath(domain, "/website-health"))
     }
 
+    func repairWebsite(_ domain: String) async throws -> RepairWebsiteResponse {
+        try await client.request("POST", path: domainPath(domain, "/repair-website"))
+    }
+
+    func websiteLogs(_ domain: String, type: String) async throws -> WebsiteLogsResponse {
+        try await client.request(
+            "GET",
+            path: domainPath(domain, "/logs", query: [URLQueryItem(name: "type", value: type)])
+        )
+    }
+
     func listDns(_ domain: String) async throws -> [DnsRecord] {
         let res: DnsResponse = try await client.request("GET", path: domainPath(domain, "/dns"))
         return res.records ?? []

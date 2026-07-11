@@ -10,7 +10,10 @@ struct QadbakApp: App {
             RootView()
                 .environment(appState)
                 .onAppear {
-                    PushNotificationService.shared.configure { appState.api }
+                    PushNotificationService.shared.configure(
+                        apiProvider: { appState.api },
+                        appStateProvider: { appState }
+                    )
                 }
                 .task {
                     if appState.isSignedIn {
