@@ -41,6 +41,7 @@ if [[ "$(id -u)" -eq 0 ]]; then
   bash "$ROOT/scripts/git-sync-origin.sh"
   bash "$ROOT/scripts/fix-qadbak-ownership.sh"
   bash "$ROOT/scripts/install-node-build-deps.sh" 2>/dev/null || true
+  bash "$ROOT/scripts/ensure-npm-current.sh" 2>/dev/null || true
 else
   run_as_qadbak "cd '$ROOT' && bash scripts/reset-git-drift-before-pull.sh && bash scripts/git-sync-origin.sh"
 fi
