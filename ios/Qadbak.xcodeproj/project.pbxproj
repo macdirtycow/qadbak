@@ -27,6 +27,7 @@
 		A10000010000000000000018 /* WidgetSummaryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000019 /* WidgetSummaryStore.swift */; };
 		A10000010000000000000019 /* FilesBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000020 /* FilesBrowserView.swift */; };
 		A10000010000000000000020 /* WebmailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000021 /* WebmailView.swift */; };
+		A10000010000000000000021 /* WebsiteHealthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000023 /* WebsiteHealthView.swift */; };
 		B10000010000000000000001 /* QadbakWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000001 /* QadbakWidget.swift */; };
 		B10000010000000000000002 /* QadbakWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000002 /* QadbakWidgetBundle.swift */; };
 		B10000010000000000000003 /* QadbakWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B30000010000000000000001 /* QadbakWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -54,6 +55,7 @@
 		A20000010000000000000019 /* WidgetSummaryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSummaryStore.swift; sourceTree = "<group>"; };
 		A20000010000000000000020 /* FilesBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesBrowserView.swift; sourceTree = "<group>"; };
 		A20000010000000000000021 /* WebmailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebmailView.swift; sourceTree = "<group>"; };
+		A20000010000000000000023 /* WebsiteHealthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebsiteHealthView.swift; sourceTree = "<group>"; };
 		A20000010000000000000022 /* Qadbak.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Qadbak.entitlements; sourceTree = "<group>"; };
 		B20000010000000000000001 /* QadbakWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakWidget.swift; sourceTree = "<group>"; };
 		B20000010000000000000002 /* QadbakWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakWidgetBundle.swift; sourceTree = "<group>"; };
@@ -200,6 +202,7 @@
 				A20000010000000000000014 /* BackupsView.swift */,
 				A20000010000000000000020 /* FilesBrowserView.swift */,
 				A20000010000000000000021 /* WebmailView.swift */,
+				A20000010000000000000023 /* WebsiteHealthView.swift */,
 			);
 			path = Domains;
 			sourceTree = "<group>";
@@ -338,6 +341,7 @@
 				A10000010000000000000018 /* WidgetSummaryStore.swift in Sources */,
 				A10000010000000000000019 /* FilesBrowserView.swift in Sources */,
 				A10000010000000000000020 /* WebmailView.swift in Sources */,
+				A10000010000000000000021 /* WebsiteHealthView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

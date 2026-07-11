@@ -15,7 +15,17 @@ enum APIError: LocalizedError {
         case .message(let text): return text
         case .totpRequired: return "Two-factor authentication required."
         case .unauthorized: return "Session expired. Sign in again."
-        case .http(let code, let text): return text ?? "Request failed (\(code))."
+        case .http(let code, let text):
+            if let text, !text.isEmpty { return text }
+            switch code {
+            case 402: return "Requires Qadbak Premium on your server."
+            case 403: return "You don't have permission for this action."
+            case 404: return "Not found on the server."
+            case 429: return "Too many requests. Wait a moment and try again."
+            case 501: return "Not enabled on this server (check panel configuration)."
+            case 503: return "Service temporarily unavailable."
+            default: return "Request failed (\(code))."
+            }
         }
     }
 }
@@ -30,6 +40,64 @@ struct LoginResponse: Decodable {
     let domains: [String]?
     let requiresTotp: Bool?
     let loginToken: String?
+    let error: String?
+
+    /// True when the server wants a TOTP code before issuing tokens.
+    var totpChallengeToken: String? {
+        let token = loginToken?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !token.isEmpty, accessToken == nil else { return nil }
+        if requiresTotp == true { return token }
+        if refreshToken == nil { return token }
+        return nil
+    }
+
+    var serverError: String? {
+        error?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case accessToken
+        case refreshToken
+        case expiresIn
+        case tokenType
+        case username
+        case role
+        case domains
+        case requiresTotp
+        case requires_totp
+        case loginToken
+        case login_token
+        case error
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        accessToken = try? c.decode(String.self, forKey: .accessToken)
+        refreshToken = try? c.decode(String.self, forKey: .refreshToken)
+        expiresIn = try? c.decode(Int.self, forKey: .expiresIn)
+        tokenType = try? c.decode(String.self, forKey: .tokenType)
+        username = try? c.decode(String.self, forKey: .username)
+        role = try? c.decode(String.self, forKey: .role)
+        domains = try? c.decode([String].self, forKey: .domains)
+        loginToken = (try? c.decode(String.self, forKey: .loginToken))
+            ?? (try? c.decode(String.self, forKey: .login_token))
+        error = try? c.decode(String.self, forKey: .error)
+        if let flag = try? c.decode(Bool.self, forKey: .requiresTotp) {
+            requiresTotp = flag
+        } else if let flag = try? c.decode(Bool.self, forKey: .requires_totp) {
+            requiresTotp = flag
+        } else if (try? c.decode(Int.self, forKey: .requiresTotp)) == 1 {
+            requiresTotp = true
+        } else {
+            requiresTotp = nil
+        }
+    }
+}
+
+private extension String {
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
+    }
 }
 
 struct SessionInfo: Decodable {
@@ -103,12 +171,115 @@ struct DomainFileContent: Decodable {
     let language: String?
     let readOnly: Bool?
     let encoding: String?
+
+    init(content: String, mime: String?, language: String?, readOnly: Bool?, encoding: String?) {
+        self.content = content
+        self.mime = mime
+        self.language = language
+        self.readOnly = readOnly
+        self.encoding = encoding
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        content = try c.decode(String.self, forKey: .content)
+        mime = try? c.decode(String.self, forKey: .mime)
+        language = try? c.decode(String.self, forKey: .language)
+        readOnly = try? c.decode(Bool.self, forKey: .readOnly)
+        encoding = try? c.decode(String.self, forKey: .encoding)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case content, mime, language, readOnly, encoding
+    }
 }
 
 struct MailMessagesResponse: Decodable {
     let messages: [MailMessageSummary]?
     let folder: String?
     let count: Int?
+}
+
+struct ImapMailbox: Decodable, Identifiable, Hashable {
+    let name: String?
+    let path: String?
+    let folder: String?
+    let messages: Int?
+    let unseen: Int?
+    let size: String?
+
+    var id: String { folder ?? name ?? path ?? UUID().uuidString }
+
+    var displayName: String {
+        let raw = folder ?? name ?? path ?? "Mailbox"
+        if raw == "INBOX" { return "Inbox" }
+        return raw
+    }
+
+    var folderQueryValue: String {
+        folder ?? name ?? path ?? "INBOX"
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case name, path, folder, messages, unseen, size, user
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        name = try? c.decode(String.self, forKey: .name)
+        path = try? c.decode(String.self, forKey: .path)
+        folder = try? c.decode(String.self, forKey: .folder)
+        if let n = try? c.decode(Int.self, forKey: .messages) {
+            messages = n
+        } else if let s = try? c.decode(String.self, forKey: .messages), let n = Int(s) {
+            messages = n
+        } else {
+            messages = nil
+        }
+        unseen = try? c.decode(Int.self, forKey: .unseen)
+        size = try? c.decode(String.self, forKey: .size)
+    }
+}
+
+struct MailFoldersResponse: Decodable {
+    let mailboxes: [ImapMailbox]?
+    let source: String?
+    let hint: String?
+}
+
+struct WebsiteHealthReport: Decodable {
+    let domain: String?
+    let originIp: String?
+    let repairAvailable: Bool?
+    let validation: WebsiteValidation?
+    let localProbe: WebsiteProbe?
+    let publicProbe: WebsiteProbe?
+    let cloudflare: WebsiteCloudflareHints?
+    let stack: WebsiteStackHealth?
+}
+
+struct WebsiteValidation: Decodable {
+    let valid: Bool?
+    let messages: [String]?
+}
+
+struct WebsiteProbe: Decodable {
+    let ok: Bool?
+    let status: Int?
+    let error: String?
+    let dnsPending: Bool?
+    let cloudflare502: Bool?
+    let cloudflare523: Bool?
+}
+
+struct WebsiteCloudflareHints: Decodable {
+    let issues: [String]?
+    let dnsChecklist: [String]?
+}
+
+struct WebsiteStackHealth: Decodable {
+    let sslDaysLeft: Int?
+    let backupAgeDays: Int?
 }
 
 struct MailMessageSummary: Decodable, Identifiable, Hashable {

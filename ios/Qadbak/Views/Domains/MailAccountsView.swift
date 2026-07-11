@@ -67,7 +67,7 @@ struct MailAccountsView: View {
                     .foregroundStyle(QadbakPalette.muted)
             }
             Spacer()
-            if openWebmail, appState.webmailEnabled, !mailbox.isEmpty {
+            if openWebmail, !mailbox.isEmpty {
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundStyle(QadbakPalette.muted)
@@ -76,7 +76,7 @@ struct MailAccountsView: View {
         .padding(14)
         .background(QadbakPalette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
-        if openWebmail, !mailbox.isEmpty, appState.webmailEnabled {
+        if openWebmail, !mailbox.isEmpty {
             NavigationLink {
                 WebmailView(domainName: domainName, mailboxUser: mailbox)
             } label: {

@@ -5,11 +5,7 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if appState.isLoading && !appState.isSignedIn {
-                QBScreenContainer {
-                    QBLoadingState(message: "Restoring session…")
-                }
-            } else if appState.isSignedIn {
+            if appState.isSignedIn {
                 DomainListView()
             } else {
                 LoginView()

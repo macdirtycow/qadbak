@@ -7,6 +7,7 @@ final class PushNotificationService: NSObject, UNUserNotificationCenterDelegate 
     static let shared = PushNotificationService()
 
     private var apiProvider: (() -> QadbakAPI?)?
+    private var lastPushToken: String?
 
     func configure(apiProvider: @escaping () -> QadbakAPI?) {
         self.apiProvider = apiProvider
@@ -28,6 +29,7 @@ final class PushNotificationService: NSObject, UNUserNotificationCenterDelegate 
 
     func handleDeviceToken(_ deviceToken: Data) {
         let token = deviceToken.map { String(format: "%02x", $0) }.joined()
+        lastPushToken = token
         Task { @MainActor in
             guard let api = apiProvider?() else { return }
             try? await api.registerPushToken(
@@ -36,6 +38,12 @@ final class PushNotificationService: NSObject, UNUserNotificationCenterDelegate 
                 deviceLabel: UIDevice.current.name
             )
         }
+    }
+
+    func unregisterFromServer() async {
+        guard let token = lastPushToken, let api = apiProvider?() else { return }
+        try? await api.unregisterPushToken(token)
+        lastPushToken = nil
     }
 
     nonisolated func userNotificationCenter(

@@ -152,22 +152,55 @@ struct FilesBrowserView: View {
 }
 
 private struct FileContentView: View {
+    @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
+
     let domainName: String
     let entry: DomainFileEntry
-    let content: DomainFileContent?
-    let error: String?
+    @State var content: DomainFileContent?
+    @State var error: String?
+
+    @State private var editedText = ""
+    @State private var isSaving = false
+    @State private var saveMessage: String?
+
+    private var canEdit: Bool {
+        entry.editable != false && content?.readOnly != true
+    }
 
     var body: some View {
         ZStack {
             QadbakPalette.bg.ignoresSafeArea()
             if let content {
-                ScrollView {
-                    Text(content.content)
-                        .font(.system(.body, design: .monospaced))
-                        .foregroundStyle(QadbakPalette.text)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(spacing: 0) {
+                    if canEdit {
+                        TextEditor(text: $editedText)
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundStyle(QadbakPalette.text)
+                            .scrollContentBackground(.hidden)
+                            .padding(12)
+                    } else {
+                        ScrollView {
+                            Text(content.content)
+                                .font(.system(.body, design: .monospaced))
+                                .foregroundStyle(QadbakPalette.text)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding()
+                                .textSelection(.enabled)
+                        }
+                    }
+                    if let saveMessage {
+                        SuccessBanner(message: saveMessage).padding()
+                    }
+                    if let error {
+                        ErrorBanner(message: error).padding()
+                    }
+                    if canEdit {
+                        QBPrimaryButton(title: "Save", loading: isSaving, disabled: editedText == content.content) {
+                            Task { await save() }
+                        }
                         .padding()
-                        .textSelection(.enabled)
+                    }
                 }
             } else if let error {
                 QBEmptyState(title: "Could not open", message: error, icon: "doc")
@@ -177,5 +210,31 @@ private struct FileContentView: View {
         }
         .navigationTitle(entry.name)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            if let content {
+                editedText = content.content
+            }
+        }
+    }
+
+    private func save() async {
+        guard let api = appState.api else { return }
+        isSaving = true
+        error = nil
+        saveMessage = nil
+        defer { isSaving = false }
+        do {
+            try await api.saveFile(domainName, path: entry.path, content: editedText)
+            content = DomainFileContent(
+                content: editedText,
+                mime: content?.mime,
+                language: content?.language,
+                readOnly: content?.readOnly,
+                encoding: content?.encoding
+            )
+            saveMessage = "Saved."
+        } catch let err {
+            self.error = err.localizedDescription
+        }
     }
 }

@@ -9,6 +9,7 @@ struct LoginView: View {
     @State private var totpLoginToken = ""
     @State private var showTotp = false
     @State private var localError: String?
+    @State private var connectionStatus: String?
 
     var body: some View {
         QBScreenContainer {
@@ -39,12 +40,20 @@ struct LoginView: View {
                             if !showTotp {
                                 QBTextField(
                                     label: "Panel URL",
-                                    placeholder: "https://panel.example.com",
+                                    placeholder: "https://qadbak.com",
                                     text: $serverURL,
                                     keyboard: .URL
                                 )
+                                Text("Use https://qadbak.com — no www, no /login.")
+                                    .font(.caption)
+                                    .foregroundStyle(QadbakPalette.muted)
                                 if let url = appState.serverURL {
                                     Text("Saved: \(url.absoluteString)")
+                                        .font(.caption)
+                                        .foregroundStyle(QadbakPalette.muted)
+                                }
+                                if let connectionStatus {
+                                    Text(connectionStatus)
                                         .font(.caption)
                                         .foregroundStyle(QadbakPalette.muted)
                                 }
@@ -57,6 +66,14 @@ struct LoginView: View {
                                     text: $totpCode,
                                     keyboard: .numberPad
                                 )
+                                Button("Use a different account") {
+                                    showTotp = false
+                                    totpCode = ""
+                                    totpLoginToken = ""
+                                    localError = nil
+                                }
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(QadbakPalette.accent)
                             }
 
                             if let localError {
@@ -81,6 +98,10 @@ struct LoginView: View {
         .onAppear {
             if serverURL.isEmpty, let saved = appState.serverURL?.absoluteString {
                 serverURL = saved
+            } else if !serverURL.isEmpty {
+                if let normalized = try? AppState.normalizePanelURL(serverURL) {
+                    serverURL = normalized.absoluteString
+                }
             }
             if username.isEmpty, let saved = KeychainStore().loadUsername() {
                 username = saved
@@ -95,8 +116,12 @@ struct LoginView: View {
 
     private func submit() async {
         localError = nil
+        connectionStatus = nil
         do {
             try appState.configureServer(serverURL)
+            if !showTotp {
+                connectionStatus = try await appState.checkPanelConnection()
+            }
             if showTotp {
                 try await appState.completeTotp(loginToken: totpLoginToken, code: totpCode)
             } else {
@@ -107,7 +132,10 @@ struct LoginView: View {
             case .totpRequired(let token):
                 totpLoginToken = token
                 showTotp = true
+                totpCode = ""
                 password = ""
+                localError = nil
+                connectionStatus = "Password accepted — enter your 2FA code."
             default:
                 localError = err.localizedDescription
             }

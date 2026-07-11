@@ -56,6 +56,16 @@ final class QadbakAPI {
         )
     }
 
+    func healthSummary() async throws -> String {
+        struct Health: Decodable { let ok: Bool?; let mock: Bool? }
+        let health: Health = try await unauthenticatedClient.request("GET", path: "/api/health", authorized: false)
+        guard health.ok == true else {
+            throw APIError.message("Panel health check failed.")
+        }
+        let mode = health.mock == true ? "demo/mock" : "live"
+        return "Connected (\(mode))"
+    }
+
     func loginTotp(loginToken: String, totp: String, deviceLabel: String) async throws -> LoginResponse {
         try await unauthenticatedClient.request(
             "POST",
@@ -95,63 +105,66 @@ final class QadbakAPI {
     }
 
     func domainDetail(_ domain: String) async throws -> DomainDetailResponse {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
-        return try await client.request("GET", path: "/api/domains/\(enc)")
+        try await client.request("GET", path: domainPath(domain))
+    }
+
+    func websiteHealth(_ domain: String) async throws -> WebsiteHealthReport {
+        try await client.request("GET", path: domainPath(domain, "/website-health"))
     }
 
     func listDns(_ domain: String) async throws -> [DnsRecord] {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
-        let res: DnsResponse = try await client.request("GET", path: "/api/domains/\(enc)/dns")
+        let res: DnsResponse = try await client.request("GET", path: domainPath(domain, "/dns"))
         return res.records ?? []
     }
 
     func addDns(_ domain: String, record: DnsRecord) async throws {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
         let _: OkResponse = try await client.request(
             "POST",
-            path: "/api/domains/\(enc)/dns",
+            path: domainPath(domain, "/dns"),
             body: record
         )
     }
 
     func deleteDns(_ domain: String, record: DnsRecord) async throws {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
         let _: OkResponse = try await client.request(
             "DELETE",
-            path: "/api/domains/\(enc)/dns",
+            path: domainPath(domain, "/dns"),
             body: record
         )
     }
 
     func listMailUsers(_ domain: String) async throws -> [MailUser] {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
-        let res: MailUsersResponse = try await client.request("GET", path: "/api/domains/\(enc)/users")
+        let res: MailUsersResponse = try await client.request("GET", path: domainPath(domain, "/users"))
         return res.users ?? []
     }
 
+    func listMailFolders(_ domain: String, user: String) async throws -> [ImapMailbox] {
+        let res: MailFoldersResponse = try await client.request(
+            "GET",
+            path: domainPath(domain, "/mailboxes", query: [URLQueryItem(name: "user", value: user)])
+        )
+        return res.mailboxes ?? []
+    }
+
     func listSsl(_ domain: String) async throws -> [SslCert] {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
-        let res: SslListResponse = try await client.request("GET", path: "/api/domains/\(enc)/ssl")
+        let res: SslListResponse = try await client.request("GET", path: domainPath(domain, "/ssl"))
         return res.certs ?? []
     }
 
     func renewSsl(_ domain: String, host: String? = nil) async throws {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
         let _: OkResponse = try await client.request(
             "POST",
-            path: "/api/domains/\(enc)/ssl",
+            path: domainPath(domain, "/ssl"),
             body: SslRenewBody(host: host ?? domain)
         )
     }
 
     func listBackups(_ domain: String) async throws -> BackupsResponse {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
-        return try await client.request("GET", path: "/api/domains/\(enc)/backups")
+        try await client.request("GET", path: domainPath(domain, "/backups"))
     }
 
     func startBackup(_ domain: String) async throws {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
-        let _: OkResponse = try await client.request("POST", path: "/api/domains/\(enc)/backups")
+        let _: OkResponse = try await client.request("POST", path: domainPath(domain, "/backups"))
     }
 
     func widgetSummary() async throws -> WidgetSummary {
@@ -166,31 +179,40 @@ final class QadbakAPI {
         )
     }
 
+    func unregisterPushToken(_ token: String) async throws {
+        let _: OkResponse = try await client.request(
+            "DELETE",
+            path: "/api/mobile/v1/push/register",
+            body: PushUnregisterBody(token: token)
+        )
+    }
+
     func listFiles(_ domain: String, dir: String) async throws -> DomainFilesListing {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
-        var allowed = CharacterSet.urlQueryAllowed
-        allowed.remove(charactersIn: "&=")
-        let dirEnc = dir.addingPercentEncoding(withAllowedCharacters: allowed) ?? ""
-        let query = dirEnc.isEmpty ? "" : "?dir=\(dirEnc)"
-        return try await client.request("GET", path: "/api/domains/\(enc)/files\(query)")
+        try await client.request(
+            "GET",
+            path: domainPath(domain, "/files", query: dir.isEmpty ? [] : [URLQueryItem(name: "dir", value: dir)])
+        )
     }
 
     func readFile(_ domain: String, path filePath: String) async throws -> DomainFileContent {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
-        var allowed = CharacterSet.urlQueryAllowed
-        allowed.remove(charactersIn: "&=")
-        let pathEnc = filePath.addingPercentEncoding(withAllowedCharacters: allowed) ?? filePath
-        return try await client.request(
+        try await client.request(
             "GET",
-            path: "/api/domains/\(enc)/files/content?path=\(pathEnc)"
+            path: domainPath(domain, "/files/content", query: [URLQueryItem(name: "path", value: filePath)])
+        )
+    }
+
+    func saveFile(_ domain: String, path filePath: String, content: String) async throws {
+        let _: OkResponse = try await client.request(
+            "POST",
+            path: domainPath(domain, "/files"),
+            body: FileSaveBody(action: "save", path: filePath, content: content)
         )
     }
 
     func deleteFile(_ domain: String, path filePath: String) async throws {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
         let _: OkResponse = try await client.request(
             "DELETE",
-            path: "/api/domains/\(enc)/files",
+            path: domainPath(domain, "/files"),
             body: FilePathBody(path: filePath)
         )
     }
@@ -200,14 +222,16 @@ final class QadbakAPI {
         user: String,
         folder: String = "INBOX"
     ) async throws -> [MailMessageSummary] {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
-        var allowed = CharacterSet.urlQueryAllowed
-        allowed.remove(charactersIn: "&=")
-        let userEnc = user.addingPercentEncoding(withAllowedCharacters: allowed) ?? user
-        let folderEnc = folder.addingPercentEncoding(withAllowedCharacters: allowed) ?? folder
         let res: MailMessagesResponse = try await client.request(
             "GET",
-            path: "/api/domains/\(enc)/mailboxes/messages?user=\(userEnc)&folder=\(folderEnc)"
+            path: domainPath(
+                domain,
+                "/mailboxes/messages",
+                query: [
+                    URLQueryItem(name: "user", value: user),
+                    URLQueryItem(name: "folder", value: folder),
+                ]
+            )
         )
         return res.messages ?? []
     }
@@ -218,15 +242,17 @@ final class QadbakAPI {
         messageId: String,
         folder: String = "INBOX"
     ) async throws -> MailMessageDetail {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
-        var allowed = CharacterSet.urlQueryAllowed
-        allowed.remove(charactersIn: "&=")
-        let userEnc = user.addingPercentEncoding(withAllowedCharacters: allowed) ?? user
-        let folderEnc = folder.addingPercentEncoding(withAllowedCharacters: allowed) ?? folder
-        let idEnc = messageId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? messageId
+        let idSegment = messageId.urlPathSegmentEncoded
         let res: MailMessageDetailResponse = try await client.request(
             "GET",
-            path: "/api/domains/\(enc)/mailboxes/messages/\(idEnc)?user=\(userEnc)&folder=\(folderEnc)"
+            path: domainPath(
+                domain,
+                "/mailboxes/messages/\(idSegment)",
+                query: [
+                    URLQueryItem(name: "user", value: user),
+                    URLQueryItem(name: "folder", value: folder),
+                ]
+            )
         )
         guard let message = res.message else {
             throw APIError.message("Message not found.")
@@ -242,12 +268,30 @@ final class QadbakAPI {
         body: String,
         cc: String = ""
     ) async throws {
-        let enc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
         let _: SendMailResponse = try await client.request(
             "POST",
-            path: "/api/domains/\(enc)/mailboxes/send",
+            path: domainPath(domain, "/mailboxes/send"),
             body: SendMailBody(user: user, to: to, cc: cc, subject: subject, body: body)
         )
+    }
+
+    private func domainPath(_ domain: String, _ suffix: String = "", query: [URLQueryItem] = []) -> String {
+        let domainEnc = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
+        var components = URLComponents()
+        components.path = "/api/domains/\(domainEnc)\(suffix)"
+        if !query.isEmpty {
+            components.queryItems = query
+        }
+        let queryString = components.percentEncodedQuery.map { "?\($0)" } ?? ""
+        return components.path + queryString
+    }
+}
+
+private extension String {
+    var urlPathSegmentEncoded: String {
+        addingPercentEncoding(
+            withAllowedCharacters: .alphanumerics.union(CharacterSet(charactersIn: "-._~"))
+        ) ?? self
     }
 }
 
@@ -281,8 +325,18 @@ private struct PushRegisterBody: Encodable {
     let deviceLabel: String?
 }
 
+private struct PushUnregisterBody: Encodable {
+    let token: String
+}
+
 private struct FilePathBody: Encodable {
     let path: String
+}
+
+private struct FileSaveBody: Encodable {
+    let action: String
+    let path: String
+    let content: String
 }
 
 private struct SendMailBody: Encodable {

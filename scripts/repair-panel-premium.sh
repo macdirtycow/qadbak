@@ -36,7 +36,7 @@ if [[ -f "$ROOT/data/license.json" ]]; then
     console.log('  plan:', j.plan);
     console.log('  features:', (j.features||[]).join(', ') || '(none)');
     console.log('  lastHeartbeat:', j.lastHeartbeatAt || '—');
-    const need=['white-label','client-rbac','admin-updates'];
+    const need=['white-label','client-rbac','admin-updates','webmail-ui'];
     for (const f of need) {
       if (!(j.features||[]).includes(f)) console.log('  MISSING feature:', f);
     }

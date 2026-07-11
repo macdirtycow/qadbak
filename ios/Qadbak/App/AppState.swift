@@ -26,7 +26,11 @@ final class AppState {
     }
 
     var webmailEnabled: Bool {
-        capabilities?.webmail != false
+        capabilities?.webmail ?? true
+    }
+
+    var filesEnabled: Bool {
+        capabilities?.files ?? true
     }
 
     var isSignedIn: Bool {
@@ -38,9 +42,16 @@ final class AppState {
     }
 
     func restoreSession() {
-        guard let base = keychain.loadServerURL(),
-              let refresh = keychain.loadRefreshToken() else {
+        if let saved = keychain.loadServerURL(),
+           let normalized = try? Self.normalizePanelURL(saved.absoluteString),
+           normalized != saved {
+            serverURL = normalized
+            keychain.saveServerURL(normalized)
+        } else {
             serverURL = keychain.loadServerURL()
+        }
+        guard let base = serverURL,
+              let refresh = keychain.loadRefreshToken() else {
             return
         }
         serverURL = base
@@ -56,26 +67,9 @@ final class AppState {
     }
 
     func configureServer(_ urlString: String) throws {
-        var trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty {
-            throw APIError.message("Enter your panel URL.")
-        }
-        if !trimmed.contains("://") {
-            trimmed = "https://" + trimmed
-        }
-        guard let parsed = URL(string: trimmed), let host = parsed.host else {
-            throw APIError.message("Enter a valid panel URL (https://panel.example.com).")
-        }
-        var components = URLComponents()
-        components.scheme = parsed.scheme == "http" ? "http" : "https"
-        components.host = host
-        components.port = parsed.port
-        guard let normalized = components.url else {
-            throw APIError.message("Enter a valid panel URL.")
-        }
-        serverURL = normalized
-        keychain.saveServerURL(normalized)
-        api = QadbakAPI(baseURL: normalized, tokenProvider: { [weak self] in
+        serverURL = try Self.normalizePanelURL(urlString)
+        keychain.saveServerURL(serverURL!)
+        api = QadbakAPI(baseURL: serverURL!, tokenProvider: { [weak self] in
             self?.accessToken
         }, onTokensRefreshed: { [weak self] access, refresh in
             self?.accessToken = access
@@ -84,37 +78,102 @@ final class AppState {
         })
     }
 
+    func checkPanelConnection() async throws -> String {
+        guard let api else { throw APIError.message("Set your panel URL first.") }
+        return try await api.healthSummary()
+    }
+
+    /// Accepts pasted panel URLs like `https://qadbak.com/login` and keeps only the origin.
+    static func normalizePanelURL(_ urlString: String) throws -> URL {
+        var trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            throw APIError.message("Enter your panel URL.")
+        }
+        if !trimmed.contains("://") {
+            trimmed = "https://" + trimmed
+        }
+        guard var components = URLComponents(string: trimmed), let host = components.host, !host.isEmpty else {
+            throw APIError.message("Enter a valid panel URL (e.g. https://qadbak.com).")
+        }
+        let scheme = components.scheme?.lowercased() == "http" ? "http" : "https"
+        components.scheme = scheme
+        // www → apex: nginx 301 on www breaks POST (login API); always use canonical host.
+        if host.lowercased().hasPrefix("www.") {
+            components.host = String(host.dropFirst(4))
+        } else {
+            components.host = host
+        }
+        components.port = components.port
+        components.path = ""
+        components.query = nil
+        components.fragment = nil
+        components.user = nil
+        components.password = nil
+        guard let normalized = components.url else {
+            throw APIError.message("Enter a valid panel URL.")
+        }
+        return normalized
+    }
+
     func login(username: String, password: String) async throws {
         guard let api else { throw APIError.message("Set your panel URL first.") }
+        let trimmedUser = username.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPass = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedUser.isEmpty, !trimmedPass.isEmpty else {
+            throw APIError.message("Enter username and password.")
+        }
         isLoading = true
         errorMessage = nil
+        accessToken = nil
+        keychain.deleteRefreshToken()
+        api.setRefreshToken(nil)
         defer { isLoading = false }
         let device = UIDevice.current.name
-        let result = try await api.login(username: username, password: password, deviceLabel: device)
-        if result.requiresTotp == true {
-            throw APIError.totpRequired(loginToken: result.loginToken ?? "")
+        let result = try await api.login(username: trimmedUser, password: trimmedPass, deviceLabel: device)
+        if let totpToken = result.totpChallengeToken {
+            throw APIError.totpRequired(loginToken: totpToken)
+        }
+        guard result.accessToken != nil else {
+            throw APIError.message(result.serverError ?? "Sign-in failed. Check username, password, and panel URL.")
         }
         applySession(result)
         if let refresh = result.refreshToken {
             keychain.saveRefreshToken(refresh)
             api.setRefreshToken(refresh)
         }
-        keychain.saveUsername(username)
+        if let username = result.username {
+            keychain.saveUsername(username)
+        }
         await refreshSessionInfo()
         await PushNotificationService.shared.requestAuthorizationAndRegister()
     }
 
     func completeTotp(loginToken: String, code: String) async throws {
         guard let api else { throw APIError.message("Set your panel URL first.") }
+        let trimmedCode = code.replacingOccurrences(of: " ", with: "")
+        guard trimmedCode.count >= 6 else {
+            throw APIError.message("Enter the 6-digit authenticator code.")
+        }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         let device = UIDevice.current.name
-        let result = try await api.loginTotp(loginToken: loginToken, totp: code, deviceLabel: device)
+        let result = try await api.loginTotp(loginToken: loginToken, totp: trimmedCode, deviceLabel: device)
+        if let totpToken = result.totpChallengeToken {
+            throw APIError.totpRequired(loginToken: totpToken)
+        }
+        guard result.accessToken != nil else {
+            throw APIError.message(result.serverError ?? "Two-factor verification failed. Try again.")
+        }
         applySession(result)
         if let refresh = result.refreshToken {
             keychain.saveRefreshToken(refresh)
             api.setRefreshToken(refresh)
+        }
+        if let username = result.username {
+            keychain.saveUsername(username)
+        } else if let saved = keychain.loadUsername() {
+            username = saved
         }
         await refreshSessionInfo()
         await PushNotificationService.shared.requestAuthorizationAndRegister()
@@ -124,6 +183,7 @@ final class AppState {
         if let api, let token = accessToken, let refresh = keychain.loadRefreshToken() {
             try? await api.logout(accessToken: token, refreshToken: refresh)
         }
+        await PushNotificationService.shared.unregisterFromServer()
         clearSession()
     }
 
@@ -132,6 +192,7 @@ final class AppState {
         username = nil
         role = nil
         domains = []
+        capabilities = nil
         keychain.deleteRefreshToken()
     }
 
@@ -159,10 +220,9 @@ final class AppState {
 
     private func bootstrapFromRefresh(refreshToken: String) async {
         guard let api else { return }
-        isLoading = true
-        defer { isLoading = false }
         do {
             let result = try await api.refresh(refreshToken: refreshToken)
+            guard !isSignedIn else { return }
             applySession(result)
             if let refresh = result.refreshToken {
                 keychain.saveRefreshToken(refresh)
@@ -170,7 +230,9 @@ final class AppState {
             }
             await refreshSessionInfo()
         } catch {
-            clearSession()
+            if !isSignedIn {
+                clearSession()
+            }
         }
     }
 }

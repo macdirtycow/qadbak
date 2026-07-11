@@ -375,13 +375,14 @@ export async function getLicensePublicInfo(
     verified.mode === "heartbeat" && !fresh
       ? `last heartbeat is older than the ${graceHours}h grace window — panel cannot reach license.omiiba.dev or the license server hasn't responded. Click "Heartbeat now" to retry.`
       : undefined;
+  const { effectivePremiumFeatures } = await import("./premium/effective-features");
   return {
     plan: stored.plan,
     status: licenseStatus(stored),
     type: `Qadbak Premium (${stored.plan})`,
     domains: String(stored.maxDomains ?? domainCount),
     expiry: stored.expiresAt ?? "Perpetual / not set",
-    features: stored.features,
+    features: effectivePremiumFeatures(stored),
     instanceId: stored.instanceId,
     lastHeartbeatAt: stored.lastHeartbeatAt,
     keyHint: stored.keyHint,
@@ -448,7 +449,8 @@ export async function activateLicense(key: string): Promise<StoredLicense> {
   };
   await writeStoredLicense(stored);
   const { syncPremiumFeaturesEnv } = await import("./premium/env-sync");
-  await syncPremiumFeaturesEnv(stored.features);
+  const { effectivePremiumFeatures } = await import("./premium/effective-features");
+  await syncPremiumFeaturesEnv(effectivePremiumFeatures(stored));
   return stored;
 }
 
@@ -483,7 +485,8 @@ export async function heartbeatLicense(): Promise<StoredLicense | null> {
   };
   await writeStoredLicense(updated);
   const { syncPremiumFeaturesEnv } = await import("./premium/env-sync");
-  await syncPremiumFeaturesEnv(updated.features);
+  const { effectivePremiumFeatures } = await import("./premium/effective-features");
+  await syncPremiumFeaturesEnv(effectivePremiumFeatures(updated));
   return updated;
 }
 

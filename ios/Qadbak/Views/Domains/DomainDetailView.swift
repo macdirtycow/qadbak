@@ -2,7 +2,11 @@ import SwiftUI
 
 struct DomainDetailView: View {
     @Environment(AppState.self) private var appState
-    let domain: HostedDomain
+    @State private var domain: HostedDomain
+
+    init(domain: HostedDomain) {
+        _domain = State(initialValue: domain)
+    }
 
     private let actionColumns = [
         GridItem(.flexible(), spacing: 12),
@@ -23,25 +27,33 @@ struct DomainDetailView: View {
                     .textCase(.uppercase)
                     .tracking(0.8)
                 LazyVGrid(columns: actionColumns, spacing: 12) {
+                    actionLink(WebsiteHealthView(domainName: domain.name)) {
+                        QBActionTile(title: "Health", subtitle: "Website", icon: "heart.text.square", tint: QadbakPalette.danger)
+                    }
                     actionLink(DnsRecordsView(domainName: domain.name)) {
                         QBActionTile(title: "DNS", subtitle: "Records", icon: "network", tint: QadbakPalette.glow)
                     }
                     actionLink(MailAccountsView(domainName: domain.name)) {
                         QBActionTile(title: "Mail", subtitle: "Accounts", icon: "envelope", tint: Color.cyan)
                     }
-                    if appState.webmailEnabled {
-                        actionLink(MailAccountsView(domainName: domain.name, openWebmail: true)) {
-                            QBActionTile(title: "Webmail", subtitle: "Inbox", icon: "envelope.open", tint: Color.mint)
-                        }
+                    actionLink(MailAccountsView(domainName: domain.name, openWebmail: true)) {
+                        QBActionTile(
+                            title: "Webmail",
+                            subtitle: appState.webmailEnabled ? "Inbox" : "Premium",
+                            icon: appState.webmailEnabled ? "envelope.open" : "lock.fill",
+                            tint: appState.webmailEnabled ? Color.mint : QadbakPalette.muted
+                        )
                     }
-                    actionLink(FilesBrowserView(domainName: domain.name)) {
-                        QBActionTile(title: "Files", subtitle: "Browser", icon: "folder", tint: Color.orange)
+                    if appState.filesEnabled {
+                        actionLink(FilesBrowserView(domainName: domain.name)) {
+                            QBActionTile(title: "Files", subtitle: "Browser", icon: "folder", tint: Color.orange)
+                        }
                     }
                     actionLink(SslCertificatesView(domainName: domain.name)) {
                         QBActionTile(title: "SSL", subtitle: "Certificates", icon: "lock.shield", tint: QadbakPalette.success)
                     }
                     actionLink(BackupsView(domainName: domain.name)) {
-                        QBActionTile(title: "Backups", subtitle: "Run & schedule", icon: "externaldrive", tint: QadbakPalette.warning)
+                        QBActionTile(title: "Backups", subtitle: "Run now", icon: "externaldrive", tint: QadbakPalette.warning)
                     }
                 }
             }
@@ -53,6 +65,7 @@ struct DomainDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(QadbakPalette.bg.opacity(0.95), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .task { await refreshDomain() }
         .preferredColorScheme(.dark)
     }
 
@@ -118,5 +131,15 @@ struct DomainDetailView: View {
             label()
         }
         .buttonStyle(.plain)
+    }
+
+    private func refreshDomain() async {
+        guard let api = appState.api else { return }
+        do {
+            let detail = try await api.domainDetail(domain.name)
+            domain = detail.domain
+        } catch {
+            // Keep list-passed domain data on failure.
+        }
     }
 }
