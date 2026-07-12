@@ -5,6 +5,9 @@ set -euo pipefail
 
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
 
+# shellcheck source=lib/website-config.sh
+source "$QADBAK_DIR/scripts/lib/website-config.sh"
+
 _is_valid_domain() {
   [[ "$1" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)+$ ]]
 }
@@ -26,44 +29,6 @@ _should_skip_nginx_customer_domain() {
   local panel="${QADBAK_PUBLIC_HOST:-}"
   [[ -n "$panel" && "$domain" == "$panel" ]] && return 0
   [[ -n "$panel" && "$domain" == "www.${panel}" ]] && return 0
-  [[ "$domain" == "license.inveil.dev" ]] && return 0
-
-  # Operator-managed vhost at sites-available/DOMAIN.conf (e.g. inveil-site deploy).
-  if [[ -f "/etc/nginx/sites-available/${domain}.conf" ]]; then
-    return 0
-  fi
-
-  local op="${QADBAK_OPERATOR_DOMAINS:-}"
-  if [[ -z "$op" && -f "$QADBAK_DIR/.env.local" ]]; then
-    op="$(grep -E '^QADBAK_OPERATOR_DOMAINS=' "$QADBAK_DIR/.env.local" 2>/dev/null | cut -d= -f2- | tr -d '"' || true)"
-  fi
-  if [[ -n "$op" ]]; then
-    local d
-    IFS=',' read -ra OPS <<<"$op"
-    for d in "${OPS[@]}"; do
-      d="$(echo "$d" | tr -d ' ')"
-      [[ -z "$d" ]] && continue
-      [[ "$domain" == "$d" || "$domain" == "www.${d}" ]] && return 0
-    done
-  fi
-
-  # If an operator-managed nginx vhost already exists for this domain
-  # (any file not named qadbak-customer-*), skip auto-generating a
-  # customer vhost to avoid "conflicting server name" warnings.
-  local nginx_dir
-  for nginx_dir in /etc/nginx/sites-enabled /etc/nginx/sites-available; do
-    [[ -d "$nginx_dir" ]] || continue
-    local f base real
-    for f in "$nginx_dir"/*; do
-      [[ -e "$f" ]] || continue
-      base="$(basename "$f")"
-      [[ "$base" == qadbak-customer-* ]] && continue
-      real="$(readlink -f "$f" 2>/dev/null || echo "$f")"
-      if grep -qE "server_name[[:space:]]+([^;]*[[:space:]])?${domain//./\\.}([[:space:]]|;)" "$real" 2>/dev/null; then
-        return 0
-      fi
-    done
-  done
   return 1
 }
 
@@ -73,7 +38,7 @@ _emit_row() {
   _is_valid_domain "$domain" || return 0
   _should_skip_nginx_customer_domain "$domain" && return 0
   id "$user" &>/dev/null || return 0
-  [[ ! -d "/home/$user/public_html" ]] && return 0
+  website_has_publishable_root "$domain" "$user" || return 0
   printf '%s\t%s\n' "$domain" "$user"
 }
 
@@ -84,7 +49,6 @@ list_customer_domains_tsv() {
     # shellcheck disable=SC1091
     source <(grep -E '^QADBAK_PUBLIC_HOST=' "$QADBAK_DIR/.env.local" 2>/dev/null | sed 's/^/export /') || true
   fi
-  local panel="${QADBAK_PUBLIC_HOST:-}"
 
   local reg="$QADBAK_DIR/data/native-domains.json"
   if [[ -f "$reg" ]]; then

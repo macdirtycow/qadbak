@@ -42,11 +42,7 @@ Disable **Cloudflare Email Routing** for `inveil.net` if enabled (it replaces MX
 
 Contabo: set **reverse DNS (PTR)** for the VPS IP to `mail.inveil.net`.
 
-On the panel VPS, add to `/opt/qadbak/.env.local` (avoids duplicate nginx vhosts):
-
-```env
-QADBAK_OPERATOR_DOMAINS=inveil.net,inveil.dev
-```
+Nginx for **inveil.net** is managed by Qadbak (`website.json` → single `qadbak-customer-inveil_net.conf`). The deploy script removes any legacy `inveil.net.conf` vhost automatically.
 
 ```bash
 sudo bash scripts/repair-domain-mail.sh inveil.net info
