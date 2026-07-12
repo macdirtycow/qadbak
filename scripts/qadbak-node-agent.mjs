@@ -41,14 +41,21 @@ const VM_URL = process.env.QADBAK_LEGACY_API_URL?.trim();
 const VM_USER = process.env.QADBAK_LEGACY_API_USER?.trim();
 const VM_PASS = process.env.QADBAK_LEGACY_API_PASS?.trim();
 
-function json(res, status, obj) {
-  res.writeHead(status, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(obj));
-}
-
 function safeErrorMessage(err) {
   if (!(err instanceof Error)) return String(err);
   return err.message || "Internal error";
+}
+
+function json(res, status, obj) {
+  const body = JSON.stringify(obj, (_key, value) => {
+    if (value instanceof Error) return safeErrorMessage(value);
+    if (typeof value === "string" && value.includes("\n    at ")) {
+      return value.split("\n")[0];
+    }
+    return value;
+  });
+  res.writeHead(status, { "Content-Type": "application/json" });
+  res.end(body);
 }
 
 function unauthorized(res) {
@@ -109,8 +116,7 @@ async function legacyApiCall(program, params = {}) {
   const mod = target.protocol === "https:" ? https : http;
   const agent =
     insecure && mod === https
-      // lgtm[js/disabling-certificate-validation] localhost self-signed legacy API only
-      ? new https.Agent({ rejectUnauthorized: false })
+      ? new https.Agent({ rejectUnauthorized: false }) // lgtm[js/disabling-certificate-validation]
       : undefined;
 
   const { status, text } = await new Promise((resolve, reject) => {

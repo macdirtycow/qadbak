@@ -17,7 +17,6 @@ import {
   findWeakPasswordUsers,
   hashPanelPassword,
   validatePanelPassword,
-  WEAK_PASSWORDS,
 } from "./lib/weak-password-check.mjs";
 
 const ROOT = process.env.QADBAK_DIR || process.cwd();
@@ -104,7 +103,6 @@ async function main() {
   const weak = await findWeakPasswordUsers(users);
 
   console.log(`Panel users file: ${USERS_PATH}`);
-  console.log(`Known weak password patterns: ${WEAK_PASSWORDS.length}`);
   console.log(`Total users: ${users.length}`);
 
   if (weak.length === 0) {

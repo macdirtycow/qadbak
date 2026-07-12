@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import { createHash } from "node:crypto";
+import { assertPathWithinRoot } from "./safe-path";
 
 const BUCKET_DIR = path.join(process.cwd(), "data", "rate-buckets");
 const LEGACY_FILE = path.join(process.cwd(), "data", "api-rate-buckets.json");
@@ -11,8 +11,12 @@ interface BucketRow {
 }
 
 function bucketFile(bucketKey: string): string {
-  const hash = createHash("sha256").update(bucketKey).digest("hex");
-  return path.join(BUCKET_DIR, `${hash}.json`);
+  const encoded = Buffer.from(bucketKey, "utf8")
+    .toString("base64url")
+    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .slice(0, 180);
+  const file = path.join(BUCKET_DIR, `${encoded || "empty"}.json`);
+  return assertPathWithinRoot(BUCKET_DIR, file);
 }
 
 async function readBucket(bucketKey: string): Promise<BucketRow | null> {
