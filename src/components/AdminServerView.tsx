@@ -50,8 +50,8 @@ export function AdminServerView({
         <h2 className="text-lg font-medium text-white">Services</h2>
         <p className="mt-1 text-sm text-panel-muted">
           {servicesSource === "native"
-            ? "nginx, Apache, Postfix, Dovecot, BIND, MariaDB, PHP-FPM — systemctl (Qadbak host-services helper)."
-            : "nginx, Apache, mail, DNS, database — remote API."}
+            ? "nginx, Apache, Postfix, Dovecot, BIND, MariaDB, PHP-FPM - systemctl (Qadbak host-services helper)."
+            : "nginx, Apache, mail, DNS, database - remote API."}
         </p>
         {services.length === 0 && !error && (
           <p className="mt-3 text-sm text-amber-200/90">
@@ -104,7 +104,7 @@ export function AdminServerView({
         <h2 className="px-6 pt-6 text-lg font-medium text-white">Disk per domain</h2>
         <p className="px-6 pb-2 text-sm text-panel-muted">
           {bandwidthSource === "native"
-            ? "Home directory size (MB) from du — limits from Qadbak registry / limits.json."
+            ? "Home directory size (MB) from du - limits from Qadbak registry / limits.json."
             : "Remote API bandwidth reporting."}
         </p>
         <table className="mt-2 w-full text-left text-sm">
@@ -119,8 +119,8 @@ export function AdminServerView({
             {bandwidth.map((b) => (
               <tr key={b.domain} className="border-t border-panel-border/50">
                 <td className="px-6 py-3 text-white">{b.domain}</td>
-                <td className="px-6 py-3">{b.used ?? "—"}</td>
-                <td className="px-6 py-3">{b.limit ?? "—"}</td>
+                <td className="px-6 py-3">{b.used ?? " - "}</td>
+                <td className="px-6 py-3">{b.limit ?? " - "}</td>
               </tr>
             ))}
           </tbody>

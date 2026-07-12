@@ -9,7 +9,7 @@ import type {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 function formatTime(iso?: string) {
-  if (!iso) return "—";
+  if (!iso) return " - ";
   try {
     return new Date(iso).toLocaleString();
   } catch {
@@ -376,10 +376,10 @@ export function AdminUpdatesView() {
               </li>
             )}
             {ubuntuRelease.preflightOk && ubuntuRelease.nextTarget && (
-              <li className="text-emerald-400">Preflight passed — ready to upgrade.</li>
+              <li className="text-emerald-400">Preflight passed - ready to upgrade.</li>
             )}
             <li className="text-panel-muted">
-              Disk free on /: {ubuntuRelease.diskFreeMb ?? "—"} MB · Checked:{" "}
+              Disk free on /: {ubuntuRelease.diskFreeMb ?? " - "} MB · Checked:{" "}
               {formatTime(ubuntuRelease.checkedAt)}
             </li>
           </ul>

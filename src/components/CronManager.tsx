@@ -104,7 +104,7 @@ export function CronManager({
       {success && <Alert variant="success">{success}</Alert>}
 
       {!canEdit && (
-        <Alert variant="info">View only — only administrators can edit.</Alert>
+        <Alert variant="info">View only - only administrators can edit.</Alert>
       )}
 
       {canEdit && (
@@ -153,7 +153,7 @@ export function CronManager({
               <tr key={j.id} className="border-b border-panel-border/50">
                 <td className="px-6 py-4 font-mono text-xs text-white">{j.schedule}</td>
                 <td className="px-6 py-4 text-panel-muted">{j.command}</td>
-                <td className="px-6 py-4 text-panel-muted">{j.user ?? "—"}</td>
+                <td className="px-6 py-4 text-panel-muted">{j.user ?? " - "}</td>
                 {canEdit && (
                   <td className="px-6 py-4 text-right">
                     <Button variant="danger" onClick={() => setDeleteId(j.id)}>

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Qadbak panel installer — hosting stack + independent native provisioning.
+# Qadbak panel installer - hosting stack + independent native provisioning.
 set -euo pipefail
 
 QADBAK_REPO="${QADBAK_REPO:-https://github.com/macdirtycow/qadbak.git}"
@@ -20,7 +20,7 @@ if [[ "$(id -u)" -ne 0 ]]; then
 fi
 
 echo ""
-echo "  Qadbak install — nginx, Apache, MariaDB, Postfix, Dovecot, BIND"
+echo "  Qadbak install - nginx, Apache, MariaDB, Postfix, Dovecot, BIND"
 echo "  Independent hosting panel (native provisioning on this server)."
 echo "  Guide: docs/QADBAK-NATIVE-INSTALL.md"
 echo ""
@@ -97,7 +97,7 @@ qadbak_install_nodejs "$NODE_MAJOR"
 command -v pm2 &>/dev/null || npm install -g pm2
 
 if ! id "$QADBAK_USER" &>/dev/null; then
-  # Service account for pm2 — no login/sudo password (panel login is separate in users.json).
+  # Service account for pm2 - no login/sudo password (panel login is separate in users.json).
   useradd -r -m -d "$QADBAK_DIR" -s /bin/bash "$QADBAK_USER"
 fi
 [[ -d "$QADBAK_DIR/.git" ]] || git clone -b "$QADBAK_GIT_BRANCH" "$QADBAK_REPO" "$QADBAK_DIR"
@@ -164,7 +164,7 @@ fi
 chmod 600 "$ENV_FILE"
 chown "$QADBAK_USER:$QADBAK_USER" "$ENV_FILE"
 
-read -rp "Premium license key (Enter to skip — Core evaluation only): " LICENSE_KEY_IN
+read -rp "Premium license key (Enter to skip - Core evaluation only): " LICENSE_KEY_IN
 if [[ -n "${LICENSE_KEY_IN// /}" ]]; then
   QADBAK_LICENSE_KEY="$LICENSE_KEY_IN"
 fi
@@ -177,7 +177,7 @@ for s in configure-domain-fs-sudo configure-domain-repair-sudo configure-domain-
   configure-backup-download-sudo; do
   if ! bash "$QADBAK_DIR/scripts/${s}.sh"; then
     echo "" >&2
-    echo "WARN: $s failed — install paused. Resume without rebuilding:" >&2
+    echo "WARN: $s failed - install paused. Resume without rebuilding:" >&2
     echo "  sudo bash $QADBAK_DIR/install/qadbak-install-resume.sh" >&2
     exit 1
   fi
@@ -233,7 +233,7 @@ if bash "$QADBAK_DIR/scripts/apply-nginx-default-deny.sh" --strip-conflicts; the
   # idempotent regardless of which entry point operators use.
   bash "$QADBAK_DIR/scripts/apply-hosting-nginx.sh" || true
 else
-  echo "  WARN: default-deny not enabled — see message above (often a default_server conflict)." >&2
+  echo "  WARN: default-deny not enabled - see message above (often a default_server conflict)." >&2
   echo "        Backfill later with: sudo bash $QADBAK_DIR/scripts/apply-nginx-default-deny.sh --strip-conflicts" >&2
 fi || true
 [[ -n "$LE_EMAIL" ]] && certbot --nginx -d "$PANEL_HOST" --non-interactive --agree-tos -m "$LE_EMAIL" && {
@@ -263,7 +263,7 @@ PM2_STARTUP_CMD="$(env PATH="$PATH:/usr/bin" pm2 startup systemd -u "$QADBAK_USE
 if [[ -n "$PM2_STARTUP_CMD" ]]; then
   bash -c "$PM2_STARTUP_CMD" || true
 else
-  echo "  WARN: pm2 startup line not found — start Qadbak manually after reboot with:" >&2
+  echo "  WARN: pm2 startup line not found - start Qadbak manually after reboot with:" >&2
   echo "    sudo -u $QADBAK_USER pm2 resurrect" >&2
 fi
 
@@ -272,7 +272,7 @@ if [[ -n "${QADBAK_LICENSE_KEY:-}" ]]; then
   ACTIVATE_OUT="$(sudo -u "$QADBAK_USER" bash -c "set -a && source '$ENV_FILE' && set +a && node '$QADBAK_DIR/scripts/qadbak-license-cli.mjs' activate '$QADBAK_LICENSE_KEY'" 2>&1)" || true
   echo "$ACTIVATE_OUT"
   if echo "$ACTIVATE_OUT" | grep -q '"ok":true'; then
-    echo "  OK — Premium license active on this server"
+    echo "  OK - Premium license active on this server"
     sudo -u "$QADBAK_USER" bash -c "set -a && source '$ENV_FILE' && set +a && node '$QADBAK_DIR/scripts/qadbak-license-cli.mjs' heartbeat" 2>/dev/null || true
     bash "$QADBAK_DIR/scripts/pm2-restart-qadbak.sh" 2>/dev/null || true
     if [[ -f "$QADBAK_DIR/scripts/repair-panel-premium.sh" ]]; then

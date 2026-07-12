@@ -24,7 +24,7 @@ if [[ "$PANEL_ONLY" -eq 1 ]]; then
   if [[ -n "$QADBAK_OS_PRETTY_NAME" ]]; then
     pass "OS: $QADBAK_OS_PRETTY_NAME"
   else
-    warn "Could not read /etc/os-release — panel-only may still work with Node 20+"
+    warn "Could not read /etc/os-release - panel-only may still work with Node 20+"
   fi
   echo ""
   echo "==> Panel runtime"
@@ -46,16 +46,16 @@ if [[ "$PANEL_ONLY" -eq 1 ]]; then
   command -v pm2 &>/dev/null && pass pm2 || warn "pm2 not installed yet"
   echo ""
   if [[ "$FAILED" -eq 0 ]]; then
-    echo "OK — host can run Qadbak panel-only (no native hosting stack)"
+    echo "OK - host can run Qadbak panel-only (no native hosting stack)"
   else
-    echo "FAIL — install Node.js 20+ before panel-only setup"
+    echo "FAIL - install Node.js 20+ before panel-only setup"
     exit 1
   fi
   exit 0
 fi
 
 if qadbak_detect_linux_distro; then
-  pass "$(qadbak_linux_release_label) — native stack supported"
+  pass "$(qadbak_linux_release_label) - native stack supported"
 else
   fail "Unsupported OS for native install (need Ubuntu 22.04/24.04/26.04 or Debian 12)"
   echo ""
@@ -94,7 +94,7 @@ for v in 8.5 8.4 8.3 8.2 8.1; do
     FOUND=1
   fi
 done
-[[ "$FOUND" -eq 1 ]] || warn "No /etc/php/*/fpm — install php-fpm"
+[[ "$FOUND" -eq 1 ]] || warn "No /etc/php/*/fpm - install php-fpm"
 
 echo ""
 echo "==> Mail (optional)"
@@ -104,9 +104,9 @@ done
 
 if [[ "$FAILED" -eq 0 ]]; then
   echo ""
-  echo "OK — host looks compatible with Qadbak on $(qadbak_linux_release_label)"
+  echo "OK - host looks compatible with Qadbak on $(qadbak_linux_release_label)"
 else
   echo ""
-  echo "FAIL — fix items above before production cutover"
+  echo "FAIL - fix items above before production cutover"
   exit 1
 fi

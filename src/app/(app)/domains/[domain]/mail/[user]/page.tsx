@@ -16,7 +16,7 @@ export default async function WebmailPage({ params }: Props) {
         <h1 className="text-xl font-semibold text-white">Qmail</h1>
         <p className="text-panel-muted">
           Built-in IMAP mail (Qmail) is a Premium feature. The free core still supports
-          mailboxes, forwarding, and delivery logs — use your own mail client or
+          mailboxes, forwarding, and delivery logs - use your own mail client or
           activate Premium in Server admin → License.
         </p>
         <Link

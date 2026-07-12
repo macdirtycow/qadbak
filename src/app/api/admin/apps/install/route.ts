@@ -6,7 +6,7 @@ import {
   runAppInstall,
 } from "@/lib/apps";
 
-/** POST /api/admin/apps/install { templateId, input } — orchestrated install. */
+/** POST /api/admin/apps/install { templateId, input } - orchestrated install. */
 export async function POST(request: Request) {
   try {
     const session = await requireAdmin();

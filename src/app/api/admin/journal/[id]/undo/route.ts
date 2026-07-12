@@ -51,7 +51,7 @@ export async function POST(
 
     undoJournal = beginJournal({
       action: "journal.undo",
-      summary: `Undo ${entry.action} — ${entry.summary}`,
+      summary: `Undo ${entry.action} - ${entry.summary}`,
       session,
       target: entry.target,
       metadata: {

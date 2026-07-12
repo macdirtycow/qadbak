@@ -24,7 +24,7 @@ export default async function DomainFilesPage({ params, searchParams }: Props) {
   let { listing, error } = primary;
   // Only fall back when public_html couldn't be listed at all (e.g.
   // brand-new domain whose helper hasn't created the dir yet). An
-  // *empty* public_html is fine — user wants to land there to add
+  // *empty* public_html is fine - user wants to land there to add
   // their first files.
   const shouldFallBack =
     requestedDir === undefined && initialDir === "public_html" && Boolean(error);

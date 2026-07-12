@@ -2,7 +2,7 @@ import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
 import { getEntry } from "@/lib/journal";
 
-/** GET /api/admin/journal/:id — single entry detail (admin only). */
+/** GET /api/admin/journal/:id - single entry detail (admin only). */
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },

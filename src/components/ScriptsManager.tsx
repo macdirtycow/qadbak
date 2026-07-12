@@ -78,7 +78,7 @@ export function ScriptsManager({
       setLastJournalId(String(data.journalId ?? ""));
       setSuccess(
         data.adminUrl
-          ? `${installScript} installed — ${data.adminUrl}`
+          ? `${installScript} installed - ${data.adminUrl}`
           : `${installScript} installed.`,
       );
       await refresh();

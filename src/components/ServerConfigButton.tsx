@@ -28,7 +28,7 @@ export function ServerConfigButton() {
     <Card>
       <h2 className="text-lg font-medium text-white">Server configuration</h2>
       <p className="mt-1 text-sm text-panel-muted">
-        Native stack check — nginx, mail, database services (administrators only)
+        Native stack check - nginx, mail, database services (administrators only)
       </p>
       <Button className="mt-4" variant="secondary" onClick={check} disabled={loading}>
         {loading ? "Working…" : "Check configuration"}

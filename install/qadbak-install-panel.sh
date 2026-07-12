@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Qadbak panel-only installer — Node.js UI without native hosting stack.
+# Qadbak panel-only installer - Node.js UI without native hosting stack.
 # Use on any Linux with Node 20+, or Debian/Ubuntu where Node is installed automatically.
 set -euo pipefail
 
@@ -18,12 +18,12 @@ fi
 source "$(dirname "$0")/../scripts/lib/linux-distro.sh"
 
 echo ""
-echo "  Qadbak panel-only — Next.js UI + pm2 (no nginx/mail/BIND stack on this host)"
+echo "  Qadbak panel-only - Next.js UI + pm2 (no nginx/mail/BIND stack on this host)"
 echo "  Guide: docs/LINUX-SUPPORT.md#panel-only"
 echo ""
 
 if [[ -f "$QADBAK_DIR/.env.local" ]]; then
-  echo "  Existing install at $QADBAK_DIR — aborting to avoid overwrite."
+  echo "  Existing install at $QADBAK_DIR - aborting to avoid overwrite."
   echo "  Remove .env.local first or use install/qadbak-uninstall.sh"
   exit 1
 fi
@@ -39,7 +39,7 @@ if qadbak_has_apt; then
   qadbak_pkg_install curl git ca-certificates openssl || true
   qadbak_install_nodejs "$NODE_MAJOR" || true
 else
-  echo "  Non-apt OS detected — Node.js ${NODE_MAJOR}+ must already be on PATH."
+  echo "  Non-apt OS detected - Node.js ${NODE_MAJOR}+ must already be on PATH."
 fi
 
 if ! command -v node &>/dev/null || [[ "$(node -v | cut -d. -f1 | tr -d v)" -lt "$NODE_MAJOR" ]]; then
@@ -80,7 +80,7 @@ read -rp "Certbot email (optional, for HTTPS nginx proxy): " LE_EMAIL
 
 echo ""
 echo "Provisioning mode:"
-echo "  1) Mock/demo (no server backend — UI development)"
+echo "  1) Mock/demo (no server backend - UI development)"
 echo "  2) Hybrid remote API (legacy hosting API on another host)"
 read -rp "Choice [1]: " PROV_MODE
 PROV_MODE="${PROV_MODE:-1}"
@@ -193,7 +193,7 @@ echo " Updates: sudo bash $QADBAK_DIR/scripts/update-qadbak.sh"
 if [[ "$PROV_MODE" == "2" ]]; then
   echo " Hybrid: domains come from your remote legacy API"
 else
-  echo " Mock:   UI demo only — use install/qadbak-install.sh for real hosting"
+  echo " Mock:   UI demo only - use install/qadbak-install.sh for real hosting"
 fi
 echo " Docs:   docs/LINUX-SUPPORT.md"
 echo "============================================"

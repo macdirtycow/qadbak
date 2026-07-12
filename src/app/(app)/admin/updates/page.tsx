@@ -12,7 +12,7 @@ export default async function AdminUpdatesPage() {
       <div>
         <h2 className="text-xl font-semibold text-white">Updates</h2>
         <p className="mt-1 text-sm text-panel-muted">
-          Linux package upgrades and Qadbak git updates — without SSH.
+          Linux package upgrades and Qadbak git updates - without SSH.
         </p>
       </div>
       {premium ? (

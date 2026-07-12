@@ -55,7 +55,7 @@ export function AdminFirewallView() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-white">Firewall</h1>
-        <p className="mt-1 text-sm text-panel-muted">Native UFW — no server-admin embed.</p>
+        <p className="mt-1 text-sm text-panel-muted">Native UFW - no server-admin embed.</p>
       </div>
       {error && <Alert>{error}</Alert>}
       <Card>

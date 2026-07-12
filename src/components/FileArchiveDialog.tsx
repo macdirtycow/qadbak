@@ -176,7 +176,7 @@ export function FileArchiveDialog({
                 <span className="text-panel-muted">Archive</span>
                 <p className="font-medium text-white">{archiveEntry.name}</p>
                 <p className="text-xs text-panel-muted">
-                  {archiveFormatLabel(archiveEntry.archiveFormat)} · {archiveEntry.size ?? "—"}
+                  {archiveFormatLabel(archiveEntry.archiveFormat)} · {archiveEntry.size ?? " - "}
                 </p>
               </div>
               <label className="block text-sm">

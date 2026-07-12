@@ -509,7 +509,7 @@ export function BackupsManager({
           ? ` · settings: ${r.settingsFiles.map((f) => f.replace(/\.json$/, "")).join(", ")}`
           : "";
         setSuccess(
-          `Test OK — ${r.entries ?? r.preview.length} paths in archive${mailHint}${settingsHint}${comps}.`,
+          `Test OK - ${r.entries ?? r.preview.length} paths in archive${mailHint}${settingsHint}${comps}.`,
         );
       } else if (r?.restored?.length) {
         setSuccess(`Restored: ${r.restored.join(", ")}`);

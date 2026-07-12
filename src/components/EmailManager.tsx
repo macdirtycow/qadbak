@@ -281,7 +281,7 @@ export function EmailManager({
                   <td className="px-6 py-4 text-white">
                     {name}@{domain}
                   </td>
-                  <td className="px-6 py-4 text-panel-muted">{u.real ?? "—"}</td>
+                  <td className="px-6 py-4 text-panel-muted">{u.real ?? " - "}</td>
                   <td className="px-6 py-4 font-mono text-panel-muted tabular-nums">
                     {formatMailboxUsedMb(u)}
                     {(u as HostedMailbox & { quotaLimitMb?: number }).quotaLimitMb
@@ -336,7 +336,7 @@ export function EmailManager({
       {quotaUser && (
         <Card>
           <h2 className="text-lg font-medium text-white">
-            Mailbox quota — {quotaUser}@{domain}
+            Mailbox quota - {quotaUser}@{domain}
           </h2>
           <div className="mt-4 flex max-w-md gap-2">
             <Input
@@ -359,7 +359,7 @@ export function EmailManager({
       {resetUser && (
         <Card>
           <h2 className="text-lg font-medium text-white">
-            Change password — {resetUser}
+            Change password - {resetUser}
           </h2>
           <div className="mt-4 flex max-w-md gap-2">
             <Input

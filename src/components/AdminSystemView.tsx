@@ -100,7 +100,7 @@ export function AdminSystemView({
         <h2 className="text-lg font-medium text-white">Systeemconfiguratie</h2>
         <p className="mt-2 text-sm text-panel-muted">
           Applies a server bundle via the native provisioning helper.
-          Only during a maintenance window — may reconfigure services.
+          Only during a maintenance window - may reconfigure services.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <select
@@ -124,7 +124,7 @@ export function AdminSystemView({
         <h2 className="text-lg font-medium text-white">Networking</h2>
         <p className="mt-2 text-sm text-panel-muted">
           Interface addresses and the public IP for customer DNS records live on a
-          dedicated native page — no server-admin embed.
+          dedicated native page - no server-admin embed.
         </p>
         <a
           href="/admin/networking"

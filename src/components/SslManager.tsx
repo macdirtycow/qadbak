@@ -77,11 +77,11 @@ export function SslManager({
             {certs.map((c, i) => (
               <tr key={i} className="border-b border-panel-border/50">
                 <td className="px-6 py-4 text-white">{c.host ?? domain}</td>
-                <td className="px-6 py-4">{c.issuer ?? "—"}</td>
+                <td className="px-6 py-4">{c.issuer ?? " - "}</td>
                 <td className="px-6 py-4">
-                  <Badge tone="success">{c.expiry ?? "—"}</Badge>
+                  <Badge tone="success">{c.expiry ?? " - "}</Badge>
                 </td>
-                <td className="px-6 py-4 text-panel-muted">{c.type ?? "—"}</td>
+                <td className="px-6 py-4 text-panel-muted">{c.type ?? " - "}</td>
               </tr>
             ))}
           </tbody>

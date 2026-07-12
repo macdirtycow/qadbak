@@ -12,8 +12,8 @@ export default async function AdminJournalPage() {
           Journal · what just happened
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-panel-muted">
-          Every action that mutates this server — domain creates, mail changes,
-          certificate issuance, DNS edits — is recorded here with the exact
+          Every action that mutates this server - domain creates, mail changes,
+          certificate issuance, DNS edits - is recorded here with the exact
           file writes, shell commands and service reloads it triggered. Use it
           to learn, debug, or audit.
         </p>

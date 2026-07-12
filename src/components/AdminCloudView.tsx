@@ -168,8 +168,8 @@ export function AdminCloudView({ initialError }: { initialError: string }) {
               {files.map((f) => (
                 <tr key={f.name} className="border-t border-panel-border/50">
                   <td className="px-6 py-3 text-white">{f.name}</td>
-                  <td className="px-6 py-3">{f.size ?? "—"}</td>
-                  <td className="px-6 py-3">{f.modified ?? "—"}</td>
+                  <td className="px-6 py-3">{f.size ?? " - "}</td>
+                  <td className="px-6 py-3">{f.modified ?? " - "}</td>
                 </tr>
               ))}
             </tbody>

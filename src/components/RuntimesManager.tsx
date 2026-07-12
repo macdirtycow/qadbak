@@ -94,7 +94,7 @@ export function RuntimesManager({
         <h2 className="text-lg font-medium text-white">PHP</h2>
         <p className="mt-2 text-sm text-panel-muted">
           Per-directory versions: <strong>PHP</strong> tab. Active FPM socket:{" "}
-          <code className="text-panel-link">{phpFpmSocket || "—"}</code>
+          <code className="text-panel-link">{phpFpmSocket || " - "}</code>
         </p>
       </Card>
 
@@ -107,7 +107,7 @@ export function RuntimesManager({
             {apps.map((a) => (
               <li key={`${a.type}-${a.name}`} className="py-3 text-sm flex justify-between gap-4">
                 <span>
-                  <span className="text-white">{a.type}</span> — {a.name}
+                  <span className="text-white">{a.type}</span> - {a.name}
                   {a.port != null && ` · port ${a.port}`}
                   {a.path && ` · proxy ${a.path}`}
                 </span>

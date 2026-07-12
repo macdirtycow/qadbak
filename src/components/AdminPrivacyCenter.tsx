@@ -6,7 +6,7 @@ import { Alert, Button, Card } from "@/components/ui";
 import type { PrivacyReport } from "@/lib/privacy-report";
 
 function formatBytes(n: number | null): string {
-  if (n == null) return "—";
+  if (n == null) return " - ";
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / (1024 * 1024)).toFixed(2)} MB`;
@@ -249,7 +249,7 @@ export function AdminPrivacyCenter({
         <h2 className="text-lg font-medium text-white">Premium license transparency</h2>
         <p className="mt-1 text-sm text-panel-muted">
           Status: <span className="text-white">{report.license.status}</span> · Last heartbeat:{" "}
-          <span className="text-white">{report.license.lastHeartbeatAt ?? "—"}</span>
+          <span className="text-white">{report.license.lastHeartbeatAt ?? " - "}</span>
         </p>
         <p className="mt-3 text-sm text-panel-muted">
           Manage activations and heartbeat in{" "}
@@ -298,7 +298,7 @@ export function AdminPrivacyCenter({
             <dd className="text-white">
               {report.hardening.terminalWsLocalOnly
                 ? "127.0.0.1 (not exposed)"
-                : "Custom host — review exposure"}
+                : "Custom host - review exposure"}
             </dd>
           </div>
           <div>

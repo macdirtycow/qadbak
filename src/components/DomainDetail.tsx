@@ -90,11 +90,11 @@ export function DomainDetail({
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <h2 className="text-sm font-medium text-panel-muted">Owner</h2>
-          <p className="mt-1 text-white">{domain.user ?? "—"}</p>
+          <p className="mt-1 text-white">{domain.user ?? " - "}</p>
         </Card>
         <Card>
           <h2 className="text-sm font-medium text-panel-muted">Plan</h2>
-          <p className="mt-1 text-white">{domain.plan ?? "—"}</p>
+          <p className="mt-1 text-white">{domain.plan ?? " - "}</p>
         </Card>
         <Card>
           <h2 className="text-sm font-medium text-panel-muted">Disk usage (MB)</h2>
@@ -107,7 +107,7 @@ export function DomainDetail({
       <div>
         <h2 className="text-lg font-medium text-white">Quick links</h2>
         <p className="mt-1 text-sm text-panel-muted">
-          Email, DNS, SSL, backups, and more — all in Qadbak.
+          Email, DNS, SSL, backups, and more - all in Qadbak.
         </p>
         <div className="mt-4">
           <DomainQuickLinks domain={domain.name} isAdmin={isAdmin} />

@@ -9,7 +9,7 @@ export default async function AdminTerminalPage() {
       fetchUrl="/api/admin/terminal/ws-token"
       wsPath="/ws/admin-terminal"
       title="Server terminal"
-      subtitle="Root shell on this VPS — no separate SSH. Only Qadbak administrators can open this session."
+      subtitle="Root shell on this VPS - no separate SSH. Only Qadbak administrators can open this session."
     />
   );
 }

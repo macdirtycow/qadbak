@@ -9,7 +9,7 @@ import Script from "next/script";
  * IBM Plex Sans / Newsreader + `/landing.css` classes directly in its markup. Migrating
  * to `next/font` or a CSS import would require re-templating the entire
  * marketing site to use Next-generated class names, which we deliberately
- * avoid — the static HTML doubles as a standalone build (see
+ * avoid - the static HTML doubles as a standalone build (see
  * `scripts/build-marketing-zip.sh`).
  *
  * The Next.js lint rules `no-page-custom-font` and `no-css-tags` fire on

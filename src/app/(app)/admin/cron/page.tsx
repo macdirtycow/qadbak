@@ -7,7 +7,7 @@ export default async function AdminCronPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-white">System cron</h1>
-        <p className="mt-1 text-panel-muted">Root crontab — native admin, no embed.</p>
+        <p className="mt-1 text-panel-muted">Root crontab - native admin, no embed.</p>
       </div>
       <AdminCronView />
     </div>

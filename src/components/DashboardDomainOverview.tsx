@@ -132,7 +132,7 @@ export function DashboardDomainOverview() {
                     ? "Down"
                     : d.websiteOk === true
                       ? "OK"
-                      : "—";
+                      : " - ";
               return (
                 <div
                   key={d.domain}
@@ -162,7 +162,7 @@ export function DashboardDomainOverview() {
                       <dt>SSL</dt>
                       <dd>
                         <Badge tone={sslTone as "success" | "warning" | "danger" | "default"}>
-                          {d.sslDaysLeft === null ? "—" : `${d.sslDaysLeft}d`}
+                          {d.sslDaysLeft === null ? " - " : `${d.sslDaysLeft}d`}
                         </Badge>
                       </dd>
                     </div>
@@ -183,7 +183,7 @@ export function DashboardDomainOverview() {
                     </div>
                     <div>
                       <dt>Mail</dt>
-                      <dd className="text-emerald-400">{d.mailOk ? "OK" : "—"}</dd>
+                      <dd className="text-emerald-400">{d.mailOk ? "OK" : " - "}</dd>
                     </div>
                   </dl>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">

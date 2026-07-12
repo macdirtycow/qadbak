@@ -168,7 +168,7 @@ export function FileManager({
           );
         } else {
           setError(
-            "This is a binary file. Use Download — editing is only available for text files.",
+            "This is a binary file. Use Download - editing is only available for text files.",
           );
         }
         return;
@@ -531,9 +531,9 @@ export function FileManager({
                       </button>
                     </td>
                     <td className="px-4 py-3 text-panel-muted">
-                      {entry.type === "dir" ? "—" : entry.size ?? "—"}
+                      {entry.type === "dir" ? " - " : entry.size ?? " - "}
                     </td>
-                    <td className="px-4 py-3 text-panel-muted">{entry.modified ?? "—"}</td>
+                    <td className="px-4 py-3 text-panel-muted">{entry.modified ?? " - "}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
                         {entry.type === "file" && entry.downloadable !== false && (

@@ -10,12 +10,14 @@ export function Button({
   variant?: "primary" | "secondary" | "danger" | "ghost";
 }) {
   const base =
-    "inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition disabled:opacity-50";
+    "inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50";
   const variants = {
-    primary: "bg-panel-accent text-panel-bg hover:brightness-95",
-    secondary: "bg-panel-card border border-panel-border hover:bg-slate-800",
+    primary:
+      "bg-panel-accent text-panel-bg hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-panel-link",
+    secondary:
+      "border border-panel-border bg-panel-card text-panel-text hover:bg-panel-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-panel-link",
     danger: "bg-red-600/90 text-white hover:bg-red-600",
-    ghost: "text-panel-muted hover:text-white hover:bg-panel-card",
+    ghost: "text-panel-muted hover:bg-panel-card hover:text-panel-text",
   };
   return (
     <button className={`${base} ${variants[variant]} ${className}`} {...props}>
@@ -33,7 +35,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-xl border border-panel-border bg-panel-card p-6 ${className}`}
+      className={`rounded-qadbak-xl border border-panel-border bg-panel-card p-6 shadow-panel ${className}`}
     >
       {children}
     </div>
@@ -118,10 +120,10 @@ export function NavLink({
   return (
     <Link
       href={href}
-      className={`rounded-lg px-3 py-2 text-sm ${
+      className={`rounded-md px-3 py-2 text-sm ${
         active
-          ? "bg-panel-accent/20 text-white"
-          : "text-panel-muted hover:bg-panel-card hover:text-white"
+          ? "bg-panel-accent/15 font-medium text-panel-text"
+          : "text-panel-muted hover:bg-panel-card hover:text-panel-text"
       }`}
     >
       {children}
@@ -181,6 +183,60 @@ export function ConfirmDialog({
           </Button>
         </div>
       </Card>
+    </div>
+  );
+}
+
+/** Page title block for admin and settings screens. */
+export function PageHeader({
+  title,
+  description,
+  actions,
+}: {
+  title: string;
+  description?: string;
+  actions?: ReactNode;
+}) {
+  return (
+    <div className="mb-6 flex flex-col gap-3 border-b border-panel-border pb-6 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-semibold tracking-tight text-panel-text">
+          {title}
+        </h1>
+        {description ? (
+          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-panel-muted">
+            {description}
+          </p>
+        ) : null}
+      </div>
+      {actions ? (
+        <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>
+      ) : null}
+    </div>
+  );
+}
+
+export function EmptyState({
+  title,
+  description,
+  icon,
+  action,
+}: {
+  title: string;
+  description?: string;
+  icon?: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-qadbak-xl border border-dashed border-panel-border bg-panel-card/40 px-6 py-14 text-center">
+      {icon ? (
+        <div className="mb-4 text-panel-muted opacity-80">{icon}</div>
+      ) : null}
+      <h2 className="text-lg font-medium text-panel-text">{title}</h2>
+      {description ? (
+        <p className="mt-2 max-w-md text-sm text-panel-muted">{description}</p>
+      ) : null}
+      {action ? <div className="mt-6">{action}</div> : null}
     </div>
   );
 }

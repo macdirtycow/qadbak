@@ -82,7 +82,7 @@ export function HealthBrowser() {
             <span>·</span>
             <span>scan took {report.totalMs} ms</span>
             <span>·</span>
-            <span>last refresh {lastRunAt ? relativeTime(lastRunAt) : "—"}</span>
+            <span>last refresh {lastRunAt ? relativeTime(lastRunAt) : " - "}</span>
           </div>
         ) : null}
       </div>

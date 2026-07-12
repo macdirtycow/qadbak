@@ -43,7 +43,7 @@ export async function POST(request: Request, { params }: Params) {
       });
       consumeLastJournalSteps();
       journal.infoStep(
-        `Validated input — mailbox=${body.user}, domain=${domain}, displayName=${body.real ? "yes" : "no"}`,
+        `Validated input - mailbox=${body.user}, domain=${domain}, displayName=${body.real ? "yes" : "no"}`,
       );
       await getProvisioner().createMailbox(domain, body.user, body.pass, body.real, session);
       journal.captureFromHelper(consumeLastJournalSteps());

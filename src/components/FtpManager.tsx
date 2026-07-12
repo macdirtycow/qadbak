@@ -144,8 +144,8 @@ export function FtpManager({
             {accounts.map((a) => (
               <tr key={a.user} className="border-b border-panel-border/50">
                 <td className="px-6 py-4 text-white">{a.user}</td>
-                <td className="px-6 py-4 text-panel-muted">{a.dir ?? "—"}</td>
-                <td className="px-6 py-4">{a.quota ?? "—"}</td>
+                <td className="px-6 py-4 text-panel-muted">{a.dir ?? " - "}</td>
+                <td className="px-6 py-4">{a.quota ?? " - "}</td>
                 <td className="px-6 py-4 text-right space-x-2">
                   <Button variant="secondary" onClick={() => setResetUser(a.user)}>Password</Button>
                   <Button variant="danger" onClick={() => setDeleteUser(a.user)}>Delete</Button>

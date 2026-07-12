@@ -74,7 +74,7 @@ export function AdminNetworkingView() {
                 Primary IPv4
               </dt>
               <dd className="mt-1 font-mono text-lg text-white">
-                {data.primaryIpv4 || "—"}
+                {data.primaryIpv4 || " - "}
               </dd>
             </div>
             <div className="rounded-lg border border-panel-border bg-panel-bg/40 p-4">
@@ -82,7 +82,7 @@ export function AdminNetworkingView() {
                 Origin IP (DNS)
               </dt>
               <dd className="mt-1 font-mono text-lg text-white">
-                {data.originIp || data.primaryIpv4 || "—"}
+                {data.originIp || data.primaryIpv4 || " - "}
               </dd>
               <p className="mt-2 text-xs text-panel-muted">
                 Set <code className="text-xs">QADBAK_ORIGIN_IP</code> in .env.local to

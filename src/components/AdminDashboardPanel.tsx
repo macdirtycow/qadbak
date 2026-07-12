@@ -108,7 +108,7 @@ export function AdminDashboardPanel() {
       <Card>
         <h2 className="text-lg font-medium text-white">Qadbak panel process</h2>
         <p className="mt-1 text-sm text-panel-muted">
-          pm2 — restart after config changes or if the UI hangs.
+          pm2 - restart after config changes or if the UI hangs.
         </p>
         {!pm2Available && (
           <p className="mt-3 text-sm text-amber-200/90">
@@ -122,7 +122,7 @@ export function AdminDashboardPanel() {
           <ul className="mt-3 space-y-1 text-sm text-panel-muted">
             {processes.map((p) => (
               <li key={p.name}>
-                <span className="text-white">{p.name}</span> — {p.status}
+                <span className="text-white">{p.name}</span> - {p.status}
               </li>
             ))}
           </ul>
@@ -177,7 +177,7 @@ export function AdminDashboardPanel() {
           </Link>
         </div>
         <p className="mt-1 text-sm text-panel-muted">
-          nginx, mail, database — systemctl via host-services helper.
+          nginx, mail, database - systemctl via host-services helper.
         </p>
         {!servicesAvailable && (
           <p className="mt-3 text-sm text-amber-200/90">

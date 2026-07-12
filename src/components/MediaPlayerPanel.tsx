@@ -49,7 +49,7 @@ export function MediaPlayerPanel({ domain }: { domain: string }) {
             Quick player
           </p>
           <p className="mt-1 text-sm text-panel-muted">
-            Play MP4/WebM files directly in the browser — no Jellyfin required. Best for a
+            Play MP4/WebM files directly in the browser - no Jellyfin required. Best for a
             single film; use Jellyfin for libraries, apps, and transcoding.
           </p>
         </div>

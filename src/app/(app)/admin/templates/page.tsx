@@ -29,7 +29,7 @@ export default async function AdminTemplatesPage() {
             {templates.map((t) => (
               <tr key={t.name} className="border-t border-panel-border/50">
                 <td className="px-6 py-3 text-white">{t.name}</td>
-                <td className="px-6 py-3">{t.id ?? "—"}</td>
+                <td className="px-6 py-3">{t.id ?? " - "}</td>
               </tr>
             ))}
           </tbody>

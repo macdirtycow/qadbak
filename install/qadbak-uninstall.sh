@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# Qadbak uninstall — safely remove the Qadbak panel from a server.
+# Qadbak uninstall - safely remove the Qadbak panel from a server.
 #
 # DEFAULT (safe):
 #   - pm2 process + systemd unit         → removed
@@ -19,14 +19,14 @@
 #   --remove-user       Delete the system user "qadbak" after removing /opt/qadbak.
 #   --remove-stack      Also apt-purge the hosting stack packages. DANGEROUS.
 #   --remove-customers  Also wipe /var/www/*, mailboxes, MariaDB user dbs.
-#                       *** EXTREMELY DANGEROUS — destroys hosted sites ***
+#                       *** EXTREMELY DANGEROUS - destroys hosted sites ***
 #   --dry-run           Print everything that would happen, change nothing.
 #   -h | --help         Show this help.
 #
-# Example — safe panel removal:
+# Example - safe panel removal:
 #   sudo bash install/qadbak-uninstall.sh
 #
-# Example — full nuke (test VPS only):
+# Example - full nuke (test VPS only):
 #   sudo bash install/qadbak-uninstall.sh --yes --remove-user --remove-stack --remove-customers
 # ─────────────────────────────────────────────────────────────────────────────
 set -uo pipefail
@@ -177,7 +177,7 @@ else
     if confirm "Delete entire $QADBAK_DIR (code, .env.local, users.json, audit log)?"; then
       run "rm -rf '$QADBAK_DIR'"
     else
-      warn "Kept $QADBAK_DIR — re-run with --keep-code to silence this prompt next time."
+      warn "Kept $QADBAK_DIR - re-run with --keep-code to silence this prompt next time."
       KEEP_CODE=1
     fi
   fi
@@ -202,7 +202,7 @@ if [[ "$REMOVE_CUSTOMERS" -eq 1 ]]; then
   warn "About to delete hosted-customer artifacts:"
   warn "  - /var/www/*"
   warn "  - all /home/<unix-user> created by Qadbak (uid >= 1000, has public_html)"
-  warn "  - per-domain MariaDB databases (those tagged in data/native-domains.json — if still present)"
+  warn "  - per-domain MariaDB databases (those tagged in data/native-domains.json - if still present)"
   warn "  - dovecot mailboxes in /var/mail/vhosts and /home/*/Maildir"
   if confirm "Type-y-to-confirm IRREVERSIBLE deletion of hosted customer data" ; then
     log "6. Deleting customer data"
@@ -244,7 +244,7 @@ if [[ "$REMOVE_CUSTOMERS" -eq 1 ]]; then
     warn "Skipped customer data removal."
   fi
 else
-  log "6. Keeping customer data (use --remove-customers to wipe — DANGEROUS)"
+  log "6. Keeping customer data (use --remove-customers to wipe - DANGEROUS)"
 fi
 
 # ─── 7. Hosting stack packages (DANGEROUS) ──────────────────────────────────
@@ -272,7 +272,7 @@ if [[ "$REMOVE_STACK" -eq 1 ]]; then
     warn "Skipped hosting stack removal."
   fi
 else
-  log "7. Keeping hosting stack packages (use --remove-stack to purge — DANGEROUS)"
+  log "7. Keeping hosting stack packages (use --remove-stack to purge - DANGEROUS)"
 fi
 
 # ─── 8. Optional leftover scrub ─────────────────────────────────────────────
@@ -281,12 +281,12 @@ log "8. Final scrub"
 if [[ "$KEEP_CODE" -eq 0 && ! -d "$QADBAK_DIR" ]]; then
   run "rm -rf '/home/$QADBAK_USER/.pm2' 2>/dev/null || true"
 fi
-# Stale /etc/qadbak — license server env lives here; only remove if empty
+# Stale /etc/qadbak - license server env lives here; only remove if empty
 if [[ -d /etc/qadbak ]]; then
   if [[ -z "$(ls -A /etc/qadbak 2>/dev/null)" ]]; then
     run "rmdir /etc/qadbak"
   else
-    warn "Leaving /etc/qadbak alone (contains files — likely license-server.env)."
+    warn "Leaving /etc/qadbak alone (contains files - likely license-server.env)."
   fi
 fi
 

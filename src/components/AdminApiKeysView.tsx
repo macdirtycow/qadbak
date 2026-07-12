@@ -95,7 +95,7 @@ export function AdminApiKeysView() {
             >
               OpenAPI spec
             </a>{" "}
-            — domains, mail, DNS, SSL, backups, suspend
+            - domains, mail, DNS, SSL, backups, suspend
           </li>
           <li>
             <a
@@ -108,7 +108,7 @@ export function AdminApiKeysView() {
             </a>
           </li>
           <li>
-            <code className="text-white">integrations/blesta/</code> — Blesta starter
+            <code className="text-white">integrations/blesta/</code> - Blesta starter
           </li>
         </ul>
         <p className="text-xs text-panel-muted">
@@ -118,7 +118,7 @@ export function AdminApiKeysView() {
       {error && <Alert>{error}</Alert>}
       {newSecret && (
         <Alert variant="success">
-          Copy now — secret shown once: <code className="text-xs">{newSecret}</code>
+          Copy now - secret shown once: <code className="text-xs">{newSecret}</code>
         </Alert>
       )}
       <Card className="flex flex-wrap gap-3 items-end">
@@ -135,7 +135,7 @@ export function AdminApiKeysView() {
           {keys.map((k) => (
             <li key={k.id} className="flex justify-between gap-4 text-panel-muted">
               <span>
-                {k.label} — {k.scopes.join(", ")}
+                {k.label} - {k.scopes.join(", ")}
                 {k.lastUsedAt ? ` · last ${k.lastUsedAt}` : ""}
               </span>
               <Button variant="secondary" onClick={() => revoke(k.id)}>

@@ -1,4 +1,4 @@
-# Linux support — Qadbak
+# Linux support - Qadbak
 
 Qadbak supports three install profiles on Linux.
 
@@ -29,7 +29,7 @@ Distro detection lives in `scripts/lib/linux-distro.sh` (Ubuntu-specific helpers
 
 ## Panel-only (any Linux with Node 20+)
 
-Run the **UI only** — no mail/DNS/hosting stack on this machine.
+Run the **UI only** - no mail/DNS/hosting stack on this machine.
 
 **Use when:**
 
@@ -66,8 +66,8 @@ bash scripts/check-linux-support.sh --panel-only
 
 **Provisioning modes** (chosen during install):
 
-1. **Mock** — fake domains in the UI; no server backend
-2. **Hybrid remote** — panel talks to a legacy hosting API on another host (`QADBAK_LEGACY_API_URL`)
+1. **Mock** - fake domains in the UI; no server backend
+2. **Hybrid remote** - panel talks to a legacy hosting API on another host (`QADBAK_LEGACY_API_URL`)
 
 Put **nginx**, Caddy, or a cloud load balancer in front of port `3000` for HTTPS (or accept the optional nginx step in the installer on apt-based systems).
 
@@ -103,7 +103,7 @@ Not available on **panel-only** installs or **Debian** (use Debian's own upgrade
 
 | Distro | Status |
 |--------|--------|
-| Rocky / Alma / RHEL | Planned — needs `dnf` package mapping |
+| Rocky / Alma / RHEL | Planned - needs `dnf` package mapping |
 | Arch / Alpine | Panel-only possible; native stack not targeted |
 
 ## Environment reference

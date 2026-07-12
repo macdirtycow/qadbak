@@ -369,7 +369,7 @@ export function ImapMailboxesManager({
     <div className="space-y-6">
       <DomainPageHeader
         domain={domain}
-        title={webmailMode ? `Qmail — ${user || "mailbox"}` : "IMAP mailboxes"}
+        title={webmailMode ? `Qmail - ${user || "mailbox"}` : "IMAP mailboxes"}
       />
       <p className="text-sm text-panel-muted">
         Browse folders and read mail via{" "}
@@ -453,8 +453,8 @@ export function ImapMailboxesManager({
                 onClick={() => void loadMessages(m.folder)}
               >
                 <td className="py-3 text-white">{m.folder}</td>
-                <td className="py-3">{m.messages ?? "—"}</td>
-                <td className="py-3 text-panel-muted">{m.size ?? "—"}</td>
+                <td className="py-3">{m.messages ?? " - "}</td>
+                <td className="py-3 text-panel-muted">{m.size ?? " - "}</td>
               </tr>
             ))}
           </tbody>
@@ -505,10 +505,10 @@ export function ImapMailboxesManager({
                     {msg.subject || "(no subject)"}
                   </td>
                   <td className="max-w-[12rem] truncate py-3 text-panel-muted">
-                    {msg.from || "—"}
+                    {msg.from || " - "}
                   </td>
-                  <td className="py-3 text-panel-muted">{msg.date || "—"}</td>
-                  <td className="py-3 text-panel-muted">{msg.size || "—"}</td>
+                  <td className="py-3 text-panel-muted">{msg.date || " - "}</td>
+                  <td className="py-3 text-panel-muted">{msg.size || " - "}</td>
                 </tr>
               ))}
             </tbody>
@@ -573,7 +573,7 @@ export function ImapMailboxesManager({
               )}
               <pre className="mt-4 max-h-[28rem] overflow-auto whitespace-pre-wrap rounded-lg border border-panel-border bg-panel-bg p-4 text-sm text-white">
                 {selectedMessage.bodyText?.trim() ||
-                  "(No plain-text body — check headers below.)"}
+                  "(No plain-text body - check headers below.)"}
               </pre>
               {selectedMessage.rawHeaders && (
                 <details className="mt-2">

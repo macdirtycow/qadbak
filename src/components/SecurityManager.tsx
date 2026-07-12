@@ -177,8 +177,8 @@ export function SecurityManager({
       setScanResult(data.summary ?? JSON.stringify(data));
       setSuccess(
         data.infected
-          ? `Scan finished — ${data.infected} infected file(s).`
-          : "ClamAV scan finished — no infections.",
+          ? `Scan finished - ${data.infected} infected file(s).`
+          : "ClamAV scan finished - no infections.",
       );
       await loadMalware();
     } catch (e) {
@@ -230,7 +230,7 @@ export function SecurityManager({
         <Card className="border-panel-accent/30 bg-panel-accent/5">
           <h2 className="text-sm font-medium text-white">Privacy on this domain</h2>
           <p className="mt-2 text-sm text-panel-muted">
-            WAF logs, malware scans, and mail filters run locally on your VPS — nothing is
+            WAF logs, malware scans, and mail filters run locally on your VPS - nothing is
             sent to Qadbak cloud. Review panel-wide data flows in{" "}
             <Link href="/admin/privacy" className="text-panel-link hover:underline">
               Privacy &amp; data
@@ -309,7 +309,7 @@ export function SecurityManager({
               <p className="text-xs text-panel-muted">
                 Last scan: {malwareCfg.lastScanAt}
                 {malwareCfg.lastInfected != null
-                  ? ` — ${malwareCfg.lastInfected} infected`
+                  ? ` - ${malwareCfg.lastInfected} infected`
                   : ""}
               </p>
             )}
@@ -397,12 +397,12 @@ export function SecurityManager({
                   <tbody>
                     {modsecEntries.map((e, i) => (
                       <tr key={i} className="border-t border-panel-border/50">
-                        <td className="p-2 font-mono">{e.id ?? "—"}</td>
-                        <td className="p-2">{e.severity ?? "—"}</td>
+                        <td className="p-2 font-mono">{e.id ?? " - "}</td>
+                        <td className="p-2">{e.severity ?? " - "}</td>
                         <td className="p-2 max-w-[8rem] truncate" title={e.uri}>
-                          {e.uri ?? "—"}
+                          {e.uri ?? " - "}
                         </td>
-                        <td className="p-2">{e.msg ?? e.preview?.slice(0, 120) ?? "—"}</td>
+                        <td className="p-2">{e.msg ?? e.preview?.slice(0, 120) ?? " - "}</td>
                       </tr>
                     ))}
                   </tbody>

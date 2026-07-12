@@ -118,7 +118,7 @@ export function DnsManager({
             <span className="font-mono">@</span> and{" "}
             <span className="font-mono">www</span> must be{" "}
             <span className="font-mono text-white">{originIp}</span> (your VPS).
-            Orange cloud is fine — public DNS may show Cloudflare IPs (
+            Orange cloud is fine - public DNS may show Cloudflare IPs (
             <span className="font-mono">104.21.x</span> /{" "}
             <span className="font-mono">172.67.x</span>). Error{" "}
             <span className="font-mono">523</span> means Cloudflare cannot
@@ -154,7 +154,7 @@ export function DnsManager({
                 <td className="px-6 py-4 text-white">{r.name}</td>
                 <td className="px-6 py-4">{r.type}</td>
                 <td className="px-6 py-4 text-panel-muted break-all">{r.value}</td>
-                <td className="px-6 py-4 text-panel-muted">{r.ttl ?? "—"}</td>
+                <td className="px-6 py-4 text-panel-muted">{r.ttl ?? " - "}</td>
                 <td className="px-6 py-4">
                   <Button
                     variant="ghost"

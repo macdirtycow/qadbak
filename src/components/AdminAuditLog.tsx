@@ -127,9 +127,9 @@ export function AdminAuditLog() {
                 </td>
                 <td className="py-2 pr-3 text-white">{row.username}</td>
                 <td className="py-2 pr-3 font-mono text-xs text-white">{row.action}</td>
-                <td className="py-2 pr-3 text-panel-muted">{row.domain ?? "—"}</td>
+                <td className="py-2 pr-3 text-panel-muted">{row.domain ?? " - "}</td>
                 <td className="py-2 max-w-xs truncate text-panel-muted" title={row.detail}>
-                  {row.detail ?? "—"}
+                  {row.detail ?? " - "}
                 </td>
               </tr>
             ))}

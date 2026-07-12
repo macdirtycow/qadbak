@@ -111,7 +111,7 @@ export function AccountTotpSetup() {
         <h2 className="text-lg font-medium text-white">Authenticator app (TOTP)</h2>
         <p className="mt-2 text-sm text-panel-muted">
           Compatible with Google Authenticator, Authy, 1Password, and other TOTP apps.
-          Codes stay on your device — Qadbak never receives them except during login.
+          Codes stay on your device - Qadbak never receives them except during login.
         </p>
         <p className="mt-2 text-sm text-panel-muted">
           Status:{" "}

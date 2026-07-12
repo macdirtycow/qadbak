@@ -71,7 +71,7 @@ export function DomainTerminal({
         requestAnimationFrame(() => r());
       });
       if (!containerRef.current) {
-        setError("Terminal could not mount — try New session.");
+        setError("Terminal could not mount - try New session.");
         return;
       }
       disconnect();
@@ -190,7 +190,7 @@ export function DomainTerminal({
   const description =
     subtitle ??
     (wsPath.includes("admin")
-      ? `Full server shell as ${shellLabel} — for Qadbak administrators only.`
+      ? `Full server shell as ${shellLabel} - for Qadbak administrators only.`
       : `Commands run as domain user ${shellLabel} (not root). For server admin use Server terminal.`);
 
   return (

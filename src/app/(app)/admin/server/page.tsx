@@ -27,7 +27,7 @@ export default async function AdminServerPage() {
   return (
     <div className="space-y-6">
       <p className="text-sm text-panel-muted">
-        Stack services and disk usage per domain — native systemctl via{" "}
+        Stack services and disk usage per domain - native systemctl via{" "}
         <code className="text-xs">configure-host-services-sudo.sh</code>.
       </p>
       <AdminServerView

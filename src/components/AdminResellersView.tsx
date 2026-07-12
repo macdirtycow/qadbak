@@ -98,7 +98,7 @@ export function AdminResellersView({
             {resellers.map((r) => (
               <tr key={r.name} className="border-b border-panel-border/50">
                 <td className="px-6 py-4 text-white">{r.name}</td>
-                <td className="px-6 py-4">{r.domains ?? "—"}</td>
+                <td className="px-6 py-4">{r.domains ?? " - "}</td>
                 <td className="px-6 py-4 text-right">
                   <Button variant="danger" onClick={() => setDeleteName(r.name)}>
                     Delete

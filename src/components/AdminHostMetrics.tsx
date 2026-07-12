@@ -79,7 +79,7 @@ export function AdminHostMetrics({
         <Card>
           <p className="text-xs uppercase tracking-wide text-panel-muted">Firewall</p>
           <p className="mt-2 text-lg font-medium text-white">
-            {metrics.firewall?.summary ?? "—"}
+            {metrics.firewall?.summary ?? " - "}
           </p>
           {metrics.firewall?.tool && (
             <p className="mt-1 text-xs text-panel-muted">{metrics.firewall.tool}</p>

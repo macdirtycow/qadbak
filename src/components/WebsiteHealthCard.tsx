@@ -127,15 +127,15 @@ export function WebsiteHealthCard({
   const subtitle = panelHijack
     ? "This domain shows the Qadbak landing page instead of your site in public_html."
     : apacheDefault
-      ? "Visitors still see the Ubuntu/Apache default page — use Repair on server."
+      ? "Visitors still see the Ubuntu/Apache default page - use Repair on server."
       : localApacheNote
         ? "Your site is live on the internet; local routing can be aligned with Repair (optional)."
       : cf502
-      ? "Cloudflare error 502 — origin answers badly (nginx→Apache or HTTPS without cert)."
+      ? "Cloudflare error 502 - origin answers badly (nginx→Apache or HTTPS without cert)."
       : cf523
-      ? "Cloudflare error 523 — the proxy cannot reach your origin on ports 80/443."
+      ? "Cloudflare error 523 - the proxy cannot reach your origin on ports 80/443."
       : siteOk
-        ? "Website is live — public_html is served for this domain."
+        ? "Website is live - public_html is served for this domain."
         : "Checks public URL, origin routing, and Cloudflare DNS.";
 
   return (
@@ -251,15 +251,15 @@ export function WebsiteHealthCard({
                 }
               >
                 {health.localProbe.servingPanelLanding
-                  ? "Qadbak landing — not public_html"
+                  ? "Qadbak landing - not public_html"
                   : health.localProbe.inferredFromPublic
-                    ? `OK via internet — HTTP ${health.publicProbe.status ?? ""}`
+                    ? `OK via internet - HTTP ${health.publicProbe.status ?? ""}`
                   : health.localProbe.servingApacheDefault && !health.publicProbe.ok
                     ? "Apache fallback (not public_html)"
                     : health.localProbe.servingApacheDefault && health.publicProbe.ok
-                      ? `OK via internet — local HTTP ${health.localProbe.status ?? ""}`
+                      ? `OK via internet - local HTTP ${health.localProbe.status ?? ""}`
                       : health.localProbe.ok
-                    ? `OK — HTTP ${health.localProbe.status ?? ""}`
+                    ? `OK - HTTP ${health.localProbe.status ?? ""}`
                     : health.localProbe.error ?? "No response"}
               </p>
             </div>
@@ -277,17 +277,17 @@ export function WebsiteHealthCard({
                 }
               >
                 {health.publicProbe.dnsPending
-                  ? "DNS not live yet — site is ready on this server"
+                  ? "DNS not live yet - site is ready on this server"
                   : health.publicProbe.servingApacheDefault
-                  ? "Ubuntu/Apache default page — not your site"
+                  ? "Ubuntu/Apache default page - not your site"
                   : health.publicProbe.cloudflare502
-                  ? `Cloudflare 502 — HTTP ${health.publicProbe.status ?? ""}`
+                  ? `Cloudflare 502 - HTTP ${health.publicProbe.status ?? ""}`
                   : health.publicProbe.cloudflare523
-                  ? `Cloudflare 523 — HTTP ${health.publicProbe.status ?? ""}`
+                  ? `Cloudflare 523 - HTTP ${health.publicProbe.status ?? ""}`
                   : health.publicProbe.servingPanelLanding
-                    ? "Qadbak landing — not your site"
+                    ? "Qadbak landing - not your site"
                     : health.publicProbe.ok
-                      ? `OK — HTTP ${health.publicProbe.status ?? ""}`
+                      ? `OK - HTTP ${health.publicProbe.status ?? ""}`
                       : health.publicProbe.error ?? "Not reachable"}
               </p>
             </div>

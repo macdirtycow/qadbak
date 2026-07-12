@@ -74,7 +74,7 @@ async function doCreateDomain(request: Request) {
       },
     });
     consumeLastJournalSteps(); // discard any leftover from earlier requests
-    journal.infoStep(`Validated input — domain="${domainName}", type=${body.type ?? "top"}`);
+    journal.infoStep(`Validated input - domain="${domainName}", type=${body.type ?? "top"}`);
 
     try {
       await getProvisioner().createDomain(
@@ -100,7 +100,7 @@ async function doCreateDomain(request: Request) {
         const existing = await getProvisioner().findDomainByName(domainName, session);
         if (existing) {
           journal.warnStep(
-            `Domain already existed on this server — treating as success.`,
+            `Domain already existed on this server - treating as success.`,
           );
           await journal.finish(true);
           return jsonOk({
@@ -163,7 +163,7 @@ async function doCreateDomain(request: Request) {
         !(await isPremiumFeatureEnabled("multi-tenant-clients"))
       ) {
         premiumNote =
-          "Client account not created — Qadbak Premium license required (Server admin → License).";
+          "Client account not created - Qadbak Premium license required (Server admin → License).";
       } else {
         try {
           const upsert = await upsertPanelClient({
@@ -177,13 +177,13 @@ async function doCreateDomain(request: Request) {
           );
         } catch (err) {
           if (err instanceof PremiumRequiredError) {
-            premiumNote = `Client account not created — Premium feature missing: ${err.feature}.`;
+            premiumNote = `Client account not created - Premium feature missing: ${err.feature}.`;
           } else {
             journal.warnStep(
               `Panel client provisioning failed: ${err instanceof Error ? err.message : String(err)}`,
             );
             premiumNote =
-              "Panel client provisioning failed — see action journal.";
+              "Panel client provisioning failed - see action journal.";
           }
         }
       }
@@ -193,7 +193,7 @@ async function doCreateDomain(request: Request) {
       if (!(await isPremiumFeatureEnabled("panel-client-vhost"))) {
         premiumNote =
           (premiumNote ? premiumNote + " " : "") +
-          "Panel vhost not applied — panel-client-vhost feature not licensed.";
+          "Panel vhost not applied - panel-client-vhost feature not licensed.";
       } else {
         try {
           await ensurePanelVhost(domainName);
@@ -203,14 +203,14 @@ async function doCreateDomain(request: Request) {
           if (err instanceof PremiumRequiredError) {
             premiumNote =
               (premiumNote ? premiumNote + " " : "") +
-              `Panel vhost not applied — Premium feature missing: ${err.feature}.`;
+              `Panel vhost not applied - Premium feature missing: ${err.feature}.`;
           } else {
             journal.warnStep(
               `Panel vhost apply failed: ${err instanceof Error ? err.message : String(err)}`,
             );
             premiumNote =
               (premiumNote ? premiumNote + " " : "") +
-              "Panel vhost apply failed — see action journal.";
+              "Panel vhost apply failed - see action journal.";
           }
         }
       }
@@ -229,7 +229,7 @@ async function doCreateDomain(request: Request) {
       } catch {
         journal.captureFromHelper(consumeLastJournalSteps());
         journal.warnStep(
-          `Repair helper failed — site may need a manual run from Domains → Overview.`,
+          `Repair helper failed - site may need a manual run from Domains → Overview.`,
         );
         hostingNote =
           "Domain created. Open Overview → Repair on server if the site does not load yet.";

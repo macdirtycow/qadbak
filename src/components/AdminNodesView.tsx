@@ -143,7 +143,7 @@ export function AdminNodesView() {
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-panel-muted">
-                    {n.agentUrl ?? "—"} · roles: {n.roles.join(", ")}
+                    {n.agentUrl ?? " - "} · roles: {n.roles.join(", ")}
                   </p>
                 </li>
               );

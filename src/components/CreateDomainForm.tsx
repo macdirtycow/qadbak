@@ -118,7 +118,7 @@ export function CreateDomainForm({
         )}
         {dnsNote && (
           <Alert variant="info">
-            <p className="font-medium text-white">DNS — next step</p>
+            <p className="font-medium text-white">DNS - next step</p>
             <p className="mt-2 text-sm">{dnsNote}</p>
             <p className="mt-2 text-xs text-panel-muted">
               Until DNS propagates, the site may already work on this server. Check
@@ -213,7 +213,7 @@ export function CreateDomainForm({
               />
               <span>
                 Create client account in <code className="text-xs">users.json</code>{" "}
-                (they sign in on the main panel — password shown after create)
+                (they sign in on the main panel - password shown after create)
               </span>
             </label>
             <label className="flex cursor-pointer items-start gap-2 text-sm text-panel-muted">
@@ -226,7 +226,7 @@ export function CreateDomainForm({
               />
               <span>
                 Also add <code className="text-xs">panel.[domain]</code> nginx vhost
-                (optional white-label URL — off by default)
+                (optional white-label URL - off by default)
               </span>
             </label>
           </div>
@@ -234,7 +234,7 @@ export function CreateDomainForm({
         {type === "top" && !premiumMultiTenant && (
           <p className="text-sm text-panel-muted">
             Client panel accounts and <code className="text-xs">panel.[domain]</code>{" "}
-            vhosts require Qadbak Premium —{" "}
+            vhosts require Qadbak Premium  - {" "}
             <a href="/admin/license" className="text-panel-link hover:underline">
               activate a license
             </a>
@@ -244,7 +244,7 @@ export function CreateDomainForm({
         {unixPassword && (
           <Alert variant="success">
             <p className="font-medium text-white">
-              Unix / FTP password (copy now — not shown again)
+              Unix / FTP password (copy now - not shown again)
             </p>
             <p className="mt-2 text-sm">
               User: <strong>{user || domain.split(".")[0]}</strong>
@@ -270,7 +270,7 @@ export function CreateDomainForm({
         )}
         {clientCredentials && (
           <Alert variant="success">
-            <p className="font-medium text-white">Client panel login (copy now — not shown again)</p>
+            <p className="font-medium text-white">Client panel login (copy now - not shown again)</p>
             <p className="mt-2 text-sm">
               Username: <strong>{clientCredentials.username}</strong>
               <br />

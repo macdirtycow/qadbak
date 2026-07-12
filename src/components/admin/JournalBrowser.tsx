@@ -43,7 +43,7 @@ function buildQuery(f: Filters): string {
 export function JournalBrowser() {
   // `filters` is what the form fields currently show; `appliedFilters` is
   // what the listing actually reflects. Only "Apply filters" / Enter copies
-  // one into the other — without this split, every keystroke would refetch
+  // one into the other - without this split, every keystroke would refetch
   // and in-flight requests for stale values could clobber the latest result,
   // which is exactly what made the button feel like it did nothing.
   const [filters, setFilters] = useState<Filters>(INITIAL_FILTERS);
@@ -91,7 +91,7 @@ export function JournalBrowser() {
 
   function applyFilters(e: React.FormEvent) {
     e.preventDefault();
-    // Shallow clone so identical filter values still trigger a refetch —
+    // Shallow clone so identical filter values still trigger a refetch  - 
     // makes "Apply filters" double as a manual reload.
     setAppliedFilters({ ...filters });
   }
@@ -188,7 +188,7 @@ export function JournalBrowser() {
 
         <Card className="p-0">
           <div className="border-b border-panel-border px-4 py-2 text-xs uppercase tracking-wide text-panel-muted">
-            {list ? `${list.entries.length} of ${list.total} entries` : "—"}
+            {list ? `${list.entries.length} of ${list.total} entries` : " - "}
           </div>
           <ul className="max-h-[60vh] divide-y divide-panel-border overflow-y-auto">
             {(list?.entries ?? []).map((e) => (
@@ -437,7 +437,7 @@ function JournalEntryDetail({
         ))}
         {entry.steps.length === 0 ? (
           <li className="text-sm text-panel-muted">
-            (No low-level steps recorded — this action only has a summary entry.)
+            (No low-level steps recorded - this action only has a summary entry.)
           </li>
         ) : null}
       </ol>

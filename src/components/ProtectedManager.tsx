@@ -248,7 +248,7 @@ export function ProtectedManager({
           </ul>
           {users.length === 0 && (
             <p className="mt-2 text-sm text-panel-muted">
-              No users — select a directory or add one.
+              No users - select a directory or add one.
             </p>
           )}
         </Card>

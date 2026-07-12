@@ -109,7 +109,7 @@ export function ClientOnboardingWizard({
           <p>
             Mailboxes:{" "}
             <span className="text-white">{mailboxes}</span>
-            {mailboxes === 0 ? " — create your first mailbox to receive email." : " — looks good!"}
+            {mailboxes === 0 ? " - create your first mailbox to receive email." : " - looks good!"}
           </p>
           <Link
             href={`/domains/${enc}/mail`}
@@ -129,7 +129,7 @@ export function ClientOnboardingWizard({
         {step < steps.length - 1 ? (
           <Button onClick={() => setStep((s) => s + 1)}>Next</Button>
         ) : (
-          <Button onClick={finish}>Done — hide wizard</Button>
+          <Button onClick={finish}>Done - hide wizard</Button>
         )}
         <Button variant="secondary" onClick={finish}>
           Skip

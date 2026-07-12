@@ -130,7 +130,7 @@ export function MailSettingsManager({
         <h2 className="text-lg font-medium text-white">External mail provider</h2>
         <p className="mt-1 text-sm text-panel-muted">
           If mail is hosted at Google Workspace, Microsoft 365, Zoho, or another
-          provider, configure DNS there — do <strong className="text-white">not</strong>{" "}
+          provider, configure DNS there - do <strong className="text-white">not</strong>{" "}
           point MX to this VPS. Your website can stay here; only mail DNS moves.
         </p>
         <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-panel-muted">

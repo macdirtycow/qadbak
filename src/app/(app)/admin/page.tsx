@@ -16,7 +16,7 @@ export default function AdminOverviewPage() {
             <h2 className="text-lg font-medium text-white">{privacy.label}</h2>
             <p className="mt-2 text-sm text-panel-muted">
               What stays on your VPS, outbound license heartbeat, audit export, and
-              hardening links — local-first by design.
+              hardening links - local-first by design.
             </p>
           </Card>
         </Link>

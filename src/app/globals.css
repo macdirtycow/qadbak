@@ -17,6 +17,9 @@
   --panel-muted-rgb: 148 163 184;
   --panel-text: #f1f5f9;
   --panel-text-rgb: 241 245 249;
+  --qadbak-radius: 0.375rem;
+  --qadbak-radius-lg: 0.5rem;
+  --qadbak-radius-xl: 0.75rem;
 }
 
 html {
@@ -29,7 +32,7 @@ body {
 
 @layer components {
   .qadbak-field {
-    @apply w-full rounded-lg border border-panel-border px-3 py-2 text-sm text-panel-text;
+    @apply w-full rounded-md border border-panel-border px-3 py-2 text-sm text-panel-text;
     background-color: rgb(var(--panel-bg-rgb) / 1) !important;
     caret-color: var(--panel-text);
   }

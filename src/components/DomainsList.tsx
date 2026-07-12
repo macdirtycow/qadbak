@@ -114,7 +114,7 @@ export function DomainsList({
                     {disabled ? "Disabled" : "Active"}
                   </Badge>
                 </td>
-                <td className="px-6 py-4 text-panel-muted">{d.plan ?? "—"}</td>
+                <td className="px-6 py-4 text-panel-muted">{d.plan ?? " - "}</td>
                 <td className="px-6 py-4 font-mono text-panel-muted tabular-nums">
                   {formatDomainDisk(d.disk_used, d.disk_limit)}
                 </td>

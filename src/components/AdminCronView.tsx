@@ -34,7 +34,7 @@ export function AdminCronView() {
       <Card>
         <h2 className="font-medium text-white">System cron (root)</h2>
         <p className="mt-1 text-sm text-panel-muted">
-          Server-wide scheduled jobs — native view, no server-admin embed.
+          Server-wide scheduled jobs - native view, no server-admin embed.
         </p>
         {loading ? (
           <p className="mt-4 text-sm text-panel-muted">Loading…</p>

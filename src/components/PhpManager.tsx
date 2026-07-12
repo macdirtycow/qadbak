@@ -174,8 +174,8 @@ export function PhpManager({
             {directories.map((d) => (
               <tr key={d.dir} className="border-t border-panel-border/50">
                 <td className="py-3 text-white">{d.dir}</td>
-                <td className="py-3">{d.version ?? "—"}</td>
-                <td className="py-3 text-panel-muted">{d.mode ?? "—"}</td>
+                <td className="py-3">{d.version ?? " - "}</td>
+                <td className="py-3 text-panel-muted">{d.mode ?? " - "}</td>
                 {isAdmin && (
                   <td className="py-3 text-right">
                     <Button

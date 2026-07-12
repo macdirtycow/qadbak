@@ -321,7 +321,7 @@ export function NewsletterManager({
         rounds++;
         if (data.done) break;
       }
-      setSuccess(remaining === 0 ? "Campaign delivery completed." : "Batch processed — more remaining.");
+      setSuccess(remaining === 0 ? "Campaign delivery completed." : "Batch processed - more remaining.");
       await loadCampaigns();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error.");
@@ -386,7 +386,7 @@ document.getElementById("qb-newsletter").addEventListener("submit", async functi
         title="Newsletter"
         description={
           isAdmin
-            ? "Send newsletters to your customers — admin can assist when needed"
+            ? "Send newsletters to your customers - admin can assist when needed"
             : "Send newsletters to your customers"
         }
       />
@@ -582,7 +582,7 @@ document.getElementById("qb-newsletter").addEventListener("submit", async functi
                 {subscribers.map((s) => (
                   <tr key={s.id} className="border-b border-panel-border/50">
                     <td className="px-6 py-4 text-white">{s.email}</td>
-                    <td className="px-6 py-4 text-panel-muted">{s.name || "—"}</td>
+                    <td className="px-6 py-4 text-panel-muted">{s.name || " - "}</td>
                     <td className="px-6 py-4">{statusBadge(s.status)}</td>
                     <td className="px-6 py-4 text-panel-muted">{s.source}</td>
                     <td className="px-6 py-4 text-right">
@@ -715,7 +715,7 @@ document.getElementById("qb-newsletter").addEventListener("submit", async functi
                     <td className="px-6 py-4 text-panel-muted tabular-nums">
                       {c.stats
                         ? `${c.stats.sent}/${c.stats.total} sent`
-                        : "—"}
+                        : " - "}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       {c.status === "draft" && (
@@ -767,7 +767,7 @@ document.getElementById("qb-newsletter").addEventListener("submit", async functi
             only count after double opt-in confirmation when that option is enabled.
           </p>
           <p className="text-xs text-panel-muted">
-            List ID: <code className="text-white">{settings.listId || "—"}</code>
+            List ID: <code className="text-white">{settings.listId || " - "}</code>
           </p>
           <pre className="overflow-x-auto rounded-lg border border-panel-border bg-panel-bg p-4 text-xs text-slate-300">
             {embedSnippet}

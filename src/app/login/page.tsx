@@ -118,7 +118,7 @@ export default function LoginPage() {
           <div className="mt-6 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-50">
             <p className="font-medium">Live demo (read-only)</p>
             <p className="mt-1 text-amber-100/90">
-              Credentials are prefilled. Explore domains, mail, Site tools, and server admin —
+              Credentials are prefilled. Explore domains, mail, Site tools, and server admin  - 
               changes are blocked. Sample domain:{" "}
               <code className="text-amber-50">{demoInfo.showcaseDomain ?? "showcase.qadbak.com"}</code>
             </p>
@@ -192,7 +192,7 @@ export default function LoginPage() {
           {httpPanel ? (
             <>
               {" "}
-              HTTP access (e.g. <code className="text-slate-400">:11000</code>) is supported — sign in works without
+              HTTP access (e.g. <code className="text-slate-400">:11000</code>) is supported - sign in works without
               HTTPS.
             </>
           ) : null}

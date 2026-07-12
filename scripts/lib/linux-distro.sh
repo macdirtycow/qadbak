@@ -79,7 +79,7 @@ qadbak_ubuntu_release_label() {
   qadbak_linux_release_label
 }
 
-# Next in-place LTS upgrade (one hop only — 22.04→24.04, 24.04→26.04).
+# Next in-place LTS upgrade (one hop only - 22.04→24.04, 24.04→26.04).
 qadbak_ubuntu_next_lts_version() {
   if [[ -z "$QADBAK_OS_VERSION_ID" ]]; then
     qadbak_load_os_release || return 1
@@ -168,26 +168,57 @@ qadbak_php_extra_apt_packages() {
 
 qadbak_install_nodejs() {
   local major="${1:-20}"
+  local min_major="${QADBAK_MIN_NODE_MAJOR:-20}"
+  if [[ "$major" -lt "$min_major" ]]; then
+    major="$min_major"
+  fi
   if command -v node &>/dev/null; then
     local ver
     ver="$(node -v | cut -d. -f1 | tr -d v)"
     if [[ "$ver" -ge "$major" ]]; then
+      echo "  OK   Node.js $(node -v) (>= ${major})"
+      command -v npm &>/dev/null && echo "  OK   npm $(npm -v)" || true
       return 0
     fi
+    echo "  Node.js $(node -v) is below required ${major}+ - upgrading…" >&2
+  else
+    echo "  Node.js not found - installing Node.js ${major}.x LTS…" >&2
   fi
   case "$QADBAK_OS_ID" in
     ubuntu | debian)
-      curl -fsSL "https://deb.nodesource.com/setup_${major}.x" | bash -
-      qadbak_pkg_install nodejs
+      if ! curl -fsSL "https://deb.nodesource.com/setup_${major}.x" | bash -; then
+        echo "FAIL: NodeSource setup script failed for Node.js ${major}.x" >&2
+        return 1
+      fi
+      if ! qadbak_pkg_install nodejs; then
+        echo "FAIL: could not install nodejs package" >&2
+        return 1
+      fi
       ;;
     *)
       echo "Install Node.js ${major}+ on this system, then re-run." >&2
       return 1
       ;;
   esac
+  if ! command -v node &>/dev/null; then
+    echo "FAIL: node not on PATH after install" >&2
+    return 1
+  fi
+  local installed
+  installed="$(node -v | cut -d. -f1 | tr -d v)"
+  if [[ "$installed" -lt "$major" ]]; then
+    echo "FAIL: expected Node.js ${major}+ but found $(node -v)" >&2
+    return 1
+  fi
+  if ! command -v npm &>/dev/null; then
+    echo "FAIL: npm not on PATH after Node.js install" >&2
+    return 1
+  fi
+  echo "  OK   Node.js $(node -v)"
+  echo "  OK   npm $(npm -v)"
 }
 
-# awscli (v1) exists on Jammy; Noble/Debian removed it — try apt, then snap, else warn.
+# awscli (v1) exists on Jammy; Noble/Debian removed it - try apt, then snap, else warn.
 qadbak_install_aws_cli() {
   if command -v aws &>/dev/null; then
     echo "  OK   aws CLI already on PATH"
@@ -205,7 +236,7 @@ qadbak_install_aws_cli() {
     echo "  OK   aws-cli (snap)"
     return 0
   fi
-  echo "  WARN aws CLI not installed (optional — S3 backup tab needs it)" >&2
+  echo "  WARN aws CLI not installed (optional - S3 backup tab needs it)" >&2
   echo "       Install later: snap install aws-cli --classic" >&2
   return 0
 }

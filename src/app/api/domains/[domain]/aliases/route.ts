@@ -78,7 +78,7 @@ export async function DELETE(request: Request, { params }: Params) {
           );
           if (hit && typeof hit.to === "string") targetTo = hit.to;
         } catch {
-          // best-effort — undo will simply be unavailable if we never knew the target
+          // best-effort - undo will simply be unavailable if we never knew the target
         }
       }
       journal = beginJournal({
@@ -101,7 +101,7 @@ export async function DELETE(request: Request, { params }: Params) {
         });
       } else {
         journal.warnStep(
-          `Could not capture alias target — undo will be unavailable. Pass {to} in the request body next time.`,
+          `Could not capture alias target - undo will be unavailable. Pass {to} in the request body next time.`,
         );
       }
       await auditLog(session.username, "delete-alias", domain, body.from);

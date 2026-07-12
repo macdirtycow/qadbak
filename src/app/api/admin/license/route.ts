@@ -89,7 +89,7 @@ export async function POST(request: Request) {
         action: "license.deactivate",
         summary: "Deactivated Qadbak Premium license",
         session,
-        metadata: { keyHint: stored?.keyHint ?? "—" },
+        metadata: { keyHint: stored?.keyHint ?? " - " },
       });
       try {
         await deactivateLicense();

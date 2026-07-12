@@ -221,14 +221,14 @@ export function PanelToolsManager({
           <Card>
             <h2 className="font-medium text-white">Deliverability score</h2>
             <p className="mt-2 text-3xl font-semibold text-white">
-              {deliverability?.grade ?? "—"}{" "}
+              {deliverability?.grade ?? " - "}{" "}
               <span className="text-base text-panel-muted">
                 ({deliverability?.score ?? 0}/100)
               </span>
             </p>
             <p className="mt-1 text-sm text-panel-muted">
               SPF {deliverability?.spf ? "✓" : "✗"} · DKIM {deliverability?.dkim ? "✓" : "✗"} ·
-              DMARC {deliverability?.dmarc ?? "—"}
+              DMARC {deliverability?.dmarc ?? " - "}
             </p>
           </Card>
           <Card>
@@ -353,7 +353,7 @@ export function PanelToolsManager({
               ).map((t) => (
                 <li key={t.id}>
                   {t.name}
-                  {t.subject ? ` — ${t.subject}` : ""}
+                  {t.subject ? ` - ${t.subject}` : ""}
                 </li>
               ))}
             </ul>
@@ -880,7 +880,7 @@ export function PanelToolsManager({
               {tickets?.tickets?.slice(0, 5).map((t) => (
                 <li key={t.id} className="flex flex-wrap items-center gap-2">
                   <span>
-                    {t.subject} — {t.status}
+                    {t.subject} - {t.status}
                   </span>
                   {t.status === "open" && (
                     <Button
@@ -935,7 +935,7 @@ export function PanelToolsManager({
               {invoices?.invoices?.slice(0, 5).map((i) => (
                 <li key={i.id} className="flex flex-wrap items-center gap-2">
                   <span>
-                    {i.description} — €{i.amount} ({i.status})
+                    {i.description} - €{i.amount} ({i.status})
                   </span>
                   <Button
                     variant="secondary"
@@ -948,7 +948,7 @@ export function PanelToolsManager({
                         w.document.write(html);
                         w.document.close();
                       }
-                      setSuccess("Invoice PDF opened — use Print → Save as PDF.");
+                      setSuccess("Invoice PDF opened - use Print → Save as PDF.");
                     }}
                     disabled={loading}
                   >
@@ -974,7 +974,7 @@ export function PanelToolsManager({
                       className="!py-0.5 !text-xs"
                       onClick={async () => {
                         await call("invoice-mark-sent", { invoiceId: i.id });
-                        setSuccess("Invoice marked sent — customer can be billed.");
+                        setSuccess("Invoice marked sent - customer can be billed.");
                         await call("billing-invoices-list");
                       }}
                       disabled={loading}

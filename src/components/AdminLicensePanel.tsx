@@ -25,7 +25,7 @@ export function AdminLicensePanel({
   const [maxServers, setMaxServers] = useState(1);
 
   const loadActivations = useCallback(async () => {
-    if (license.status === "none" || license.keyHint === "—") {
+    if (license.status === "none" || license.keyHint === " - ") {
       setActivations([]);
       return;
     }
@@ -133,7 +133,7 @@ export function AdminLicensePanel({
           ) : (
             <>
               Premium features will stay locked until the verifier is configured
-              — see{" "}
+              - see{" "}
               <a
                 className="underline"
                 href="https://github.com/macdirtycow/qadbak/blob/main/docs/COMMERCIAL.md#license-verification"
@@ -147,7 +147,7 @@ export function AdminLicensePanel({
       )}
       {journalId && (
         <Alert>
-          Recorded in the action journal —{" "}
+          Recorded in the action journal  - {" "}
           <a className="underline" href={`/admin/journal#${journalId}`}>
             view exact steps
           </a>
@@ -197,7 +197,7 @@ export function AdminLicensePanel({
           </div>
           <div>
             <dt className="text-sm text-panel-muted">Last heartbeat</dt>
-            <dd className="text-white">{license.lastHeartbeatAt ?? "—"}</dd>
+            <dd className="text-white">{license.lastHeartbeatAt ?? " - "}</dd>
           </div>
           <div className="sm:col-span-2">
             <dt className="text-sm text-panel-muted">Premium modules</dt>
@@ -211,13 +211,13 @@ export function AdminLicensePanel({
             <dt className="text-sm text-panel-muted">Trust mode</dt>
             <dd className="text-white">
               {license.trustMode === "crypto" && license.verifyAlgo === "EdDSA"
-                ? "Cryptographic — Ed25519 (config/license-public.pem)"
+                ? "Cryptographic - Ed25519 (config/license-public.pem)"
                 : license.trustMode === "crypto" &&
                     license.verifyAlgo === "HS256"
-                  ? "Cryptographic — HS256 (QADBAK_LICENSE_JWT_SECRET)"
+                  ? "Cryptographic - HS256 (QADBAK_LICENSE_JWT_SECRET)"
                   : license.trustMode === "heartbeat"
                     ? `Heartbeat-based (license server is source of truth; grace = ${license.heartbeatGraceHours ?? 48}h)`
-                    : "—"}
+                    : " - "}
             </dd>
           </div>
           {license.trustMode === "heartbeat" ? (
@@ -225,8 +225,8 @@ export function AdminLicensePanel({
               <dt className="text-sm text-panel-muted">Heartbeat freshness</dt>
               <dd className="text-white">
                 {license.heartbeatFresh
-                  ? "Fresh — license is trusted"
-                  : "Stale — Premium features are locked until next heartbeat"}
+                  ? "Fresh - license is trusted"
+                  : "Stale - Premium features are locked until next heartbeat"}
               </dd>
             </div>
           ) : null}
@@ -279,7 +279,7 @@ export function AdminLicensePanel({
         </div>
       </Card>
 
-      {license.keyHint !== "—" && license.status !== "none" ? (
+      {license.keyHint !== " - " && license.status !== "none" ? (
         <Card>
           <h3 className="font-medium text-white">Other servers using this license</h3>
           <p className="mt-2 text-sm text-panel-muted">
@@ -319,7 +319,7 @@ export function AdminLicensePanel({
                         ) : null}
                       </td>
                       <td className="py-2 pr-4 font-mono text-xs text-panel-muted">
-                        {row.fingerprintTag ?? "—"}
+                        {row.fingerprintTag ?? " - "}
                         {row.panelVersion ? ` · v${row.panelVersion}` : ""}
                       </td>
                       <td className="py-2 pr-4 font-mono text-xs text-panel-muted">
@@ -328,12 +328,12 @@ export function AdminLicensePanel({
                       <td className="py-2 pr-4 text-panel-muted">
                         {row.firstSeenAt
                           ? new Date(row.firstSeenAt).toLocaleString()
-                          : "—"}
+                          : " - "}
                       </td>
                       <td className="py-2 pr-4 text-panel-muted">
                         {row.lastHeartbeatAt
                           ? new Date(row.lastHeartbeatAt).toLocaleString()
-                          : "—"}
+                          : " - "}
                       </td>
                       <td className="py-2 pr-4 capitalize text-white">
                         {row.status}

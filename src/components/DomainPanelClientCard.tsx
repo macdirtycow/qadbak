@@ -194,7 +194,7 @@ export function DomainPanelClientCard({ domain }: { domain: string }) {
           </div>
           {!hasClient && (
             <p className="text-xs text-panel-muted">
-              You do not need to enter a password — one is generated and shown once after
+              You do not need to enter a password - one is generated and shown once after
               you click Create client account.
             </p>
           )}
@@ -231,7 +231,7 @@ export function DomainPanelClientCard({ domain }: { domain: string }) {
                 {panelUrl}
               </a>
               {" "}
-              — with native DNS on this server, the{" "}
+              - with native DNS on this server, the{" "}
               <code>panel.{domain}</code> A-record and HTTPS are applied
               automatically when you click Apply panel vhost.
             </p>

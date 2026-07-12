@@ -44,7 +44,7 @@ export function AdminAwstatsView() {
       <Card>
         <h2 className="font-medium text-white">AWStats (server-wide)</h2>
         <p className="mt-1 text-sm text-panel-muted">
-          Per-domain traffic stats — {installed ? "awstats installed" : "awstats not detected on PATH"}.
+          Per-domain traffic stats - {installed ? "awstats installed" : "awstats not detected on PATH"}.
           {" "}
           {configured}/{rows.length} domains configured.
         </p>

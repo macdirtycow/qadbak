@@ -20,7 +20,7 @@ export default async function AdminPrivacyPage() {
         <p className="mt-1 max-w-3xl text-sm text-panel-muted">
           See what stays on your VPS, what can leave it, and which hardening tools are
           available. Qadbak is designed local-first: customer hosting data is not
-          sent to our servers — only a small Premium license heartbeat when you opt in.
+          sent to our servers - only a small Premium license heartbeat when you opt in.
         </p>
       </header>
       <AdminPrivacyCenter

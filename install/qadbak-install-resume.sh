@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Resume Qadbak install after a mid-install failure (e.g. domain-fs sudo verify).
-# Does not re-run npm build or stack install — only sudoers, users (if missing), hosting, pm2, verify.
+# Does not re-run npm build or stack install - only sudoers, users (if missing), hosting, pm2, verify.
 set -euo pipefail
 
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
@@ -13,7 +13,7 @@ QADBAK_USER="${QADBAK_USER:-qadbak}"
 
 # shellcheck source=/dev/null
 [[ -f "$QADBAK_DIR/.env.local" ]] || {
-  echo "Missing $QADBAK_DIR/.env.local — run install/qadbak-install.sh first." >&2
+  echo "Missing $QADBAK_DIR/.env.local - run install/qadbak-install.sh first." >&2
   exit 1
 }
 

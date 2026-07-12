@@ -62,7 +62,7 @@ export function BrandingEditor({ initial }: { initial: BrandingState }) {
         applyBrandingTheme(colorsForThemeId(data.themeId));
       }
       router.refresh();
-      setSuccess("Branding saved — applies on login and across the panel.");
+      setSuccess("Branding saved - applies on login and across the panel.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed.");
     } finally {
@@ -210,7 +210,7 @@ export function BrandingEditor({ initial }: { initial: BrandingState }) {
       >
         <div className="border-b border-panel-border bg-panel-card/80 px-4 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-panel-muted">
-            Live preview — {BRANDING_PRESETS.find((p) => p.id === form.themeId)?.name}
+            Live preview - {BRANDING_PRESETS.find((p) => p.id === form.themeId)?.name}
           </p>
         </div>
         <div className="bg-panel-bg p-4">
