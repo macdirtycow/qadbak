@@ -7,6 +7,7 @@ final class BackupICloudService {
         case iCloudUnavailable
         case invalidDownload
         case http(Int, String?)
+        case network(LocalizedError)
 
         var errorDescription: String? {
             switch self {
@@ -17,6 +18,8 @@ final class BackupICloudService {
             case .http(let code, let message):
                 if let message, !message.isEmpty { return message }
                 return "Backup download failed (HTTP \(code))."
+            case .network(let error):
+                return error.errorDescription
             }
         }
     }
@@ -71,7 +74,12 @@ final class BackupICloudService {
         return destination
     }
 
-    func downloadAndSaveToICloud(domain: String, archiveName: String) async throws -> URL {
+    func downloadAndSaveToICloud(
+        domain: String,
+        archiveName: String,
+        wifiOnly: Bool = BackupICloudSettings.wifiOnly
+    ) async throws -> URL {
+        try await BackupNetworkPolicy.ensureAllowsDownload(wifiOnly: wifiOnly)
         let local = try await downloadBackup(domain: domain, archiveName: archiveName)
         defer { try? FileManager.default.removeItem(at: local) }
         return try saveToICloud(localFile: local, domain: domain, fileName: archiveName)

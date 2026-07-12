@@ -163,6 +163,10 @@ The app can download `.tar.gz` archives from the panel and save them to the user
 
 **Files → iCloud Drive → Qadbak Backups → {domain}/**
 
+**Settings (in Backups screen):**
+- **Auto-save to iCloud after backup** — after “Run backup now”, download the new archive to iCloud automatically
+- **Wi-Fi only** — block cellular downloads (on by default; large archives)
+
 Requires iCloud sign-in on the device, **iCloud Drive** enabled, and the `iCloud.com.qadbak.panel` container on the app's provisioning profile. Large backups may take several minutes over cellular — use Wi‑Fi when possible.
 
 ## Local test

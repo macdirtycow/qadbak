@@ -221,8 +221,9 @@ final class QadbakAPI {
         try await client.request("GET", path: domainPath(domain, "/backups"))
     }
 
-    func startBackup(_ domain: String) async throws {
-        let _: OkResponse = try await client.request("POST", path: domainPath(domain, "/backups"))
+    func startBackup(_ domain: String) async throws -> String? {
+        let res: StartBackupResponse = try await client.request("POST", path: domainPath(domain, "/backups"))
+        return res.result?.file
     }
 
     func makeBackupICloudService() -> BackupICloudService {

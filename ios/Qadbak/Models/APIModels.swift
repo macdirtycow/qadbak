@@ -556,6 +556,15 @@ struct BackupsResponse: Decodable {
     let native: Bool?
 }
 
+struct StartBackupResponse: Decodable {
+    let ok: Bool?
+    let result: StartBackupResult?
+}
+
+struct StartBackupResult: Decodable {
+    let file: String?
+}
+
 struct OkResponse: Decodable {
     let ok: Bool?
 }

@@ -11,6 +11,8 @@ struct BackupsView: View {
     @State private var savingArchiveId: String?
     @State private var errorMessage: String?
     @State private var successMessage: String?
+    @State private var autoSaveToICloud = BackupICloudSettings.autoSaveAfterBackup
+    @State private var wifiOnlyDownloads = BackupICloudSettings.wifiOnly
 
     private var scheduleRows: [ScheduledBackup] {
         scheduled.filter(\.isScheduleConfig)
@@ -77,12 +79,13 @@ struct BackupsView: View {
 
     private var iCloudSection: some View {
         QBGlassCard {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 12) {
                 Label("iCloud Drive", systemImage: "icloud.fill")
                     .font(.headline)
                     .foregroundStyle(QadbakPalette.text)
+
                 if BackupICloudService.iCloudAvailable {
-                    Text("Save server backups to Files → iCloud Drive → Qadbak Backups.")
+                    Text("Copies are saved under Files → iCloud Drive → Qadbak Backups.")
                         .font(.caption)
                         .foregroundStyle(QadbakPalette.muted)
                 } else {
@@ -90,6 +93,21 @@ struct BackupsView: View {
                         .font(.caption)
                         .foregroundStyle(QadbakPalette.warning)
                 }
+
+                Toggle("Auto-save to iCloud after backup", isOn: $autoSaveToICloud)
+                    .font(.subheadline)
+                    .foregroundStyle(QadbakPalette.text)
+                    .disabled(!BackupICloudService.iCloudAvailable)
+                    .onChange(of: autoSaveToICloud) { _, value in
+                        BackupICloudSettings.autoSaveAfterBackup = value
+                    }
+
+                Toggle("Wi-Fi only (recommended)", isOn: $wifiOnlyDownloads)
+                    .font(.subheadline)
+                    .foregroundStyle(QadbakPalette.text)
+                    .onChange(of: wifiOnlyDownloads) { _, value in
+                        BackupICloudSettings.wifiOnly = value
+                    }
             }
         }
     }
@@ -182,6 +200,7 @@ struct BackupsView: View {
 
     private func startBackup() async {
         guard let api = appState.api else { return }
+        let existingArchives = Set(archiveRows.map(\.id))
         isStarting = true
         errorMessage = nil
         successMessage = nil
@@ -194,10 +213,23 @@ struct BackupsView: View {
         defer { isStarting = false }
         do {
             LiveActivityManager.update(title: "Running backup", detail: "Backup in progress…", progress: 0.5)
-            try await api.startBackup(domainName)
-            successMessage = "Backup started on server."
-            LiveActivityManager.end(success: true, message: "Backup started on server.")
+            let createdFile = try await api.startBackup(domainName)
             await load()
+
+            if autoSaveToICloud, BackupICloudService.iCloudAvailable {
+                if let archiveName = createdFile ?? newestArchiveName(excluding: existingArchives) {
+                    LiveActivityManager.update(title: "Saving to iCloud", detail: archiveName, progress: 0.75)
+                    await saveArchiveByName(archiveName)
+                    if errorMessage == nil {
+                        successMessage = "Backup created and saved to iCloud Drive."
+                        LiveActivityManager.end(success: true, message: "Backup saved to iCloud.")
+                    }
+                    return
+                }
+            }
+
+            successMessage = "Backup created on server."
+            LiveActivityManager.end(success: true, message: "Backup created on server.")
         } catch {
             errorMessage = error.localizedDescription
             LiveActivityManager.end(success: false, message: error.localizedDescription)
@@ -205,10 +237,15 @@ struct BackupsView: View {
     }
 
     private func saveArchiveToICloud(_ backup: ScheduledBackup) async {
-        guard let api = appState.api, let archiveName = backup.archiveFileName else { return }
-        savingArchiveId = backup.id
+        guard let archiveName = backup.archiveFileName else { return }
+        await saveArchiveByName(archiveName, archiveId: backup.id)
+    }
+
+    private func saveArchiveByName(_ archiveName: String, archiveId: String? = nil) async {
+        guard let api = appState.api else { return }
+        let trackId = archiveId ?? archiveName
+        savingArchiveId = trackId
         errorMessage = nil
-        successMessage = nil
         LiveActivityManager.start(
             domain: domainName,
             kind: "backup",
@@ -218,12 +255,24 @@ struct BackupsView: View {
         defer { savingArchiveId = nil }
         do {
             let service = api.makeBackupICloudService()
-            _ = try await service.downloadAndSaveToICloud(domain: domainName, archiveName: archiveName)
+            _ = try await service.downloadAndSaveToICloud(
+                domain: domainName,
+                archiveName: archiveName,
+                wifiOnly: wifiOnlyDownloads
+            )
             successMessage = "Saved to iCloud Drive → Qadbak Backups → \(domainName)."
             LiveActivityManager.end(success: true, message: "Backup saved to iCloud.")
         } catch {
             errorMessage = error.localizedDescription
             LiveActivityManager.end(success: false, message: error.localizedDescription)
         }
+    }
+
+    private func newestArchiveName(excluding existing: Set<String>) -> String? {
+        archiveRows
+            .filter { !existing.contains($0.id) }
+            .map(\.id)
+            .sorted(by: >)
+            .first
     }
 }
