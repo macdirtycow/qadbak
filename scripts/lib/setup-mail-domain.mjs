@@ -14,8 +14,6 @@ function pickUser(rows) {
   if (hit?.user) return String(hit.user);
   const base = MAIL_DOMAIN.split(".")[0] || "inveil";
   if (unixUserExists(base)) return base;
-  // Legacy: inveil.net may still use unix user from omiiba.dev migration
-  if (base === "inveil" && unixUserExists("omiiba")) return "omiiba";
   return base;
 }
 

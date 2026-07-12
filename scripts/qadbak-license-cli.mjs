@@ -70,13 +70,22 @@ async function postLicenseServer(pathname, body) {
     process.env.QADBAK_LICENSE_SERVER_INTERNAL?.trim().replace(/\/$/, "") ??
     process.env.QADBAK_LICENSE_SERVER?.replace(/\/$/, "") ??
     "https://license.inveil.dev";
-  const res = await fetch(`${server}${pathname}`, {
+  const url = `${server}${pathname}`;
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+  if (!res.ok) {
+    const err = data.error ?? `HTTP ${res.status}`;
+    if (res.status === 404 && err === "Not found") {
+      throw new Error(
+        `Not found — ${url} is not the license API. Set QADBAK_LICENSE_SERVER=https://license.inveil.dev and remove QADBAK_LICENSE_SERVER_INTERNAL unless the license server runs on this host.`,
+      );
+    }
+    throw new Error(err);
+  }
   return data;
 }
 

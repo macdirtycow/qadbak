@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Point a production VPS at public main (installer fixes, BIND auto-zones, Playwright E2E).
-# Safe to run after an install that used macdirtycow/proprietary-premium-commercialization.
+# Safe to run after an install that tracked a non-main git branch.
 set -euo pipefail
 ROOT="${QADBAK_DIR:-/opt/qadbak}"
 USER="${QADBAK_USER:-qadbak}"

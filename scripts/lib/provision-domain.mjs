@@ -108,19 +108,16 @@ export async function domainCreate(domain, pass, userOpt, extraJson) {
   jinfo(`Resolved domain '${name}' (type=${type}, user=${user})`);
 
   if (ownedByQadbak) {
-    let userExisted = false;
-    try {
-      await exec("id", [user]);
-      userExisted = true;
-    } catch {
-      const t0 = Date.now();
-      await exec("useradd", ["-m", "-s", "/bin/bash", user]);
+    const t0 = Date.now();
+    const userExisted = !(await ensureUnixUser(user));
+    if (!userExisted) {
       jstep("shell", `Created unix user '${user}'`, {
         command: `useradd -m -s /bin/bash ${user}`,
         durationMs: Date.now() - t0,
       });
+    } else {
+      jinfo(`Unix user '${user}' already existed`);
     }
-    if (userExisted) jinfo(`Unix user '${user}' already existed`);
     await mkdir(path.join(home, "public_html"), { recursive: true });
     await mkdir(path.join(home, "backups"), { recursive: true });
     jstep("file-write", `Created ${home}/public_html and ${home}/backups`, {

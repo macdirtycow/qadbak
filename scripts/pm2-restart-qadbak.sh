@@ -69,7 +69,7 @@ if [[ -f "$ROOT/data/license.json" ]]; then
   if run "cd '$ROOT' && node scripts/qadbak-license-cli.mjs heartbeat"; then
     echo "    OK"
   else
-    echo "    WARN — heartbeat failed (check curl to license server from this host)" >&2
+    echo "    WARN — heartbeat failed — run: sudo bash scripts/repair-license-heartbeat.sh" >&2
   fi
 fi
 

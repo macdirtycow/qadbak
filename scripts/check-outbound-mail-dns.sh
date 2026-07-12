@@ -4,7 +4,14 @@
 set -euo pipefail
 
 DOMAIN="${1:?domain}"
-ORIGIN_IP="${2:-${QADBAK_ORIGIN_IP:-158.220.85.245}}"
+ORIGIN_IP="${2:-${QADBAK_ORIGIN_IP:-}}"
+if [[ -z "$ORIGIN_IP" ]]; then
+  ORIGIN_IP="$(curl -4 -sf --max-time 8 ifconfig.me 2>/dev/null || true)"
+fi
+if [[ -z "$ORIGIN_IP" ]]; then
+  echo "Set QADBAK_ORIGIN_IP or pass VPS IP as second argument." >&2
+  exit 1
+fi
 MAIL_HOST="${QADBAK_MAIL_HOST:-mail.${DOMAIN}}"
 
 fail=0

@@ -2,7 +2,7 @@
 
 Static marketing site for **https://inveil.net**. **https://inveil.dev** redirects to inveil.net (same VPS).
 
-## Deploy (main VPS, e.g. 158.220.85.245)
+## Deploy (your main VPS)
 
 ```bash
 cd /opt/qadbak && git pull
@@ -17,14 +17,14 @@ Configures nginx + TLS for **inveil.net**, **www.inveil.net**, and **inveil.dev*
 
 | Name | Type | Content |
 |------|------|---------|
-| `@` | A | `158.220.85.245` (your main VPS IP) |
+| `@` | A | Your main VPS public IP |
 | `www` | CNAME | `inveil.net` |
 
 ### Zone `inveil.dev` (separate domain in Cloudflare)
 
 | Name | Type | Content |
 |------|------|---------|
-| `@` | A | `158.220.85.245` (same VPS as inveil.net) |
+| `@` | A | Same VPS IP as inveil.net |
 
 Orange cloud (proxy) is OK on both zones if TCP 80/443 are open on the VPS.
 
@@ -38,12 +38,6 @@ curl -sI https://inveil.dev/ | head -3   # HTTP 301 → inveil.net
 **Error 523:** See [docs/CLOUDFLARE.md](../docs/CLOUDFLARE.md) — A record **Content** must be the VPS IP, not Cloudflare anycast lookup results.
 
 Mail: `sudo bash scripts/setup-mail.sh inveil.net`
-
-If the domain still uses legacy unix user `omiiba`:
-
-```bash
-sudo bash scripts/rename-domain-unix-user.sh omiiba inveil inveil.net
-```
 
 ## Build zip
 

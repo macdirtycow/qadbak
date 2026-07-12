@@ -1,4 +1,4 @@
-/** Must match qadbak-premium license-server ALL_LICENSE_FEATURES. */
+/** Must stay in sync with the license-server feature catalog. */
 export const ALL_PREMIUM_FEATURES = [
   "white-label",
   "client-rbac",

@@ -60,42 +60,14 @@ bash "$ROOT/scripts/ensure-install-salt.sh" || {
 
 echo ""
 echo "==> Heartbeat (refresh features + fingerprint from license server)"
-sudo -u "$USER" bash -c "set -a && source '$ENV_FILE' && set +a && node '$ROOT/scripts/qadbak-license-cli.mjs' heartbeat" || {
-  echo "WARN: heartbeat failed — check JWT secret matches license server" >&2
-}
-
-if [[ -f "$ROOT/scripts/configure-license-heartbeat-timer.sh" ]]; then
-  echo ""
-  echo "==> Systemd license heartbeat timer (every 6h fallback)"
-  bash "$ROOT/scripts/configure-license-heartbeat-timer.sh" || true
+if [[ -x "$ROOT/scripts/repair-license-heartbeat.sh" ]]; then
+  bash "$ROOT/scripts/repair-license-heartbeat.sh"
+else
+  sudo -u "$USER" bash -c "set -a && source '$ENV_FILE' && set +a && node '$ROOT/scripts/qadbak-license-cli.mjs' heartbeat" || {
+    echo "WARN: heartbeat failed — check JWT secret matches license server" >&2
+  }
+  bash "$ROOT/scripts/pm2-restart-qadbak.sh"
 fi
-
-echo ""
-echo "==> Sync QADBAK_PREMIUM_FEATURES from license.json"
-if [[ -f "$ROOT/data/license.json" ]]; then
-  sudo -u "$USER" node -e "
-    const fs = require('fs');
-    const path = require('path');
-    const root = process.argv[1];
-    const lic = JSON.parse(fs.readFileSync(path.join(root, 'data', 'license.json'), 'utf8'));
-    const features = lic.features || [];
-    if (!features.length) process.exit(0);
-    const envPath = path.join(root, '.env.local');
-    let content = fs.readFileSync(envPath, 'utf8');
-    const line = 'QADBAK_PREMIUM_FEATURES=' + features.join(',');
-    if (/^QADBAK_PREMIUM_FEATURES=/m.test(content)) {
-      content = content.replace(/^QADBAK_PREMIUM_FEATURES=.*$/m, line);
-    } else {
-      content = content.trimEnd() + '\\n' + line + '\\n';
-    }
-    fs.writeFileSync(envPath, content);
-    console.log('  OK — synced ' + features.length + ' feature(s)');
-  " "$ROOT" 2>/dev/null || echo "  WARN: could not sync premium features to .env.local" >&2
-fi
-
-echo ""
-echo "==> Restart panel (load QADBAK_PREMIUM_FEATURES from .env.local)"
-bash "$ROOT/scripts/pm2-restart-qadbak.sh"
 
 if [[ -f "$ROOT/data/license.json" ]]; then
   echo ""
@@ -155,5 +127,4 @@ fi
 echo ""
 echo "Done."
 echo "  License admin: ensure features are checked → Save → Heartbeat on panel"
-echo "  Or on license VPS: node /opt/qadbak-premium/ops/backfill-license-features.mjs"
 echo "  Panel: Server admin → License → verify webmail-ui in feature list"
