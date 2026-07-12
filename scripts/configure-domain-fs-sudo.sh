@@ -85,5 +85,4 @@ if ! verify_domain_fs_sudo "$TEST_HOME"; then
 fi
 
 echo "OK — wrapper: $WRAPPER"
-echo "     node:    $NODE_BIN"
 echo "     probe:   list $TEST_HOME"
