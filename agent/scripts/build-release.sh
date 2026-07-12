@@ -12,7 +12,7 @@ for spec in "linux amd64" "linux arm64"; do
   os=$1
   arch=$2
   name="qadbak-agent-${os}-${arch}"
-  env GOOS=$os GOARCH=$arch CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o "${OUT}/${name}" ./cmd/qadbak-agent
+  env GOOS=$os GOARCH=$arch CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w" -o "${OUT}/${name}" ./cmd/qadbak-agent
   echo "built ${OUT}/${name}"
 done
 

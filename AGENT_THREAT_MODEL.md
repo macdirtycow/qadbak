@@ -96,11 +96,21 @@ The iOS app **must not** trust UI hiding alone. Every sensitive action is re-val
 ## What the agent must never do
 
 - Execute arbitrary shell commands from API input
-- Modify third-party panel configuration (Hestia, Coolify, Plesk, DirectAdmin)
+- Modify third-party panel configuration outside the linked-panel allowlist (Hestia hosting commands, Coolify app actions)
 - Run as root in the main daemon process
 - Accept TLS connections without user-approved pin (first pairing)
 - Store SSH passwords on disk
 - Log tokens, keys, or passwords
+
+### A8 — Agent API exposed on the public internet
+
+**Impact:** Unauthenticated pairing attempts, TLS handshake noise, future vuln exposure on :9443.  
+**Mitigation:** Default bind is loopback; installer prefers Tailscale; LAN (`0.0.0.0`) requires explicit iOS onboarding choice; optional `ufw` rules on `tailscale0` or reviewed LAN rules.
+
+### A9 — Tampered agent binary in iOS bundle
+
+**Impact:** Supply-chain compromise of servers installed from the app.  
+**Mitigation:** SHA-256 manifest verified in iOS before upload; CI rebuilds from source and compares bundle; documented workflow in `docs/agent/BINARY_SUPPLY_CHAIN.md`.
 
 ## Residual risks (accepted for beta)
 

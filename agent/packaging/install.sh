@@ -8,8 +8,13 @@ CONFIG_DIR="${QADBAK_AGENT_CONFIG_DIR:-/etc/qadbak-agent}"
 INSTALL_DIR="${QADBAK_AGENT_INSTALL_DIR:-/usr/lib/qadbak-agent}"
 UNIT_NAME="qadbak-agent.service"
 AGENT_USER="qadbak-agent"
-LISTEN="0.0.0.0:${AGENT_PORT}"
+LISTEN_MODE="${QADBAK_AGENT_LISTEN_MODE:-auto}"
 MANIFEST="${2:-}"
+AGENT_LISTEN=""
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=resolve-listen.sh
+source "${SCRIPT_DIR}/resolve-listen.sh"
 
 log() { printf '[qadbak-agent] %s\n' "$*"; }
 die() { log "ERROR: $*"; exit 1; }
@@ -96,6 +101,10 @@ EOF
 }
 
 write_unit() {
+  AGENT_LISTEN="$(resolve_agent_listen "$AGENT_PORT" "$LISTEN_MODE")" || die "Could not resolve listen address (mode=$LISTEN_MODE)"
+  write_agent_env "$AGENT_LISTEN" "$LISTEN_MODE" "$CONFIG_DIR"
+  apply_agent_firewall "$LISTEN_MODE" "$AGENT_PORT"
+  log "Agent will listen on https://${AGENT_LISTEN} (mode=${LISTEN_MODE})"
   cat >"/etc/systemd/system/${UNIT_NAME}" <<EOF
 [Unit]
 Description=Qadbak Linux Agent
@@ -107,10 +116,11 @@ Type=simple
 User=${AGENT_USER}
 Group=${AGENT_USER}
 Environment=QADBAK_AGENT_DATA_DIR=${DATA_DIR}
-Environment=QADBAK_AGENT_LISTEN=${LISTEN}
+Environment=QADBAK_AGENT_LISTEN=${AGENT_LISTEN}
+Environment=QADBAK_AGENT_LISTEN_MODE=${LISTEN_MODE}
 Environment=QADBAK_AGENT_BINARY=${INSTALL_DIR}/qadbak-agent
 EnvironmentFile=-${CONFIG_DIR}/agent.env
-ExecStart=${INSTALL_DIR}/qadbak-agent -listen ${LISTEN} -data-dir ${DATA_DIR}
+ExecStart=${INSTALL_DIR}/qadbak-agent -listen ${AGENT_LISTEN} -data-dir ${DATA_DIR}
 Restart=on-failure
 RestartSec=3
 NoNewPrivileges=true
@@ -129,10 +139,20 @@ EOF
   log "systemd unit enabled (non-root)"
 }
 
+pairing_connect_host() {
+  local host="${AGENT_LISTEN%%:*}"
+  if [[ "$host" == "0.0.0.0" ]]; then
+    host="127.0.0.1"
+  fi
+  printf '%s:%s\n' "$host" "${AGENT_LISTEN##*:}"
+}
+
 issue_pairing() {
+  local connect
+  connect="$(pairing_connect_host)"
   local tmp
   tmp="$(mktemp)"
-  curl -sk -X POST "https://127.0.0.1:${AGENT_PORT}/api/v1/pairing/init" -o "$tmp" || die "Agent not responding on port ${AGENT_PORT}"
+  curl -sk -X POST "https://${connect}/api/v1/pairing/init" -o "$tmp" || die "Agent not responding on https://${connect}"
   if command -v python3 >/dev/null 2>&1; then
     python3 - "$tmp" <<'PY'
 import json, sys
@@ -156,6 +176,7 @@ main() {
   write_sudoers
   write_unit
   sleep 1
+  printf 'agent_listen_host:%s\n' "${AGENT_LISTEN%%:*}"
   log "Pairing credentials (use within 10 minutes):"
   issue_pairing
 }

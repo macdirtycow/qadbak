@@ -22,6 +22,7 @@ struct LinuxServerOnboardingView: View {
     @State private var agentPort = 9443
     @State private var sshHostKeyFingerprint: String?
     @State private var installManifest: AgentReleaseManifest?
+    @State private var listenMode: AgentListenMode = .tailscale
 
     private let ssh = SSHSessionService()
 
@@ -128,6 +129,7 @@ struct LinuxServerOnboardingView: View {
                 .font(.subheadline)
                 .foregroundStyle(QadbakPalette.muted)
             }
+            networkAccessCard
         case .installAndPair:
             if isBusy {
                 VStack(alignment: .leading, spacing: 12) {
@@ -143,6 +145,49 @@ struct LinuxServerOnboardingView: View {
         }
     }
 
+    private var networkAccessCard: some View {
+        QBGlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("How should your phone reach the agent?")
+                    .font(.headline)
+                    .foregroundStyle(QadbakPalette.text)
+                Text("The agent no longer opens 0.0.0.0 by default. Pick an exposure mode before port \(agentPort) is reachable.")
+                    .font(.caption)
+                    .foregroundStyle(QadbakPalette.muted)
+                ForEach(AgentListenMode.allCases) { mode in
+                    Button {
+                        listenMode = mode
+                    } label: {
+                        HStack(alignment: .top, spacing: 10) {
+                            Image(systemName: listenMode == mode ? "largecircle.fill.circle" : "circle")
+                                .foregroundStyle(listenMode == mode ? QadbakPalette.accent : QadbakPalette.muted)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(mode.title)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(QadbakPalette.text)
+                                Text(mode.detail)
+                                    .font(.caption)
+                                    .foregroundStyle(QadbakPalette.muted)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+                if listenMode == .tailscale, probe?.tailscaleIPv4 == nil {
+                    Text("Tailscale was not detected on this server. Install Tailscale first or choose Private LAN.")
+                        .font(.caption)
+                        .foregroundStyle(QadbakPalette.warning)
+                }
+                if listenMode == .lan {
+                    Text("This exposes the agent on every network interface. Prefer Tailscale when possible.")
+                        .font(.caption)
+                        .foregroundStyle(QadbakPalette.warning)
+                }
+            }
+        }
+    }
+
     private func detectionCard(_ probe: SSHSystemProbe) -> some View {
         QBGlassCard {
             VStack(alignment: .leading, spacing: 10) {
@@ -152,6 +197,9 @@ struct LinuxServerOnboardingView: View {
                 row("sudo (non-interactive)", probe.hasSudo ? "Yes" : "No — required")
                 if let kind = probe.panelDetection.detectedPanel {
                     row("Panel", kind.displayName)
+                }
+                if let ts = probe.tailscaleIPv4 {
+                    row("Tailscale", ts)
                 }
                 if !probe.hasSudo {
                     ErrorBanner(message: "Passwordless sudo is required for agent installation.")
@@ -204,6 +252,9 @@ struct LinuxServerOnboardingView: View {
         case .detection:
             return probe?.hasSudo == true
         case .consent:
+            if listenMode == .tailscale && probe?.tailscaleIPv4 == nil {
+                return false
+            }
             return consentAccepted
         case .installAndPair:
             return true
@@ -244,6 +295,11 @@ struct LinuxServerOnboardingView: View {
         do {
             let detection = try await ssh.probeSystem(settings: sshSettings(), knownHostFingerprint: sshHostKeyFingerprint)
             probe = detection.probe
+            if detection.probe.tailscaleIPv4 != nil {
+                listenMode = .tailscale
+            } else {
+                listenMode = .lan
+            }
             if sshHostKeyFingerprint == nil {
                 sshHostKeyFingerprint = detection.hostKeyFingerprint
             }
@@ -269,14 +325,15 @@ struct LinuxServerOnboardingView: View {
                 settings: settings,
                 knownHostFingerprint: sshHostKeyFingerprint,
                 binary: verified.data,
-                agentPort: agentPort
+                agentPort: agentPort,
+                listenMode: listenMode
             )
             if sshHostKeyFingerprint == nil {
                 sshHostKeyFingerprint = result.hostKeyFingerprint
             }
 
             progressMessage = "Pairing with agent…"
-            let baseURL = AgentInstallService.makeAgentBaseURL(host: settings.host, port: agentPort)
+            let baseURL = AgentInstallService.makeAgentBaseURL(host: result.agentHost, port: agentPort)
             let deviceId = UIDeviceIdentifier.persistentUUID
 
             var pairedAccess = ""
@@ -319,9 +376,10 @@ struct LinuxServerOnboardingView: View {
             var server = ManagedServer.linuxAgentPending(
                 displayName: displayName.trimmingCharacters(in: .whitespaces),
                 hostname: probe.hostname,
-                ipAddress: settings.host,
+                ipAddress: result.agentHost,
                 agentPort: agentPort
             )
+            server.apiBaseURL = baseURL.absoluteString
             server.serverKind = serverKind
             server.operatingSystem = probe.operatingSystem
             server.architecture = probe.architecture

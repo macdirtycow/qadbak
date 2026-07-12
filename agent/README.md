@@ -1,17 +1,15 @@
 # Qadbak Agent
 
-Standalone Linux agent for the Qadbak iOS app. **Beta** (v0.5.0).
+Standalone Linux agent for the Qadbak iOS app. **Beta** (v0.6.1).
 
-Runs on Debian 12 and Ubuntu 22.04 / 24.04 (amd64, arm64). Listens on **9443/tcp** (HTTPS, self-signed cert + fingerprint pinning).
+Runs on Debian 12 and Ubuntu 22.04 / 24.04 (amd64, arm64). Listens on **9443/tcp** (HTTPS, self-signed cert + fingerprint pinning). **Default bind is loopback**; iOS onboarding chooses Tailscale, LAN, or local-only exposure (see [LISTEN_MODES.md](../docs/agent/LISTEN_MODES.md)).
 
 ## What it does
 
 - System metrics, systemd services, Docker, logs, apt updates, reboot/shutdown
 - SSH onboarding from the iOS app (install + pair)
 - Detects HestiaCP, Coolify, CasaOS, Plesk, DirectAdmin, Qadbak on the host
-- **Panel linking (v0.5.0):** read-only API access for HestiaCP, Coolify, CasaOS
-
-It does **not** replace those panels. Domain and mail management still need the Qadbak panel or the panel's own UI.
+- **Panel linking (v0.6+):** HestiaCP domain hosting; Coolify app deploy/start/stop; CasaOS app list
 
 ## Status
 
@@ -24,7 +22,8 @@ It does **not** replace those panels. Domain and mail management still need the 
 | 5: Panel badges, local alerts | Done (beta) |
 | 6: Hardening, JWT secret, manifest verify | Done (beta) |
 | 7: SSH keys, re-pair, upgrade, metrics, audit | Done (beta) |
-| 8: OSS panel linking (Hestia, Coolify, CasaOS) | Done (beta, read-only) |
+| 8: OSS panel linking (Hestia, Coolify, CasaOS) | Done (beta) |
+| 9: Listen hardening + binary supply-chain checks | Done (beta) |
 
 ## Quick install
 

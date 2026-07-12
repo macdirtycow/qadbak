@@ -13,13 +13,14 @@ import (
 
 	"github.com/macdirtycow/qadbak/agent/internal/auth"
 	"github.com/macdirtycow/qadbak/agent/internal/config"
+	"github.com/macdirtycow/qadbak/agent/internal/netlisten"
 	"github.com/macdirtycow/qadbak/agent/internal/handlers"
 	"github.com/macdirtycow/qadbak/agent/internal/privilege"
 	"github.com/macdirtycow/qadbak/agent/internal/system"
 	"github.com/macdirtycow/qadbak/agent/internal/tlsutil"
 )
 
-const version = "0.6.0"
+const version = "0.6.1"
 
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "priv" {
@@ -27,7 +28,7 @@ func main() {
 	}
 
 	var (
-		listen   = flag.String("listen", envOr("QADBAK_AGENT_LISTEN", "0.0.0.0:9443"), "HTTPS listen address")
+		listen   = flag.String("listen", envOr("QADBAK_AGENT_LISTEN", netlisten.Default(9443)), "HTTPS listen address (default: 127.0.0.1:9443; set QADBAK_AGENT_LISTEN_MODE=tailscale|lan during install)")
 		dataDir  = flag.String("data-dir", envOr("QADBAK_AGENT_DATA_DIR", "/var/lib/qadbak-agent"), "State directory")
 		certFile = flag.String("cert", "", "TLS certificate file")
 		keyFile  = flag.String("key", "", "TLS private key file")

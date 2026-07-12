@@ -338,6 +338,34 @@ struct SSHSystemProbe: Sendable {
     var hasSudo: Bool
     var panelDetection: PanelDetection
     var hostname: String
+    var tailscaleIPv4: String?
+}
+
+enum AgentListenMode: String, CaseIterable, Identifiable, Sendable {
+    case tailscale
+    case lan
+    case local
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .tailscale: return "Tailscale (recommended)"
+        case .lan: return "Private LAN"
+        case .local: return "Local only"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .tailscale:
+            return "Bind to your Tailscale IP. Optional ufw rule on tailscale0 only."
+        case .lan:
+            return "Bind on all interfaces (0.0.0.0). Only choose this if your phone reaches the server on a trusted network."
+        case .local:
+            return "Loopback only (127.0.0.1). Use only with VPN or SSH tunnel access."
+        }
+    }
 }
 
 enum SSHAuthMethod: Sendable {

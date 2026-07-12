@@ -68,6 +68,10 @@ struct SSHSessionService {
             knownHostFingerprint: knownHostFingerprint
         ).output)
 
+        let tailscale = try await run("(command -v tailscale >/dev/null && tailscale ip -4 2>/dev/null | head -1) || true", settings: settings, knownHostFingerprint: knownHostFingerprint)
+        let ts = tailscale.output.trimmingCharacters(in: .whitespacesAndNewlines)
+        let tailscaleIP = ts.isEmpty ? nil : ts
+
         let probe = SSHSystemProbe(
             architecture: arch.output.trimmingCharacters(in: .whitespacesAndNewlines),
             operatingSystem: pretty.isEmpty ? "\(osID) \(versionID)" : pretty,
@@ -75,7 +79,8 @@ struct SSHSessionService {
             osVersionID: versionID,
             hasSudo: sudoCheck.output.contains("ok"),
             panelDetection: panel,
-            hostname: hostname.output.trimmingCharacters(in: .whitespacesAndNewlines)
+            hostname: hostname.output.trimmingCharacters(in: .whitespacesAndNewlines),
+            tailscaleIPv4: tailscaleIP
         )
         return (probe, arch.hostKeyFingerprint ?? osRelease.hostKeyFingerprint ?? hostname.hostKeyFingerprint)
     }
@@ -84,8 +89,9 @@ struct SSHSessionService {
         settings: SSHConnectionSettings,
         knownHostFingerprint: String?,
         binary: Data,
-        agentPort: Int
-    ) async throws -> (pairingToken: String, tlsFingerprint: String, hostKeyFingerprint: String?) {
+        agentPort: Int,
+        listenMode: AgentListenMode
+    ) async throws -> (pairingToken: String, tlsFingerprint: String, hostKeyFingerprint: String?, agentHost: String) {
         let remoteBin = "/tmp/qadbak-agent-\(UUID().uuidString)"
         let b64 = binary.base64EncodedString()
         let chunkSize = 32_000
@@ -109,22 +115,27 @@ struct SSHSessionService {
         _ = try await run("chmod +x '\(remoteBin)'", settings: settings, knownHostFingerprint: knownHostFingerprint)
 
         let installOutput = try await run(
-            "sudo QADBAK_AGENT_PORT=\(agentPort) bash -s -- '\(remoteBin)' << 'QADBAK_INSTALL'\n" + embeddedInstallScript + "\nQADBAK_INSTALL",
+            "sudo QADBAK_AGENT_PORT=\(agentPort) QADBAK_AGENT_LISTEN_MODE=\(listenMode.rawValue) bash -s -- '\(remoteBin)' << 'QADBAK_INSTALL'\n" + embeddedInstallScript + "\nQADBAK_INSTALL",
             settings: settings,
             knownHostFingerprint: knownHostFingerprint
         )
 
         var pairing = ""
         var fingerprint = ""
+        var agentHost = settings.host
         for line in installOutput.output.split(separator: "\n") {
             let s = String(line).trimmingCharacters(in: .whitespacesAndNewlines)
             if s.hasPrefix("pairing:") { pairing = String(s.dropFirst(8)) }
             if s.hasPrefix("fingerprint:") { fingerprint = String(s.dropFirst(12)) }
+            if s.hasPrefix("agent_listen_host:") {
+                let host = String(s.dropFirst(18)).trimmingCharacters(in: .whitespaces)
+                if !host.isEmpty { agentHost = host }
+            }
         }
         if pairing.isEmpty {
             throw SSHServiceError.commandFailed("Install did not return pairing token.")
         }
-        return (pairing, fingerprint, installOutput.hostKeyFingerprint ?? lastHostKey)
+        return (pairing, fingerprint, installOutput.hostKeyFingerprint ?? lastHostKey, agentHost)
     }
 
     func upgradeAgent(
@@ -229,11 +240,39 @@ struct SSHSessionService {
         """
         set -euo pipefail
         AGENT_PORT="${QADBAK_AGENT_PORT:-9443}"
+        LISTEN_MODE="${QADBAK_AGENT_LISTEN_MODE:-auto}"
         DATA_DIR="/var/lib/qadbak-agent"
         CONFIG_DIR="/etc/qadbak-agent"
         INSTALL_DIR="/usr/lib/qadbak-agent"
         AGENT_USER="qadbak-agent"
         BIN_SRC="$1"
+        resolve_listen() {
+          if [[ -n "${QADBAK_AGENT_LISTEN:-}" ]]; then printf '%s\\n' "$QADBAK_AGENT_LISTEN"; return; fi
+          case "$LISTEN_MODE" in
+            lan) printf '0.0.0.0:%s\\n' "$AGENT_PORT"; return ;;
+            local|localhost) printf '127.0.0.1:%s\\n' "$AGENT_PORT"; return ;;
+            tailscale)
+              if command -v tailscale >/dev/null; then
+                TS="$(tailscale ip -4 2>/dev/null | head -1 | tr -d '[:space:]')"
+                if [[ -n "$TS" ]]; then printf '%s:%s\\n' "$TS" "$AGENT_PORT"; return; fi
+              fi
+              echo "Tailscale required but not available" >&2; exit 1 ;;
+            auto|*)
+              if command -v tailscale >/dev/null; then
+                TS="$(tailscale ip -4 2>/dev/null | head -1 | tr -d '[:space:]')"
+                if [[ -n "$TS" ]]; then printf '%s:%s\\n' "$TS" "$AGENT_PORT"; return; fi
+              fi
+              printf '127.0.0.1:%s\\n' "$AGENT_PORT" ;;
+          esac
+        }
+        apply_firewall() {
+          command -v ufw >/dev/null 2>&1 || return 0
+          ufw status >/dev/null 2>&1 || return 0
+          case "$LISTEN_MODE" in
+            tailscale|auto) ufw allow in on tailscale0 to any port "$AGENT_PORT" proto tcp comment 'qadbak-agent' >/dev/null 2>&1 || true ;;
+            lan) ufw allow "$AGENT_PORT"/tcp comment 'qadbak-agent' >/dev/null 2>&1 || true ;;
+          esac
+        }
         if ! id "$AGENT_USER" &>/dev/null; then
           useradd --system --home "$DATA_DIR" --shell /usr/sbin/nologin "$AGENT_USER"
         fi
@@ -253,6 +292,13 @@ struct SSHSessionService {
         EOF
         chmod 440 /etc/sudoers.d/qadbak-agent
         visudo -cf /etc/sudoers.d/qadbak-agent >/dev/null
+        AGENT_LISTEN="$(resolve_listen)"
+        apply_firewall
+        cat >"${CONFIG_DIR}/agent.env" <<EOF
+        QADBAK_AGENT_LISTEN=${AGENT_LISTEN}
+        QADBAK_AGENT_LISTEN_MODE=${LISTEN_MODE}
+        EOF
+        chmod 640 "${CONFIG_DIR}/agent.env"
         cat >/etc/systemd/system/qadbak-agent.service <<EOF
         [Unit]
         Description=Qadbak Linux Agent
@@ -263,9 +309,11 @@ struct SSHSessionService {
         User=${AGENT_USER}
         Group=${AGENT_USER}
         Environment=QADBAK_AGENT_DATA_DIR=${DATA_DIR}
-        Environment=QADBAK_AGENT_LISTEN=0.0.0.0:${AGENT_PORT}
+        Environment=QADBAK_AGENT_LISTEN=${AGENT_LISTEN}
+        Environment=QADBAK_AGENT_LISTEN_MODE=${LISTEN_MODE}
         Environment=QADBAK_AGENT_BINARY=${INSTALL_DIR}/qadbak-agent
-        ExecStart=${INSTALL_DIR}/qadbak-agent -listen 0.0.0.0:${AGENT_PORT} -data-dir ${DATA_DIR}
+        EnvironmentFile=-${CONFIG_DIR}/agent.env
+        ExecStart=${INSTALL_DIR}/qadbak-agent -listen ${AGENT_LISTEN} -data-dir ${DATA_DIR}
         Restart=on-failure
         RestartSec=3
         NoNewPrivileges=true
@@ -281,7 +329,10 @@ struct SSHSessionService {
         systemctl daemon-reload
         systemctl enable --now qadbak-agent.service
         sleep 1
-        RESP=$(curl -sk -X POST "https://127.0.0.1:${AGENT_PORT}/api/v1/pairing/init")
+        LISTEN_HOST="${AGENT_LISTEN%%:*}"
+        [[ "$LISTEN_HOST" == "0.0.0.0" ]] && CURL_HOST="127.0.0.1" || CURL_HOST="$LISTEN_HOST"
+        echo "agent_listen_host:$LISTEN_HOST"
+        RESP=$(curl -sk -X POST "https://${CURL_HOST}:${AGENT_PORT}/api/v1/pairing/init")
         TOKEN=$(printf '%s' "$RESP" | sed -n 's/.*"pairingToken":"\\([^"]*\\)".*/\\1/p')
         FP=$(printf '%s' "$RESP" | sed -n 's/.*"tlsFingerprintSha256":"\\([^"]*\\)".*/\\1/p')
         echo "pairing:$TOKEN"
