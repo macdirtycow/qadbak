@@ -8,6 +8,10 @@ import https from "node:https";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  legacyApiHttpsAgent,
+  resolveLegacyApiUrl,
+} from "./lib/legacy-api-tls.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -41,19 +45,17 @@ const VM_URL = process.env.QADBAK_LEGACY_API_URL?.trim();
 const VM_USER = process.env.QADBAK_LEGACY_API_USER?.trim();
 const VM_PASS = process.env.QADBAK_LEGACY_API_PASS?.trim();
 
-function safeErrorMessage(err) {
-  if (!(err instanceof Error)) return String(err);
-  return err.message || "Internal error";
+function sanitizeClientError(value) {
+  const msg = value instanceof Error ? value.message : String(value ?? "");
+  return msg.split("\n")[0].slice(0, 500) || "Internal error";
 }
 
 function json(res, status, obj) {
-  const body = JSON.stringify(obj, (_key, value) => {
-    if (value instanceof Error) return safeErrorMessage(value);
-    if (typeof value === "string" && value.includes("\n    at ")) {
-      return value.split("\n")[0];
-    }
-    return value;
-  });
+  const payload = { ...obj };
+  if (typeof payload.error === "string") {
+    payload.error = sanitizeClientError(payload.error);
+  }
+  const body = JSON.stringify(payload);
   res.writeHead(status, { "Content-Type": "application/json" });
   res.end(body);
 }
@@ -75,17 +77,6 @@ function checkAuth(req, res) {
   return true;
 }
 
-function vmTlsInsecure(url) {
-  const flag = process.env.QADBAK_LEGACY_API_TLS_INSECURE?.trim().toLowerCase();
-  if (flag === "true" || flag === "1" || flag === "yes") return true;
-  try {
-    const host = new URL(url).hostname;
-    return host === "127.0.0.1" || host === "localhost";
-  } catch {
-    return false;
-  }
-}
-
 async function legacyApiCall(program, params = {}) {
   if (!VM_URL || !VM_USER || !VM_PASS) {
     throw new Error("QADBAK_LEGACY_API_URL/USER/PASS missing in .env.local");
@@ -99,14 +90,8 @@ async function legacyApiCall(program, params = {}) {
     body.set("json", "1");
     body.set("simple-multiline", "");
   }
-  const insecure = vmTlsInsecure(VM_URL);
-  const target = new URL(VM_URL);
-  if (insecure) {
-    const host = target.hostname;
-    if (host !== "127.0.0.1" && host !== "localhost" && host !== "::1") {
-      throw new Error("Insecure TLS is only allowed for localhost legacy API URLs.");
-    }
-  }
+  const requestUrl = resolveLegacyApiUrl(VM_URL);
+  const target = new URL(requestUrl);
   const payload = body.toString();
   const headers = {
     Authorization: `Basic ${Buffer.from(`${VM_USER}:${VM_PASS}`).toString("base64")}`,
@@ -114,10 +99,7 @@ async function legacyApiCall(program, params = {}) {
     "Content-Length": String(Buffer.byteLength(payload)),
   };
   const mod = target.protocol === "https:" ? https : http;
-  const agent =
-    insecure && mod === https
-      ? new https.Agent({ rejectUnauthorized: false }) // lgtm[js/disabling-certificate-validation]
-      : undefined;
+  const agent = target.protocol === "https:" ? legacyApiHttpsAgent() : undefined;
 
   const { status, text } = await new Promise((resolve, reject) => {
     const req = mod.request(
@@ -226,7 +208,7 @@ const server = http.createServer(async (req, res) => {
       if (code !== 0 || !parsed.ok) {
         json(res, 500, {
           ok: false,
-          error: safeErrorMessage(new Error(parsed.error || stderr || `domain-create exit ${code}`)),
+          error: sanitizeClientError(parsed.error || stderr || `domain-create exit ${code}`),
         });
         return;
       }
@@ -236,7 +218,7 @@ const server = http.createServer(async (req, res) => {
 
     json(res, 404, { ok: false, error: "Not found" });
   } catch (e) {
-    json(res, 500, { ok: false, error: safeErrorMessage(e) });
+    json(res, 500, { ok: false, error: sanitizeClientError(e) });
   }
 });
 

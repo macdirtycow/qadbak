@@ -1,7 +1,0 @@
-name: qadbak CodeQL
-query-filters:
-  - exclude:
-      id: js/disabling-certificate-validation
-      paths:
-        - src/lib/hosting-remote-http.ts
-        - scripts/qadbak-node-agent.mjs

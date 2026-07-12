@@ -1,36 +1,12 @@
 import http from "node:http";
 import https from "node:https";
+import {
+  legacyApiHttpsAgent,
+  legacyApiTlsInsecureEnabled,
+  resolveLegacyApiUrl,
+} from "./legacy-api-tls";
 
-function legacyApiUrlIsLocal(urlString?: string): boolean {
-  const url = urlString?.trim() || process.env.QADBAK_LEGACY_API_URL?.trim();
-  if (!url) return false;
-  try {
-    const host = new URL(url).hostname;
-    return host === "127.0.0.1" || host === "localhost" || host === "::1";
-  } catch {
-    return false;
-  }
-}
-
-/**
- * When true, legacy hosting API fetch skips TLS verification (localhost self-signed server admin only).
- * Auto-enabled for QADBAK_LEGACY_API_URL on 127.0.0.1/localhost unless QADBAK_LEGACY_API_TLS_INSECURE=false.
- */
-export function legacyApiTlsInsecureEnabled(): boolean {
-  const flag = process.env.QADBAK_LEGACY_API_TLS_INSECURE?.trim().toLowerCase();
-  if (flag === "false" || flag === "0" || flag === "no") return false;
-  if (flag === "true" || flag === "1" || flag === "yes") return true;
-
-  return legacyApiUrlIsLocal();
-}
-
-function localhostInsecureAgent(target: URL): https.Agent {
-  if (!legacyApiUrlIsLocal(target.href)) {
-    throw new Error("Insecure TLS is only allowed for localhost legacy API URLs.");
-  }
-  // codeql[js/disabling-certificate-validation] localhost self-signed legacy API only
-  return new https.Agent({ rejectUnauthorized: false }); // lgtm[js/disabling-certificate-validation]
-}
+export { legacyApiTlsInsecureEnabled } from "./legacy-api-tls";
 
 function headersToRecord(headers: HeadersInit | undefined): Record<string, string> {
   if (!headers) return {};
@@ -107,20 +83,22 @@ function nodeRequest(
   });
 }
 
-/** POST to remote.cgi — strict TLS by default; opt-in insecure for localhost self-signed. */
+/** POST to remote.cgi — strict TLS by default; localhost may use HTTP or pinned HTTPS. */
 export async function hostingRemoteFetch(
   url: string,
   init: RequestInit,
 ): Promise<Response> {
-  const target = new URL(url);
-  const insecure = legacyApiTlsInsecureEnabled();
-
-  if (!insecure) {
-    return fetch(url, init);
-  }
+  const resolvedUrl = resolveLegacyApiUrl(url);
+  const target = new URL(resolvedUrl);
 
   if (target.protocol === "http:") {
-    return nodeRequest(http, url, init);
+    return nodeRequest(http, resolvedUrl, init);
   }
-  return nodeRequest(https, url, init, localhostInsecureAgent(target));
+
+  const agent = legacyApiHttpsAgent();
+  if (agent) {
+    return nodeRequest(https, resolvedUrl, init, agent);
+  }
+
+  return fetch(resolvedUrl, init);
 }
