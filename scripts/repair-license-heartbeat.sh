@@ -47,7 +47,7 @@ if [[ -z "$CURRENT_URL" ]]; then
   echo "==> Set QADBAK_LICENSE_SERVER=$CANONICAL_URL"
   upsert_env QADBAK_LICENSE_SERVER "$CANONICAL_URL"
 elif [[ "$CURRENT_URL" != "$CANONICAL_URL" ]]; then
-  if [[ "$CURRENT_URL" == *omiiba* ]] || ! curl -sf --max-time 8 "${CURRENT_URL}/health" 2>/dev/null | grep -q '"ok"'; then
+  if ! curl -sf --max-time 8 "${CURRENT_URL}/health" 2>/dev/null | grep -q '"ok"'; then
     echo "==> Replace stale QADBAK_LICENSE_SERVER ($CURRENT_URL → $CANONICAL_URL)"
     upsert_env QADBAK_LICENSE_SERVER "$CANONICAL_URL"
   fi

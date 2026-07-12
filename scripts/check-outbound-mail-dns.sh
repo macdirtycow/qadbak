@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Check public mail DNS + PTR for inbound/outbound mail (Gmail/iCloud/etc.).
-# Usage: bash scripts/check-outbound-mail-dns.sh inveil.net [origin-ip]
+# Usage: bash scripts/check-outbound-mail-dns.sh example.com [origin-ip]
 set -euo pipefail
 
 DOMAIN="${1:?domain}"

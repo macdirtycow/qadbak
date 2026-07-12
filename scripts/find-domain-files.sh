@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Locate website files, backups, and nginx for a Qadbak domain (run on VPS as root).
-# Usage: sudo bash scripts/find-domain-files.sh inveil.net
+# Usage: sudo bash scripts/find-domain-files.sh example.com
 set -euo pipefail
 
 DOMAIN="${1:-}"

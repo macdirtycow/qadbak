@@ -1,6 +1,6 @@
 # Qadbak product roadmap
 
-Full UI replacement of server admin/legacy hosting. Product name: **Qadbak** (repo: `macdirtycow/qadbak`, local folder: `~/Projects/qadbak`).
+Full UI replacement of server admin/legacy hosting. Product name: **Qadbak** (repo: `macdirtycow/qadbak`).
 
 **Independence plan (8 phases, Dutch):** [QADBAK-INDEPENDENCE-8-PHASES.md](./QADBAK-INDEPENDENCE-8-PHASES.md) — how Qadbak stands alone without server admin in daily use, and eventually without legacy hosting API on the server.
 

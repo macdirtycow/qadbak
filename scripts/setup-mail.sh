@@ -1,22 +1,26 @@
 #!/usr/bin/env bash
-# Setup Postfix/Dovecot mail + webmail for a Qadbak domain (default: inveil.net).
+# Setup Postfix/Dovecot mail + webmail for a Qadbak domain.
 # Prints Cloudflare MX/SPF/DKIM records.
 #
 #   cd /opt/qadbak && git pull
-#   sudo bash scripts/setup-mail.sh
 #   sudo bash scripts/setup-mail.sh example.com
 set -euo pipefail
 
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
 QADBAK_USER="${QADBAK_USER:-qadbak}"
 ENV_FILE="$QADBAK_DIR/.env.local"
-MAIL_DOMAIN="${1:-${MAIL_DOMAIN:-inveil.net}}"
-MAIL_HOST="${MAIL_HOST:-mail.${MAIL_DOMAIN}}"
+MAIL_DOMAIN="${1:-}"
+MAIL_HOST="${MAIL_HOST:-}"
 
 [[ "$(id -u)" -eq 0 ]] || {
-  echo "Run as root: sudo bash scripts/setup-mail.sh [domain]" >&2
+  echo "Run as root: sudo bash scripts/setup-mail.sh <domain>" >&2
   exit 1
 }
+if [[ -z "$MAIL_DOMAIN" ]]; then
+  echo "Usage: sudo bash scripts/setup-mail.sh example.com" >&2
+  exit 1
+fi
+MAIL_HOST="${MAIL_HOST:-mail.${MAIL_DOMAIN}}"
 
 log() { echo "==> $*"; }
 

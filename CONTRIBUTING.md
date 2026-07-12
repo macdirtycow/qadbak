@@ -33,3 +33,14 @@ Premium code are welcome under the same license terms.
 Use `macdirtycow/<topic>` for feature branches (for example
 `macdirtycow/premium-rbac-fix`). Legacy `cursor/*` branch names were renamed;
 open new work under `macdirtycow/*` only.
+
+## Maintainers
+
+After a release, sync the GitHub **About** sidebar (description, homepage, topics):
+
+```bash
+bash scripts/sync-github-repo-about.sh
+```
+
+Requires `gh auth login`. Override with `GITHUB_REPO`, `QADBAK_GITHUB_DESCRIPTION`,
+`QADBAK_GITHUB_HOMEPAGE`, or `QADBAK_GITHUB_TOPICS` if needed.

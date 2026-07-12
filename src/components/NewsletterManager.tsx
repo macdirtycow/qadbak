@@ -88,8 +88,12 @@ export function NewsletterManager({
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Could not load newsletter.");
     setSettings({ ...EMPTY_SETTINGS, ...(data.settings ?? {}) });
-    setStats(data.stats ?? stats);
-    setPublicUrls(data.publicUrls ?? publicUrls);
+    setStats(
+      data.stats ?? { total: 0, active: 0, pending: 0, unsubscribed: 0 },
+    );
+    setPublicUrls(
+      data.publicUrls ?? { subscribe: "", confirm: "", unsubscribe: "" },
+    );
   }, [enc]);
 
   const loadSubscribers = useCallback(async () => {

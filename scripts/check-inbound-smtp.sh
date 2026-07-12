@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 # Diagnose why inbound SMTP (port 25) fails — "lost connection during initial greeting".
-# Usage: sudo bash scripts/check-inbound-smtp.sh [domain]
+# Usage: sudo bash scripts/check-inbound-smtp.sh <domain>
 set -euo pipefail
 
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
-DOMAIN="${1:-inveil.net}"
+DOMAIN="${1:-}"
 ORIGIN_IP="${QADBAK_ORIGIN_IP:-$(curl -4 -sf --max-time 8 ifconfig.me 2>/dev/null || true)}"
 
 [[ "$(id -u)" -eq 0 ]] || {
-  echo "Run as root: sudo bash $0 [domain]" >&2
+  echo "Run as root: sudo bash $0 <domain>" >&2
   exit 1
 }
+if [[ -z "$DOMAIN" ]]; then
+  echo "Usage: sudo bash $0 example.com" >&2
+  exit 1
+fi
 
 fail=0
 ok() { echo "  OK   $*"; }

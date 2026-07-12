@@ -32,36 +32,46 @@ export function QadbakWebmailClient({
     autoOpenInbox: true,
   });
 
+  const {
+    user,
+    composeOpen,
+    setComposeOpen,
+    openComposeNew,
+    composeMode,
+    mailboxes,
+    loading,
+  } = m;
+
   const enc = encodeURIComponent(domain);
-  const accountEmail = m.user ? `${m.user}@${domain}` : "";
+  const accountEmail = user ? `${user}@${domain}` : "";
   const showImapHint =
     Boolean(initialError) ||
-    (m.mailboxes.length === 0 && !m.loading && Boolean(m.user));
+    (mailboxes.length === 0 && !loading && Boolean(user));
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape" && m.composeOpen) {
-        m.setComposeOpen(false);
+      if (e.key === "Escape" && composeOpen) {
+        setComposeOpen(false);
       }
       if (
         e.key === "c" &&
-        !m.composeOpen &&
+        !composeOpen &&
         !(e.target instanceof HTMLInputElement) &&
         !(e.target instanceof HTMLTextAreaElement)
       ) {
-        m.openComposeNew();
+        openComposeNew();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [m.composeOpen, m.openComposeNew, m.setComposeOpen]);
+  }, [composeOpen, openComposeNew, setComposeOpen]);
 
   const composeTitle =
-    m.composeMode === "reply"
+    composeMode === "reply"
       ? "Reply"
-      : m.composeMode === "reply-all"
+      : composeMode === "reply-all"
         ? "Reply all"
-        : m.composeMode === "forward"
+        : composeMode === "forward"
           ? "Forward"
           : "New message";
 

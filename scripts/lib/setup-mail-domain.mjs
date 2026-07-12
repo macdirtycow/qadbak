@@ -7,7 +7,11 @@ import {
   unixUserExists,
 } from "./provisioning-common.mjs";
 
-const MAIL_DOMAIN = String(process.env.MAIL_DOMAIN || "inveil.net").trim().toLowerCase();
+const MAIL_DOMAIN = String(process.env.MAIL_DOMAIN || "").trim().toLowerCase();
+if (!MAIL_DOMAIN) {
+  process.stderr.write("MAIL_DOMAIN env required\n");
+  process.exit(1);
+}
 
 function pickUser(rows) {
   const hit = rows.find((r) => String(r.name).toLowerCase() === MAIL_DOMAIN && r.user);

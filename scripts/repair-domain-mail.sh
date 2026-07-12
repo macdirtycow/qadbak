@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
 # Install/repair Postfix/Dovecot on this VPS and diagnose public mail DNS.
-# Usage: sudo bash scripts/repair-domain-mail.sh [domain] [mailbox-local-part]
-# Example: sudo bash scripts/repair-domain-mail.sh inveil.net info
+# Usage: sudo bash scripts/repair-domain-mail.sh <domain> [mailbox-local-part]
+# Example: sudo bash scripts/repair-domain-mail.sh example.com info
 set -euo pipefail
 
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
-DOMAIN="${1:-inveil.net}"
+DOMAIN="${1:-}"
 MAIL_USER="${2:-info}"
 
 [[ "$(id -u)" -eq 0 ]] || {
-  echo "Run as root: sudo bash $0 [domain] [mailbox]" >&2
+  echo "Run as root: sudo bash $0 <domain> [mailbox]" >&2
   exit 1
 }
+if [[ -z "$DOMAIN" ]]; then
+  echo "Usage: sudo bash $0 example.com [info]" >&2
+  exit 1
+fi
 
 echo ""
 echo "==> Mail stack (Postfix, Dovecot, OpenDKIM)"

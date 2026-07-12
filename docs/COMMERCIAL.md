@@ -65,7 +65,7 @@ waiting for the next scheduled tick.
 origin and aligns the checkout with `QADBAK_GIT_BRANCH` (default
 **`main`** for production).
 
-**One-time bootstrap** if an older install still tracks the internal branch:
+**One-time bootstrap** if an older install still tracks a non-main branch:
 
 ```bash
 sudo bash /opt/qadbak/scripts/switch-vps-to-main.sh

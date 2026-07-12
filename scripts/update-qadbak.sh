@@ -118,6 +118,9 @@ if [[ "$(id -u)" -eq 0 ]]; then
   if [[ -f "$ROOT/scripts/prune-stale-hosting.sh" ]]; then
     bash "$ROOT/scripts/prune-stale-hosting.sh" || echo "    WARN: prune-stale-hosting.sh failed" >&2
   fi
+  if [[ -f "$ROOT/scripts/dedupe-nginx-vhosts.sh" ]]; then
+    bash "$ROOT/scripts/dedupe-nginx-vhosts.sh" --apply 2>/dev/null || true
+  fi
 fi
 
 if [[ "$(id -u)" -eq 0 ]]; then

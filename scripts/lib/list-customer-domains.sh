@@ -28,6 +28,20 @@ _should_skip_nginx_customer_domain() {
   [[ -n "$panel" && "$domain" == "www.${panel}" ]] && return 0
   [[ "$domain" == "license.inveil.dev" ]] && return 0
 
+  local op="${QADBAK_OPERATOR_DOMAINS:-}"
+  if [[ -z "$op" && -f "$QADBAK_DIR/.env.local" ]]; then
+    op="$(grep -E '^QADBAK_OPERATOR_DOMAINS=' "$QADBAK_DIR/.env.local" 2>/dev/null | cut -d= -f2- | tr -d '"' || true)"
+  fi
+  if [[ -n "$op" ]]; then
+    local d
+    IFS=',' read -ra OPS <<<"$op"
+    for d in "${OPS[@]}"; do
+      d="$(echo "$d" | tr -d ' ')"
+      [[ -z "$d" ]] && continue
+      [[ "$domain" == "$d" || "$domain" == "www.${d}" ]] && return 0
+    done
+  fi
+
   # If an operator-managed nginx vhost already exists for this domain
   # (any file not named qadbak-customer-*), skip auto-generating a
   # customer vhost to avoid "conflicting server name" warnings.
