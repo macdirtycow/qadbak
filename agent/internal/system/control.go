@@ -2,9 +2,9 @@ package system
 
 import (
 	"fmt"
-	"os/exec"
 	"strings"
 
+	"github.com/macdirtycow/qadbak/agent/internal/privilege"
 	"github.com/macdirtycow/qadbak/agent/internal/validate"
 )
 
@@ -18,14 +18,5 @@ func ControlService(unit, action string) error {
 	default:
 		return fmt.Errorf("invalid service action")
 	}
-	cmd := exec.Command("systemctl", action, unit)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		msg := strings.TrimSpace(string(out))
-		if msg == "" {
-			msg = err.Error()
-		}
-		return fmt.Errorf("%s", msg)
-	}
-	return nil
+	return privilege.RunSimple([]string{"systemctl", action, unit})
 }

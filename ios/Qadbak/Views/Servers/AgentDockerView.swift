@@ -64,6 +64,12 @@ struct AgentDockerView: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(QadbakPalette.text)
                     Spacer()
+                    NavigationLink {
+                        AgentDockerLogsView(container: container)
+                    } label: {
+                        Image(systemName: "doc.text")
+                            .foregroundStyle(QadbakPalette.muted)
+                    }
                     Menu {
                         Button("Restart") { pendingAction = .restart(container) }
                         Button("Start") { pendingAction = .start(container) }

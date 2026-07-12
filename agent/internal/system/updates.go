@@ -3,11 +3,12 @@ package system
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/macdirtycow/qadbak/agent/internal/privilege"
 )
 
 type UpdatesInfo struct {
@@ -18,10 +19,9 @@ type UpdatesInfo struct {
 }
 
 func CheckUpdates() (UpdatesInfo, error) {
-	_ = exec.Command("apt-get", "update", "-qq").Run()
+	_ = privilege.RunSimple([]string{"apt-update"})
 
-	cmd := exec.Command("apt-get", "-s", "upgrade")
-	out, err := cmd.Output()
+	out, err := exec.Command("apt-get", "-s", "upgrade").Output()
 	if err != nil {
 		return UpdatesInfo{}, err
 	}
@@ -37,31 +37,18 @@ func CheckUpdates() (UpdatesInfo, error) {
 }
 
 func InstallUpdates() error {
-	update := exec.Command("apt-get", "update", "-qq")
-	if out, err := update.CombinedOutput(); err != nil {
-		return fmt.Errorf("%s", strings.TrimSpace(string(out)))
+	if err := privilege.RunSimple([]string{"apt-update"}); err != nil {
+		return err
 	}
-	upgrade := exec.Command(
-		"env", "DEBIAN_FRONTEND=noninteractive",
-		"apt-get", "upgrade", "-y", "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold",
-	)
-	out, err := upgrade.CombinedOutput()
-	if err != nil {
-		msg := strings.TrimSpace(string(out))
-		if msg == "" {
-			msg = err.Error()
-		}
-		return fmt.Errorf("%s", msg)
-	}
-	return nil
+	return privilege.RunSimple([]string{"apt-upgrade"})
 }
 
 func Reboot() error {
-	return exec.Command("systemctl", "reboot").Run()
+	return privilege.RunSimple([]string{"reboot"})
 }
 
 func Shutdown() error {
-	return exec.Command("systemctl", "poweroff").Run()
+	return privilege.RunSimple([]string{"shutdown"})
 }
 
 func parseUpgradePackages(out []byte) []string {

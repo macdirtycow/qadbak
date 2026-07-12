@@ -82,8 +82,16 @@
 		A10000010000000000000078 /* AgentHealthMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000078 /* AgentHealthMonitor.swift */; };
 		A10000010000000000000079 /* AgentNotificationSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000079 /* AgentNotificationSettings.swift */; };
 		A10000010000000000000080 /* PanelDetectionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000080 /* PanelDetectionCard.swift */; };
+		A10000010000000000000081 /* AgentCompatibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000081 /* AgentCompatibility.swift */; };
 		A10000010000000000000071 /* qadbak-agent-linux-amd64 in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000071 /* qadbak-agent-linux-amd64 */; };
 		A10000010000000000000072 /* qadbak-agent-linux-arm64 in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000072 /* qadbak-agent-linux-arm64 */; };
+		A10000010000000000000082 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000082 /* manifest.json */; };
+		A10000010000000000000083 /* SSHPrivateKeyAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000083 /* SSHPrivateKeyAuth.swift */; };
+		A10000010000000000000084 /* LinuxAgentPairExistingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000084 /* LinuxAgentPairExistingView.swift */; };
+		A10000010000000000000085 /* AgentMetricsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000085 /* AgentMetricsView.swift */; };
+		A10000010000000000000086 /* AgentDockerLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000086 /* AgentDockerLogsView.swift */; };
+		A10000010000000000000087 /* AgentAuditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000087 /* AgentAuditView.swift */; };
+		A10000010000000000000088 /* AgentUpgradeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000088 /* AgentUpgradeView.swift */; };
 		B10000010000000000000001 /* QadbakWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000001 /* QadbakWidget.swift */; };
 		B10000010000000000000002 /* QadbakWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000002 /* QadbakWidgetBundle.swift */; };
 		B10000010000000000000004 /* QadbakLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000005 /* QadbakLiveActivity.swift */; };
@@ -169,6 +177,14 @@
 		A20000010000000000000078 /* AgentHealthMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentHealthMonitor.swift; sourceTree = "<group>"; };
 		A20000010000000000000079 /* AgentNotificationSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentNotificationSettings.swift; sourceTree = "<group>"; };
 		A20000010000000000000080 /* PanelDetectionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelDetectionCard.swift; sourceTree = "<group>"; };
+		A20000010000000000000081 /* AgentCompatibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentCompatibility.swift; sourceTree = "<group>"; };
+		A20000010000000000000082 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = manifest.json; sourceTree = "<group>"; };
+		A20000010000000000000083 /* SSHPrivateKeyAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHPrivateKeyAuth.swift; sourceTree = "<group>"; };
+		A20000010000000000000084 /* LinuxAgentPairExistingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinuxAgentPairExistingView.swift; sourceTree = "<group>"; };
+		A20000010000000000000085 /* AgentMetricsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentMetricsView.swift; sourceTree = "<group>"; };
+		A20000010000000000000086 /* AgentDockerLogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentDockerLogsView.swift; sourceTree = "<group>"; };
+		A20000010000000000000087 /* AgentAuditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentAuditView.swift; sourceTree = "<group>"; };
+		A20000010000000000000088 /* AgentUpgradeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentUpgradeView.swift; sourceTree = "<group>"; };
 		A20000010000000000000071 /* qadbak-agent-linux-amd64 */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = "qadbak-agent-linux-amd64"; sourceTree = "<group>"; };
 		A20000010000000000000072 /* qadbak-agent-linux-arm64 */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = "qadbak-agent-linux-arm64"; sourceTree = "<group>"; };
 		B20000010000000000000001 /* QadbakWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakWidget.swift; sourceTree = "<group>"; };
@@ -303,7 +319,9 @@
 				A20000010000000000000006 /* QadbakAPI.swift */,
 				A20000010000000000000066 /* AgentAPIClient.swift */,
 				A20000010000000000000067 /* SSHSessionService.swift */,
+				A20000010000000000000083 /* SSHPrivateKeyAuth.swift */,
 				A20000010000000000000068 /* AgentInstallService.swift */,
+				A20000010000000000000081 /* AgentCompatibility.swift */,
 				A20000010000000000000076 /* AgentConfirmedAction.swift */,
 				A20000010000000000000078 /* AgentHealthMonitor.swift */,
 				A20000010000000000000079 /* AgentNotificationSettings.swift */,
@@ -342,7 +360,12 @@
 				A20000010000000000000063 /* AddServerChoiceView.swift */,
 				A20000010000000000000064 /* AgentServerPlaceholderView.swift */,
 				A20000010000000000000069 /* LinuxServerOnboardingView.swift */,
+				A20000010000000000000084 /* LinuxAgentPairExistingView.swift */,
 				A20000010000000000000070 /* AgentServerDashboardView.swift */,
+				A20000010000000000000085 /* AgentMetricsView.swift */,
+				A20000010000000000000086 /* AgentDockerLogsView.swift */,
+				A20000010000000000000087 /* AgentAuditView.swift */,
+				A20000010000000000000088 /* AgentUpgradeView.swift */,
 				A20000010000000000000073 /* AgentServicesView.swift */,
 				A20000010000000000000074 /* AgentDockerView.swift */,
 				A20000010000000000000075 /* AgentLogsView.swift */,
@@ -413,6 +436,7 @@
 			children = (
 				A20000010000000000000071 /* qadbak-agent-linux-amd64 */,
 				A20000010000000000000072 /* qadbak-agent-linux-arm64 */,
+				A20000010000000000000082 /* manifest.json */,
 			);
 			path = Agent;
 			sourceTree = "<group>";
@@ -529,6 +553,7 @@
 				A10000010000000000000046 /* xterm.css in Resources */,
 				A10000010000000000000071 /* qadbak-agent-linux-amd64 in Resources */,
 				A10000010000000000000072 /* qadbak-agent-linux-arm64 in Resources */,
+				A10000010000000000000082 /* manifest.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -636,6 +661,13 @@
 				A10000010000000000000078 /* AgentHealthMonitor.swift in Sources */,
 				A10000010000000000000079 /* AgentNotificationSettings.swift in Sources */,
 				A10000010000000000000080 /* PanelDetectionCard.swift in Sources */,
+				A10000010000000000000081 /* AgentCompatibility.swift in Sources */,
+				A10000010000000000000083 /* SSHPrivateKeyAuth.swift in Sources */,
+				A10000010000000000000084 /* LinuxAgentPairExistingView.swift in Sources */,
+				A10000010000000000000085 /* AgentMetricsView.swift in Sources */,
+				A10000010000000000000086 /* AgentDockerLogsView.swift in Sources */,
+				A10000010000000000000087 /* AgentAuditView.swift in Sources */,
+				A10000010000000000000088 /* AgentUpgradeView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

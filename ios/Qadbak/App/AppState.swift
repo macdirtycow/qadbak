@@ -168,6 +168,9 @@ final class AppState {
     }
 
     func removeServer(_ server: ManagedServer) async {
+        if server.isAgentManaged, let client = makeAgentClient(for: server) {
+            try? await client.revoke()
+        }
         if activeServerId == server.id {
             await logout()
         }
@@ -351,10 +354,14 @@ final class AppState {
         _ server: ManagedServer,
         accessToken: String,
         refreshToken: String,
-        tlsFingerprint: String
+        tlsFingerprint: String,
+        sshHostKeyFingerprint: String? = nil
     ) async throws {
         keychain.saveAgentRefreshToken(refreshToken, serverId: server.id)
         keychain.saveAgentTlsPin(tlsFingerprint, serverId: server.id)
+        if let sshHostKeyFingerprint, !sshHostKeyFingerprint.isEmpty {
+            keychain.saveSshHostKeyFingerprint(sshHostKeyFingerprint, serverId: server.id)
+        }
         upsertServer(server)
         activeServerId = server.id
         keychain.saveActiveServerId(server.id)

@@ -13,12 +13,15 @@ struct LinuxServerOnboardingView: View {
     @State private var password = ""
     @State private var usePassword = true
     @State private var privateKeyPEM = ""
+    @State private var keyPassphrase = ""
     @State private var consentAccepted = false
     @State private var probe: SSHSystemProbe?
     @State private var progressMessage = ""
     @State private var errorMessage: String?
     @State private var isBusy = false
     @State private var agentPort = 9443
+    @State private var sshHostKeyFingerprint: String?
+    @State private var installManifest: AgentReleaseManifest?
 
     private let ssh = SSHSessionService()
 
@@ -80,9 +83,16 @@ struct LinuxServerOnboardingView: View {
                             .font(.caption)
                             .foregroundStyle(QadbakPalette.muted)
                     } else {
-                        Text("SSH key authentication will be available in a future update. Use password for now.")
+                        Text("Paste an OpenSSH private key (Ed25519 or RSA). The key is not stored on this device.")
                             .font(.caption)
-                            .foregroundStyle(QadbakPalette.warning)
+                            .foregroundStyle(QadbakPalette.muted)
+                        TextEditor(text: $privateKeyPEM)
+                            .font(.caption.monospaced())
+                            .frame(minHeight: 120)
+                            .scrollContentBackground(.hidden)
+                            .padding(8)
+                            .background(QadbakPalette.surface.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+                        QBTextField(label: "Passphrase (if encrypted)", placeholder: "Optional", text: $keyPassphrase, secure: true)
                     }
                 }
             }
@@ -102,8 +112,9 @@ struct LinuxServerOnboardingView: View {
                     Text("The following will be installed:")
                         .font(.headline)
                         .foregroundStyle(QadbakPalette.text)
-                    Label("qadbak-agent binary (~7 MB)", systemImage: "shippingbox")
-                    Label("systemd service on port \(agentPort)", systemImage: "gearshape.2")
+                    Label("qadbak-agent v\(installManifest?.version ?? "…") (~7 MB)", systemImage: "shippingbox")
+                    Label("Non-root systemd service on port \(agentPort)", systemImage: "gearshape.2")
+                    Label("SHA-256 verified install manifest", systemImage: "checkmark.shield")
                     Label("Self-signed TLS certificate (you will pin the fingerprint)", systemImage: "lock.shield")
                     Text("Nothing changes on Hestia, Coolify, Plesk, or other panels.")
                         .font(.caption)
@@ -189,7 +200,7 @@ struct LinuxServerOnboardingView: View {
                 && !username.trimmingCharacters(in: .whitespaces).isEmpty
         case .authentication:
             if usePassword { return password.count >= 1 }
-            return false
+            return privateKeyPEM.trimmingCharacters(in: .whitespacesAndNewlines).contains("BEGIN OPENSSH PRIVATE KEY")
         case .detection:
             return probe?.hasSudo == true
         case .consent:
@@ -204,7 +215,7 @@ struct LinuxServerOnboardingView: View {
             host: host.trimmingCharacters(in: .whitespacesAndNewlines),
             port: Int(port) ?? 22,
             username: username.trimmingCharacters(in: .whitespacesAndNewlines),
-            auth: usePassword ? .password(password) : .privateKeyPEM(privateKeyPEM)
+            auth: usePassword ? .password(password) : .privateKeyPEM(privateKeyPEM, passphrase: keyPassphrase)
         )
     }
 
@@ -218,6 +229,7 @@ struct LinuxServerOnboardingView: View {
             await runDetection()
         case .detection:
             step = .consent
+            installManifest = try? AgentInstallService.loadManifest()
         case .consent:
             step = .installAndPair
         case .installAndPair:
@@ -230,7 +242,11 @@ struct LinuxServerOnboardingView: View {
         progressMessage = "Connecting via SSH…"
         defer { isBusy = false }
         do {
-            probe = try await ssh.probeSystem(settings: sshSettings(), knownHostFingerprint: nil)
+            let detection = try await ssh.probeSystem(settings: sshSettings(), knownHostFingerprint: sshHostKeyFingerprint)
+            probe = detection.probe
+            if sshHostKeyFingerprint == nil {
+                sshHostKeyFingerprint = detection.hostKeyFingerprint
+            }
             password = ""
         } catch {
             errorMessage = error.localizedDescription
@@ -245,15 +261,19 @@ struct LinuxServerOnboardingView: View {
         guard let probe else { return }
 
         do {
-            progressMessage = "Uploading agent binary…"
-            let binary = try AgentInstallService.loadAgentBinary(architecture: probe.architecture)
+            progressMessage = "Verifying agent binary…"
+            let verified = try AgentInstallService.verifiedBinary(architecture: probe.architecture)
+            installManifest = verified.manifest
             let settings = sshSettings()
             let result = try await ssh.uploadAndInstall(
                 settings: settings,
-                knownHostFingerprint: nil,
-                binary: binary,
+                knownHostFingerprint: sshHostKeyFingerprint,
+                binary: verified.data,
                 agentPort: agentPort
             )
+            if sshHostKeyFingerprint == nil {
+                sshHostKeyFingerprint = result.hostKeyFingerprint
+            }
 
             progressMessage = "Pairing with agent…"
             let baseURL = AgentInstallService.makeAgentBaseURL(host: settings.host, port: agentPort)
@@ -285,6 +305,13 @@ struct LinuxServerOnboardingView: View {
             pairedAccess = access
             pairedRefresh = refresh
 
+            progressMessage = "Checking compatibility…"
+            let versionInfo = try await client.version()
+            if let agentVersion = versionInfo.version {
+                try AgentCompatibility.ensureAgentMeetsRequirement(agentVersion, minimum: versionInfo.minAgentVersion)
+            }
+            try AgentCompatibility.ensureAppMeetsRequirement(versionInfo.minAppVersion)
+
             let serverKind = pairRes.panelDetection?.detectedPanel.flatMap { ServerKind(rawValue: $0) }
                 ?? probe.panelDetection.detectedPanel
                 ?? .genericLinux
@@ -309,11 +336,13 @@ struct LinuxServerOnboardingView: View {
                 server,
                 accessToken: pairedAccess,
                 refreshToken: pairedRefresh,
-                tlsFingerprint: result.tlsFingerprint
+                tlsFingerprint: result.tlsFingerprint,
+                sshHostKeyFingerprint: sshHostKeyFingerprint
             )
 
             password = ""
             privateKeyPEM = ""
+            keyPassphrase = ""
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

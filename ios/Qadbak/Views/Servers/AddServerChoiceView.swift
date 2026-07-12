@@ -5,6 +5,7 @@ struct AddServerChoiceView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showLinuxOnboarding = false
+    @State private var showPairExisting = false
 
     var body: some View {
         QBScreenContainer {
@@ -38,6 +39,15 @@ struct AddServerChoiceView: View {
                         ) {
                             showLinuxOnboarding = true
                         }
+
+                        choiceCard(
+                            title: "Pair existing agent",
+                            subtitle: "Agent already installed — connect with TLS fingerprint + pairing token.",
+                            icon: "link",
+                            tint: QadbakPalette.glow
+                        ) {
+                            showPairExisting = true
+                        }
                     }
                 }
                 .padding(20)
@@ -52,6 +62,9 @@ struct AddServerChoiceView: View {
         }
         .navigationDestination(isPresented: $showLinuxOnboarding) {
             LinuxServerOnboardingView()
+        }
+        .navigationDestination(isPresented: $showPairExisting) {
+            LinuxAgentPairExistingView()
         }
         .preferredColorScheme(.dark)
     }

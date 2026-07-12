@@ -81,5 +81,6 @@ UI uses **capabilities** from `GET /api/v1/capabilities` — not hardcoded serve
 | 4 | Writes: restart, updates, reboot (confirmed) |
 | 5 | Panel detection badges, notifications |
 | 6 | Hardening, signed releases, closed beta |
+| 7 | SSH key auth, pair existing, upgrade, metrics history, docker/audit views |
 
 See `docs/ios/EXTERNAL_SERVERS.md` for the mobile side.

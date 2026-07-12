@@ -14,12 +14,18 @@ import (
 	"github.com/macdirtycow/qadbak/agent/internal/auth"
 	"github.com/macdirtycow/qadbak/agent/internal/config"
 	"github.com/macdirtycow/qadbak/agent/internal/handlers"
+	"github.com/macdirtycow/qadbak/agent/internal/privilege"
+	"github.com/macdirtycow/qadbak/agent/internal/system"
 	"github.com/macdirtycow/qadbak/agent/internal/tlsutil"
 )
 
-const version = "0.2.0"
+const version = "0.4.0"
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "priv" {
+		privilege.MainExit(os.Args[2:])
+	}
+
 	var (
 		listen   = flag.String("listen", envOr("QADBAK_AGENT_LISTEN", "0.0.0.0:9443"), "HTTPS listen address")
 		dataDir  = flag.String("data-dir", envOr("QADBAK_AGENT_DATA_DIR", "/var/lib/qadbak-agent"), "State directory")
@@ -62,6 +68,16 @@ func main() {
 			MinVersion: tls.VersionTLS12,
 		},
 	}
+
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+		metrics := system.NewMetricsHistory(cfg.DataDir)
+		for range ticker.C {
+			overview := system.CollectOverview(version)
+			_ = metrics.RecordFromOverview(overview)
+		}
+	}()
 
 	go func() {
 		log.Printf("qadbak-agent %s listening on https://%s", version, *listen)

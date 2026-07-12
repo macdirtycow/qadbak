@@ -74,6 +74,43 @@ final class AgentAPIClient: NSObject, @unchecked Sendable {
         )
     }
 
+    func version() async throws -> AgentVersionResponse {
+        try await request("GET", path: "/api/v1/version", authorized: false)
+    }
+
+    func revoke() async throws {
+        guard let refresh = refreshTokenProvider() else { return }
+        struct Body: Encodable { let refreshToken: String }
+        let _: AgentRevokeResponse = try await request(
+            "POST",
+            path: "/api/v1/auth/revoke",
+            body: Body(refreshToken: refresh),
+            authorized: true
+        )
+    }
+
+    func metrics(limit: Int = 60) async throws -> [AgentMetricSample] {
+        let res: AgentMetricsResponse = try await request("GET", path: "/api/v1/system/metrics?limit=\(limit)")
+        return res.samples ?? []
+    }
+
+    func auditLog(tail: Int = 200) async throws -> [AgentAuditEntry] {
+        let res: AgentAuditResponse = try await request("GET", path: "/api/v1/audit?tail=\(tail)")
+        return res.entries ?? []
+    }
+
+    func dockerLogs(containerId: String, tail: Int = 200) async throws -> [String] {
+        let encoded = containerId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? containerId
+        let res: AgentDockerLogsResponse = try await request(
+            "GET",
+            path: "/api/v1/docker/containers/\(encoded)/logs?tail=\(tail)"
+        )
+        if res.ok == false {
+            throw APIError.message(res.error ?? "Could not load container logs.")
+        }
+        return res.lines ?? []
+    }
+
     func rotate() async throws -> AgentRotateResponse {
         guard let refresh = refreshTokenProvider() else {
             throw APIError.unauthorized

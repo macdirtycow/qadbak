@@ -11,7 +11,8 @@ Standalone Linux agent for the Qadbak iOS app. **Work in progress — beta.**
 | 3 — Read-only services/docker/logs | Done (beta) |
 | 4 — Writes: restart, updates, reboot | Done (beta) |
 | 5 — Panel badges, local agent alerts | Done (beta) |
-| 6 — Hardening, signed releases, closed beta | Planned |
+| 6 — Hardening, signed releases, closed beta | Done (beta) |
+| 7 — Production ops: SSH keys, re-pair, upgrade, metrics, audit | Done (beta) |
 
 ## Documentation
 
@@ -19,6 +20,7 @@ Standalone Linux agent for the Qadbak iOS app. **Work in progress — beta.**
 - [Security](../docs/agent/SECURITY.md)
 - [API](../docs/agent/API.md)
 - [Installation](../docs/agent/INSTALLATION.md)
+- [Beta program](../docs/agent/BETA.md)
 - [Supported systems](../docs/agent/SUPPORTED_SYSTEMS.md)
 - [Threat model](../AGENT_THREAT_MODEL.md)
 - [iOS integration](../docs/ios/EXTERNAL_SERVERS.md)

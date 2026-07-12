@@ -136,3 +136,25 @@ curl -sk https://127.0.0.1:9443/health
 - [x] Background health polling every 5 minutes
 - [x] Local notifications: offline, high CPU, failed services, pending updates
 - [x] Settings toggle for agent alerts
+
+## Phase 6 deliverables
+
+- [x] Non-root agent daemon (`qadbak-agent` user + `priv` subcommand)
+- [x] Hardened install script (sudoers, JWT secret, systemd hardening)
+- [x] SHA-256 release manifest (`manifest.json`) + iOS verify before upload
+- [x] SSH host key pinning (Citadel custom validator)
+- [x] Version compatibility checks (`minAppVersion` / bundled agent version)
+- [x] `POST /api/v1/auth/revoke` on server removal
+- [x] Agent CI workflow + Go CodeQL
+- [x] [Closed beta guide](../agent/BETA.md)
+
+## Phase 7 deliverables
+
+- [x] SSH key authentication during onboarding (OpenSSH Ed25519/RSA + optional passphrase)
+- [x] Pair with existing agent (HTTPS-only, TLS fingerprint confirm)
+- [x] In-app agent upgrade via SSH when bundled manifest is newer
+- [x] `GET /api/v1/system/metrics` — rolling history (60 samples)
+- [x] `GET /api/v1/docker/containers/{id}/logs`
+- [x] `GET /api/v1/audit` — read-only audit tail
+- [x] iOS: Metrics sparklines, Docker log viewer, Audit log screen
+- [x] CasaOS detection in SSH probe + agent panel detection

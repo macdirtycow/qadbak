@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -51,4 +52,43 @@ func (l *Logger) Record(action, target, deviceID, sourceIP, result string) {
 	defer f.Close()
 	b, _ := json.Marshal(entry)
 	_, _ = f.Write(append(b, '\n'))
+}
+
+// Tail returns the last n audit entries (newest last).
+func (l *Logger) Tail(n int) ([]Entry, error) {
+	if l == nil {
+		return []Entry{}, nil
+	}
+	if n <= 0 || n > 500 {
+		n = 200
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	b, err := os.ReadFile(l.path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []Entry{}, nil
+		}
+		return nil, err
+	}
+	lines := strings.Split(strings.TrimSpace(string(b)), "\n")
+	if len(lines) == 0 {
+		return []Entry{}, nil
+	}
+	if len(lines) > n {
+		lines = lines[len(lines)-n:]
+	}
+	entries := make([]Entry, 0, len(lines))
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var e Entry
+		if err := json.Unmarshal([]byte(line), &e); err != nil {
+			continue
+		}
+		entries = append(entries, e)
+	}
+	return entries, nil
 }

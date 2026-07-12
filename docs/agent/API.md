@@ -18,13 +18,17 @@ Liveness probe (no auth).
 
 ```json
 {
-  "version": "1.0.0",
-  "commit": "abc123",
-  "min_app_version": "2.0.0"
+  "version": "0.3.0",
+  "minAppVersion": "1.2.0",
+  "minAgentVersion": "0.3.0"
 }
 ```
 
 ## Pairing (unauthenticated, rate-limited)
+
+### POST /pairing/init
+
+Returns one-time pairing token and TLS fingerprint.
 
 ### POST /pairing/complete
 
@@ -67,6 +71,18 @@ CPU, RAM, disk, load, uptime, OS, agent version, last boot.
 
 Time-series snapshot or current gauges (implementation phase 3).
 
+### GET /system/metrics
+
+Query: `?limit=60` — rolling CPU/memory/disk samples (recorded every 5 minutes and on overview refresh).
+
+### GET /audit
+
+Query: `?tail=200` — read-only audit log entries (newest last in response).
+
+### GET /docker/containers/{id}/logs
+
+Query: `?tail=200` — container stdout/stderr (sanitized).
+
 ### GET /services
 
 List systemd units (filtered).
@@ -108,6 +124,10 @@ Require confirmation JWT.
 ### POST /auth/rotate
 
 Body: `{ "refreshToken": "…" }` — returns new access + refresh.
+
+### POST /auth/revoke
+
+Authenticated. Body: `{ "refreshToken": "…" }` — revokes refresh token (e.g. when removing device).
 
 ## Errors
 

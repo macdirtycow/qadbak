@@ -165,6 +165,23 @@ func (s *Store) ValidateAccess(secret []byte, tokenString string) (deviceID stri
 	return sub, nil
 }
 
+func (s *Store) RevokeRefreshToken(refreshToken string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	tokens, err := s.loadRefreshTokensLocked()
+	if err != nil {
+		return err
+	}
+	hash := hashToken(refreshToken)
+	rec, ok := tokens[hash]
+	if !ok {
+		return errors.New("invalid refresh token")
+	}
+	rec.Revoked = true
+	tokens[hash] = rec
+	return s.saveRefreshTokensLocked(tokens)
+}
+
 func (s *Store) signAccess(secret []byte, deviceID, label string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub":   deviceID,

@@ -28,14 +28,19 @@ Other distributions: blocked until tested.
 ## Manual install (recovery)
 
 ```bash
-# Example — exact commands will ship with signed .deb in phase 2
-curl -fsSL https://releases.example/qadbak-agent_1.0.0_amd64.deb -o /tmp/qadbak-agent.deb
-sha256sum -c qadbak-agent_1.0.0_amd64.deb.sha256
-sudo dpkg -i /tmp/qadbak-agent.deb
-sudo systemctl enable --now qadbak-agent
+bash agent/scripts/build-release.sh
+sudo bash agent/packaging/install.sh agent/dist/qadbak-agent-linux-amd64
 ```
 
-Pair from iOS using **Reconnect → Pair with existing agent**.
+The installer creates user `qadbak-agent`, installs to `/usr/lib/qadbak-agent/`, writes `/etc/sudoers.d/qadbak-agent`, generates `/etc/qadbak-agent/jwt.secret`, and starts a **non-root** systemd unit.
+
+Verify checksum when a manifest is available:
+
+```bash
+sha256sum -c agent/dist/SHA256SUMS
+```
+
+Pair from iOS using **Add server → Linux via SSH** (or reuse the pairing token printed by the installer within 10 minutes).
 
 ## Idempotency
 

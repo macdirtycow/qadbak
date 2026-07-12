@@ -26,11 +26,15 @@ jobs:
     permissions:
       security-events: write
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, go]
     steps:
       - uses: actions/checkout@v4
       - uses: github/codeql-action/init@v3
         with:
-          languages: javascript-typescript
+          languages: ${{ matrix.language }}
       - uses: github/codeql-action/analyze@v3
 
   trivy:

@@ -20,17 +20,25 @@ import (
 )
 
 type Handler struct {
-	cfg   *config.Config
-	store *auth.Store
-	cert  string
-	audit *audit.Logger
-	mu    sync.Mutex
-	rate  map[string][]time.Time
+	cfg     *config.Config
+	store   *auth.Store
+	cert    string
+	audit   *audit.Logger
+	metrics *system.MetricsHistory
+	mu      sync.Mutex
+	rate    map[string][]time.Time
 }
 
 func New(cfg *config.Config, store *auth.Store, certPath string) *Handler {
 	log, _ := audit.NewLogger(cfg.DataDir)
-	return &Handler{cfg: cfg, store: store, cert: certPath, audit: log, rate: map[string][]time.Time{}}
+	return &Handler{
+		cfg:     cfg,
+		store:   store,
+		cert:    certPath,
+		audit:   log,
+		metrics: system.NewMetricsHistory(cfg.DataDir),
+		rate:    map[string][]time.Time{},
+	}
 }
 
 func (h *Handler) Register(mux *http.ServeMux) {
@@ -39,11 +47,15 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/pairing/init", h.pairingInit)
 	mux.HandleFunc("/api/v1/pairing/complete", h.pairingComplete)
 	mux.HandleFunc("/api/v1/auth/rotate", h.authRotate)
+	mux.HandleFunc("/api/v1/auth/revoke", h.withAuthDevice(h.authRevoke))
 	mux.HandleFunc("/api/v1/capabilities", h.withAuth(h.capabilities))
 	mux.HandleFunc("/api/v1/system/overview", h.withAuth(h.systemOverview))
+	mux.HandleFunc("/api/v1/system/metrics", h.withAuth(h.systemMetrics))
+	mux.HandleFunc("/api/v1/audit", h.withAuth(h.auditLog))
 	mux.HandleFunc("/api/v1/detection/panel", h.withAuth(h.panelDetection))
 	mux.HandleFunc("/api/v1/services", h.withAuth(h.servicesList))
 	mux.HandleFunc("/api/v1/docker/containers", h.withAuth(h.dockerContainers))
+	mux.HandleFunc("/api/v1/docker/containers/{id}/logs", h.withAuth(h.dockerContainerLogs))
 	mux.HandleFunc("/api/v1/logs", h.withAuth(h.logsFetch))
 	mux.HandleFunc("/api/v1/updates", h.withAuth(h.updatesCheck))
 	mux.HandleFunc("/api/v1/actions/confirm", h.withAuthDevice(h.actionsConfirm))
@@ -84,8 +96,9 @@ func (h *Handler) version(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	WriteJSON(w, http.StatusOK, map[string]any{
-		"version":       h.cfg.Version,
-		"minAppVersion": h.cfg.MinAppVersion,
+		"version":         h.cfg.Version,
+		"minAppVersion":   h.cfg.MinAppVersion,
+		"minAgentVersion": h.cfg.MinAgentVersion,
 	})
 }
 
@@ -187,6 +200,29 @@ func (h *Handler) authRotate(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handler) authRevoke(w http.ResponseWriter, r *http.Request, deviceID string) {
+	if r.Method != http.MethodPost {
+		methodNotAllowed(w)
+		return
+	}
+	var body rotateBody
+	if err := decodeJSON(r, &body); err != nil {
+		WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "Invalid JSON"})
+		return
+	}
+	token := strings.TrimSpace(body.RefreshToken)
+	if token == "" {
+		WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "refreshToken required"})
+		return
+	}
+	if err := h.store.RevokeRefreshToken(token); err != nil {
+		WriteJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": "Invalid refresh token"})
+		return
+	}
+	h.audit.Record("auth.revoke", deviceID, deviceID, clientIP(r), "ok")
+	WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
+}
+
 func (h *Handler) capabilities(w http.ResponseWriter, r *http.Request) {
 	panel := detection.DetectPanel()
 	WriteJSON(w, http.StatusOK, map[string]any{
@@ -198,7 +234,51 @@ func (h *Handler) capabilities(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) systemOverview(w http.ResponseWriter, r *http.Request) {
 	overview := system.CollectOverview(h.cfg.Version)
+	_ = h.metrics.RecordFromOverview(overview)
 	WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "overview": overview})
+}
+
+func (h *Handler) systemMetrics(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		methodNotAllowed(w)
+		return
+	}
+	caps := detection.MapCapabilities(detection.DetectPanel().DetectedPanel)
+	if !caps["systemMetrics"] {
+		WriteJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "Capability missing", "code": "CAPABILITY_MISSING"})
+		return
+	}
+	tail := 60
+	if t := strings.TrimSpace(r.URL.Query().Get("limit")); t != "" {
+		if n, err := strconv.Atoi(t); err == nil {
+			tail = n
+		}
+	}
+	samples, err := h.metrics.List(tail)
+	if err != nil {
+		WriteJSON(w, http.StatusServiceUnavailable, map[string]any{"ok": false, "error": "Could not load metrics"})
+		return
+	}
+	WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "samples": samples})
+}
+
+func (h *Handler) auditLog(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		methodNotAllowed(w)
+		return
+	}
+	tail := 200
+	if t := strings.TrimSpace(r.URL.Query().Get("tail")); t != "" {
+		if n, err := strconv.Atoi(t); err == nil {
+			tail = n
+		}
+	}
+	entries, err := h.audit.Tail(tail)
+	if err != nil {
+		WriteJSON(w, http.StatusServiceUnavailable, map[string]any{"ok": false, "error": "Could not read audit log"})
+		return
+	}
+	WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "entries": entries})
 }
 
 func (h *Handler) panelDetection(w http.ResponseWriter, r *http.Request) {
@@ -239,6 +319,35 @@ func (h *Handler) dockerContainers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "containers": containers})
+}
+
+func (h *Handler) dockerContainerLogs(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		methodNotAllowed(w)
+		return
+	}
+	caps := detection.MapCapabilities(detection.DetectPanel().DetectedPanel)
+	if !caps["dockerManagement"] {
+		WriteJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "Docker not available", "code": "CAPABILITY_MISSING"})
+		return
+	}
+	id := strings.TrimSpace(r.PathValue("id"))
+	if id == "" {
+		WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "Container id required"})
+		return
+	}
+	tail := 200
+	if t := strings.TrimSpace(r.URL.Query().Get("tail")); t != "" {
+		if n, err := strconv.Atoi(t); err == nil {
+			tail = n
+		}
+	}
+	lines, err := docker.ContainerLogs(id, tail)
+	if err != nil {
+		WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": err.Error(), "code": "VALIDATION_FAILED"})
+		return
+	}
+	WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "lines": lines})
 }
 
 func (h *Handler) logsFetch(w http.ResponseWriter, r *http.Request) {

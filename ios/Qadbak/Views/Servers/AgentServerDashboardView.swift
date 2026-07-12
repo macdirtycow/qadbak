@@ -7,6 +7,8 @@ struct AgentServerDashboardView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showSwitcher = false
+    @State private var showUpgrade = false
+    @State private var upgradeManifest: AgentReleaseManifest?
 
     var body: some View {
         QBScreenContainer {
@@ -14,6 +16,7 @@ struct AgentServerDashboardView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     if let server = appState.activeServer {
                         header(server)
+                        upgradeBanner
                         PanelDetectionCard(server: server)
                     }
                     if isLoading && overview == nil {
@@ -41,8 +44,42 @@ struct AgentServerDashboardView: View {
             }
         }
         .sheet(isPresented: $showSwitcher) { ServerSwitcherView() }
+        .sheet(isPresented: $showUpgrade) {
+            if let server = appState.activeServer, let manifest = upgradeManifest, let version = overview?.agentVersion {
+                AgentUpgradeView(server: server, manifest: manifest, currentVersion: version) {
+                    Task { await reload() }
+                }
+            }
+        }
         .task { await reload() }
         .preferredColorScheme(.dark)
+    }
+
+    @ViewBuilder
+    private var upgradeBanner: some View {
+        if let manifest = upgradeManifest,
+           let current = overview?.agentVersion,
+           AgentCompatibility.isAtLeast(manifest.version, required: current),
+           manifest.version != current {
+            QBGlassCard {
+                HStack(spacing: 12) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .foregroundStyle(QadbakPalette.warning)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Agent update available")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(QadbakPalette.text)
+                        Text("\(current) → \(manifest.version)")
+                            .font(.caption)
+                            .foregroundStyle(QadbakPalette.muted)
+                    }
+                    Spacer()
+                    Button("Upgrade") { showUpgrade = true }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(QadbakPalette.accent)
+                }
+            }
+        }
     }
 
     private func header(_ server: ManagedServer) -> some View {
@@ -84,6 +121,16 @@ struct AgentServerDashboardView: View {
                 .font(.headline)
                 .foregroundStyle(QadbakPalette.text)
 
+            if provider.supports(.overview) || provider.supports(.metrics) {
+                NavigationLink { AgentMetricsView() } label: {
+                    featureRow(title: "Metrics", subtitle: "CPU & memory history", icon: "chart.xyaxis.line", tint: .mint)
+                }
+            }
+            if provider.supports(.logs) {
+                NavigationLink { AgentAuditView() } label: {
+                    featureRow(title: "Audit log", subtitle: "Recent agent actions", icon: "list.bullet.rectangle", tint: QadbakPalette.muted)
+                }
+            }
             if provider.supports(.services) {
                 NavigationLink { AgentServicesView() } label: {
                     featureRow(title: "Services", subtitle: "systemd units (read-only)", icon: "gearshape.2", tint: QadbakPalette.accent)
@@ -137,6 +184,7 @@ struct AgentServerDashboardView: View {
         defer { isLoading = false }
         do {
             overview = try await provider.fetchOverview()
+            upgradeManifest = try? AgentInstallService.loadManifest()
             if var server = appState.activeServer {
                 if let caps = try? await provider.apiClient.capabilities().capabilities?.toServerCapabilities() {
                     server.capabilities = caps

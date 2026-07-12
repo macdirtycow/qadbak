@@ -10,6 +10,49 @@ struct AgentHealthResponse: Decodable {
 struct AgentVersionResponse: Decodable {
     let version: String?
     let minAppVersion: String?
+    let minAgentVersion: String?
+}
+
+struct AgentRevokeResponse: Decodable {
+    let ok: Bool?
+    let error: String?
+}
+
+struct AgentMetricSample: Decodable, Identifiable {
+    var id: String { timestamp ?? UUID().uuidString }
+    let timestamp: String?
+    let cpuPercent: Double?
+    let memoryUsedBytes: Int64?
+    let memoryTotalBytes: Int64?
+    let diskUsedBytes: Int64?
+    let diskTotalBytes: Int64?
+    let loadAverage: [Double]?
+}
+
+struct AgentMetricsResponse: Decodable {
+    let ok: Bool?
+    let samples: [AgentMetricSample]?
+}
+
+struct AgentAuditEntry: Decodable, Identifiable {
+    var id: String { "\(ts ?? "")-\(action ?? "")-\(target ?? "")" }
+    let ts: String?
+    let action: String?
+    let target: String?
+    let deviceId: String?
+    let sourceIp: String?
+    let result: String?
+}
+
+struct AgentAuditResponse: Decodable {
+    let ok: Bool?
+    let entries: [AgentAuditEntry]?
+}
+
+struct AgentDockerLogsResponse: Decodable {
+    let ok: Bool?
+    let lines: [String]?
+    let error: String?
 }
 
 struct AgentCapabilitiesResponse: Decodable {
@@ -214,7 +257,7 @@ struct SSHSystemProbe: Sendable {
 
 enum SSHAuthMethod: Sendable {
     case password(String)
-    case privateKeyPEM(String)
+    case privateKeyPEM(String, passphrase: String = "")
 }
 
 struct SSHConnectionSettings: Sendable {
