@@ -43,36 +43,13 @@ struct DomainListView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    HStack(spacing: 8) {
-                        Button {
-                            showServerSwitcher = true
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "server.rack")
-                                if let server = appState.activeServer {
-                                    Text(server.label)
-                                        .font(.caption.weight(.semibold))
-                                        .lineLimit(1)
-                                }
-                            }
+                    Button {
+                        showServerSwitcher = true
+                    } label: {
+                        Image(systemName: "server.rack")
                             .foregroundStyle(QadbakPalette.accent)
-                        }
-                        if appState.isClientAccount {
-                            Text("Client")
-                                .font(.caption2.weight(.bold))
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .foregroundStyle(QadbakPalette.accent)
-                                .background(QadbakPalette.glow.opacity(0.2), in: Capsule())
-                        } else if appState.premiumActive, let plan = appState.premiumPlanLabel {
-                            Text(shortPremiumLabel(plan))
-                                .font(.caption2.weight(.bold))
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .foregroundStyle(QadbakPalette.success)
-                                .background(QadbakPalette.success.opacity(0.15), in: Capsule())
-                        }
                     }
+                    .accessibilityLabel(appState.activeServer?.label ?? "Switch server")
                 }
                 ToolbarItem(placement: .principal) {
                     HStack(spacing: 8) {
@@ -245,7 +222,7 @@ struct DomainListView: View {
                 tone: QadbakPalette.success
             )
             QBStatTile(
-                title: "SSL < 14d",
+                title: "SSL expiring",
                 value: "\(summary.sslExpiringSoon)",
                 icon: "lock.shield",
                 tone: summary.sslExpiringSoon > 0 ? QadbakPalette.warning : QadbakPalette.success

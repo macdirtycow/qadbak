@@ -44,6 +44,9 @@
 		A10000010000000000000038 /* TerminalWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000038 /* TerminalWebView.swift */; };
 		A10000010000000000000039 /* TermuxExtraKeysView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000039 /* TermuxExtraKeysView.swift */; };
 		A10000010000000000000040 /* terminal.html in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000040 /* terminal.html */; };
+		A10000010000000000000044 /* xterm.min.js in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000044 /* xterm.min.js */; };
+		A10000010000000000000045 /* addon-fit.min.js in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000045 /* addon-fit.min.js */; };
+		A10000010000000000000046 /* xterm.css in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000046 /* xterm.css */; };
 		A10000010000000000000041 /* BackupICloudService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000041 /* BackupICloudService.swift */; };
 		A10000010000000000000042 /* BackupICloudSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000042 /* BackupICloudSettings.swift */; };
 		A10000010000000000000043 /* BackupNetworkPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000043 /* BackupNetworkPolicy.swift */; };
@@ -94,6 +97,9 @@
 		A20000010000000000000038 /* TerminalWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWebView.swift; sourceTree = "<group>"; };
 		A20000010000000000000039 /* TermuxExtraKeysView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermuxExtraKeysView.swift; sourceTree = "<group>"; };
 		A20000010000000000000040 /* terminal.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = terminal.html; sourceTree = "<group>"; };
+		A20000010000000000000044 /* xterm.min.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = xterm.min.js; sourceTree = "<group>"; };
+		A20000010000000000000045 /* addon-fit.min.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = addon-fit.min.js; sourceTree = "<group>"; };
+		A20000010000000000000046 /* xterm.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = xterm.css; sourceTree = "<group>"; };
 		A20000010000000000000041 /* BackupICloudService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupICloudService.swift; sourceTree = "<group>"; };
 		A20000010000000000000042 /* BackupICloudSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupICloudSettings.swift; sourceTree = "<group>"; };
 		A20000010000000000000043 /* BackupNetworkPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupNetworkPolicy.swift; sourceTree = "<group>"; };
@@ -289,9 +295,20 @@
 		A50000010000000000000012 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				A20000010000000000000040 /* terminal.html */,
+				A50000010000000000000013 /* terminal */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		A50000010000000000000013 /* terminal */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010000000000000040 /* terminal.html */,
+				A20000010000000000000044 /* xterm.min.js */,
+				A20000010000000000000045 /* addon-fit.min.js */,
+				A20000010000000000000046 /* xterm.css */,
+			);
+			path = terminal;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -375,6 +392,9 @@
 				A10000010000000000000016 /* Assets.xcassets in Resources */,
 				A10000010000000000000034 /* PrivacyInfo.xcprivacy in Resources */,
 				A10000010000000000000040 /* terminal.html in Resources */,
+				A10000010000000000000044 /* xterm.min.js in Resources */,
+				A10000010000000000000045 /* addon-fit.min.js in Resources */,
+				A10000010000000000000046 /* xterm.css in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -21,8 +21,9 @@ struct TerminalWebView: UIViewRepresentable {
         context.coordinator.webView = webView
         context.coordinator.onReady = onReady
 
-        if let url = Bundle.main.url(forResource: "terminal", withExtension: "html") {
-            webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+        if let url = Bundle.main.url(forResource: "terminal", withExtension: "html", subdirectory: "terminal") {
+            let base = url.deletingLastPathComponent()
+            webView.loadFileURL(url, allowingReadAccessTo: base)
         }
         return webView
     }
@@ -47,8 +48,12 @@ struct TerminalWebView: UIViewRepresentable {
             }
         }
 
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            // Ready message comes from JS after load.
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            controller?.statusHandler?("error", error.localizedDescription)
+        }
+
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            controller?.statusHandler?("error", error.localizedDescription)
         }
     }
 }
@@ -64,33 +69,40 @@ final class TerminalWebViewController {
 
     func connect(session: TerminalSessionInfo) {
         guard let data = try? JSONEncoder().encode(session),
-              let json = String(data: data, encoding: .utf8) else { return }
+              let json = String(data: data, encoding: .utf8) else {
+            statusHandler?("error", "Could not encode terminal session.")
+            return
+        }
         let escaped = json
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "'", with: "\\'")
-        evaluate("window.qadbakTerminal.connect('\(escaped)')")
+        evaluate("window.qadbakTerminal && window.qadbakTerminal.connect('\(escaped)')") { [weak self] _, error in
+            if let error {
+                self?.statusHandler?("error", error.localizedDescription)
+            }
+        }
     }
 
     func disconnect() {
-        evaluate("window.qadbakTerminal.disconnect()")
+        evaluate("window.qadbakTerminal && window.qadbakTerminal.disconnect()")
     }
 
     func fit() {
-        evaluate("window.qadbakTerminal.fit()")
+        evaluate("window.qadbakTerminal && window.qadbakTerminal.fit()")
     }
 
     func sendKey(_ key: String) {
         let escaped = key.replacingOccurrences(of: "'", with: "\\'")
-        evaluate("window.qadbakTerminal.sendKey('\(escaped)')")
+        evaluate("window.qadbakTerminal && window.qadbakTerminal.sendKey('\(escaped)')")
     }
 
     func sendText(_ text: String) {
         guard let data = try? JSONEncoder().encode(text),
               let json = String(data: data, encoding: .utf8) else { return }
-        evaluate("window.qadbakTerminal.sendText(\(json))")
+        evaluate("window.qadbakTerminal && window.qadbakTerminal.sendText(\(json))")
     }
 
-    private func evaluate(_ script: String) {
-        webView?.evaluateJavaScript(script, completionHandler: nil)
+    private func evaluate(_ script: String, completion: ((Any?, Error?) -> Void)? = nil) {
+        webView?.evaluateJavaScript(script, completionHandler: completion)
     }
 }

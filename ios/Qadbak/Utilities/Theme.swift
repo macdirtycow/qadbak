@@ -166,6 +166,8 @@ struct QBStatTile: View {
             Text(title)
                 .font(.caption)
                 .foregroundStyle(QadbakPalette.muted)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
@@ -184,29 +186,38 @@ struct QBActionTile: View {
     var tint: Color = QadbakPalette.glow
 
     var body: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(tint.opacity(0.18))
-                    .frame(width: 44, height: 44)
-                Image(systemName: icon)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(tint)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 0) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(tint.opacity(0.18))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: icon)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(tint)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(QadbakPalette.muted.opacity(0.55))
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(QadbakPalette.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                    .allowsTightening(true)
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(QadbakPalette.muted)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                    .allowsTightening(true)
             }
-            Spacer(minLength: 0)
-            Image(systemName: "chevron.right")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(QadbakPalette.muted.opacity(0.6))
         }
-        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 92, alignment: .topLeading)
+        .padding(12)
         .background(QadbakPalette.card.opacity(0.9), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -224,10 +235,14 @@ struct QBScreenHeader: View {
             Text(title)
                 .font(.title2.weight(.bold))
                 .foregroundStyle(QadbakPalette.text)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
             if let subtitle {
                 Text(subtitle)
                     .font(.subheadline)
                     .foregroundStyle(QadbakPalette.muted)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

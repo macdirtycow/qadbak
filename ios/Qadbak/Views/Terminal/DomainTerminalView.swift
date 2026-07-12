@@ -7,6 +7,7 @@ struct DomainTerminalView: View {
 
     @State private var terminalController: TerminalWebViewController?
     @State private var session: TerminalSessionInfo?
+    @State private var webReady = false
     @State private var statusText = "Connecting…"
     @State private var isConnected = false
     @State private var errorMessage: String?
@@ -23,9 +24,8 @@ struct DomainTerminalView: View {
                         handleStatus(state, detail: detail)
                     }
                 }
-                if let session {
-                    controller.connect(session: session)
-                }
+                webReady = true
+                openTerminalIfReady()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -81,11 +81,16 @@ struct DomainTerminalView: View {
                 .font(.caption)
                 .foregroundStyle(QadbakPalette.muted)
                 .lineLimit(1)
-            Spacer()
+                .truncationMode(.tail)
+                .layoutPriority(0)
+            Spacer(minLength: 8)
             if let user = session?.unixUser ?? session?.shellUser {
                 Text(user)
                     .font(.caption.monospaced())
                     .foregroundStyle(QadbakPalette.accent)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .layoutPriority(1)
             }
         }
         .padding(.horizontal, 12)
@@ -108,22 +113,33 @@ struct DomainTerminalView: View {
             terminalController?.fit()
         case "closed":
             isConnected = false
-            statusText = "Session closed"
+            statusText = detail?.isEmpty == false ? "Session closed (\(detail!))" : "Session closed"
         case "error":
             isConnected = false
             statusText = detail ?? "Terminal error"
             errorMessage = detail
         case "ready":
-            if let session { terminalController?.connect(session: session) }
+            webReady = true
+            openTerminalIfReady()
         default:
             break
         }
+    }
+
+    private func openTerminalIfReady() {
+        guard webReady,
+              let info = session,
+              info.available == true,
+              let controller = terminalController else { return }
+        statusText = "Opening terminal…"
+        controller.connect(session: info)
     }
 
     private func connect() async {
         guard let api = appState.api else { return }
         statusText = "Fetching session…"
         errorMessage = nil
+        isConnected = false
         do {
             let info: TerminalSessionInfo
             if adminShell {
@@ -137,7 +153,7 @@ struct DomainTerminalView: View {
                 errorMessage = info.error
                 return
             }
-            terminalController?.connect(session: info)
+            openTerminalIfReady()
         } catch {
             statusText = error.localizedDescription
             errorMessage = error.localizedDescription

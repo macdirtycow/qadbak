@@ -9,8 +9,7 @@ struct DomainDetailView: View {
     }
 
     private let actionColumns = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12),
+        GridItem(.adaptive(minimum: 158), spacing: 12),
     ]
 
     var body: some View {

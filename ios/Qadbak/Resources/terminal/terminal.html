@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css" />
+  <link rel="stylesheet" href="xterm.css" />
   <style>
     html, body { margin: 0; padding: 0; background: #0f1419; height: 100%; overflow: hidden; }
     #term { position: absolute; inset: 0; }
@@ -12,8 +12,8 @@
 </head>
 <body>
   <div id="term"></div>
-  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+  <script src="xterm.min.js"></script>
+  <script src="addon-fit.min.js"></script>
   <script>
     let term = null;
     let fitAddon = null;
@@ -27,6 +27,12 @@
       }
     }
 
+    function createFitAddon() {
+      if (typeof FitAddon === 'function') return new FitAddon();
+      if (FitAddon && typeof FitAddon.FitAddon === 'function') return new FitAddon.FitAddon();
+      throw new Error('Terminal fit addon failed to load.');
+    }
+
     function sendResize() {
       if (!term || !ws || ws.readyState !== WebSocket.OPEN) return;
       ws.send(JSON.stringify({ t: 'resize', cols: term.cols, rows: term.rows }));
@@ -37,6 +43,10 @@
         postStatus('error', session && session.error ? session.error : 'Missing terminal session.');
         return;
       }
+      if (typeof Terminal !== 'function') {
+        postStatus('error', 'Terminal library failed to load.');
+        return;
+      }
       disconnect();
       term = new Terminal({
         cursorBlink: true,
@@ -45,7 +55,7 @@
         theme: { background: '#0f1419', foreground: '#e6edf3', cursor: '#58a6ff' },
         scrollback: 5000,
       });
-      fitAddon = new FitAddon.FitAddon();
+      fitAddon = createFitAddon();
       term.loadAddon(fitAddon);
       term.open(document.getElementById('term'));
       fitAddon.fit();
@@ -66,7 +76,7 @@
         else term.write(new Uint8Array(ev.data));
       };
       ws.onerror = () => postStatus('error', 'WebSocket error.');
-      ws.onclose = () => postStatus('closed');
+      ws.onclose = (ev) => postStatus('closed', ev.code ? 'code ' + ev.code : '');
 
       term.onData((data) => {
         if (ws && ws.readyState === WebSocket.OPEN) ws.send(data);
