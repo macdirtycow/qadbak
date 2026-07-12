@@ -16,8 +16,40 @@ function domainConfigDir(domain) {
   return path.join(QADBAK_DIR, "data", "domain-config", String(domain).toLowerCase());
 }
 import { mailSendDirect } from "./mail-send.mjs";
+import {
+  assertGitBranch,
+  assertGitRepoUrl,
+} from "./validate-git-deploy.mjs";
 
 const exec = promisify(execFile);
+
+async function runAsUser(user, file, args, opts = {}) {
+  await exec("sudo", ["-u", user, file, ...args], opts);
+}
+
+async function gitDeployRunAsUser(user, pub, repoUrl, branch) {
+  const git = (subArgs, extra = {}) =>
+    runAsUser(user, "git", ["-C", pub, ...subArgs], { timeout: 120_000, ...extra });
+
+  await runAsUser(user, "mkdir", ["-p", pub], { timeout: 10_000 });
+  try {
+    await git(["rev-parse", "--git-dir"]);
+  } catch {
+    await git(["init"]);
+  }
+  try {
+    await git(["remote", "remove", "origin"]);
+  } catch {
+    /* no origin yet */
+  }
+  await git(["remote", "add", "origin", repoUrl]);
+  await git(["fetch", "origin", branch]);
+  try {
+    await git(["checkout", "-B", branch, `origin/${branch}`]);
+  } catch {
+    await git(["pull", "origin", branch]);
+  }
+}
 
 export async function analyticsSummary(domain) {
   const { home } = await resolveDomainUser(domain);
@@ -73,8 +105,8 @@ export async function gitDeployGet(domain) {
 export async function gitDeploySet(domain, payloadJson) {
   const payload = typeof payloadJson === "string" ? JSON.parse(payloadJson) : payloadJson;
   const cfg = {
-    repoUrl: String(payload.repoUrl || "").trim(),
-    branch: String(payload.branch || "main").trim() || "main",
+    repoUrl: assertGitRepoUrl(String(payload.repoUrl || "").trim()),
+    branch: assertGitBranch(String(payload.branch || "main").trim() || "main"),
     webhookSecret: String(payload.webhookSecret || "").trim(),
     lastDeploy: payload.lastDeploy ?? null,
   };
@@ -87,8 +119,9 @@ export async function gitDeployRun(domain) {
   const cfg = await readDomainConfigJson(domain, "git-deploy.json", {});
   const pub = `${home}/public_html`;
   if (!cfg.repoUrl) fail("Configure a Git repository URL first");
-  const cmd = `cd ${pub} && (test -d .git || git init) && git remote remove origin 2>/dev/null; git remote add origin ${cfg.repoUrl} && git fetch origin ${cfg.branch} && git checkout -B ${cfg.branch} origin/${cfg.branch} || git pull origin ${cfg.branch}`;
-  await exec("sudo", ["-u", user, "bash", "-c", cmd], { timeout: 120_000 });
+  const repoUrl = assertGitRepoUrl(cfg.repoUrl);
+  const branch = assertGitBranch(cfg.branch || "main");
+  await gitDeployRunAsUser(user, pub, repoUrl, branch);
   cfg.lastDeploy = new Date().toISOString();
   await writeDomainConfigJson(domain, "git-deploy.json", cfg);
   const logPath = path.join(domainConfigDir(domain), "git-deploy-log.jsonl");

@@ -15,6 +15,7 @@ import {
   writeDomainConfigJson,
   QADBAK_DIR,
 } from "./provisioning-common.mjs";
+import { assertComposePolicyYaml } from "./compose-policy.mjs";
 
 const exec = promisify(execFile);
 
@@ -241,6 +242,7 @@ export async function jellyfinInstall(domain, payloadJson) {
     cacheDir,
     mediaDir,
   });
+  assertComposePolicyYaml(compose);
   await writeFile(composePath, compose, "utf8");
   await exec("chown", ["-R", `${user}:${user}`, appsDir, mediaDir], {
     timeout: 120_000,
@@ -415,6 +417,7 @@ export async function jellyfinSetMediaPath(domain, payloadJson) {
     cacheDir,
     mediaDir,
   });
+  assertComposePolicyYaml(compose);
   await writeFile(composePath, compose, "utf8");
   await exec("chown", [`${user}:${user}`, composePath], { timeout: 30_000 }).catch(
     () => {},

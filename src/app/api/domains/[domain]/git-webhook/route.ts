@@ -1,5 +1,6 @@
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
 import { runDomainTool } from "@/lib/panel-tools";
+import { secretsEqual } from "@/lib/security-utils";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -23,7 +24,7 @@ export async function POST(request: Request, { params }: Params) {
     } catch {
       /* */
     }
-    if (!expected || secret !== expected) {
+    if (!expected || !secretsEqual(secret ?? "", expected)) {
       return jsonError("Invalid deploy secret.", 401);
     }
     const raw = await runDomainTool(domain, "git-deploy-run");

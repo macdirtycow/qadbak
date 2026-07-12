@@ -5,6 +5,11 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    server: {
+      deps: {
+        inline: [/scripts\/lib\/.*\.mjs$/],
+      },
+    },
   },
   resolve: {
     alias: {

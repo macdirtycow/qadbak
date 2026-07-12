@@ -1,10 +1,13 @@
 import bcrypt from "bcryptjs";
-import { copyFile, mkdir, readFile, stat, writeFile } from "fs/promises";
+import { chmod, copyFile, mkdir, readFile, stat, writeFile } from "fs/promises";
 import path from "path";
 import type { PanelUser } from "./types";
 
 const USERS_PATH = path.join(process.cwd(), "data", "users.json");
 const EXAMPLE_PATH = path.join(process.cwd(), "data", "users.example.json");
+const USERS_MODE = 0o600;
+
+export const WEAK_PASSWORDS = new Set(["changeme", "password", "admin123", "password123"]);
 
 let cache: PanelUser[] | null = null;
 let cacheMtimeMs = 0;
@@ -20,7 +23,7 @@ async function ensureUsersFile(): Promise<void> {
   try {
     await copyFile(EXAMPLE_PATH, USERS_PATH);
   } catch {
-    const hash = await bcrypt.hash("changeme", 10);
+    const hash = await bcrypt.hash("changeme", 12);
     const seed: PanelUser[] = [
       {
         id: "admin-1",
@@ -49,7 +52,12 @@ export function invalidateUsersCache(): void {
 export async function saveUsers(users: PanelUser[]): Promise<void> {
   await ensureUsersFile();
   await writeFile(USERS_PATH, JSON.stringify(users, null, 2), "utf8");
+  await chmod(USERS_PATH, USERS_MODE).catch(() => undefined);
   invalidateUsersCache();
+}
+
+export function isWeakPassword(password: string): boolean {
+  return WEAK_PASSWORDS.has(password.trim().toLowerCase());
 }
 
 export async function loadUsers(): Promise<PanelUser[]> {

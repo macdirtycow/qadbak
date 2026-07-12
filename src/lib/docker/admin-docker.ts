@@ -11,6 +11,7 @@ import {
   assertNetworkName,
   assertVolumeName,
 } from "./validate";
+import { assertComposePolicyYaml } from "./compose-policy";
 
 const execFileAsync = promisify(execFile);
 
@@ -173,6 +174,7 @@ export async function listNetworks(): Promise<DockerNetworkRow[]> {
 
 export async function validateComposeYaml(yaml: string): Promise<string> {
   assertComposeYaml(yaml);
+  assertComposePolicyYaml(yaml);
   const dir = await mkdtemp(join(tmpdir(), "qadbak-compose-"));
   const file = join(dir, "docker-compose.yml");
   try {
@@ -190,6 +192,7 @@ export async function composeUp(
 ): Promise<string> {
   assertComposeProject(project);
   assertComposeYaml(yaml);
+  assertComposePolicyYaml(yaml);
   const dir = await mkdtemp(join(tmpdir(), "qadbak-compose-"));
   const file = join(dir, "docker-compose.yml");
   try {

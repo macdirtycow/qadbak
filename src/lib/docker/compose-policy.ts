@@ -1,0 +1,44 @@
+/**
+ * Docker Compose security policy — block host-escape options in admin-supplied YAML.
+ */
+
+const DANGEROUS_PATTERNS = [
+  /\bprivileged\s*:\s*true\b/i,
+  /\bnetwork_mode\s*:\s*['"]?host['"]?\b/i,
+  /\bpid\s*:\s*['"]?host['"]?\b/i,
+  /\bipc\s*:\s*['"]?host['"]?\b/i,
+  /\/var\/run\/docker\.sock/i,
+  /\bcap_add\s*:/i,
+  /\bdevices\s*:/i,
+];
+
+const FORBIDDEN_BIND_PREFIXES = ["/etc", "/root", "/var/run", "/proc", "/sys", "/dev"];
+
+export function assertComposePolicyYaml(yaml: string): void {
+  if (!yaml || typeof yaml !== "string") {
+    throw new Error("Invalid compose file content.");
+  }
+  for (const re of DANGEROUS_PATTERNS) {
+    if (re.test(yaml)) {
+      throw new Error(
+        "Compose file contains disallowed options (privileged, host namespace, docker.sock, cap_add, or devices).",
+      );
+    }
+  }
+  const bindRe = /-\s*['"]?([^'":\s]+)\s*:\s*/g;
+  let m: RegExpExecArray | null;
+  while ((m = bindRe.exec(yaml)) !== null) {
+    const hostPath = m[1].replace(/^['"]|['"]$/g, "");
+    if (hostPath.includes("docker.sock")) {
+      throw new Error("Mounting docker.sock is not allowed.");
+    }
+    if (hostPath === "/") {
+      throw new Error("Bind mount of / is not allowed.");
+    }
+    for (const prefix of FORBIDDEN_BIND_PREFIXES) {
+      if (hostPath === prefix || hostPath.startsWith(`${prefix}/`)) {
+        throw new Error(`Compose bind mount not allowed: ${hostPath}`);
+      }
+    }
+  }
+}

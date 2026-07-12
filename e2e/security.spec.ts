@@ -128,6 +128,26 @@ test.describe("file path hardening", () => {
   });
 });
 
+test.describe("public endpoint hardening", () => {
+  test("newsletter click redirect ignores javascript URLs", async ({ request }) => {
+    const res = await request.get(
+      "/api/newsletter/track?kind=click&url=javascript:alert(1)",
+      { maxRedirects: 0 },
+    );
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toMatch(/image\/gif/i);
+  });
+
+  test("newsletter click redirect allows https URLs", async ({ request }) => {
+    const res = await request.get(
+      "/api/newsletter/track?kind=click&url=https://example.com/safe",
+      { maxRedirects: 0 },
+    );
+    expect(res.status()).toBe(302);
+    expect(res.headers().location).toBe("https://example.com/safe");
+  });
+});
+
 test.describe("premium messaging on marketing", () => {
   test("HTML mentions free core vs premium multi-tenant", async ({ request }) => {
     const res = await request.get("/");

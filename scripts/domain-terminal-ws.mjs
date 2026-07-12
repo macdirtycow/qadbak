@@ -179,10 +179,6 @@ function attachPty(ws, term) {
 const TERMINAL_WS_PROTOCOL = "qadbak-terminal";
 
 function extractWsToken(req) {
-  const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
-  const query = url.searchParams.get("token");
-  if (query) return query;
-
   const raw = req.headers["sec-websocket-protocol"];
   if (!raw || typeof raw !== "string") return null;
   const parts = raw.split(",").map((s) => s.trim());

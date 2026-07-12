@@ -1,4 +1,5 @@
 import { runProvisioningHelper } from "@/lib/provisioner/native-exec";
+import { validateNewsletterRedirect } from "@/lib/security-utils";
 
 const PIXEL = Buffer.from(
   "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
@@ -26,10 +27,9 @@ export async function GET(request: Request) {
   }
 
   if (kind === "click" && redirect) {
-    try {
-      return Response.redirect(redirect, 302);
-    } catch {
-      /* */
+    const safe = validateNewsletterRedirect(redirect);
+    if (safe) {
+      return Response.redirect(safe, 302);
     }
   }
 

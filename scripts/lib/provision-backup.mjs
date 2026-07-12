@@ -15,6 +15,7 @@ import {
   open,
 } from "node:fs/promises";
 import path from "node:path";
+import { safeExtractArchive } from "./safe-archive-extract.mjs";
 import {
   emit,
   fail,
@@ -533,7 +534,7 @@ export async function backupRestore(domain, source, testOnly) {
 
   const staging = `/tmp/qadbak-restore-${user}-${Date.now()}`;
   await mkdir(staging, { recursive: true });
-  await exec("tar", ["-xzf", archive, "-C", staging], { timeout: 900_000 });
+  await safeExtractArchive("tar.gz", archive, staging);
 
   const restored = [];
   const pubStaging = path.join(staging, "public_html");

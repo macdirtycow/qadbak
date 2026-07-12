@@ -9,6 +9,7 @@ import {
   QADBAK_DIR,
   loadRegistry,
 } from "./provisioning-common.mjs";
+import { assertAdminReadablePath } from "./validate-admin-path.mjs";
 
 const exec = promisify(execFile);
 
@@ -326,8 +327,8 @@ export async function adminS3ListFiles(bucket, accessKey, secretKey) {
 export async function adminS3Upload(bucket, key, accessKey, secretKey, source) {
   const b = String(bucket || "").trim();
   const k = String(key || "").trim();
-  const src = String(source || "").trim();
-  if (!b || !k || !src) fail("bucket, key, and source path required");
+  const src = await assertAdminReadablePath(source);
+  if (!b || !k) fail("bucket, key, and source path required");
   try {
     await exec(
       "aws",

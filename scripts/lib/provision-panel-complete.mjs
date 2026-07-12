@@ -17,6 +17,7 @@ import {
 } from "./provisioning-common.mjs";
 import { applyAutoresponderSieve } from "./mail-settings-apply.mjs";
 import { mailDnsHints } from "./mail-dns.mjs";
+import { assertCiStep } from "./validate-git-deploy.mjs";
 const exec = promisify(execFile);
 
 function domainConfigDir(domain) {
@@ -353,7 +354,13 @@ export async function memcachedSet(domain, payloadJson) {
 
 export async function mongoCreate(domain, name, pass) {
   const { user } = await resolveDomainUser(domain);
-  const dbName = `${user}_${name}`.replace(/-/g, "_").slice(0, 48);
+  const safeName = String(name || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 32);
+  if (!safeName) fail("Invalid MongoDB database name.");
+  const dbName = `${user}_${safeName}`.replace(/-/g, "_").slice(0, 48);
+  if (!/^[a-zA-Z0-9_]+$/.test(dbName)) fail("Invalid MongoDB database name.");
   await exec("mongosh", ["--quiet", "--eval", `db.getSiblingDB('${dbName}').createCollection('init')`], {
     timeout: 30_000,
   }).catch(() => fail("MongoDB not installed or not running"));
@@ -429,12 +436,13 @@ export async function ciPipelineRun(domain) {
   const { home, user } = await resolveDomainUser(domain);
   const cfg = await readDomainConfigJson(domain, "ci-pipeline.json", { steps: [] });
   const pub = `${home}/public_html`;
-  for (const step of cfg.steps ?? []) {
+  const steps = (cfg.steps ?? []).map((s) => assertCiStep(s));
+  for (const step of steps) {
     await exec("sudo", ["-u", user, "bash", "-c", `cd ${pub} && ${step}`], {
       timeout: 600_000,
     });
   }
-  emit({ ok: true, ran: cfg.steps?.length ?? 0 });
+  emit({ ok: true, ran: steps.length });
 }
 
 export async function ticketNotify(domain, payloadJson) {

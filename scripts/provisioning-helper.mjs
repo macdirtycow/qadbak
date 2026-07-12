@@ -4,6 +4,7 @@
  */
 import { emit } from "./lib/provisioning-common.mjs";
 import { loadEnvLocal } from "./lib/load-env-local.mjs";
+import { assertProvisioningCommand } from "./lib/provisioning-helper-allowlist.mjs";
 import { sslList, sslIssue } from "./lib/provision-ssl.mjs";
 import { dnsGet, dnsAdd, dnsDel } from "./lib/provision-dns.mjs";
 import {
@@ -280,6 +281,7 @@ function parseJsonArg(i) {
 
 async function main() {
   await loadEnvLocal();
+  assertProvisioningCommand(cmd);
   switch (cmd) {
     case "ping":
       emit({ ok: true, helper: "provisioning-helper", phase: 8 });

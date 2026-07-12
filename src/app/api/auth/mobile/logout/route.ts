@@ -4,6 +4,7 @@ import {
   revokeAllMobileRefreshTokens,
   revokeMobileRefreshToken,
 } from "@/lib/mobile-auth";
+import { markUserLoggedOut } from "@/lib/session-revocation";
 import { requireSession } from "@/lib/session";
 
 export async function POST(request: Request) {
@@ -16,6 +17,7 @@ export async function POST(request: Request) {
 
     if (body.allDevices) {
       await revokeAllMobileRefreshTokens(session.userId);
+      await markUserLoggedOut(session.userId);
       await auditLog(session.username, "mobile-logout-all");
       return jsonOk({ ok: true });
     }

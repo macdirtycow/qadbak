@@ -9,6 +9,7 @@ import { promisify } from "node:util";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { safeExtractArchive } from "./lib/safe-archive-extract.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -159,19 +160,7 @@ async function archiveExtract(absArchive, payload) {
 
   await fs.mkdir(dest, { recursive: true });
 
-  if (kind === "zip") {
-    await execFileAsync("unzip", ["-q", "-o", resolved, "-d", dest], {
-      maxBuffer: 16 * 1024 * 1024,
-    });
-  } else if (kind === "tar.gz") {
-    await execFileAsync("tar", ["-xzf", resolved, "-C", dest], {
-      maxBuffer: 16 * 1024 * 1024,
-    });
-  } else {
-    await execFileAsync("tar", ["-xf", resolved, "-C", dest], {
-      maxBuffer: 16 * 1024 * 1024,
-    });
-  }
+  await safeExtractArchive(kind, resolved, dest);
 
   await chownTree(dest);
   emit({

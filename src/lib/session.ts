@@ -70,7 +70,7 @@ function secretKey(): Uint8Array {
 
 export async function createSession(payload: SessionPayload): Promise<string> {
   const maxAge = sessionMaxAgeSec();
-  return new SignJWT({ ...payload })
+  return new SignJWT({ ...payload, jti: randomUUID() })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuer(JWT_ISSUER)
     .setAudience(JWT_AUDIENCE)
@@ -121,8 +121,17 @@ export async function verifySessionToken(
       issuer: JWT_ISSUER,
       audience: JWT_AUDIENCE,
     });
+    const { isSessionRevoked, isUserSessionRevoked } = await import(
+      "./session-revocation"
+    );
+    const jti = payload.jti ? String(payload.jti) : undefined;
+    if (await isSessionRevoked(jti)) return null;
+    const userId = String(payload.userId);
+    const iat =
+      typeof payload.iat === "number" ? payload.iat : Math.floor(Date.now() / 1000);
+    if (await isUserSessionRevoked(userId, iat)) return null;
     return {
-      userId: String(payload.userId),
+      userId,
       username: String(payload.username),
       role: payload.role as SessionPayload["role"],
       domains: (payload.domains as string[]) ?? [],

@@ -9,6 +9,7 @@ import {
   readDomainConfigJson,
   writeDomainConfigJson,
 } from "./provisioning-common.mjs";
+import { chpasswdSafe } from "./chpasswd-safe.mjs";
 
 const exec = promisify(execFile);
 
@@ -68,8 +69,7 @@ export async function ftpCreate(domain, localUser, pass) {
     await writeDomainConfigJson(domain, "ftp.json", accounts);
   }
   if (pass) {
-    const esc = pass.replace(/'/g, "'\\''");
-    await exec("bash", ["-c", `echo '${local}:${esc}' | chpasswd`], { timeout: 15_000 });
+    await chpasswdSafe(local, pass);
   }
   emit({ ok: true, user: local, dir: ftpHome });
 }
@@ -91,7 +91,6 @@ export async function ftpDelete(domain, localUser) {
 export async function ftpPass(domain, localUser, pass) {
   const local = String(localUser || "").trim();
   if (!(await unixUserExists(local))) fail(`User ${local} not found`);
-  const esc = pass.replace(/'/g, "'\\''");
-  await exec("bash", ["-c", `echo '${local}:${esc}' | chpasswd`], { timeout: 15_000 });
+  await chpasswdSafe(local, pass);
   emit({ ok: true });
 }

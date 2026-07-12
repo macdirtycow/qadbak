@@ -10,6 +10,7 @@ import {
   loadRegistry,
   QADBAK_DIR,
 } from "./provisioning-common.mjs";
+import { validateDnsRecord } from "./validate-dns-record.mjs";
 
 const exec = promisify(execFile);
 
@@ -233,9 +234,10 @@ export async function dnsGet(domain) {
 
 export async function dnsAdd(domain, record) {
   await resolveDomainUser(domain);
+  const safe = validateDnsRecord(record);
   const zonePath = await findZonePath(domain);
   let text = await readFile(zonePath, "utf8");
-  text += formatRecordLine(domain, record);
+  text += formatRecordLine(domain, safe);
   await writeFile(zonePath, text, "utf8");
   try {
     await exec("rndc", ["reload"], { timeout: 30_000 });

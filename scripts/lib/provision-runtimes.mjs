@@ -10,6 +10,7 @@ import {
   writeDomainConfigJson,
   QADBAK_DIR,
 } from "./provisioning-common.mjs";
+import { assertComposePolicyYaml } from "./compose-policy.mjs";
 
 const exec = promisify(execFile);
 const CFG = "runtimes.json";
@@ -140,6 +141,8 @@ export async function runtimesDockerInstall(domain, name) {
       "utf8",
     );
   }
+  const composeYaml = await readFile(compose, "utf8");
+  assertComposePolicyYaml(composeYaml);
   await exec("sudo", ["-u", user, "docker", "compose", "-f", compose, "up", "-d"], {
     cwd: appsDir,
     timeout: 300_000,
@@ -178,6 +181,10 @@ export async function runtimesDockerAction(domain, name, action) {
   const appName = String(name || "stack").replace(/[^a-z0-9-]/gi, "");
   const compose = path.join(home, "apps", appName, "docker-compose.yml");
   const act = String(action || "status").toLowerCase();
+  if (act === "start") {
+    const composeYaml = await readFile(compose, "utf8");
+    assertComposePolicyYaml(composeYaml);
+  }
   const args =
     act === "start"
       ? ["compose", "-f", compose, "up", "-d"]

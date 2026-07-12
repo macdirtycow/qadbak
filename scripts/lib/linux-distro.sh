@@ -186,10 +186,18 @@ qadbak_install_nodejs() {
   fi
   case "$QADBAK_OS_ID" in
     ubuntu | debian)
-      if ! curl -fsSL "https://deb.nodesource.com/setup_${major}.x" | bash -; then
-        echo "FAIL: NodeSource setup script failed for Node.js ${major}.x" >&2
+      NS_SCRIPT="/tmp/qadbak-nodesource-setup-${major}.sh"
+      if ! curl -fsSL "https://deb.nodesource.com/setup_${major}.x" -o "$NS_SCRIPT"; then
+        echo "FAIL: could not download NodeSource setup script" >&2
+        rm -f "$NS_SCRIPT"
         return 1
       fi
+      if ! bash "$NS_SCRIPT"; then
+        echo "FAIL: NodeSource setup script failed for Node.js ${major}.x" >&2
+        rm -f "$NS_SCRIPT"
+        return 1
+      fi
+      rm -f "$NS_SCRIPT"
       if ! qadbak_pkg_install nodejs; then
         echo "FAIL: could not install nodejs package" >&2
         return 1

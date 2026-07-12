@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import path from "node:path";
 import { access } from "node:fs/promises";
 import { emit, fail, resolveDomainUser } from "./provisioning-common.mjs";
+import { chpasswdSafe } from "./chpasswd-safe.mjs";
 import {
   discoverMailLayout,
   listMailboxesFromLayout,
@@ -104,10 +105,7 @@ export async function mailCreateDirect(domain, localUser, pass, real) {
 
   if (pass) {
     const target = isOwner ? owner : local;
-    const esc = pass.replace(/'/g, "'\\''");
-    await exec("bash", ["-c", `echo '${target}:${esc}' | chpasswd`], {
-      timeout: 15_000,
-    });
+    await chpasswdSafe(target, pass);
   }
 
   emit({ ok: true, email, source: "postfix-dovecot" });
@@ -144,8 +142,6 @@ export async function mailPassDirect(domain, localUser, pass) {
   const local = String(localUser || "").trim().toLowerCase();
   const target = local === owner ? owner : local;
   if (!(await unixUserExists(target))) fail(`Unix user ${target} not found`);
-  await exec("bash", ["-c", `echo '${target}:${pass.replace(/'/g, "'\\''")}' | chpasswd`], {
-    timeout: 15_000,
-  });
+  await chpasswdSafe(target, pass);
   emit({ ok: true, source: "postfix-dovecot" });
 }

@@ -13,7 +13,8 @@ export function requireAdminTotp(): boolean {
 export function healthMinimalPublic(): boolean {
   const v = process.env.QADBAK_HEALTH_MINIMAL?.trim().toLowerCase();
   if (v === "false" || v === "0" || v === "no") return false;
-  return v === "true" || v === "1" || v === "yes";
+  if (v === "true" || v === "1" || v === "yes") return true;
+  return process.env.NODE_ENV === "production";
 }
 
 export function trustProxyHeaders(): boolean {

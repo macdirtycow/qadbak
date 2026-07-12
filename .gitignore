@@ -12,6 +12,7 @@ data/instance-id
 data/license.json
 data/api-keys.json
 data/mobile-refresh-tokens.json
+data/session-revocations.json
 data/mobile-push-tokens.json
 data/cloud-credentials.json
 data/api-rate-buckets.json

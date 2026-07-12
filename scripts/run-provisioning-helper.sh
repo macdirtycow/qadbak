@@ -11,4 +11,12 @@ if [[ -f "$ENV_FILE" ]]; then
   source "$ENV_FILE"
   set +a
 fi
+
+CMD="${1:-}"
+ALLOWLIST="$SCRIPT_DIR/lib/provisioning-helper-commands.txt"
+if [[ -z "$CMD" ]] || ! grep -qxF "$CMD" "$ALLOWLIST" 2>/dev/null; then
+  echo "Disallowed provisioning command: ${CMD:-(empty)}" >&2
+  exit 1
+fi
+
 exec "$QADBAK_NODE_BIN" "$SCRIPT_DIR/provisioning-helper.mjs" "$@"

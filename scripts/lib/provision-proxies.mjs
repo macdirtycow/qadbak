@@ -9,6 +9,7 @@ import {
   writeDomainConfigJson,
   QADBAK_DIR,
 } from "./provisioning-common.mjs";
+import { validateProxyDest } from "./validate-proxy-dest.mjs";
 
 const exec = promisify(execFile);
 
@@ -32,11 +33,12 @@ export async function proxyList(domain) {
 export async function proxyCreate(domain, urlPath, dest, type) {
   const { user } = await resolveDomainUser(domain);
   const p = normPath(urlPath);
+  const safeDest = validateProxyDest(dest);
   const proxies = await readDomainConfigJson(domain, "proxies.json", []);
   if (proxies.some((r) => r.path === p)) fail(`Proxy exists: ${p}`);
   proxies.push({
     path: p,
-    dest: String(dest || "").trim(),
+    dest: safeDest,
     type: String(type || "proxy").trim() || "proxy",
   });
   await writeDomainConfigJson(domain, "proxies.json", proxies);
