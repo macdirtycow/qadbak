@@ -9,25 +9,34 @@ spam=0
 dkim=0
 if [[ -f "$CFG" ]] && command -v jq &>/dev/null; then
   spam="$(jq -r '.spamEnabled // false' "$CFG" 2>/dev/null)"
-  dkim="$(jq -r '.dkimEnabled // false' "$CFG" 2>/dev/null)"
+  dkim="$(jq -r '.dkimEnabled // true' "$CFG" 2>/dev/null)"
+else
+  dkim=1
 fi
 
 if [[ "$dkim" == "true" ]] && command -v opendkim-genkey &>/dev/null; then
   KEYDIR="/etc/opendkim/keys/${DOMAIN}"
+  SELECTOR="mail"
   mkdir -p "$KEYDIR"
-  if [[ ! -f "$KEYDIR/mail.private" ]]; then
-    opendkim-genkey -b 2048 -d "$DOMAIN" -D "$KEYDIR" -s mail -v
+  if [[ ! -f "$KEYDIR/${SELECTOR}.private" ]]; then
+    opendkim-genkey -b 2048 -d "$DOMAIN" -D "$KEYDIR" -s "$SELECTOR" -v
     chown -R opendkim:opendkim "$KEYDIR" 2>/dev/null || true
   fi
-  if [[ -f /etc/opendkim/signing.table ]]; then
-    LINE="mail._domainkey.${DOMAIN} ${DOMAIN}:mail:${KEYDIR}/mail.private"
-    grep -qF "$DOMAIN" /etc/opendkim/signing.table 2>/dev/null || echo "$LINE" >>/etc/opendkim/signing.table
+  KEYTABLE="/etc/opendkim/KeyTable"
+  SIGNING="/etc/opendkim/SigningTable"
+  TRUSTED="/etc/opendkim/TrustedHosts"
+  mkdir -p /etc/opendkim
+  touch "$KEYTABLE" "$SIGNING" "$TRUSTED"
+  KEY_LINE="${SELECTOR}._domainkey.${DOMAIN} ${DOMAIN}:${SELECTOR}:${KEYDIR}/${SELECTOR}.private"
+  SIGN_LINE="*@${DOMAIN} ${SELECTOR}._domainkey.${DOMAIN}"
+  grep -qF "$KEY_LINE" "$KEYTABLE" 2>/dev/null || echo "$KEY_LINE" >>"$KEYTABLE"
+  grep -qF "@${DOMAIN}" "$SIGNING" 2>/dev/null || echo "$SIGN_LINE" >>"$SIGNING"
+  grep -qF "$DOMAIN" "$TRUSTED" 2>/dev/null || echo "*.${DOMAIN}" >>"$TRUSTED"
+  if [[ -x "$QADBAK_DIR/scripts/configure-opendkim-native.sh" ]]; then
+    bash "$QADBAK_DIR/scripts/configure-opendkim-native.sh"
+  else
+    systemctl reload opendkim 2>/dev/null || true
   fi
-  if [[ -f /etc/opendkim/key.table ]]; then
-    grep -qF "${DOMAIN}:mail:" /etc/opendkim/key.table 2>/dev/null || \
-      echo "mail._domainkey.${DOMAIN} ${DOMAIN}:mail:${KEYDIR}/mail.private" >>/etc/opendkim/key.table
-  fi
-  systemctl reload opendkim 2>/dev/null || true
 fi
 
 if [[ "$spam" == "true" ]]; then

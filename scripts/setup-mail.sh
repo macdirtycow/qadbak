@@ -52,6 +52,7 @@ apt-get install -y -qq postfix dovecot-core dovecot-imapd dovecot-lmtpd opendkim
 
 bash "$QADBAK_DIR/scripts/configure-native-mail.sh" --force
 bash "$QADBAK_DIR/scripts/apply-domain-mail-security.sh" "$MAIL_DOMAIN" || true
+bash "$QADBAK_DIR/scripts/configure-opendkim-native.sh" 2>/dev/null || true
 
 if id "$QADBAK_USER" &>/dev/null; then
   sudo -u "$QADBAK_USER" sudo -n "$QADBAK_DIR/scripts/run-provisioning-helper.sh" mail-sync 2>/dev/null || true
