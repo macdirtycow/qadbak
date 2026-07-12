@@ -39,6 +39,12 @@ curl -sI https://inveil.dev/ | head -3   # HTTP 301 → inveil.net
 
 Mail: `sudo bash scripts/setup-mail.sh inveil.net`
 
+If the domain still uses legacy unix user `omiiba`:
+
+```bash
+sudo bash scripts/rename-domain-unix-user.sh omiiba inveil inveil.net
+```
+
 ## Build zip
 
 ```bash
