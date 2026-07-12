@@ -1,0 +1,7 @@
+__probe__
+status
+restart
+stop
+start
+restart-terminal
+restart-all

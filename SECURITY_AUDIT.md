@@ -108,7 +108,7 @@ Volledige endpoint-tabel: [`docs/SECURITY_AUDIT_ENDPOINTS.md`](docs/SECURITY_AUD
 - Technische oorzaak: brede NOPASSWD wildcard
 - Impact: volledige server takeover
 - Aanbevolen oplossing: per-command wrappers of argv allowlist in wrapper
-- Status: **Fixed** — per-command sudoers via `generate-sudoers-allowlist.sh` (242 rules for provisioning; stack/host-services/updates/domain-fs likewise). Shell + helper allowlists remain as defense-in-depth. **Operator:** re-run all `configure-*-sudo.sh` after deploy.
+- Status: **Fixed** — geen brede `NOPASSWD: WRAPPER *` meer. Provisioning/stack/host-services/updates/domain-fs/panel-pm2 gebruiken per-command sudoers (`generate-sudoers-allowlist.sh`). Terminal, PHP-FPM, vhost en repair gebruiken per-unix-user/per-domain regels (`generate-sudoers-domain-*.sh`). Backup-download: exact twee args (`* *`). Resterende `cmd *` suffixen alleen voor gevalideerde trailing args (JSON, optionele php-versie). Verificatie: `scripts/check-sudoers-no-broad-wildcards.sh`. **Operator:** `sudo bash scripts/configure-all-sudo.sh` na pull of nieuwe domeinen.
 
 ## QAD-SEC-003 Git deploy shell injection
 
@@ -210,7 +210,7 @@ Volledige endpoint-tabel: [`docs/SECURITY_AUDIT_ENDPOINTS.md`](docs/SECURITY_AUD
 ## QAD-SEC-014 Stateless JWT geen revocation
 
 - Ernst: High | CWE: CWE-613
-- Status: **Fixed** — jti + logout revocation in `verifySessionToken`; Node middleware checks `session-revocations.json` (sync cache). Mobile logout revokes access jti.
+- Status: **Fixed** — jti + logout revocation in `verifySessionToken`; middleware (Node) leest `session-revocations.json`; Edge-fallback via `/api/internal/session-revocation` (HMAC-geschermd). Geen geldig pad meer met alleen JWT-signature tot exp na logout.
 
 ## QAD-SEC-015 Mobile refresh unrate-limited
 

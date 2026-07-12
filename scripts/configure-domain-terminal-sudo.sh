@@ -10,19 +10,20 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+LIB_DIR="$(readlink -f "$SCRIPT_DIR/lib")"
+GEN="$LIB_DIR/generate-sudoers-domain-users.sh"
 RUNNER="$(readlink -f "$QADBAK_DIR/scripts/run-domain-terminal.sh")"
 if [[ ! -f "$RUNNER" ]]; then
   echo "Missing $RUNNER — git pull first." >&2
   exit 1
 fi
-chmod 755 "$RUNNER"
+chmod 755 "$RUNNER" "$GEN" "$LIB_DIR/list-sudo-unix-users.sh"
 
 SUDOERS="/etc/sudoers.d/qadbak-domain-terminal"
-cat >"$SUDOERS" <<EOF
-# Qadbak native terminal — bash as domain unix users under /home/
-$QADBAK_USER ALL=(root) NOPASSWD: $RUNNER *
-EOF
+bash "$GEN" "$QADBAK_USER" "$RUNNER" \
+  "# Qadbak domain terminal — per unix-user sudo (re-run after new domains)" >"$SUDOERS"
 chmod 440 "$SUDOERS"
 visudo -cf "$SUDOERS"
 
-echo "OK — $QADBAK_USER may run: sudo -n $RUNNER <unix-user>"
+echo "OK — $QADBAK_USER may run: sudo -n $RUNNER <unix-user> (registered users only)"

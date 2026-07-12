@@ -19,7 +19,7 @@ import {
 } from "./middleware/request-security";
 import { applySecurityHeaders } from "./middleware/security-headers";
 import { sessionSecretMinLength } from "./lib/security-config";
-import { sessionRevokedSync } from "./lib/session-revocation-sync";
+import { isSessionRevokedAtEdge } from "./lib/session-revocation-middleware";
 
 export const runtime = "nodejs";
 
@@ -41,6 +41,7 @@ const PUBLIC_EXACT = new Set([
   "/api/newsletter/track",
   "/api/contact/submit",
   "/api/demo/info",
+  "/api/internal/session-revocation",
   "/landing.css",
   "/landing.js",
   "/favicon.svg",
@@ -148,7 +149,7 @@ export async function middleware(request: NextRequest) {
     const userId = String(payload.userId ?? "");
     const iat =
       typeof payload.iat === "number" ? payload.iat : Math.floor(Date.now() / 1000);
-    if (sessionRevokedSync(jti, userId, iat)) {
+    if (await isSessionRevokedAtEdge(request, jti, userId, iat)) {
       if (pathname.startsWith("/api/")) {
         return finish(
           request,

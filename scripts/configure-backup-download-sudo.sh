@@ -8,8 +8,8 @@ WRAPPER="$(readlink -f "$QADBAK_DIR/scripts/run-backup-download.sh")"
 chmod 755 "$WRAPPER"
 
 cat >"/etc/sudoers.d/qadbak-backup-download" <<EOF
-# Qadbak backup download (stream ~/backups archives)
-$QADBAK_USER ALL=(root) NOPASSWD: $WRAPPER *
+# Qadbak backup download — domain + filename only (two args, not bare *)
+$QADBAK_USER ALL=(root) NOPASSWD: $WRAPPER * *
 EOF
 chmod 440 "/etc/sudoers.d/qadbak-backup-download"
 visudo -cf "/etc/sudoers.d/qadbak-backup-download"
@@ -19,5 +19,4 @@ if ! sudo -u "$QADBAK_USER" sudo -n -l 2>/dev/null | grep -qF "$WRAPPER"; then
   exit 1
 fi
 
-echo "OK — $WRAPPER"
-echo "     test: sudo -u $QADBAK_USER sudo -n $WRAPPER <domain> <file.tar.gz> | head -c 4 | xxd"
+echo "OK — $WRAPPER (two-arg rule: domain + backup file)"

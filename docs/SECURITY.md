@@ -22,6 +22,8 @@ No hosting panel is “unhackable.” Qadbak layers **defense in depth** so comm
 ## On the VPS (operator checklist)
 
 ```bash
+sudo bash /opt/qadbak/scripts/configure-all-sudo.sh
+sudo bash /opt/qadbak/scripts/check-sudoers-no-broad-wildcards.sh
 sudo bash /opt/qadbak/scripts/check-panel-security.sh
 sudo bash /opt/qadbak/scripts/harden-panel-security.sh
 ```

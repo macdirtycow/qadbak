@@ -10,29 +10,26 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+LIB_DIR="$(readlink -f "$SCRIPT_DIR/lib")"
+GEN="$LIB_DIR/generate-sudoers-domain-names.sh"
 SCRIPT="$(readlink -f "$QADBAK_DIR/scripts/fix-domain-website.sh")"
 if [[ ! -f "$SCRIPT" ]]; then
   echo "Missing $SCRIPT — git pull in $QADBAK_DIR first." >&2
   exit 1
 fi
-chmod 755 "$SCRIPT"
+chmod 755 "$SCRIPT" "$GEN"
 
 SUDOERS="/etc/sudoers.d/qadbak-domain-repair"
-# Trailing * allows arguments (__probe__, domain name). Do not use /bin/bash wrapper.
-cat >"$SUDOERS" <<EOF
-# Qadbak website repair (Cloudflare 523 / Apache down)
-$QADBAK_USER ALL=(root) NOPASSWD: $SCRIPT *
-EOF
+bash "$GEN" "$QADBAK_USER" "$SCRIPT" \
+  "# Qadbak website repair — per-domain sudo (re-run after new domains)" >"$SUDOERS"
 chmod 440 "$SUDOERS"
 visudo -cf "$SUDOERS"
 
 echo "==> Verify (must print OK, no password prompt)"
 if ! sudo -u "$QADBAK_USER" sudo -n "$SCRIPT" __probe__ 2>/dev/null | grep -q OK; then
-  echo "FAILED: sudo rule not active. Check:" >&2
-  echo "  cat $SUDOERS" >&2
-  echo "  sudo -u $QADBAK_USER sudo -l" >&2
+  echo "FAILED: sudo rule not active." >&2
   exit 1
 fi
 
-echo "OK — test with:"
-echo "  sudo -u $QADBAK_USER sudo -n $SCRIPT __probe__"
+echo "OK — test: sudo -u $QADBAK_USER sudo -n $SCRIPT __probe__"

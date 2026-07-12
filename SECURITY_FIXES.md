@@ -110,8 +110,8 @@ Existing e2e: `e2e/security.spec.ts` (CSRF, IDOR, path traversal, legacy redirec
 
 | ID | Fix |
 |----|-----|
-| QAD-SEC-002 | Per-command sudoers (`generate-sudoers-allowlist.sh`) + shell allowlists on all helper wrappers |
-| QAD-SEC-014 | Session revocation in Node middleware (`session-revocation-sync.ts`); mobile logout revokes access jti |
+| QAD-SEC-002 | Alle sudoers zonder brede `SCRIPT *`; `configure-all-sudo.sh` + `check-sudoers-no-broad-wildcards.sh` |
+| QAD-SEC-014 | Middleware revocation (sync + internal API fallback); mobile logout revokes access jti |
 | QAD-SEC-018 | Admin terminal TOTP step-up (`QADBAK_ADMIN_TERMINAL_TOTP`); terminal JWT binds session jti; WS verifies iss/aud + revocation |
 | QAD-SEC-017 | Terminal WS token query string removed — subprotocol only |
 | QAD-SEC-019 | S3 upload source restricted to `/home/`, `/opt/qadbak/data/`, `/tmp/qadbak-*` |
@@ -131,8 +131,8 @@ Existing e2e: `e2e/security.spec.ts` (CSRF, IDOR, path traversal, legacy redirec
 1. Set `QADBAK_HEALTH_MINIMAL=true` explicitly if not in production mode
 2. Change default `changeme` passwords before exposing panel
 3. Enable `QADBAK_REQUIRE_ADMIN_TOTP=true` and `QADBAK_ADMIN_TERMINAL_TOTP=true` for admins
-4. Re-run all `configure-*-sudo.sh` after pull (per-command sudoers)
-5. Run `sudo bash scripts/check-panel-security.sh` on VPS
+4. Re-run `sudo bash scripts/configure-all-sudo.sh` after pull or new domains
+5. Run `sudo bash scripts/check-sudoers-no-broad-wildcards.sh` and `scripts/check-panel-security.sh` on VPS
 6. Restart after deploy: `sudo bash scripts/pull-build-restart.sh` and `sudo bash scripts/pm2-restart-qadbak.sh`
 
 ---

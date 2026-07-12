@@ -10,18 +10,19 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+LIB_DIR="$(readlink -f "$SCRIPT_DIR/lib")"
+GEN="$LIB_DIR/generate-sudoers-domain-names.sh"
 SCRIPT="$(readlink -f "$QADBAK_DIR/scripts/apply-client-panel-vhost.sh")"
 if [[ ! -f "$SCRIPT" ]]; then
   echo "Missing $SCRIPT — git pull in $QADBAK_DIR first." >&2
   exit 1
 fi
-chmod 755 "$SCRIPT"
+chmod 755 "$SCRIPT" "$GEN"
 
 SUDOERS="/etc/sudoers.d/qadbak-panel-vhost"
-cat >"$SUDOERS" <<EOF
-# Qadbak per-domain panel vhost (panel.example.com)
-$QADBAK_USER ALL=(root) NOPASSWD: $SCRIPT *
-EOF
+bash "$GEN" "$QADBAK_USER" "$SCRIPT" \
+  "# Qadbak panel vhost — per-domain sudo (re-run after new domains)" >"$SUDOERS"
 chmod 440 "$SUDOERS"
 visudo -cf "$SUDOERS"
 
