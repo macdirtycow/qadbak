@@ -21,6 +21,8 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   line="${line%"${line##*[![:space:]]}"}"
   [[ -z "$line" ]] && continue
   if [[ "$WILDCARD_ALL" == "--wildcard-all" ]]; then
+    # Exact (no JSON tail) + wildcard (optional payload args).
+    printf '%s ALL=(root) NOPASSWD: %s %s\n' "$USER" "$WRAPPER" "$line"
     printf '%s ALL=(root) NOPASSWD: %s %s *\n' "$USER" "$WRAPPER" "$line"
   elif [[ "$line" == *' *' ]]; then
     cmd="${line% \*}"
