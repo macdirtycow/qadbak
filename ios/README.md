@@ -1,10 +1,46 @@
 # Qadbak iOS app
 
-> **Standalone repo:** [github.com/macdirtycow/qadbak-ios](https://github.com/macdirtycow/qadbak-ios)
+Native SwiftUI client for iPhone and iPad. **Version 1.2.3** (TestFlight beta). Requires **iOS 17+**.
 
-Native **SwiftUI** client for iPhone and iPad (Phases A–C). Source of truth for the app lives in the `qadbak-ios` repository; this folder is kept in sync for panel development.
+Also published at [github.com/macdirtycow/qadbak-ios](https://github.com/macdirtycow/qadbak-ios). This folder stays in sync with the main Qadbak repo.
 
-**License:** the companion app is not redistributable — see [LICENSE](LICENSE). Use only with Qadbak panels you are authorised to access.
+**License:** companion app terms in [LICENSE](LICENSE). Use only on infrastructure you are allowed to manage.
+
+## Two connection modes
+
+### 1. Qadbak panel (full)
+
+Enter your panel URL (HTTPS), sign in with username/password (+ TOTP if enabled). You manage domains, DNS, mail, SSL, backups, files, and terminal the same way as in the browser.
+
+### 2. Linux agent (existing server)
+
+For a VPS that already runs HestiaCP, Coolify, CasaOS, or plain Linux:
+
+1. **Servers → Add server → Linux server via SSH**
+2. App installs `qadbak-agent` v0.5.0 and pairs on port **9443**
+3. Dashboard: CPU, RAM, disk, services, Docker, logs, apt updates, reboot
+4. If a panel is detected: tap **Link panel** and enter API credentials (read-only)
+
+Supported panel links: **HestiaCP**, **Coolify**, **CasaOS**. Plesk and DirectAdmin are detected but not linkable yet.
+
+Docs: [docs/ios/EXTERNAL_SERVERS.md](../docs/ios/EXTERNAL_SERVERS.md), [docs/agent/PANEL-LINKING.md](../docs/agent/PANEL-LINKING.md)
+
+## Features (Qadbak panel path)
+
+| Area | Notes |
+|------|--------|
+| Domains | List, add, health, live logs |
+| DNS | CRUD on BIND records |
+| Mail | Mailboxes, quotas |
+| Qmail | Webmail (Premium) |
+| SSL | Renew Let's Encrypt |
+| Backups | Run, download, optional iCloud copy |
+| Files | Browse domain home |
+| Terminal | Domain user + admin root shell |
+| Widget | Domain count, SSL warnings |
+| Push | APNs when panel is configured |
+| Multi-server | Switch saved panel URLs |
+| Client login | Premium RBAC: own domains only |
 
 ## Open in Xcode
 
@@ -12,74 +48,53 @@ Native **SwiftUI** client for iPhone and iPad (Phases A–C). Source of truth fo
 open ios/Qadbak.xcodeproj
 ```
 
-1. Select the **Qadbak** scheme.
-2. Set your **Development Team** (Signing & Capabilities) on both **Qadbak** and **QadbakWidgetExtension**.
-3. Enable **App Groups** (`group.com.qadbak.panel`), **Push Notifications**, and **iCloud** (CloudDocuments + container `iCloud.com.qadbak.panel`) on the main target.
-4. Run on simulator or device (iOS 17+).
+1. Scheme **Qadbak**
+2. **Development Team** on Qadbak + QadbakWidgetExtension
+3. Capabilities: App Groups (`group.com.qadbak.panel`), Push, iCloud (`iCloud.com.qadbak.panel`)
+4. Run on device or simulator (iOS 17+)
 
-## Features
+Before testing SSH agent install from Xcode, build agent binaries into the app bundle:
 
-### Phase B (MVP)
-- Login + TOTP, domain list/detail
-- DNS editor, mail accounts, SSL renew, backup trigger
-- **iCloud** — download server backup archives to iCloud Drive
+```bash
+bash scripts/copy-agent-to-ios.sh
+```
 
-### Phase C (App Store)
-- **Push** — APNs token registration with the panel
-- **Widget** — Home Screen widget (domain count, SSL alerts)
-- **Files** — browse domain home, view text files, delete
-- **Webmail** — INBOX, read messages, compose (requires Premium `webmail-ui` on server)
-- **Client login** — Premium `client-rbac`: only assigned domains, client badge in UI
+## TestFlight
 
-## First launch
+Email **support@inveil.net** for an invite.
 
-1. Panel URL, e.g. `https://qadbak.com` or `http://127.0.0.1:3000` (local dev).
-2. Sign in; refresh token stored in Keychain.
-3. Add the **Qadbak** widget from the home screen (after opening the app once).
+Build for upload:
 
-## Local development
+```bash
+bash ios/scripts/archive-appstore.sh
+```
+
+Then Xcode → Organizer → Distribute App → TestFlight. Details: [docs/APP-STORE.md](docs/APP-STORE.md).
+
+## Unsigned IPA (sideload)
+
+```bash
+bash ios/scripts/build-ipa.sh
+```
+
+Output: `ios/build/Qadbak-1.2.3.ipa` (arm64). Sign with ESign, DefianceSign, or Sideloadly using your certificate + provisioning profile.
+
+## Local dev (panel path)
 
 ```bash
 npm run dev
 npm run test:mobile-auth
 ```
 
-Simulator URL: `http://127.0.0.1:3000`
-
-## TestFlight
-
-```bash
-bash ios/scripts/archive-appstore.sh
-```
-
-Then **Xcode → Organizer → Distribute App → TestFlight**. Details: [`docs/APP-STORE.md`](docs/APP-STORE.md).
+Simulator panel URL: `http://127.0.0.1:3000`
 
 ## Project layout
 
 ```
 ios/
-  Qadbak/              Main app
-  QadbakWidget/        WidgetKit extension
+  Qadbak/                 Main app
+  QadbakWidget/           Home Screen widget
+  Qadbak/Resources/Agent/ Bundled qadbak-agent binaries + manifest.json
 ```
 
-API reference: [`docs/MOBILE-IOS-APP.md`](../docs/MOBILE-IOS-APP.md)
-
-## IPA (sideload / ESign / DefianceSign)
-
-Build an **unsigned** Release IPA for on-device signing:
-
-```bash
-bash ios/scripts/build-ipa.sh
-```
-
-Output: `ios/build/Qadbak-1.0.0.ipa` (arm64, iOS 17+).
-
-### Install on iPhone
-
-1. Copy the `.ipa` to your iPhone (AirDrop, Files, etc.).
-2. Open your signing app (e.g. **ESign**, **DefianceSign**).
-3. Import your **.p12** certificate + **.mobileprovision**.
-4. Import the IPA → **Sign** → **Install**.
-5. Trust the profile under **Settings → General → VPN & Device Management**.
-
-**Note:** Widget and push use App Groups / push entitlements. If signing fails, remove those entitlements in the signer or use a developer certificate that includes `com.qadbak.panel` and `group.com.qadbak.panel`.
+API reference: [docs/MOBILE-IOS-APP.md](../docs/MOBILE-IOS-APP.md)

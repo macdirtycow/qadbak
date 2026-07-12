@@ -1,4 +1,4 @@
-# iOS — External Linux Servers
+# iOS: External Linux Servers
 
 Integration of non-Qadbak Linux servers into the existing Qadbak iOS app.
 
@@ -23,10 +23,10 @@ protocol ServerManagementProvider {
 
 Implementations:
 
-- `QadbakPanelProvider` — wraps existing `QadbakAPI`
-- `QadbakAgentProvider` — HTTPS to agent (phase 2+)
+- `QadbakPanelProvider` wraps existing `QadbakAPI`
+- `QadbakAgentProvider` talks HTTPS to `qadbak-agent`
 
-Views must **not** branch on `ServerKind` for feature visibility — use `server.capabilities`.
+Views must use `server.capabilities`, not hardcoded server type checks.
 
 ## Adding a server
 
@@ -61,7 +61,7 @@ Existing users see no behaviour change.
 
 `ConnectionStatus`: connecting, installingAgent, pairing, online, degraded, offline, authFailed, agentUpdateRequired, unsupportedOS.
 
-Show concrete progress during onboarding — not only spinners.
+Show concrete progress during onboarding (SSH steps, install log), not only spinners.
 
 ## Beta disclaimer
 
@@ -164,6 +164,6 @@ curl -sk https://127.0.0.1:9443/health
 - [x] Read-only API links for **HestiaCP**, **Coolify**, **CasaOS**
 - [x] Agent routes: `GET/POST/DELETE /api/v1/panels/link`, `GET /api/v1/panels/overview`
 - [x] iOS: **Link panel** sheet + overview on agent dashboard
-- [ ] Write access (create domain/app) — future
+- [ ] Write access (create domain/app) via panel link
 
 See [PANEL-LINKING.md](../agent/PANEL-LINKING.md).

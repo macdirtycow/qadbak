@@ -87,70 +87,69 @@ Three prompts to start (hostname, admin password, Let's Encrypt email) - then ma
 
 Website: [qadbak.com](https://qadbak.com) · Market features: [docs/MARKET-FEATURES.md](docs/MARKET-FEATURES.md)
 
-## iOS app (iPhone & iPad)
+## iOS app (v1.2.3, TestFlight beta)
 
-Native **SwiftUI** companion for your Qadbak panel - same login, same domains,
-Bearer auth (no cookies). Requires **iOS 17+**, a reachable **HTTPS** panel URL,
-and mobile API v1 on the server ([docs/MOBILE-IOS-APP.md](docs/MOBILE-IOS-APP.md)).
+Native SwiftUI app for iPhone and iPad. Requires **iOS 17+**. Source in [`ios/`](ios/), build notes in [ios/README.md](ios/README.md).
 
-**Current version:** 1.2.3 (beta) · Source: [`ios/`](ios/) · Build guide: [ios/README.md](ios/README.md)
+There are **two ways** to use the app:
 
-### Dashboard
+### Path 1: Your Qadbak panel (full hosting)
 
-| Feature | Description |
-|---------|-------------|
-| **Domain list** | All hosted domains with running/SSL/container/warning stats |
-| **Multi-server** | Save and switch between panel URLs (e.g. production + staging) |
-| **Account menu** | Profile, Premium plan label, add domain, panel updates, server shell |
-| **Pull to refresh** | Reload domains and widget summary from the panel |
-| **Home Screen widget** | Domain count, SSL expiring soon, urgent actions (App Group) |
+Point the app at your panel URL over **HTTPS**. Same Bearer auth as the mobile API ([docs/MOBILE-IOS-APP.md](docs/MOBILE-IOS-APP.md)). Login, TOTP, and refresh tokens use the iOS Keychain.
 
-### Per domain
+| Area | In the app |
+|------|------------|
+| **Domains** | List, add domain, health, logs |
+| **DNS** | List, add, delete records |
+| **Mail** | Mailboxes, create accounts |
+| **Qmail** | INBOX, read, compose (Premium `webmail-ui`) |
+| **SSL** | Certificates, Let's Encrypt renew |
+| **Backups** | List, run now, download, save to iCloud Drive |
+| **Files** | Browse `public_html`, view text, delete |
+| **Terminal** | Domain shell and admin root shell (WebSocket) |
+| **Admin** | Panel updates, server health widget |
+| **Multi-server** | Save and switch panel URLs |
+| **Widget** | Domain count and SSL alerts (Home Screen) |
+| **Push** | APNs registration when configured on the panel |
+| **Security** | Face ID / Touch ID lock, client RBAC when Premium |
 
-| Feature | Description |
-|---------|-------------|
-| **Health** | Public/local probe, SSL days left, repair hints |
-| **Logs** | Live error/access log tail with auto-refresh |
-| **DNS** | List, add, and delete BIND records |
-| **Mail** | Mailboxes - create accounts, quotas, forwarding |
-| **Qmail** | Built-in webmail INBOX, read, compose (**Premium** `webmail-ui`) |
-| **Files** | Browse `public_html`, view text files, delete |
-| **SSL** | Certificate list and Let's Encrypt renew |
-| **Backups** | List archives, run backup now, download; **save to iCloud Drive** |
-| **Terminal** | Domain shell in-app (xterm + Termux-style extra keys) |
+Premium features (Qmail, client logins, etc.) follow the server license. The app reads `premiumActive` from `GET /api/mobile/v1/me`.
 
-**Backups → iCloud:** archives land in `iCloud Drive/Qadbak Backups/{domain}/`.
-Optional auto-save after “Run backup now” and Wi‑Fi-only downloads.
+### Path 2: Linux agent (existing VPS)
 
-### Admin-only (panel administrator)
+For servers that already run **HestiaCP**, **Coolify**, **CasaOS**, or plain Linux on Debian 12 / Ubuntu 22.04 / 24.04:
 
-| Feature | Description |
-|---------|-------------|
-| **Add domain** | Provision a new hosted domain from the phone |
-| **Panel updates** | Trigger `update-qadbak.sh` flow from the app |
-| **Server terminal** | Root/admin shell on the VPS (WebSocket) |
+1. In the app: **Servers → Add server → Linux server via SSH**
+2. The app installs `qadbak-agent` (v0.5.0) and pairs over HTTPS on port **9443**
+3. You get metrics, systemd services, Docker, logs, apt updates, reboot/shutdown
+4. Optional: **link the detected panel** with a local API token (read-only lists of users, domains, or apps)
 
-### Security & auth
+Panel API credentials stay on the server (`/var/lib/qadbak-agent/panel-link.json`). The app only stores the agent token.
 
-- Login with username/password; **TOTP** when enabled on the panel
-- Refresh tokens in **Keychain**; access tokens in memory
-- **Face ID / Touch ID** app lock and sensitive-action confirmation
-- **Push notifications** - device token registered with the panel (APNs)
-- **Client accounts** - Premium `client-rbac`: clients only see assigned domains
+| Panel | Link support | What you see |
+|-------|--------------|--------------|
+| HestiaCP | Yes | Users, domains, version |
+| Coolify | Yes | Projects, applications |
+| CasaOS | Yes | Installed apps |
+| Plesk / DirectAdmin | Detected only | System ops via agent, no panel API yet |
 
-Premium features (Qmail, client login, etc.) follow the **server license**  - 
-the app reads `premiumActive` and capabilities from `GET /api/mobile/v1/me`.
+Docs: [docs/ios/EXTERNAL_SERVERS.md](docs/ios/EXTERNAL_SERVERS.md), [docs/agent/PANEL-LINKING.md](docs/agent/PANEL-LINKING.md)
+
+Rebuild bundled agent binaries after agent changes:
+
+```bash
+bash scripts/copy-agent-to-ios.sh
+```
 
 ### Get the app
 
 | Channel | How |
 |---------|-----|
-| **TestFlight** | `bash ios/scripts/archive-appstore.sh` - see [ios/docs/APP-STORE.md](ios/docs/APP-STORE.md) |
-| **Sideload (unsigned IPA)** | `bash ios/scripts/build-ipa.sh` → sign with ESign / DefianceSign / Sideloadly |
-| **Xcode** | `open ios/Qadbak.xcodeproj` - set Development Team, run on device or simulator |
+| **TestFlight** | Email **support@inveil.net** for an invite |
+| **Xcode** | `open ios/Qadbak.xcodeproj`, set Development Team, run on device |
+| **Unsigned IPA** | `bash ios/scripts/build-ipa.sh` → sign with ESign / Sideloadly |
 
-TestFlight access (public beta): email **support@inveil.net**. The iOS app is
-licensed separately - see [ios/LICENSE](ios/LICENSE).
+App Store notes: [ios/docs/APP-STORE.md](ios/docs/APP-STORE.md). The iOS app has separate terms: [ios/LICENSE](ios/LICENSE).
 
 ## Pricing
 
@@ -177,7 +176,7 @@ Qmail, and live admin updates.
 | Starting price / month          | **€2.50**  | ~€35   | ~€15  | Free     |
 | 3-year subscription (€55)       | **€55**    |   ✗    |   ✗   | Free     |
 | Modern web UI                   | ✅         | Legacy | Mixed | Functional |
-| Native iOS app                | ✅ Beta    | Apps   | Apps  | ✗        |
+| Native iOS app                | ✅ Panel + Linux agent | Apps   | Apps  | ✗        |
 | Admin / client role split       | ✅ Native  | WHM    | ✅    | ✅       |
 | Panel license (self-host)       | ✅ Panel use |   ✗    |   ✗   | GPL      |
 | EU-based vendor (GDPR)          | 🇳🇱 NL   |  🇺🇸  | EU+US | EU       |
@@ -227,7 +226,7 @@ The installer:
 
 When it's done, open `https://your-panel-host/login`. Optional: `sudo bash scripts/configure-ufw-qadbak.sh` for UFW.
 
-**iOS app:** point the app at your panel URL after install - see [iOS app](#ios-app-iphone--ipad) and [docs/MOBILE-IOS-APP.md](docs/MOBILE-IOS-APP.md).
+**iOS app:** Qadbak panel URL for full hosting, or Linux agent for existing servers. See [iOS app](#ios-app-v123-testflight-beta) and [docs/MOBILE-IOS-APP.md](docs/MOBILE-IOS-APP.md).
 
 ### Panel-only (any Linux + Node 20+)
 
@@ -287,13 +286,15 @@ Defaults are conservative - only the Qadbak panel is removed. Use
 
 ```mermaid
 flowchart LR
-    B[Browser] -->|"HTTPS · 80/443"| N[nginx]
-    I[iOS app] -->|"HTTPS · Bearer"| Q
-    N -->|"panel host"| Q[Qadbak - Next.js]
+    B[Browser] -->|"HTTPS"| N[nginx]
+    I[iOS app] -->|"HTTPS Bearer"| Q
+    I -->|"HTTPS agent JWT"| A1[qadbak-agent]
+    N -->|"panel host"| Q[Qadbak Next.js]
     N -->|"customer domain"| A[Apache + PHP-FPM]
-    Q -->|"server-side only"| P["Native provisioner<br/>scripts/provisioning-helper.mjs"]
-    P --> S["nginx · Apache · MariaDB<br/>Postfix · Dovecot · BIND"]
-    Q -.->|"license heartbeat"| L[("license.inveil.dev")]
+    A1 -->|"local API"| P2[Hestia / Coolify / CasaOS]
+    Q --> P["Native provisioner"]
+    P --> S["nginx Apache MariaDB Postfix Dovecot BIND"]
+    Q -.-> L[("license.inveil.dev")]
 ```
 
 - **Auth:** JWT (httpOnly cookie), users in `data/users.json`.
@@ -312,7 +313,8 @@ src/components/   UI per domain / admin
 scripts/          install, native helpers, update, tests
 install/          qadbak-install.sh, qadbak-uninstall.sh
 deploy/           nginx examples
-ios/              Native SwiftUI app + widget (iPhone/iPad)
+ios/              SwiftUI app, widget, bundled Linux agent binaries
+agent/            qadbak-agent (Go) for external Linux servers
 docs/             guides and checklists
 data/             users.example.json (template)
 marketing-site/   static HTML for qadbak.com + legal pages
@@ -323,6 +325,9 @@ marketing-site/   static HTML for qadbak.com + legal pages
 | File | Contents |
 |------|----------|
 | [docs/MOBILE-IOS-APP.md](docs/MOBILE-IOS-APP.md) | Mobile API, Bearer auth, push, widgets, iCloud backups |
+| [docs/ios/EXTERNAL_SERVERS.md](docs/ios/EXTERNAL_SERVERS.md) | Linux agent onboarding, SSH pairing, capabilities |
+| [docs/agent/PANEL-LINKING.md](docs/agent/PANEL-LINKING.md) | HestiaCP, Coolify, CasaOS read-only links |
+| [agent/README.md](agent/README.md) | Agent build, install, API overview |
 | [docs/CLOUDFLARE.md](docs/CLOUDFLARE.md) | Cloudflare 502/520/523 + panel SSL |
 | [ios/README.md](ios/README.md) | Xcode setup, IPA build, TestFlight, feature list |
 | [ios/docs/APP-STORE.md](ios/docs/APP-STORE.md) | App Store / TestFlight submission |

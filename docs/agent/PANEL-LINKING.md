@@ -10,7 +10,7 @@ Agent **v0.5.0+** can connect to open-source panels on the same server and retur
 | **Coolify** | API token (Settings → Keys & Tokens) | Project count, application list |
 | **CasaOS** | API token, or username + password | Installed apps, version |
 
-Credentials are stored in `/var/lib/qadbak-agent/panel-link.json` (mode `0600`) on the server. The iOS app never keeps panel passwords — only the agent JWT.
+Credentials are stored in `/var/lib/qadbak-agent/panel-link.json` (mode `0600`) on the server. The iOS app only holds the agent JWT.
 
 Plesk and DirectAdmin are **detected** but not linkable yet.
 
@@ -68,7 +68,7 @@ System operations (metrics, Docker, reboot) work without linking the panel.
 
 ## Scope and limits
 
-- **Read-only** — no domain create/delete through the agent yet.
+- **Read-only.** No domain create/delete through the agent yet.
 - Agent calls the panel API on **localhost**; your phone talks only to the agent on port **9443**.
 - Requires agent **0.5.0+** (reinstall or upgrade from the app after rebuilding binaries).
 

@@ -19,9 +19,9 @@ The agent **detects** these panels on the host:
 | Panel | Detection | Agent link (read-only) |
 |-------|-----------|------------------------|
 | Qadbak | `/opt/qadbak` | Use the Qadbak **panel URL** in the iOS app instead |
-| HestiaCP | `/usr/local/hestia` | Yes — API login or access key |
-| Coolify | `/data/coolify` | Yes — API token |
-| CasaOS | `casaos.service` | Yes — token or login |
+| HestiaCP | `/usr/local/hestia` | Yes (API login or access key) |
+| Coolify | `/data/coolify` | Yes (API token) |
+| CasaOS | `casaos.service` | Yes (token or login) |
 | Plesk | `/usr/local/psa` | Detected only (not yet) |
 | DirectAdmin | `/usr/local/directadmin` | Detected only (not yet) |
 

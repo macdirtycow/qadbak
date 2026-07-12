@@ -8,14 +8,28 @@ body:
       value: |
         Thanks for taking the time to file a bug. Before submitting, please
         run `bash /opt/qadbak/scripts/post-install-verify.sh` on the affected
-        server — it catches most install issues automatically.
+        server. It catches most install issues automatically.
 
   - type: input
     id: version
     attributes:
       label: Qadbak version
       description: "Run on the server: `cd /opt/qadbak && git rev-parse --short HEAD && git describe --tags --always`"
-      placeholder: "e.g. 617c6ed (main) — 2026-05-25"
+      placeholder: "e.g. 617c6ed (main), 2026-05-25"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - "Qadbak panel (web UI / API)"
+        - "iOS app (Qadbak panel connection)"
+        - "iOS app + Linux agent"
+        - "Linux agent only"
+        - "Installer / scripts"
+        - "Other"
     validations:
       required: true
 
@@ -90,7 +104,7 @@ body:
     id: license
     attributes:
       label: Are you using a Premium license?
-      placeholder: "yes / no — last 4 chars of QAD-… key if yes (so we can look up the order)"
+      placeholder: "yes / no. Last 4 chars of QAD-… key if yes."
     validations:
       required: false
 

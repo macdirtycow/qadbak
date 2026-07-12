@@ -1,8 +1,10 @@
-# Qadbak Agent — HTTP API (v1)
+# Qadbak Agent HTTP API (v1)
 
 Base path: `/api/v1`  
-All authenticated routes: `Authorization: Bearer <access_jwt>`  
+Authenticated routes: `Authorization: Bearer <access_jwt>`  
 Content-Type: `application/json`
+
+Current agent version: **0.5.0**
 
 ## Public
 
@@ -18,9 +20,9 @@ Liveness probe (no auth).
 
 ```json
 {
-  "version": "0.3.0",
+  "version": "0.5.0",
   "minAppVersion": "1.2.0",
-  "minAgentVersion": "0.3.0"
+  "minAgentVersion": "0.5.0"
 }
 ```
 
@@ -69,19 +71,39 @@ CPU, RAM, disk, load, uptime, OS, agent version, last boot.
 
 ### GET /system/metrics
 
-Time-series snapshot or current gauges (implementation phase 3).
-
-### GET /system/metrics
-
-Query: `?limit=60` — rolling CPU/memory/disk samples (recorded every 5 minutes and on overview refresh).
+Query: `?limit=60` (default 60). Rolling CPU/memory/disk samples, recorded every 5 minutes and on overview refresh.
 
 ### GET /audit
 
-Query: `?tail=200` — read-only audit log entries (newest last in response).
+Query: `?tail=200`. Read-only audit log (newest last).
 
 ### GET /docker/containers/{id}/logs
 
-Query: `?tail=200` — container stdout/stderr (sanitized).
+Query: `?tail=200`. Container stdout/stderr (sanitized).
+
+### GET /detection/panel
+
+Detected panel kind and confidence signals.
+
+### GET /panels/link
+
+Link status for the detected panel (linked or not, masked hint).
+
+### POST /panels/link
+
+Test credentials and save panel link. Body fields depend on panel:
+
+- **hestiaCP:** `username` + `password`, or `accessKey` + `secretKey`, optional `baseUrl`
+- **coolify:** `apiToken`, optional `baseUrl`
+- **casaOS:** `apiToken`, or `username` + `password`, optional `baseUrl`
+
+### DELETE /panels/link
+
+Remove stored panel credentials.
+
+### GET /panels/overview
+
+Read-only snapshot from linked panel (users/domains/apps). Requires prior POST /panels/link.
 
 ### GET /services
 
@@ -123,11 +145,11 @@ Require confirmation JWT.
 
 ### POST /auth/rotate
 
-Body: `{ "refreshToken": "…" }` — returns new access + refresh.
+Body: `{ "refreshToken": "…" }`. Returns new access + refresh tokens.
 
 ### POST /auth/revoke
 
-Authenticated. Body: `{ "refreshToken": "…" }` — revokes refresh token (e.g. when removing device).
+Authenticated. Body: `{ "refreshToken": "…" }`. Revokes refresh token (e.g. when removing device from the app).
 
 ## Errors
 

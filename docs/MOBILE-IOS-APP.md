@@ -1,10 +1,25 @@
-# Qadbak iOS app — Phase A (mobile API)
+# Qadbak iOS app and mobile API
 
-Native SwiftUI app (Phase B) talks to your existing Qadbak panel over HTTPS. Phase A adds **Bearer token auth** so the app can use the same domain APIs as the web panel, without cookies or CSRF.
+The native app talks to **your** infrastructure, not a Qadbak cloud dashboard.
 
-## Authentication
+**App version:** 1.2.3 (TestFlight)  
+**Panel mobile API:** v1 (Bearer tokens on existing `/api/*` routes)  
+**Linux agent API:** v0.5.0 (`/api/v1/*` on port 9443)
 
-### 1. Sign in
+## Connection modes
+
+| Mode | When to use | Auth |
+|------|-------------|------|
+| **Qadbak panel** | You run the Qadbak panel on the VPS | `POST /api/auth/mobile` → Bearer JWT |
+| **Linux agent** | Existing Linux box (Hestia, Coolify, CasaOS, bare metal) | SSH install + agent pairing token |
+
+Panel path = full hosting (domains, mail, terminal). Agent path = system ops + optional read-only panel link. See [ios/EXTERNAL_SERVERS.md](ios/EXTERNAL_SERVERS.md) and [agent/PANEL-LINKING.md](agent/PANEL-LINKING.md).
+
+---
+
+## Panel authentication
+
+### Sign in
 
 ```http
 POST /api/auth/mobile
@@ -13,7 +28,7 @@ Content-Type: application/json
 {
   "username": "admin",
   "password": "…",
-  "deviceLabel": "My iPhone"   // optional
+  "deviceLabel": "My iPhone"
 }
 ```
 
@@ -47,30 +62,24 @@ POST /api/auth/mobile
 { "loginToken": "…", "totp": "123456", "deviceLabel": "…" }
 ```
 
-### 2. Use the access token
-
-Send on every API call:
+### Use the access token
 
 ```http
 Authorization: Bearer <accessToken>
 ```
 
-Bearer requests skip CSRF checks (cookie sessions still require same-origin `Origin`).
+Bearer requests skip CSRF checks. Access tokens expire in **1 hour**.
 
-Access tokens expire in **1 hour**. Refresh before expiry.
-
-### 3. Refresh
+### Refresh
 
 ```http
 POST /api/auth/mobile/refresh
 { "refreshToken": "qmr_…" }
 ```
 
-Returns a new `accessToken` and `refreshToken` (rotation). Old refresh token is invalidated.
+Returns new access + refresh (rotation). Refresh tokens last **90 days** (`data/mobile-refresh-tokens.json`).
 
-Refresh tokens last **90 days** and are stored server-side in `data/mobile-refresh-tokens.json`.
-
-### 4. Log out
+### Log out
 
 ```http
 POST /api/auth/mobile/logout
@@ -78,96 +87,90 @@ Authorization: Bearer <accessToken>
 { "refreshToken": "qmr_…" }
 ```
 
-Revoke all devices:
+Revoke all devices: `{ "allDevices": true }`
 
-```json
-{ "allDevices": true }
-```
-
-### 5. Session check
+### Session check
 
 ```http
 GET /api/mobile/v1/me
 Authorization: Bearer <accessToken>
 ```
 
-## Domain APIs (MVP)
+---
 
-Use existing panel routes with `Authorization: Bearer`. Same RBAC as the web UI (admin vs client domains).
+## Panel domain APIs
+
+Same routes as the web UI. RBAC applies (admin vs client domains).
 
 | Feature | Method | Path |
 |--------|--------|------|
-| List domains | `GET` | `/api/domains` |
-| Domain detail | `GET` | `/api/domains/{domain}` |
-| DNS records | `GET` | `/api/domains/{domain}/dns` |
-| Add DNS record | `POST` | `/api/domains/{domain}/dns` |
-| Delete DNS record | `DELETE` | `/api/domains/{domain}/dns` |
-| Mail accounts | `GET` | `/api/domains/{domain}/users` |
-| Create mailbox | `POST` | `/api/domains/{domain}/users` |
-| IMAP folders | `GET` | `/api/domains/{domain}/mailboxes?user=…` |
-| SSL certs | `GET` | `/api/domains/{domain}/ssl` |
-| Renew LE cert | `POST` | `/api/domains/{domain}/ssl` |
-| Backups list | `GET` | `/api/domains/{domain}/backups` |
-| Trigger backup | `POST` | `/api/domains/{domain}/backups` |
-| Download backup | `GET` | `/api/domains/{domain}/backups/download?name=…` |
-| Backup schedule | `PATCH` | `/api/domains/{domain}/backups` |
+| List domains | GET | `/api/domains` |
+| Domain detail | GET | `/api/domains/{domain}` |
+| DNS records | GET/POST/DELETE | `/api/domains/{domain}/dns` |
+| Mail accounts | GET/POST | `/api/domains/{domain}/users` |
+| IMAP folders | GET | `/api/domains/{domain}/mailboxes?user=…` |
+| SSL certs | GET/POST | `/api/domains/{domain}/ssl` |
+| Backups | GET/POST/PATCH | `/api/domains/{domain}/backups` |
+| Download backup | GET | `/api/domains/{domain}/backups/download?name=…` |
+| Files | GET/DELETE | `/api/domains/{domain}/files` |
+| Webmail messages | GET/POST | `/api/domains/{domain}/mailboxes/messages`, `/send` |
+| Terminal ws-token | GET/POST | `/api/domains/{domain}/terminal/ws-token` |
+| Admin terminal | GET/POST | `/api/admin/terminal/ws-token` |
 
-OpenAPI for mobile auth: [`docs/api/openapi-mobile.yaml`](api/openapi-mobile.yaml).
+OpenAPI: [docs/api/openapi-mobile.yaml](api/openapi-mobile.yaml)
+
+---
+
+## Push, widgets, Premium client
+
+| Feature | App behaviour | API |
+|---------|---------------|-----|
+| Push | Registers APNs token after login | `POST /api/mobile/v1/push/register` |
+| Widget | Domain count, SSL alerts | `GET /api/mobile/v1/widgets/summary` |
+| Client RBAC | Own domains only when licensed | `capabilities` in `/api/mobile/v1/me` |
+
+Push delivery needs Apple credentials on the panel (`QADBAK_APNS_*` in `.env.local`).
+
+### iCloud backup copies
+
+Downloaded archives go to **Files → iCloud Drive → Qadbak Backups → {domain}/**.
+
+Settings on the Backups screen:
+
+- Auto-save to iCloud after “Run backup now”
+- Wi-Fi only (default on)
+
+Requires iCloud Drive and container `iCloud.com.qadbak.panel` on the provisioning profile.
+
+---
+
+## Linux agent (summary)
+
+Installed from the app over SSH or manually (`agent/packaging/install.sh`).
+
+| Feature | Agent route |
+|---------|-------------|
+| Overview | `GET /api/v1/system/overview` |
+| Metrics history | `GET /api/v1/system/metrics?limit=60` |
+| Services | `GET /api/v1/services`, POST start/stop/restart |
+| Docker | `GET /api/v1/docker/containers`, logs, control |
+| Logs | `GET /api/v1/logs` |
+| Updates | `GET /api/v1/updates`, POST install |
+| Reboot / shutdown | POST with confirm header |
+| Panel link | `GET/POST/DELETE /api/v1/panels/link` |
+| Panel overview | `GET /api/v1/panels/overview` |
+
+Full reference: [agent/API.md](agent/API.md)
+
+---
 
 ## iOS client notes
 
-- Store `refreshToken` in Keychain; keep `accessToken` in memory.
-- On `401` from domain APIs, call `/api/auth/mobile/refresh` once, then retry.
-- Base URL is the operator's panel origin (e.g. `https://panel.example.com`).
-- Phase C adds push, widgets, files, webmail, and Premium client-login restrictions.
-
-## Phase C features
-
-| Feature | App | API |
-|---------|-----|-----|
-| Push (APNs token register) | On login, device token → server | `POST /api/mobile/v1/push/register` |
-| Home Screen widget | Domain count, SSL expiring, urgent actions | `GET /api/mobile/v1/widgets/summary` |
-| Files browser | Browse `public_html`, view text, delete | `GET /api/domains/{domain}/files` |
-| Webmail | INBOX, read, compose (Premium) | `/api/domains/{domain}/mailboxes/messages`, `/send` |
-| Client login | Own domains only when `client-rbac` licensed | `capabilities.clientOwnDomainsOnly` in `/api/mobile/v1/me` |
-
-### Push notifications
-
-After sign-in the app registers its APNs device token:
-
-```http
-POST /api/mobile/v1/push/register
-Authorization: Bearer <accessToken>
-{ "token": "<hex>", "bundleId": "com.qadbak.panel", "deviceLabel": "iPhone" }
-```
-
-Tokens are stored in `data/mobile-push-tokens.json`. Configure Apple Push credentials on the server to deliver alerts (SSL expiry, backup stale) — delivery wiring is operator-specific.
-
-### Widgets
-
-The main app refreshes widget data from:
-
-```http
-GET /api/mobile/v1/widgets/summary
-```
-
-Cached in App Group `group.com.qadbak.panel` for the **Qadbak** home screen widget.
-
-### Premium client accounts
-
-When the server has Premium `client-rbac`, client users only see domains assigned to their account (enforced server-side). The app shows a client badge and hides admin-only flows.
-
-### iCloud backup copies (iOS)
-
-The app can download `.tar.gz` archives from the panel and save them to the user's **iCloud Drive**:
-
-**Files → iCloud Drive → Qadbak Backups → {domain}/**
-
-**Settings (in Backups screen):**
-- **Auto-save to iCloud after backup** — after “Run backup now”, download the new archive to iCloud automatically
-- **Wi-Fi only** — block cellular downloads (on by default; large archives)
-
-Requires iCloud sign-in on the device, **iCloud Drive** enabled, and the `iCloud.com.qadbak.panel` container on the app's provisioning profile. Large backups may take several minutes over cellular — use Wi‑Fi when possible.
+- Store `refreshToken` in Keychain; keep `accessToken` in memory
+- On `401`, call `/api/auth/mobile/refresh` once, then retry
+- Panel base URL = operator origin, e.g. `https://panel.example.com`
+- Agent base URL = `https://host:9443` with TLS fingerprint pin from pairing
+- Face ID / Touch ID optional app lock
 
 ## Local test
 
@@ -175,12 +178,6 @@ Requires iCloud sign-in on the device, **iCloud Drive** enabled, and the `iCloud
 npm run test:mobile-auth
 ```
 
-Requires a running panel (`npm run dev` or production) and valid credentials in `.env.local` (`QADBAK_E2E_ADMIN_USER` / `QADBAK_E2E_ADMIN_PASS` or defaults `admin` / `changeme`).
+Needs a running panel and credentials (`QADBAK_E2E_ADMIN_USER` / `QADBAK_E2E_ADMIN_PASS` or defaults `admin` / `changeme`).
 
-## Roadmap
-
-| Phase | Scope |
-|-------|--------|
-| **A** (this) | Mobile auth + Bearer on domain APIs |
-| **B** | SwiftUI MVP — see [`ios/README.md`](../ios/README.md) |
-| **C** | Push, widgets, files, webmail, Premium client RBAC — see Phase C section above |
+Build and run the app: [ios/README.md](../ios/README.md)
