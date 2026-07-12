@@ -4,7 +4,7 @@
 set -euo pipefail
 
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
-TARGET="${1:-panel.siccamanagement.nl}"
+TARGET="${1:-panel.example.com}"
 ORIGIN_IP="$(curl -4 -fsS --max-time 3 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')"
 
 echo "==> Panel diagnose: $TARGET"

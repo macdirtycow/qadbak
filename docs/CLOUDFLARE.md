@@ -84,7 +84,7 @@ Cloudflare reaches your VPS but the origin returns an **empty or invalid** respo
 cd /opt/qadbak
 sudo bash scripts/fix-panel-now.sh
 # or one customer domain:
-sudo bash scripts/fix-panel-now.sh siccamanagement.nl
+sudo bash scripts/fix-panel-now.sh example.com
 ```
 
 (`fix-panel-now.sh` is the same as `repair-panel-access.sh`.)

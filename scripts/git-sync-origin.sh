@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fetch origin and align the VPS checkout with the remote branch.
-# Handles: history rewrites (reset --hard), QADBAK_GIT_BRANCH, cursor/* vs macdirtycow/*.
+# Handles: history rewrites (reset --hard), QADBAK_GIT_BRANCH.
 set -euo pipefail
 
 ROOT="${QADBAK_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
@@ -35,39 +35,21 @@ read_env_branch() {
   printf '%s' "$v"
 }
 
-migrate_cursor_branch_name() {
-  local name="$1"
-  if [[ "$name" == cursor/* ]]; then
-    printf 'macdirtycow/%s' "${name#cursor/}"
-  else
-    printf '%s' "$name"
-  fi
-}
-
 branch_exists_on_origin() {
   git show-ref --quiet "refs/remotes/origin/$1"
 }
 
-# Pick the first branch name that exists on origin (exact env name before legacy migrate).
 pick_origin_branch() {
-  local env_branch current migrated candidates=() c
+  local env_branch current candidates=() c
 
   env_branch="$(read_env_branch || true)"
   if [[ -n "$env_branch" ]]; then
     candidates+=("$env_branch")
-    migrated="$(migrate_cursor_branch_name "$env_branch")"
-    if [[ "$migrated" != "$env_branch" ]]; then
-      candidates+=("$migrated")
-    fi
   fi
 
   current="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
   if [[ -n "$current" && "$current" != "HEAD" ]]; then
     candidates+=("$current")
-    migrated="$(migrate_cursor_branch_name "$current")"
-    if [[ "$migrated" != "$current" ]]; then
-      candidates+=("$migrated")
-    fi
   fi
 
   candidates+=("main")
@@ -75,9 +57,6 @@ pick_origin_branch() {
   for c in "${candidates[@]}"; do
     [[ -z "$c" ]] && continue
     if branch_exists_on_origin "$c"; then
-      if [[ -n "$env_branch" && "$c" != "$env_branch" && "$c" == "$(migrate_cursor_branch_name "$env_branch")" ]]; then
-        log "using origin/$c (legacy macdirtycow alias; set QADBAK_GIT_BRANCH=$c or use origin/$env_branch)"
-      fi
       printf '%s' "$c"
       return 0
     fi

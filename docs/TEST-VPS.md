@@ -3,7 +3,7 @@
 Use a **dedicated test server** (e.g. rent one for a month). **Never** use your live production server or any host with live client sites.
 
 **Start here:** [V1-TEST-SERVER.md](./V1-TEST-SERVER.md) (full step-by-step).  
-**Status:** [STATUS.md](./STATUS.md).
+**Getting started:** [V1-TEST-SERVER.md](./V1-TEST-SERVER.md) · [E2E-CHECKLIST.md](./E2E-CHECKLIST.md).
 
 ## Option A — Qadbak + legacy hosting API on one test VPS (recommended to start)
 

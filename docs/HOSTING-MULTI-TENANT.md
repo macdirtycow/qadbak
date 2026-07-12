@@ -12,7 +12,7 @@ Qadbak server scripts are **not** tied to one customer domain. They read domains
 Docs use `example.com` as a placeholder. On your VPS, pass **your** domain:
 
 ```bash
-sudo bash scripts/fix-domain-website.sh jouwdomein.nl
+sudo bash scripts/fix-domain-website.sh example.com
 ```
 
 Fresh installs run `scripts/install-hosting-stack.sh` automatically (see `install/qadbak-install.sh`).

@@ -26,7 +26,7 @@ sudo bash scripts/pm2-restart-qadbak.sh
 The domain was created without the **server admin** feature. On the VPS:
 
 ```bash
-sudo bash scripts/enable-domain-legacy-login.sh jouwdomein.nl
+sudo bash scripts/enable-domain-legacy-login.sh example.com
 ```
 
 Or **Repair on server** on Overview (runs `enable-feature --legacy-panel`). New domains get `legacy-panel` automatically.
@@ -45,7 +45,7 @@ After `git pull` + `npm run build` + `pm2-restart-qadbak.sh`, Terminal and serve
 ## Test on the VPS
 
 ```bash
-cd /opt/qadbak && bash scripts/test-login-link.sh jouwdomein.nl
+cd /opt/qadbak && bash scripts/test-login-link.sh example.com
 ```
 
 You should see an `https://…` URL and no `Unknown parameter`.

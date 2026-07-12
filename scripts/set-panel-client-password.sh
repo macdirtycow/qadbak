@@ -2,7 +2,7 @@
 # Create or reset a panel client user in data/users.json.
 # Usage:
 #   sudo bash scripts/set-panel-client-password.sh USERNAME DOMAIN
-#   sudo bash scripts/set-panel-client-password.sh siccamanagement siccamanagement.nl
+#   sudo bash scripts/set-panel-client-password.sh clientuser example.com
 # Prompts for password (twice). Or pass as third argument (less safe in shell history).
 set -euo pipefail
 

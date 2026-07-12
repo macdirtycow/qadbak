@@ -31,7 +31,7 @@ echo "$OUT"
 if ! echo "$OUT" | grep -q '"ok":true'; then
   echo "" >&2
   echo "Activation failed. If the key should work on multiple servers:" >&2
-  echo "  https://license.inveil.dev/admin → your license → Max servers (VPS) = 2 or more" >&2
+  echo "  License server dashboard → your license → Max servers (VPS) = 2 or more" >&2
   echo "  Remove stale activations (old VPS) with Remove, then run this script again." >&2
   exit 1
 fi

@@ -26,4 +26,4 @@ In finance and sport, the name became associated with **vapourware** — big ann
 ## Further reading
 
 - [Wikipedia: Qadbak Investments](https://en.wikipedia.org/wiki/Qadbak_Investments)
-- Product status: [STATUS.md](./STATUS.md)
+- Product status: [ROADMAP.md](./ROADMAP.md)

@@ -182,7 +182,7 @@ sudo nginx -t && sudo systemctl reload nginx
 ```
 
 `<slug>` is the customer domain with dots replaced by hyphens
-(e.g. `sdconderhoud.nl` → `qadbak-panel-sdconderhoud-nl.conf`). The
+(e.g. `example.com` → `qadbak-panel-example-com.conf`). The
 file in `sites-available/` can stay; nginx only loads the one in
 `sites-enabled/`.
 

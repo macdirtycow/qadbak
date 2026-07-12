@@ -59,7 +59,7 @@ Until each server admin module has a rebuilt form, use **in-panel embed** (`Lega
 
 ## Links
 
-- [STATUS.md](./STATUS.md) — current phase
+- [ROADMAP.md](./ROADMAP.md) — product direction
 - [V1-TEST-SERVER.md](./V1-TEST-SERVER.md) — **v1 test VPS (start here)**
 - [E2E-CHECKLIST.md](./E2E-CHECKLIST.md) — v1 sign-off
 - [DEPLOY.md](./DEPLOY.md) — production setup (after test VPS passes)

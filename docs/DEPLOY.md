@@ -3,7 +3,7 @@
 Deploy Qadbak on the same VPS as legacy hosting API. **Qadbak must be the front door on ports 80/443** (IP and hostname). legacy hosting API/server admin stays on **:10000** for the API and embeds — not as the page users see first.
 
 **First deploy:** use a [dedicated test VPS](V1-TEST-SERVER.md), not production.  
-See [FRONT-DOOR.md](FRONT-DOOR.md) · [STATUS.md](STATUS.md).
+See [FRONT-DOOR.md](FRONT-DOOR.md) · [V1-TEST-SERVER.md](V1-TEST-SERVER.md).
 
 ## Prerequisites
 

@@ -315,12 +315,6 @@ apt-get upgrade -y
   return { job: { id: jobId, type: "linux-upgrade", status: "running" } };
 }
 
-function migrateCursorBranch(name) {
-  const n = String(name || "").trim();
-  if (n.startsWith("cursor/")) return `macdirtycow/${n.slice("cursor/".length)}`;
-  return n;
-}
-
 async function readEnvGitBranch() {
   const envPath = path.join(QADBAK_DIR, ".env.local");
   if (!(await exists(envPath))) return "";
@@ -331,7 +325,7 @@ async function readEnvGitBranch() {
 }
 
 async function resolveTrackingBranch() {
-  const fromEnv = migrateCursorBranch(await readEnvGitBranch());
+  const fromEnv = await readEnvGitBranch();
   if (fromEnv) return fromEnv;
   const head = (
     await run("git", ["-C", QADBAK_DIR, "rev-parse", "--abbrev-ref", "HEAD"], {
@@ -339,7 +333,7 @@ async function resolveTrackingBranch() {
     })
   ).trim();
   if (!head || head === "HEAD") return "main";
-  return migrateCursorBranch(head);
+  return head;
 }
 
 async function originBranchRef(branch) {
