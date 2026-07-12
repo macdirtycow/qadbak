@@ -6,10 +6,14 @@ import {
   listAdminServerServices,
 } from "@/lib/admin-server-services";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
+import { demoSandboxActive, demoServerServicesMock } from "@/lib/demo-sandbox";
 
 export async function GET() {
   try {
     const session = await requireAdmin();
+    if (demoSandboxActive(session.username)) {
+      return jsonOk(demoServerServicesMock());
+    }
     const [bw, { services, source }] = await Promise.all([
       listAdminBandwidth(session),
       listAdminServerServices(session),

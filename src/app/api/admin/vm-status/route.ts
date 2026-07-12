@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonOk } from "@/lib/api";
+import { demoSandboxActive, demoVmStatusMock } from "@/lib/demo-sandbox";
 import { isIndependentMode } from "@/lib/provisioner/native-stub";
 import { getNativeServerStatus } from "@/lib/provisioner/independent-ops";
 import { getProvisioner } from "@/lib/provisioner";
@@ -11,14 +12,14 @@ import {
 /** Admin-only: server / provisioner health (native or legacy remote API probe). */
 export async function GET() {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    if (demoSandboxActive(session.username)) {
+      return jsonOk(demoVmStatusMock());
+    }
 
     if (isIndependentMode()) {
       const status = await getNativeServerStatus();
-      const domains = await getProvisioner().listDomains({
-        role: "admin",
-        domains: [],
-      });
+      const domains = await getProvisioner().listDomains(session);
       return jsonOk({
         mode: "native",
         provisioner: "native",
@@ -62,10 +63,7 @@ export async function GET() {
       probeBytes = text.length;
       probePreview = text.slice(0, 120).replace(/\s+/g, " ");
     }
-    const domains = await getProvisioner().listDomains({
-      role: "admin",
-      domains: [],
-    });
+    const domains = await getProvisioner().listDomains(session);
     return jsonOk({
       mode: "hybrid",
       legacyApiUrl: url,

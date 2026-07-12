@@ -2,16 +2,23 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { auditLog, rotateAuditLogNow } from "@/lib/audit";
 import { requireAdmin } from "@/lib/admin-api";
-import { handleApiError, jsonOk } from "@/lib/api";
+import { handleApiError, jsonError, jsonOk } from "@/lib/api";
+import { demoPrivacyReportMock, demoSandboxActive } from "@/lib/demo-sandbox";
 import { buildPrivacyReport } from "@/lib/privacy-report";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
     const url = new URL(request.url);
     if (url.searchParams.get("export") === "audit") {
+      if (demoSandboxActive(session.username)) {
+        return new Response("", {
+          status: 403,
+          headers: { "Content-Type": "text/plain" },
+        });
+      }
       const logPath = path.join(process.cwd(), "data", "audit.log");
       try {
         const raw = await readFile(logPath, "utf8");
@@ -32,6 +39,9 @@ export async function GET(request: Request) {
         });
       }
     }
+    if (demoSandboxActive(session.username)) {
+      return jsonOk(await demoPrivacyReportMock());
+    }
     const report = await buildPrivacyReport();
     return jsonOk(report);
   } catch (err) {
@@ -46,10 +56,12 @@ export async function POST(request: Request) {
     if (body.action === "rotate-audit") {
       await rotateAuditLogNow();
       await auditLog(session.username, "audit-rotate");
-      const report = await buildPrivacyReport();
+      const report = demoSandboxActive(session.username)
+        ? await demoPrivacyReportMock()
+        : await buildPrivacyReport();
       return jsonOk({ ok: true, report });
     }
-    return handleApiError(new Error("Unknown action."));
+    return jsonError("Unknown action.");
   } catch (err) {
     return handleApiError(err);
   }

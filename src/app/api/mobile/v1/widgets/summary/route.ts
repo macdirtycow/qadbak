@@ -1,5 +1,5 @@
 import { handleApiError, jsonOk } from "@/lib/api";
-import { runGlobalTool } from "@/lib/panel-tools";
+import { runGlobalToolForSession } from "@/lib/panel-tools";
 import { getProvisioner } from "@/lib/provisioner";
 import { requireSession } from "@/lib/session";
 
@@ -18,7 +18,7 @@ type HealthRow = {
 export async function GET() {
   try {
     const session = await requireSession();
-    const raw = await runGlobalTool("domain-health-batch");
+    const raw = await runGlobalToolForSession(session, "domain-health-batch");
     let rows = ((raw as { domains?: HealthRow[] }).domains ?? []) as HealthRow[];
 
     if (session.role !== "admin") {

@@ -43,9 +43,33 @@ export async function systemCronList() {
   emit({ ok: true, jobs, scope: "root" });
 }
 
-export async function systemAwstatsSummary() {
+function parseRegistryFilter(payloadJson) {
+  let demoOnly = false;
+  let excludeDemoOnly = false;
+  if (payloadJson) {
+    try {
+      const opts =
+        typeof payloadJson === "string" ? JSON.parse(payloadJson) : payloadJson;
+      demoOnly = Boolean(opts?.demoOnly);
+      excludeDemoOnly = Boolean(opts?.excludeDemoOnly);
+    } catch {
+      /* ignore */
+    }
+  }
+  return { demoOnly, excludeDemoOnly };
+}
+
+function registryMatchesDemoFilter(row, { demoOnly, excludeDemoOnly }) {
+  if (demoOnly) return row.demoOnly === true;
+  if (excludeDemoOnly) return row.demoOnly !== true;
+  return row.demoOnly !== true;
+}
+
+export async function systemAwstatsSummary(payloadJson) {
+  const filter = parseRegistryFilter(payloadJson);
   const registry = await loadRegistry();
   const domains = (Array.isArray(registry) ? registry : [])
+    .filter((row) => registryMatchesDemoFilter(row, filter))
     .map((d) => String(d.name || d.domain || "").trim())
     .filter(Boolean);
   const rows = [];
@@ -305,14 +329,15 @@ async function dockerStoppedApps(domain) {
   return [...new Set(stopped)];
 }
 
-export async function domainHealthBatch() {
+export async function domainHealthBatch(payloadJson) {
+  const filter = parseRegistryFilter(payloadJson);
   const registry = await loadRegistry();
   const domains = Array.isArray(registry) ? registry : [];
   const items = [];
   for (const row of domains) {
     const name = String(row.name || row.domain || "").trim();
     if (!name) continue;
-    if (row.demoOnly === true) continue;
+    if (!registryMatchesDemoFilter(row, filter)) continue;
     const disabled = row.disabled === true || row.disabled === "1" || row.disabled === 1;
     const diskUsed = parseFloat(String(row.disk_used ?? row.diskUsed ?? "0")) || 0;
     const diskLimit = parseFloat(String(row.disk_limit ?? row.diskLimit ?? "0")) || null;

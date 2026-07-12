@@ -1,12 +1,16 @@
 import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
+import { demoNodesMock, demoSandboxActive } from "@/lib/demo-sandbox";
 import { probeNodeHealth } from "@/lib/node-agent-client";
 import { isIndependentMode } from "@/lib/provisioner/native-stub";
 import { getDefaultNode, loadNodes, saveNodes, type QadbakNode } from "@/lib/servers";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    if (demoSandboxActive(session.username)) {
+      return jsonOk(demoNodesMock());
+    }
     const nodes = await loadNodes();
     const health = await Promise.all(nodes.map((n) => probeNodeHealth(n)));
     return jsonOk({

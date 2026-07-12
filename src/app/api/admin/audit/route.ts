@@ -1,12 +1,17 @@
 import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonOk } from "@/lib/api";
+import { demoAuditMock, demoSandboxActive } from "@/lib/demo-sandbox";
 import { readAuditEntries } from "@/lib/audit-read";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    if (demoSandboxActive(session.username)) {
+      return jsonOk(demoAuditMock());
+    }
+
     const url = new URL(request.url);
     const sinceParam = url.searchParams.get("since");
     const since =

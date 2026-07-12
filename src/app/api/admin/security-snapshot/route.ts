@@ -1,12 +1,16 @@
 import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonOk } from "@/lib/api";
+import { demoSandboxActive, demoSecuritySnapshotMock } from "@/lib/demo-sandbox";
 import { runProvisioningHelper } from "@/lib/provisioner/native-exec";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    if (demoSandboxActive(session.username)) {
+      return jsonOk(demoSecuritySnapshotMock());
+    }
     const [firewall, fail2ban] = await Promise.all([
       runProvisioningHelper("firewall-status").catch(() => ({
         raw: "",

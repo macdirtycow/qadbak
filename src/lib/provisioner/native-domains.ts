@@ -165,7 +165,10 @@ export async function listDomainsNative(actor: {
   username?: string;
 }): Promise<HostedDomain[]> {
   let rows = await loadNativeDomainRegistry();
-  if (rows.length === 0) rows = await scanHomeDomains();
+  const demo = isDemoUser(actor.username);
+  if (rows.length === 0 && !demo) {
+    rows = await scanHomeDomains();
+  }
   rows = await filterRegistryRows(rows, actor.username);
 
   let mapped = await Promise.all(rows.map((r) => enrichDomainDisk(r)));

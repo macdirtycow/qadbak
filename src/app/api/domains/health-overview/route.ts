@@ -1,6 +1,6 @@
 import { handleApiError, jsonOk } from "@/lib/api";
 import { getSession } from "@/lib/session";
-import { runGlobalTool } from "@/lib/panel-tools";
+import { runGlobalToolForSession } from "@/lib/panel-tools";
 import { getProvisioner } from "@/lib/provisioner";
 
 export async function GET() {
@@ -9,7 +9,7 @@ export async function GET() {
     if (!session) {
       return jsonOk({ domains: [] });
     }
-    const raw = await runGlobalTool("domain-health-batch");
+    const raw = await runGlobalToolForSession(session, "domain-health-batch");
     let domains = (raw as { domains?: { domain: string }[] }).domains ?? [];
     if (session.role !== "admin") {
       const allowed = new Set(session.domains.map((d) => d.toLowerCase()));

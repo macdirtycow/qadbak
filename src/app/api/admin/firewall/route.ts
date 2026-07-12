@@ -1,11 +1,15 @@
 import { auditLog } from "@/lib/audit";
 import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
+import { demoFirewallMock, demoSandboxActive } from "@/lib/demo-sandbox";
 import { runProvisioningHelper } from "@/lib/provisioner/native-exec";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    if (demoSandboxActive(session.username)) {
+      return jsonOk(demoFirewallMock());
+    }
     const r = await runProvisioningHelper("firewall-status");
     return jsonOk(r);
   } catch (err) {

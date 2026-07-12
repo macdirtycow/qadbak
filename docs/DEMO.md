@@ -20,6 +20,8 @@ The demo account is **admin** so all menus are visible. **Mutations are blocked*
 
 **Terminal is disabled** on the public demo (including admin and domain shells). The demo user cannot obtain WebSocket tokens or open a real shell — even though the UI menus are visible.
 
+**Production data is hidden** from the demo login. Admin views that would read the real VPS (AWStats, domain health, cron, networking, firewall, audit log, host metrics, bandwidth, cluster nodes, etc.) return **sample data** scoped to the showcase domain only. Your real customer domains and server telemetry stay visible only to your production admin account.
+
 **Explorable areas:** dashboard, domains (DNS, SSL, files), mail & newsletter, Site tools, **Media library**, app store, backups UI, server admin (Premium screens visible to demo admin).
 
 Sample domain in the panel: `showcase.qadbak.com` (JSON config for Site tools / newsletter UI). Marked `demoOnly` in `native-domains.json` — **hidden from your real admin** on qadbak.com; the demo user only sees showcase domains, not customer sites.

@@ -1,12 +1,12 @@
 import { requireAdmin } from "@/lib/admin-api";
 import { auditLog } from "@/lib/audit";
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
-import { runGlobalTool } from "@/lib/panel-tools";
+import { runGlobalTool, runGlobalToolForSession } from "@/lib/panel-tools";
 
 export async function GET() {
   try {
-    await requireAdmin();
-    const raw = await runGlobalTool("nodes-health");
+    const session = await requireAdmin();
+    const raw = await runGlobalToolForSession(session, "nodes-health");
     return jsonOk(raw);
   } catch (err) {
     return handleApiError(err);

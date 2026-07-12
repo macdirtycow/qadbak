@@ -105,7 +105,7 @@ export async function evaluateMobilePushAlerts(): Promise<{
   if (!apnsConfigured()) {
     return { sent: [], delivered: 0, skipped: "APNs not configured" };
   }
-  const raw = await runGlobalTool("domain-health-batch");
+  const raw = await runGlobalTool("domain-health-batch", { excludeDemoOnly: true });
   const rows = ((raw as { domains?: HealthRow[] }).domains ?? []) as HealthRow[];
   const state = await loadState();
   const sent: string[] = [];

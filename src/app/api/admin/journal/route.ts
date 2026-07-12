@@ -1,11 +1,15 @@
 import { requireAdmin } from "@/lib/admin-api";
 import { handleApiError, jsonOk } from "@/lib/api";
+import { demoJournalMock, demoSandboxActive } from "@/lib/demo-sandbox";
 import { listEntries } from "@/lib/journal";
 
 /** GET /api/admin/journal?date=&user=&action=&days=&domain=&failuresOnly=&limit= */
 export async function GET(request: Request) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    if (demoSandboxActive(session.username)) {
+      return jsonOk(demoJournalMock());
+    }
     const url = new URL(request.url);
     const params = url.searchParams;
     const result = await listEntries({

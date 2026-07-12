@@ -1001,10 +1001,10 @@ async function main() {
       await systemCronList();
       break;
     case "system-awstats-summary":
-      await systemAwstatsSummary();
+      await systemAwstatsSummary(args[0]);
       break;
     case "domain-health-batch":
-      await domainHealthBatch();
+      await domainHealthBatch(args[0]);
       break;
     case "system-network-summary":
       await systemNetworkSummary();
