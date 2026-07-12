@@ -38,10 +38,17 @@ Keep `@omiiba.dev` aliases forwarding to `@inveil.net` during transition.
 sudo INVEIL_MIGRATION_SCOPE=license bash /opt/qadbak-premium/ops/migrate-to-inveil.sh
 ```
 
-**Main VPS** (IP ending `.158`) — inveil.net company site:
+**Main VPS** (IP ending `.158`) — only `/opt/qadbak` needed:
 
 ```bash
-sudo INVEIL_MIGRATION_SCOPE=site bash /opt/qadbak-premium/ops/migrate-to-inveil.sh
+cd /opt/qadbak && git pull
+sudo bash inveil-site/ops/migrate-site.sh
+```
+
+**License VPS** (IP ending `.80`):
+
+```bash
+sudo INVEIL_MIGRATION_SCOPE=license bash /opt/qadbak-premium/ops/migrate-to-inveil.sh
 ```
 
 Each scope only configures nginx/certs for hosts on that box. Do **not** run the full
