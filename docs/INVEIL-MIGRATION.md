@@ -30,6 +30,15 @@ Create or forward:
 
 Keep `@omiiba.dev` aliases forwarding to `@inveil.net` during transition.
 
+**Restore mail + webmail on main VPS** (forwards `@inveil.net` → `@omiiba.dev`):
+
+```bash
+cd /opt/qadbak && git pull
+sudo bash scripts/restore-inveil-mail.sh
+```
+
+Prints Cloudflare MX/SPF/DKIM records. Webmail login uses `@omiiba.dev` mailboxes.
+
 ## 3. Two-server layout (recommended)
 
 **License VPS** (IP ending `.80`, vmi2930777):
