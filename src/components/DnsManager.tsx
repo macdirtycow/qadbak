@@ -112,12 +112,18 @@ export function DnsManager({
 
       {originIp && (
         <Alert>
-          <p className="font-medium text-white">Cloudflare (orange cloud)</p>
+          <p className="font-medium text-white">Cloudflare proxy</p>
           <p className="mt-1 text-sm text-panel-muted">
-            A record @ and www must point to origin{" "}
-            <span className="font-mono text-white">{originIp}</span> — not only
-            Cloudflare proxy IPs. Error 523 = server unreachable on ports 80/443.
-            See{" "}
+            In Cloudflare DNS, the A record <strong>Content</strong> for{" "}
+            <span className="font-mono">@</span> and{" "}
+            <span className="font-mono">www</span> must be{" "}
+            <span className="font-mono text-white">{originIp}</span> (your VPS).
+            Orange cloud is fine — public DNS may show Cloudflare IPs (
+            <span className="font-mono">104.21.x</span> /{" "}
+            <span className="font-mono">172.67.x</span>). Error{" "}
+            <span className="font-mono">523</span> means Cloudflare cannot
+            connect to that origin on ports 80/443 (wrong IP in Cloudflare or
+            Contabo firewall). See{" "}
             <a
               href="https://github.com/macdirtycow/qadbak/blob/main/docs/CLOUDFLARE.md"
               className="text-panel-link underline"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# nginx: inveil.net + www + inveil.dev + omiiba.dev redirect (main VPS)
+# nginx: inveil.net + www + inveil.dev redirect (main VPS)
 set -euo pipefail
 
 OPS_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -8,10 +8,8 @@ source "$OPS_DIR/lib/web-preflight.sh"
 
 APEX="${INVEIL_APEX:-inveil.net}"
 DEV_HOST="${INVEIL_DEV_HOST:-inveil.dev}"
-OLD_APEX="${INVEIL_OLD_APEX:-omiiba.dev}"
 WEB_ROOT="${INVEIL_WEB_ROOT:-/var/www/inveil.net}"
 CERTBOT_EMAIL="${CERTBOT_EMAIL:-admin@${APEX}}"
-LEGACY="${INVEIL_LEGACY_REDIRECTS:-apex}"
 
 [[ "$(id -u)" -eq 0 ]] || { echo "Run as root: sudo bash $0" >&2; exit 1; }
 
@@ -24,43 +22,6 @@ issue_cert() {
     [[ -f "/etc/letsencrypt/live/${n}/fullchain.pem" ]] && continue
     web_preflight_issue_cert "$n" "$CERTBOT_EMAIL" || return 1
   done
-}
-
-write_redirect_vhost() {
-  local name="$1"
-  local target="$2"
-  local conf="/etc/nginx/sites-available/${name}-redirect.conf"
-  local cert="/etc/letsencrypt/live/${name}/fullchain.pem"
-  issue_cert "$name" || true
-  if [[ -f "$cert" ]]; then
-    cat >"$conf" <<EOF
-server {
-    listen 80;
-    listen [::]:80;
-    server_name ${name};
-    return 301 ${target}\$request_uri;
-}
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name ${name};
-    ssl_certificate     ${cert};
-    ssl_certificate_key /etc/letsencrypt/live/${name}/privkey.pem;
-    return 301 ${target}\$request_uri;
-}
-EOF
-  else
-    cat >"$conf" <<EOF
-server {
-    listen 80;
-    listen [::]:80;
-    server_name ${name};
-    return 301 ${target}\$request_uri;
-}
-EOF
-    echo "WARN: ${name} redirect is HTTP-only until TLS is issued" >&2
-  fi
-  ln -sf "$conf" "/etc/nginx/sites-enabled/${name}-redirect.conf"
 }
 
 write_apex_vhost() {
@@ -137,7 +98,6 @@ server {
 }
 EOF
     ln -sf "$conf" "/etc/nginx/sites-enabled/${DEV_HOST}.conf"
-    echo "WARN: ${DEV_HOST} redirect is HTTP-only until TLS is issued" >&2
     return 0
   fi
   cat >"$conf" <<EOF
@@ -161,16 +121,9 @@ EOF
 
 write_apex_vhost
 write_dev_vhost
-case "$LEGACY" in
-  none) ;;
-  apex | all | *)
-    write_redirect_vhost "$OLD_APEX" "https://${APEX}"
-    ;;
-esac
 
 nginx -t
 systemctl reload nginx
 
 echo ""
-echo "OK — https://${APEX}/ serves static site from ${WEB_ROOT}"
-echo "Redirects: ${DEV_HOST} → ${APEX}, ${OLD_APEX} → ${APEX}"
+echo "OK — https://${APEX}/ from ${WEB_ROOT} · ${DEV_HOST} → ${APEX}"

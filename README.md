@@ -323,8 +323,8 @@ inveil-site/      static HTML for inveil.net (company)
 
 | File | Contents |
 |------|----------|
-| [docs/INVEIL-MIGRATION.md](docs/INVEIL-MIGRATION.md) | Rebrand checklist — DNS, license server, email |
 | [docs/MOBILE-IOS-APP.md](docs/MOBILE-IOS-APP.md) | Mobile API, Bearer auth, push, widgets, iCloud backups |
+| [docs/CLOUDFLARE.md](docs/CLOUDFLARE.md) | Cloudflare 502/520/523 + panel SSL |
 | [ios/README.md](ios/README.md) | Xcode setup, IPA build, TestFlight, feature list |
 | [ios/docs/APP-STORE.md](ios/docs/APP-STORE.md) | App Store / TestFlight submission |
 | [docs/LINUX-SUPPORT.md](docs/LINUX-SUPPORT.md) | Ubuntu/Debian native + panel-only + LTS upgrade |
@@ -336,7 +336,6 @@ inveil-site/      static HTML for inveil.net (company)
 | [docs/E2E-CHECKLIST.md](docs/E2E-CHECKLIST.md) | Sign-off checklist |
 | [docs/PHASES.md](docs/PHASES.md) | Feature phases |
 | [docs/MARKET-FEATURES.md](docs/MARKET-FEATURES.md) | Market competition phases 1–8 |
-| [docs/CLOUDFLARE.md](docs/CLOUDFLARE.md) | Cloudflare 502/520 + panel SSL |
 | [docs/integrations/WHMCS-INTEGRATION.md](docs/integrations/WHMCS-INTEGRATION.md) | WHMCS + API v1 |
 | [docs/api/openapi.yaml](docs/api/openapi.yaml) | REST API v1 OpenAPI |
 | [docs/HOSTING-NGINX.md](docs/HOSTING-NGINX.md) | nginx + Apache for sites |

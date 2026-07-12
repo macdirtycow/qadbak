@@ -21,13 +21,13 @@ In **Qadbak** → domain overview → **Website & Cloudflare** → **Repair on s
 | `@` | A | Your VPS public IP | Proxied OK |
 | `www` | A or CNAME | Same origin | Proxied OK |
 
+The **Content** column in Cloudflare must be your VPS IP (e.g. `158.220.85.245`). Public `dig` may show Cloudflare anycast IPs when proxied — that is normal. Error **523** = Cloudflare cannot reach that origin IP on **80/443** (fix IP in Cloudflare or open Contabo firewall).
+
 Set in server `.env.local`:
 
 ```env
 QADBAK_ORIGIN_IP=YOUR_VPS_PUBLIC_IP
 ```
-
-(Public DNS may show Cloudflare IPs `104.21.x` / `172.67.x` when proxied — that is normal.)
 
 ### Contabo firewall (Inbound Rules)
 

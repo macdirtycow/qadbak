@@ -1,47 +1,28 @@
 # Inveil company site
 
-Static marketing site for **https://inveil.net** — company home, product links, and license portal CTAs.
+Static marketing site for **https://inveil.net**.
 
-## Deploy on main VPS (only needs qadbak)
+## Deploy
 
 ```bash
 cd /opt/qadbak && git pull
-sudo bash inveil-site/ops/migrate-site.sh
+sudo bash inveil-site/ops/deploy-inveil-site.sh
 ```
 
-Cloudflare: `inveil.net`, `www`, `inveil.dev` → main VPS IP, DNS only until TLS works.
+## Cloudflare DNS
 
-## Deploy on license VPS
+| Record | Type | Content | Proxy |
+|--------|------|---------|-------|
+| `@` | A | Your VPS IP (e.g. `158.220.85.245`) | Orange OK |
+| `www` | CNAME | `inveil.net` | Orange OK |
+| `inveil.dev` | A | Same VPS IP | Orange OK |
 
-Bundled in `qadbak-premium/inveil-site` and deployed automatically by:
+**Error 523:** Cloudflare cannot reach your VPS on ports **80/443**. The A record **Content** in Cloudflare must be your real VPS IP — not the public `104.21.x` / `172.67.x` lookup results. Open TCP 80+443 in Contabo firewall. See [docs/CLOUDFLARE.md](../docs/CLOUDFLARE.md).
 
-```bash
-sudo INVEIL_MIGRATION_SCOPE=license bash /opt/qadbak-premium/ops/migrate-to-inveil.sh
-```
+Mail (MX, SPF, DKIM): `sudo bash scripts/setup-mail.sh inveil.net`
 
-Manual deploy only:
-
-```bash
-sudo INVEIL_SITE_SRC=/opt/qadbak-premium/inveil-site bash inveil-site/ops/deploy-vps.sh
-sudo bash /opt/qadbak-premium/ops/configure-inveil-site-nginx.sh
-```
-
-## Build zip (static host)
+## Build zip
 
 ```bash
 bash scripts/build-inveil-site-zip.sh
-# → dist/inveil-site-upload.zip
 ```
-
-## Structure
-
-```
-inveil-site/
-  index.html
-  assets/css/site.css
-  assets/js/main.js
-  assets/img/logo.svg
-  ops/deploy-vps.sh
-```
-
-Also mirrored in `qadbak-premium/inveil-site` for license-server VPS deploys.
