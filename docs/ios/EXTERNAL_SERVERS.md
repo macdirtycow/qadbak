@@ -128,3 +128,11 @@ curl -sk https://127.0.0.1:9443/health
 - [x] Reboot & shutdown (confirmed)
 - [x] Audit log (`data/logs/audit.log` on agent)
 - [x] iOS: action menus on Services/Docker + Control screen
+
+## Phase 5 deliverables
+
+- [x] Dual badges: Linux Agent + detected panel (Hestia, Coolify, …)
+- [x] Panel detection card on agent dashboard (signals, confidence)
+- [x] Background health polling every 5 minutes
+- [x] Local notifications: offline, high CPU, failed services, pending updates
+- [x] Settings toggle for agent alerts

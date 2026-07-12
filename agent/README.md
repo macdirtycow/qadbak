@@ -10,7 +10,8 @@ Standalone Linux agent for the Qadbak iOS app. **Work in progress — beta.**
 | 2 — Agent binary + SSH onboarding + dashboard | Done (beta) |
 | 3 — Read-only services/docker/logs | Done (beta) |
 | 4 — Writes: restart, updates, reboot | Done (beta) |
-| 5 — Panel detection badges, notifications | Planned |
+| 5 — Panel badges, local agent alerts | Done (beta) |
+| 6 — Hardening, signed releases, closed beta | Planned |
 
 ## Documentation
 

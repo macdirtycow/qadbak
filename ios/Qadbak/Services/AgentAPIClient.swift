@@ -104,6 +104,10 @@ final class AgentAPIClient: NSObject, @unchecked Sendable {
         try await request("GET", path: "/api/v1/capabilities")
     }
 
+    func panelDetection() async throws -> AgentPanelDetectionResponse {
+        try await request("GET", path: "/api/v1/detection/panel")
+    }
+
     func services() async throws -> [ManagedService] {
         let res: AgentServicesResponse = try await request("GET", path: "/api/v1/services")
         return (res.services ?? []).compactMap { $0.toManagedService() }

@@ -8,25 +8,34 @@ struct ServerBadgeView: View {
             if !server.connectionStatus.isReachable && server.isAgentManaged {
                 badge("Offline", tone: .danger)
             }
-            badge(label, tone: tone)
+            badge(primaryLabel, tone: primaryTone)
+            if let panelBadge = panelBadgeLabel {
+                badge(panelBadge, tone: .default)
+            }
+            if server.isBetaAgent {
+                badge("Beta", tone: .warning)
+            }
         }
     }
 
-    private var label: String {
+    private var primaryLabel: String {
         if server.isQadbakPanel { return "Qadbak" }
-        if server.isAgentManaged { return server.serverKind.badgeLabel }
+        if server.isAgentManaged { return "Linux Agent" }
         return server.serverKind.displayName
     }
 
-    private var tone: QBBadge.BadgeTone {
-        if server.isQadbakPanel { return .default }
-        if server.isBetaAgent { return .warning }
-        switch server.serverKind {
-        case .hestiaCP, .coolify, .casaOS, .plesk, .directAdmin:
-            return .default
-        default:
-            return .default
-        }
+    private var primaryTone: QBBadge.BadgeTone {
+        if server.isQadbakPanel { return .success }
+        if !server.connectionStatus.isReachable { return .danger }
+        return .default
+    }
+
+    /// Secondary badge when a hosting panel was detected alongside the agent.
+    private var panelBadgeLabel: String? {
+        guard server.isAgentManaged else { return nil }
+        let kind = server.panelDetection?.detectedPanel ?? server.serverKind
+        guard kind != .genericLinux, kind != .unknownCustom else { return nil }
+        return kind.displayName
     }
 
     private func badge(_ text: String, tone: QBBadge.BadgeTone) -> some View {

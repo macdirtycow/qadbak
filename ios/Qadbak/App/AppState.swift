@@ -333,6 +333,20 @@ final class AppState {
         upsertServer(profile)
     }
 
+    func updateServerProfileIfExists(_ profile: ManagedServer) {
+        guard savedServers.contains(where: { $0.id == profile.id }) else { return }
+        upsertServer(profile)
+    }
+
+    func makeAgentClient(for server: ManagedServer) -> AgentAPIClient? {
+        guard server.isAgentManaged, hasStoredSession(for: server) else { return nil }
+        return makeAgentClient(for: server, accessToken: nil)
+    }
+
+    var hasAgentServers: Bool {
+        savedServers.contains { $0.isAgentManaged && $0.authenticationMethod == .agentToken }
+    }
+
     func registerAgentServer(
         _ server: ManagedServer,
         accessToken: String,

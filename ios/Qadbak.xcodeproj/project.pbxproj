@@ -79,6 +79,9 @@
 		A10000010000000000000075 /* AgentLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000075 /* AgentLogsView.swift */; };
 		A10000010000000000000076 /* AgentConfirmedAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000076 /* AgentConfirmedAction.swift */; };
 		A10000010000000000000077 /* AgentServerControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000077 /* AgentServerControlView.swift */; };
+		A10000010000000000000078 /* AgentHealthMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000078 /* AgentHealthMonitor.swift */; };
+		A10000010000000000000079 /* AgentNotificationSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000079 /* AgentNotificationSettings.swift */; };
+		A10000010000000000000080 /* PanelDetectionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000080 /* PanelDetectionCard.swift */; };
 		A10000010000000000000071 /* qadbak-agent-linux-amd64 in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000071 /* qadbak-agent-linux-amd64 */; };
 		A10000010000000000000072 /* qadbak-agent-linux-arm64 in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000072 /* qadbak-agent-linux-arm64 */; };
 		B10000010000000000000001 /* QadbakWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000001 /* QadbakWidget.swift */; };
@@ -163,6 +166,9 @@
 		A20000010000000000000075 /* AgentLogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentLogsView.swift; sourceTree = "<group>"; };
 		A20000010000000000000076 /* AgentConfirmedAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentConfirmedAction.swift; sourceTree = "<group>"; };
 		A20000010000000000000077 /* AgentServerControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentServerControlView.swift; sourceTree = "<group>"; };
+		A20000010000000000000078 /* AgentHealthMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentHealthMonitor.swift; sourceTree = "<group>"; };
+		A20000010000000000000079 /* AgentNotificationSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentNotificationSettings.swift; sourceTree = "<group>"; };
+		A20000010000000000000080 /* PanelDetectionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelDetectionCard.swift; sourceTree = "<group>"; };
 		A20000010000000000000071 /* qadbak-agent-linux-amd64 */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = "qadbak-agent-linux-amd64"; sourceTree = "<group>"; };
 		A20000010000000000000072 /* qadbak-agent-linux-arm64 */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = "qadbak-agent-linux-arm64"; sourceTree = "<group>"; };
 		B20000010000000000000001 /* QadbakWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakWidget.swift; sourceTree = "<group>"; };
@@ -299,6 +305,8 @@
 				A20000010000000000000067 /* SSHSessionService.swift */,
 				A20000010000000000000068 /* AgentInstallService.swift */,
 				A20000010000000000000076 /* AgentConfirmedAction.swift */,
+				A20000010000000000000078 /* AgentHealthMonitor.swift */,
+				A20000010000000000000079 /* AgentNotificationSettings.swift */,
 				A50000010000000000000014 /* Providers */,
 				A20000010000000000000041 /* BackupICloudService.swift */,
 				A20000010000000000000042 /* BackupICloudSettings.swift */,
@@ -339,6 +347,7 @@
 				A20000010000000000000074 /* AgentDockerView.swift */,
 				A20000010000000000000075 /* AgentLogsView.swift */,
 				A20000010000000000000077 /* AgentServerControlView.swift */,
+				A20000010000000000000080 /* PanelDetectionCard.swift */,
 			);
 			path = Servers;
 			sourceTree = "<group>";
@@ -624,6 +633,9 @@
 				A10000010000000000000075 /* AgentLogsView.swift in Sources */,
 				A10000010000000000000076 /* AgentConfirmedAction.swift in Sources */,
 				A10000010000000000000077 /* AgentServerControlView.swift in Sources */,
+				A10000010000000000000078 /* AgentHealthMonitor.swift in Sources */,
+				A10000010000000000000079 /* AgentNotificationSettings.swift in Sources */,
+				A10000010000000000000080 /* PanelDetectionCard.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -14,6 +14,7 @@ struct AgentServerDashboardView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     if let server = appState.activeServer {
                         header(server)
+                        PanelDetectionCard(server: server)
                     }
                     if isLoading && overview == nil {
                         QBLoadingState(message: "Loading overview…")
@@ -136,9 +137,16 @@ struct AgentServerDashboardView: View {
         defer { isLoading = false }
         do {
             overview = try await provider.fetchOverview()
-            if let caps = try? await provider.apiClient.capabilities().capabilities?.toServerCapabilities(),
-               var server = appState.activeServer {
-                server.capabilities = caps
+            if var server = appState.activeServer {
+                if let caps = try? await provider.apiClient.capabilities().capabilities?.toServerCapabilities() {
+                    server.capabilities = caps
+                }
+                if let detection = try? await provider.apiClient.panelDetection().panelDetection?.toPanelDetection() {
+                    server.panelDetection = detection
+                    if let kind = detection.detectedPanel, kind != .genericLinux {
+                        server.serverKind = kind
+                    }
+                }
                 appState.updateActiveServerProfile(server)
             }
         } catch {

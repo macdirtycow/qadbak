@@ -21,6 +21,23 @@ struct SettingsView: View {
                             }
                         }
                     }
+                    if appState.hasAgentServers {
+                        QBGlassCard {
+                            Toggle(isOn: Binding(
+                                get: { AgentNotificationSettings.enabled },
+                                set: { AgentNotificationSettings.enabled = $0 }
+                            )) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Label("Agent alerts", systemImage: "bell.badge")
+                                        .foregroundStyle(QadbakPalette.text)
+                                    Text("Local notifications when a Linux agent goes offline, CPU spikes, or updates are pending.")
+                                        .font(.caption)
+                                        .foregroundStyle(QadbakPalette.muted)
+                                }
+                            }
+                            .tint(QadbakPalette.glow)
+                        }
+                    }
                     QBGlassCard {
                         VStack(alignment: .leading, spacing: 12) {
                             Label("Face ID / Touch ID lock", systemImage: "faceid")

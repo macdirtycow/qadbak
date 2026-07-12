@@ -14,9 +14,11 @@ struct QadbakApp: App {
                         apiProvider: { appState.api },
                         appStateProvider: { appState }
                     )
+                    AgentHealthMonitor.shared.start(appState: appState)
                 }
                 .task {
-                    if appState.isSignedIn {
+                    await PushNotificationService.shared.requestAuthorizationAndRegister()
+                    if appState.isSignedIn || appState.showsAgentDashboard {
                         await appState.refreshSessionInfo()
                     }
                 }

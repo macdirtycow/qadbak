@@ -157,6 +157,11 @@ struct AgentLogsResponse: Decodable {
     let nextCursor: String?
 }
 
+struct AgentPanelDetectionResponse: Decodable {
+    let ok: Bool?
+    let panelDetection: AgentPanelDetectionPayload?
+}
+
 struct AgentConfirmResponse: Decodable {
     let ok: Bool?
     let confirmToken: String?
