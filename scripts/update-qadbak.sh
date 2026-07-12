@@ -95,23 +95,7 @@ bash "$ROOT/scripts/ensure-terminal-deps.sh"
 
 if [[ "$(id -u)" -eq 0 ]]; then
   echo "==> Sudo helpers"
-  for helper in \
-    configure-domain-fs-sudo.sh \
-    configure-domain-repair-sudo.sh \
-    configure-panel-vhost-sudo.sh \
-    configure-updates-sudo.sh \
-    configure-php-fpm-sudo.sh \
-    configure-panel-pm2-sudo.sh \
-    configure-domain-terminal-sudo.sh \
-    configure-host-services-sudo.sh \
-    configure-stack-helper-sudo.sh \
-    configure-provisioning-helper-sudo.sh \
-    configure-backup-download-sudo.sh; do
-    echo "    $helper"
-    if ! bash "$ROOT/scripts/$helper"; then
-      echo "    WARN: $helper failed (see above)" >&2
-    fi
-  done
+  bash "$ROOT/scripts/configure-all-sudo.sh" || echo "    WARN: configure-all-sudo.sh failed" >&2
   echo "==> Hosting stack (nginx, Apache)"
   QADBAK_NATIVE_INSTALL=1 QADBAK_DISABLE_LEGACY_PANEL=true \
     bash "$ROOT/scripts/install-hosting-stack.sh" || echo "    WARN: install-hosting-stack.sh failed" >&2

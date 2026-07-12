@@ -35,8 +35,7 @@ sudo bash scripts/configure-domain-fs-sudo.sh
 # Panel env hardening
 grep -E 'QADBAK_REQUIRE_ADMIN_TOTP|QADBAK_ADMIN_TERMINAL_TOTP|QADBAK_SESSION_MAX_AGE_HOURS' .env.local
 
-sudo bash scripts/pull-build-restart.sh
-sudo bash scripts/pm2-restart-qadbak.sh
+sudo bash scripts/update.sh
 sudo -u qadbak pm2 restart qadbak-terminal
 ```
 

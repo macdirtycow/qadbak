@@ -133,7 +133,7 @@ Existing e2e: `e2e/security.spec.ts` (CSRF, IDOR, path traversal, legacy redirec
 3. Enable `QADBAK_REQUIRE_ADMIN_TOTP=true` and `QADBAK_ADMIN_TERMINAL_TOTP=true` for admins
 4. Re-run `sudo bash scripts/configure-all-sudo.sh` after pull or new domains
 5. Run `sudo bash scripts/check-sudoers-no-broad-wildcards.sh` and `scripts/check-panel-security.sh` on VPS
-6. Restart after deploy: `sudo bash scripts/pull-build-restart.sh` and `sudo bash scripts/pm2-restart-qadbak.sh`
+6. Restart after deploy: `sudo bash scripts/update.sh`
 
 ---
 

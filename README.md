@@ -246,7 +246,7 @@ sudo bash /opt/qadbak/install/qadbak-install-resume.sh
 ### Update on the server
 
 ```bash
-cd /opt/qadbak && sudo bash scripts/update-qadbak.sh
+cd /opt/qadbak && sudo bash scripts/update.sh
 ```
 
 Premium admins can also update from **Admin → Updates** (Qadbak pull/rebuild, apt packages, and Ubuntu LTS release upgrade).
@@ -350,7 +350,8 @@ marketing-site/   static HTML for qadbak.com + legal pages
 | `npm run build` | Production Next.js build |
 | `npm run test-api` | API + domain-registry sanity check |
 | `npm run preflight` | VPS checks (env, ports, services) |
-| `bash scripts/update-qadbak.sh` | Pull + build + restart pm2 |
+| `bash scripts/update.sh` | Pull + sudoers + build + restart pm2 (standard VPS update) |
+| `bash scripts/update-qadbak.sh` | Full update (hosting stack, E2E, repairs) |
 | `sudo bash install/qadbak-install.sh` | Fresh VPS install |
 | `sudo bash install/qadbak-uninstall.sh` | Remove the panel cleanly |
 
