@@ -24,7 +24,9 @@ final class AgentAPIClient: NSObject, @unchecked Sendable {
         onTokensRefreshed: @escaping (String, String) -> Void
     ) {
         self.baseURL = baseURL
-        self.pinnedFingerprint = pinnedFingerprint?.lowercased()
+        self.pinnedFingerprint = pinnedFingerprint?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
         self.accessToken = accessToken
         self.refreshTokenProvider = refreshTokenProvider
         self.onTokensRefreshed = onTokensRefreshed

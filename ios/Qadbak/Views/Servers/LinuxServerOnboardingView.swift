@@ -342,7 +342,15 @@ struct LinuxServerOnboardingView: View {
                 sshHostKeyFingerprint = result.hostKeyFingerprint
             }
 
-            progressMessage = "Pairing with agent…"
+            guard !result.tlsFingerprint.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw APIError.message("Install finished but TLS fingerprint was missing. Use Add server → Pair existing agent instead.")
+            }
+
+            let pairHost = result.agentHost
+            progressMessage = "Pairing with agent via HTTPS (\(pairHost):\(agentPort))…"
+            if listenMode == .tailscale {
+                progressMessage += " Keep Tailscale enabled on this iPhone."
+            }
             let baseURL = AgentInstallService.makeAgentBaseURL(host: result.agentHost, port: agentPort)
             let deviceId = UIDeviceIdentifier.persistentUUID
 
@@ -417,6 +425,15 @@ struct LinuxServerOnboardingView: View {
             if message.contains("SSHClientError error 4") || message.contains("allAuthenticationOptionsFailed") {
                 errorMessage = "SSH login failed during install. Go back to step 2 and re-enter your password."
                 step = .authentication
+            } else if message.contains("TLS") || message.contains("secure connection") {
+                errorMessage = """
+                \(message)
+
+                Step 5 has two parts: SSH install (server) then HTTPS pairing from your iPhone to the agent.
+                • Turn on Tailscale on your iPhone (agent listens on \(probe.tailscaleIPv4 ?? "Tailscale IP"), not the SSH IP).
+                • Install the latest Qadbak-latest.ipa from your Desktop.
+                • Or use Add server → Pair existing agent after install succeeded on the server.
+                """
             } else if message.contains("SSH timed out") || message.contains("timed out reaching") {
                 errorMessage = "\(message)\n\nTip: if the agent is already running, use Add server → Pair existing agent (Tailscale IP, port 9443). Otherwise use Wi-Fi and keep the app open."
             } else if message.contains("exit 7") || message.contains("did not respond on port") {

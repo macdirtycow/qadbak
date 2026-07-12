@@ -194,7 +194,7 @@ struct SSHSessionService {
         for line in output.split(separator: "\n") {
             let s = String(line).trimmingCharacters(in: .whitespacesAndNewlines)
             if s.hasPrefix("pairing:") { pairing = String(s.dropFirst(8)) }
-            if s.hasPrefix("fingerprint:") { fingerprint = String(s.dropFirst(12)) }
+            if s.hasPrefix("fingerprint:") { fingerprint = String(s.dropFirst(12)).trimmingCharacters(in: .whitespacesAndNewlines) }
             if s.hasPrefix("agent_listen_host:") {
                 let host = String(s.dropFirst(18)).trimmingCharacters(in: .whitespaces)
                 if !host.isEmpty, host != "0.0.0.0" { agentHost = host }
