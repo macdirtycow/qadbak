@@ -32,3 +32,19 @@ export function demoPanelEnabled(): boolean {
   const v = process.env.QADBAK_DEMO_ENABLED?.trim().toLowerCase();
   return v === "true" || v === "1";
 }
+
+/** Block in-panel shells on the public read-only demo (GET ws-token bypass). */
+export function demoTerminalBlocked(): boolean {
+  const v = process.env.QADBAK_DEMO_TERMINAL_DISABLED?.trim().toLowerCase();
+  if (v === "false" || v === "0") return false;
+  if (v === "true" || v === "1") return true;
+  return demoReadOnlyEnabled();
+}
+
+export function assertDemoTerminalAllowed(username: string | null | undefined): void {
+  if (demoTerminalBlocked() && isDemoUser(username)) {
+    throw new Error(
+      "Terminal is disabled on the read-only demo panel. Install Qadbak on your own VPS for shell access.",
+    );
+  }
+}

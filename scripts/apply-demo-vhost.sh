@@ -33,6 +33,7 @@ set_env_key "QADBAK_DEMO_HOST" "$DEMO_HOST"
 set_env_key "QADBAK_DEMO_ENABLED" "true"
 grep -q "^QADBAK_DEMO_USERNAME=" "$ENV_FILE" 2>/dev/null || set_env_key "QADBAK_DEMO_USERNAME" "demo"
 grep -q "^QADBAK_DEMO_READ_ONLY=" "$ENV_FILE" 2>/dev/null || set_env_key "QADBAK_DEMO_READ_ONLY" "true"
+grep -q "^QADBAK_DEMO_TERMINAL_DISABLED=" "$ENV_FILE" 2>/dev/null || set_env_key "QADBAK_DEMO_TERMINAL_DISABLED" "true"
 
 echo "==> TLS certificate (expand main cert with demo host if needed)"
 if command -v certbot >/dev/null 2>&1; then

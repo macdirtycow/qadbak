@@ -58,6 +58,25 @@ function secretKey() {
   return new TextEncoder().encode(secret);
 }
 
+function demoUsername() {
+  return (process.env.QADBAK_DEMO_USERNAME || "demo").trim().toLowerCase();
+}
+
+function demoTerminalBlocked() {
+  const v = String(process.env.QADBAK_DEMO_TERMINAL_DISABLED ?? "").trim().toLowerCase();
+  if (v === "false" || v === "0") return false;
+  if (v === "true" || v === "1") return true;
+  const ro = String(process.env.QADBAK_DEMO_READ_ONLY ?? "true").trim().toLowerCase();
+  return ro !== "false" && ro !== "0";
+}
+
+function assertDemoTerminalUsername(username) {
+  if (!demoTerminalBlocked()) return;
+  if (String(username || "").trim().toLowerCase() === demoUsername()) {
+    throw new Error("Terminal disabled for demo accounts.");
+  }
+}
+
 async function verifyDomainToken(token) {
   const { payload } = await jwtVerify(token, secretKey(), {
     algorithms: ["HS256"],
@@ -68,6 +87,7 @@ async function verifyDomainToken(token) {
   const domain = String(payload.domain || "");
   const unixUser = String(payload.unixUser || "");
   if (!domain || !unixUser) throw new Error("Invalid token payload.");
+  assertDemoTerminalUsername(payload.username);
   return unixUser;
 }
 
@@ -78,6 +98,7 @@ async function verifyAdminToken(token) {
   if (payload.purpose !== "admin-terminal-ws") {
     throw new Error("Invalid token purpose.");
   }
+  assertDemoTerminalUsername(payload.username);
   return true;
 }
 

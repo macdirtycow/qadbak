@@ -1,5 +1,6 @@
 import { SignJWT } from "jose";
 import type { SessionPayload } from "./types";
+import { assertDemoTerminalAllowed } from "./demo-mode";
 
 function secretKey(): Uint8Array {
   const secret = process.env.SESSION_SECRET;
@@ -14,6 +15,7 @@ export async function createTerminalWsToken(
   unixUser: string,
   session: SessionPayload,
 ): Promise<string> {
+  assertDemoTerminalAllowed(session.username);
   return new SignJWT({
     purpose: "terminal-ws",
     domain,
@@ -34,6 +36,7 @@ export async function createAdminTerminalWsToken(
   if (session.role !== "admin") {
     throw new Error("Only administrators may use the server terminal.");
   }
+  assertDemoTerminalAllowed(session.username);
   return new SignJWT({
     purpose: "admin-terminal-ws",
     sub: session.userId,

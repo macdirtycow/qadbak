@@ -4,6 +4,7 @@ import {
   demoPanelEnabled,
   demoReadOnlyEnabled,
   demoShowcaseDomain,
+  demoTerminalBlocked,
   demoUsername,
   isDemoHost,
 } from "@/lib/demo-mode";
@@ -24,6 +25,7 @@ export async function GET(request: Request) {
     username: demoUsername(),
     ...(password ? { password } : { passwordHint: "Set QADBAK_DEMO_SHOW_PASSWORD=true on demo host to expose." }),
     readOnly: demoReadOnlyEnabled(),
+    terminalDisabled: demoTerminalBlocked(),
     showcaseDomain: demoShowcaseDomain(),
     loginUrl: `https://${demoHost()}/login`,
   });

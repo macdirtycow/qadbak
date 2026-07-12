@@ -1,4 +1,5 @@
 import { handleApiError, jsonOk } from "@/lib/api";
+import { demoTerminalBlocked } from "@/lib/demo-mode";
 import { requireDomainApi } from "@/lib/domain-api";
 import {
   TERMINAL_SETUP_HINT,
@@ -14,6 +15,14 @@ type Params = { params: Promise<{ domain: string }> };
 
 export async function GET(request: Request, { params }: Params) {
   try {
+    if (demoTerminalBlocked()) {
+      return jsonOk({
+        available: false,
+        error:
+          "Terminal is disabled on the read-only demo panel. Install Qadbak on your own VPS for shell access.",
+        demoBlocked: true,
+      });
+    }
     if (!terminalAvailable()) {
       return jsonOk({
         available: false,
