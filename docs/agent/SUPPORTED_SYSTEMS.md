@@ -12,20 +12,21 @@ Fully tested target platforms:
 
 Architectures: **amd64**, **arm64**.
 
-## Panel detection (informational)
+## Panel detection and linking
 
-The agent **detects but does not manage** these panels in v1:
+The agent **detects** these panels on the host:
 
-| Panel | Detection signals |
-|-------|-------------------|
-| Qadbak | `/opt/qadbak`, pm2, panel health URL |
-| HestiaCP | `/usr/local/hestia`, `hestia` service |
-| Coolify | Coolify Docker containers, `/data/coolify` |
-| CasaOS | `casaos.service` |
-| Plesk | `/usr/local/psa` |
-| DirectAdmin | `/usr/local/directadmin` |
+| Panel | Detection | Agent link (read-only) |
+|-------|-----------|------------------------|
+| Qadbak | `/opt/qadbak` | Use the Qadbak **panel URL** in the iOS app instead |
+| HestiaCP | `/usr/local/hestia` | Yes — API login or access key |
+| Coolify | `/data/coolify` | Yes — API token |
+| CasaOS | `casaos.service` | Yes — token or login |
+| Plesk | `/usr/local/psa` | Detected only (not yet) |
+| DirectAdmin | `/usr/local/directadmin` | Detected only (not yet) |
 
-UI shows badge only — no claim of full panel integration unless capability is set.
+Linking stores credentials on the server and exposes summaries via `/api/v1/panels/overview`.
+See [PANEL-LINKING.md](./PANEL-LINKING.md).
 
 ## Explicitly unsupported (initial)
 

@@ -145,6 +145,26 @@ final class AgentAPIClient: NSObject, @unchecked Sendable {
         try await request("GET", path: "/api/v1/detection/panel")
     }
 
+    func panelLinkStatus() async throws -> AgentPanelLinkStatusResponse {
+        try await request("GET", path: "/api/v1/panels/link")
+    }
+
+    func linkPanel(_ body: PanelLinkRequest) async throws -> AgentPanelLinkStatusResponse {
+        try await request("POST", path: "/api/v1/panels/link", body: body)
+    }
+
+    func unlinkPanel() async throws {
+        let _: AgentActionResponse = try await request("DELETE", path: "/api/v1/panels/link")
+    }
+
+    func panelOverview() async throws -> AgentPanelOverviewPayload {
+        let res: AgentPanelOverviewResponse = try await request("GET", path: "/api/v1/panels/overview")
+        guard let overview = res.overview else {
+            throw APIError.message(res.error ?? "Panel overview unavailable.")
+        }
+        return overview
+    }
+
     func services() async throws -> [ManagedService] {
         let res: AgentServicesResponse = try await request("GET", path: "/api/v1/services")
         return (res.services ?? []).compactMap { $0.toManagedService() }

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inveil — Qadbak panel &amp; iOS app</title>
+    <meta
+      name="description"
+      content="Inveil builds Qadbak, a self-hosted Linux hosting panel, and the companion iOS app for operators."
+    />
+    <meta name="theme-color" content="#0f1419" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0f1419;
+        --text: #e8edf2;
+        --muted: #94a3b8;
+        --accent: #14b8a6;
+        --card: #171d24;
+        --border: #243041;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+      }
+      a { color: var(--accent); }
+      .wrap { max-width: 720px; margin: 0 auto; padding: 3rem 1.25rem 4rem; }
+      h1 {
+        font-family: Newsreader, Georgia, serif;
+        font-weight: 500;
+        font-size: clamp(2rem, 5vw, 2.6rem);
+        line-height: 1.15;
+        margin: 0.25rem 0 1rem;
+      }
+      .label {
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.75rem;
+        color: var(--muted);
+        margin: 0;
+      }
+      .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 2rem; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem 1.35rem;
+        margin-bottom: 1rem;
+      }
+      .card h2 { font-size: 1.05rem; margin: 0 0 0.5rem; }
+      .card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+      .links { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+      .btn {
+        display: inline-block;
+        padding: 0.65rem 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.92rem;
+      }
+      .btn-primary { background: var(--accent); color: #042f2e; }
+      .btn-secondary { border: 1px solid var(--border); color: var(--text); }
+      footer { margin-top: 3rem; font-size: 0.85rem; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <p class="label">Inveil · Netherlands</p>
+      <h1>We build Qadbak and ship the iOS app that talks to it.</h1>
+      <p class="lead">
+        Inveil is the company behind
+        <a href="https://qadbak.com">Qadbak</a> — an open-core hosting panel you install on your own VPS —
+        and the native iPhone/iPad app operators use to manage that panel on the road.
+      </p>
+
+      <div class="card">
+        <h2>Qadbak panel</h2>
+        <p>
+          Domains, mail, DNS, TLS, backups, app store, API, and security tools on Debian 12 or Ubuntu LTS.
+          Source on GitHub. Premium modules (client logins, webmail, offsite backups) via
+          <a href="https://license.inveil.dev">license.inveil.dev</a>.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>iOS app (TestFlight)</h2>
+        <p>
+          Two modes: connect to your Qadbak panel URL for full hosting control, or add an existing Linux server
+          with the Qadbak agent — including read-only links to HestiaCP, Coolify, and CasaOS.
+          Request a beta seat at
+          <a href="mailto:support@inveil.net">support@inveil.net</a>.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>Contact</h2>
+        <p>
+          Support: <a href="mailto:support@inveil.net">support@inveil.net</a><br />
+          Privacy: <a href="mailto:privacy@inveil.net">privacy@inveil.net</a><br />
+          Billing: <a href="mailto:billing@inveil.net">billing@inveil.net</a>
+        </p>
+      </div>
+
+      <div class="links">
+        <a class="btn btn-primary" href="https://qadbak.com">Qadbak website</a>
+        <a class="btn btn-secondary" href="https://github.com/macdirtycow/qadbak">GitHub</a>
+        <a class="btn btn-secondary" href="https://qadbak.com/privacy">Privacy policy</a>
+      </div>
+
+      <footer>© 2026 Inveil</footer>
+    </main>
+  </body>
+</html>

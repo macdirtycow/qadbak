@@ -53,6 +53,8 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/system/metrics", h.withAuth(h.systemMetrics))
 	mux.HandleFunc("/api/v1/audit", h.withAuth(h.auditLog))
 	mux.HandleFunc("/api/v1/detection/panel", h.withAuth(h.panelDetection))
+	mux.HandleFunc("/api/v1/panels/link", h.withAuth(h.panelLinkRoute))
+	mux.HandleFunc("/api/v1/panels/overview", h.withAuth(h.panelOverview))
 	mux.HandleFunc("/api/v1/services", h.withAuth(h.servicesList))
 	mux.HandleFunc("/api/v1/docker/containers", h.withAuth(h.dockerContainers))
 	mux.HandleFunc("/api/v1/docker/containers/{id}/logs", h.withAuth(h.dockerContainerLogs))

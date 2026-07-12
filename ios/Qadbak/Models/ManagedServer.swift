@@ -32,6 +32,14 @@ enum ServerKind: String, Codable, CaseIterable, Hashable {
         default: return displayName
         }
     }
+
+    /// Open-source panels the Linux agent can link to (read-only API).
+    var isOpenSourceLinkable: Bool {
+        switch self {
+        case .hestiaCP, .coolify, .casaOS: return true
+        default: return false
+        }
+    }
 }
 
 enum ConnectionStatus: String, Codable, Hashable {

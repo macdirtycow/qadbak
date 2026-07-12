@@ -158,3 +158,12 @@ curl -sk https://127.0.0.1:9443/health
 - [x] `GET /api/v1/audit` — read-only audit tail
 - [x] iOS: Metrics sparklines, Docker log viewer, Audit log screen
 - [x] CasaOS detection in SSH probe + agent panel detection
+
+## Panel linking (agent v0.5.0+)
+
+- [x] Read-only API links for **HestiaCP**, **Coolify**, **CasaOS**
+- [x] Agent routes: `GET/POST/DELETE /api/v1/panels/link`, `GET /api/v1/panels/overview`
+- [x] iOS: **Link panel** sheet + overview on agent dashboard
+- [ ] Write access (create domain/app) — future
+
+See [PANEL-LINKING.md](../agent/PANEL-LINKING.md).

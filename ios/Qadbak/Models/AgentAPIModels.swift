@@ -205,6 +205,86 @@ struct AgentPanelDetectionResponse: Decodable {
     let panelDetection: AgentPanelDetectionPayload?
 }
 
+struct AgentPanelLinkStatusPayload: Decodable {
+    let panel: String?
+    let baseUrl: String?
+    let linked: Bool?
+    let linkedAt: String?
+    let hint: String?
+    let linkable: Bool?
+    let openSource: Bool?
+}
+
+struct AgentPanelLinkStatusResponse: Decodable {
+    let ok: Bool?
+    let detectedPanel: String?
+    let status: AgentPanelLinkStatusPayload?
+    let error: String?
+}
+
+struct AgentPanelOverviewItem: Decodable, Identifiable {
+    var id: String { itemID ?? title ?? UUID().uuidString }
+    let itemID: String?
+    let title: String?
+    let detail: String?
+    let status: String?
+
+    enum CodingKeys: String, CodingKey {
+        case itemID = "id"
+        case title, detail, status
+    }
+}
+
+struct AgentPanelOverviewPayload: Decodable {
+    let panel: String?
+    let panelVersion: String?
+    let hostname: String?
+    let summary: [String: JSONAgentValue]?
+    let items: [AgentPanelOverviewItem]?
+    let notes: [String]?
+}
+
+struct AgentPanelOverviewResponse: Decodable {
+    let ok: Bool?
+    let overview: AgentPanelOverviewPayload?
+    let error: String?
+}
+
+/// Loose JSON values from agent panel summaries.
+enum JSONAgentValue: Decodable {
+    case string(String)
+    case int(Int)
+    case double(Double)
+    case bool(Bool)
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let v = try? container.decode(Int.self) { self = .int(v); return }
+        if let v = try? container.decode(Double.self) { self = .double(v); return }
+        if let v = try? container.decode(Bool.self) { self = .bool(v); return }
+        self = .string(try container.decode(String.self))
+    }
+
+    var displayString: String {
+        switch self {
+        case .string(let s): return s
+        case .int(let i): return String(i)
+        case .double(let d): return String(format: "%.1f", d)
+        case .bool(let b): return b ? "yes" : "no"
+        }
+    }
+}
+
+struct PanelLinkRequest: Encodable {
+    let panel: String?
+    let baseUrl: String?
+    let username: String?
+    let password: String?
+    let accessKey: String?
+    let secretKey: String?
+    let apiToken: String?
+}
+
 struct AgentConfirmResponse: Decodable {
     let ok: Bool?
     let confirmToken: String?

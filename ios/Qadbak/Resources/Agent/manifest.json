@@ -1,7 +1,7 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "minAppVersion": "1.2.0",
-  "minAgentVersion": "0.4.0",
+  "minAgentVersion": "0.5.0",
   "binaries": {
     "linux-amd64": {
       "sha256": "0904a13415aefeb93faf68962382c4aa0717587fd042a092943d187522f902a3",

@@ -6,7 +6,7 @@
     <title>Qadbak - Self-hosted hosting control panel for Linux</title>
     <meta
       name="description"
-      content="Self-hosted hosting panel for Debian-based Linux (Debian 12, Ubuntu LTS): native iOS app (beta), Jellyfin media, 25 one-click apps, Ubuntu LTS upgrade from the panel, Site tools, REST API, and a live demo at demo.qadbak.com. Premium from €2.50/month."
+      content="Self-hosted hosting panel for Debian-based Linux: native iOS app (beta), Linux agent for HestiaCP, Coolify, and CasaOS, Jellyfin media, 25 one-click apps, REST API, live demo at demo.qadbak.com."
     />
     <meta name="theme-color" content="#0f1419" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -83,8 +83,9 @@
             <p class="hero-lead">
               Qadbak replaces cPanel-style workflows on your VPS: sites, mail, DNS, TLS,
               databases, local backups, a curated app store, and operator security tools.
-              Customer site data stays on your hardware. Manage from the browser or the
-              <strong>native iOS app</strong> (public beta).
+              Customer site data stays on your hardware. Manage from the browser, the
+              <strong>iOS app</strong> (TestFlight beta), or attach existing Linux servers
+              with HestiaCP, Coolify, or CasaOS through the agent.
             </p>
             <p class="hero-note">
               <strong>Panel license:</strong> install on your VPS to manage hosting.
@@ -99,14 +100,14 @@
             <ul class="facts">
               <li><strong>License</strong><span>Panel use on your VPS · paid Premium modules</span></li>
               <li><strong>Stack</strong><span>nginx · Postfix · Dovecot · BIND · MariaDB</span></li>
-              <li><strong>Mobile</strong><span>iOS app (beta) · same panel, Bearer auth</span></li>
+              <li><strong>Mobile</strong><span>Qadbak panel (full) · Linux agent + OSS panels (read-only link)</span></li>
               <li><strong>Activate</strong><span>License key in panel · under one minute</span></li>
             </ul>
           </div>
           <aside class="hero-aside">
             <h2>What’s new</h2>
             <ul>
-              <li><strong>iOS app (beta)</strong>: domains, DNS, mail, SSL, backups, Qmail, files, terminal, and panel updates from iPhone/iPad</li>
+              <li><strong>iOS app (beta)</strong>: full panel control on your Qadbak install; Linux agent for metrics, Docker, logs, reboot; link HestiaCP, Coolify, or CasaOS for read-only site/app lists</li>
               <li><strong>Ubuntu LTS upgrade</strong>: 22.04→24.04 or 24.04→26.04 from Admin → Updates (Premium)</li>
               <li><strong>Media</strong>: Jellyfin one-click, domain media library, HTML5 quick player</li>
               <li><strong>Linux installs</strong>: native stack on Debian 12 + Ubuntu 26.04; panel-only on any Linux + Node 20+</li>
@@ -218,40 +219,62 @@
       <section id="mobile-app">
         <div class="container">
           <p class="section-label">iOS app</p>
-          <h2 class="section-title">Your panel in your pocket (public beta)</h2>
+          <h2 class="section-title">Two ways to use the app</h2>
           <p class="section-lead">
-            The native <strong>Qadbak</strong> app for iPhone and iPad connects to <em>your</em> panel
-            over HTTPS, not a cloud dashboard we host. Sign in with your panel URL once; access and
-            refresh tokens stay in the iOS Keychain. TOTP, client logins (Premium), and Qmail work the
-            same as in the browser.
+            The Qadbak iOS app (TestFlight, iOS 17+) connects directly to <em>your</em> infrastructure.
+            Nothing routes through our cloud except Premium license checks on the panel itself.
+            Tokens live in the iOS Keychain.
           </p>
           <div class="grid-2">
             <article class="card">
-              <h3>What you can do today</h3>
+              <h3>Qadbak panel — full control</h3>
               <p>
-                Browse and add domains, edit DNS, manage mail accounts, renew TLS, trigger backups,
-                read and send mail with <strong>Qmail</strong> (Premium), browse domain files, open a
-                web terminal with extra keys, check server health, and run panel or Linux package
-                updates, all from the app.
+                Point the app at your panel URL (HTTPS required). Same work as the browser:
+                domains, DNS, mail, TLS, backups, Qmail (Premium), files, terminal, widgets,
+                and package updates. This is the complete experience.
               </p>
             </article>
             <article class="card">
-              <h3>Built for operators on the move</h3>
+              <h3>Linux agent — existing servers</h3>
               <p>
-                Home Screen widget for domain count and SSL alerts, push notifications for critical
-                events, and the same Bearer-token mobile API the panel exposes for integrations.
-                Open source in the repo, see <code>docs/MOBILE-IOS-APP.md</code> on GitHub.
+                Already run HestiaCP, Coolify, or CasaOS on Debian 12 / Ubuntu 22.04 / 24.04?
+                Add the server over SSH from the app. The agent handles CPU, memory, systemd services,
+                Docker, logs, apt updates, reboot, and shutdown. Link the detected panel with an API
+                token to see users, domains, or applications — read-only for now.
+              </p>
+            </article>
+          </div>
+          <div class="grid-2" style="margin-top: 1.25rem">
+            <article class="card">
+              <h3>Supported open-source panels (agent link)</h3>
+              <ul style="margin: 0.5rem 0 0 1.1rem; color: var(--muted); line-height: 1.6">
+                <li><strong>HestiaCP</strong> — admin login or access key; user and domain counts</li>
+                <li><strong>Coolify</strong> — API token; projects and applications</li>
+                <li><strong>CasaOS</strong> — login or token; installed apps</li>
+              </ul>
+              <p style="margin-top: 0.75rem; margin-bottom: 0; color: var(--muted); font-size: 0.92rem">
+                Plesk and DirectAdmin are detected but not linked yet. The agent does not replace these panels —
+                it gives you a phone-friendly ops layer beside them.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Get the beta</h3>
+              <p>
+                Built by <a href="https://inveil.net" rel="noopener">Inveil</a> alongside the open panel repo.
+                Source and API notes: <code>docs/MOBILE-IOS-APP.md</code> and
+                <code>docs/ios/EXTERNAL_SERVERS.md</code> on GitHub.
+              </p>
+              <p style="margin-bottom: 0">
+                Email <a href="mailto:support@inveil.net">support@inveil.net</a> for a TestFlight invite.
+                You need port <span class="code-chip">9443</span> reachable from your phone for agent servers
+                (or use a VPN).
               </p>
             </article>
           </div>
           <div class="hero-cta" style="margin-top: 2rem">
-            <a href="mailto:support@inveil.net?subject=Qadbak%20iOS%20beta" class="btn btn-primary btn-lg">Request TestFlight beta</a>
-            <a href="https://github.com/macdirtycow/qadbak/blob/main/docs/MOBILE-IOS-APP.md" class="btn btn-secondary btn-lg" rel="noopener">Mobile API docs</a>
+            <a href="mailto:support@inveil.net?subject=Qadbak%20iOS%20beta" class="btn btn-primary btn-lg">Request TestFlight</a>
+            <a href="https://github.com/macdirtycow/qadbak/blob/main/docs/agent/PANEL-LINKING.md" class="btn btn-secondary btn-lg" rel="noopener">Panel linking docs</a>
           </div>
-          <p class="section-lead" style="margin-top: 1.5rem; margin-bottom: 0">
-            Requires iOS 17+, your own Qadbak panel (v1.1+), and HTTPS to your panel hostname.
-            Email <a href="mailto:support@inveil.net">support@inveil.net</a> for a TestFlight invite.
-          </p>
         </div>
       </section>
 
@@ -357,10 +380,11 @@
       <section id="integrations">
         <div class="container">
           <p class="section-label">Integrations</p>
-          <h2 class="section-title">Sell hosting with your existing billing stack</h2>
+          <h2 class="section-title">Billing APIs, mobile ops, and panel links</h2>
           <p class="section-lead">
-            Provision and suspend domains from WHMCS or Blesta using Bearer tokens.
-            OpenAPI spec and integration guides ship in the public repository.
+            WHMCS and Blesta modules use Bearer tokens against your Qadbak panel.
+            The iOS app adds a separate path: a Linux agent on servers you already operate,
+            with optional read-only links to HestiaCP, Coolify, and CasaOS.
           </p>
           <div class="grid-2">
             <article class="card">
@@ -372,8 +396,8 @@
               <p>Create, terminate, suspend, and unsuspend accounts against your panel origin, see <code>docs/integrations/WHMCS-INTEGRATION.md</code> on GitHub.</p>
             </article>
             <article class="card">
-              <h3>Cloudflare-ready panels</h3>
-              <p><code>panel.customer.com</code> vhosts work with Flexible or Full SSL; repair script fixes post-update 520 errors.</p>
+              <h3>iOS + Linux agent</h3>
+              <p>Install <span class="code-chip">qadbak-agent</span> over SSH from the app. Metrics, services, Docker, logs, updates, reboot. Link HestiaCP, Coolify, or CasaOS with a local API token — credentials stay on the server.</p>
             </article>
             <article class="card">
               <h3>Monitoring</h3>
@@ -631,7 +655,14 @@
                 Is there an iOS app?
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
-              <div class="faq-a">Yes. A native <strong>iOS app</strong> is in <strong>public beta</strong> on TestFlight. It talks to your own panel URL (not our servers): domains, DNS, mail, SSL, backups, Qmail, files, terminal, and updates. Requires iOS 17+ and HTTPS to your panel. Request access via <a href="mailto:support@inveil.net">support@inveil.net</a> or read <a href="https://github.com/macdirtycow/qadbak/blob/main/docs/MOBILE-IOS-APP.md" rel="noopener">MOBILE-IOS-APP.md</a> on GitHub.</div>
+              <div class="faq-a">Yes. TestFlight build for iOS 17+. <strong>Path 1:</strong> your own Qadbak panel over HTTPS — domains, mail, terminal, the lot. <strong>Path 2:</strong> Linux agent on an existing VPS (SSH setup from the app) with optional links to HestiaCP, Coolify, or CasaOS for read-only panel data. Request access: <a href="mailto:support@inveil.net">support@inveil.net</a>. Docs: <a href="https://github.com/macdirtycow/qadbak/blob/main/docs/MOBILE-IOS-APP.md" rel="noopener">MOBILE-IOS-APP.md</a>, <a href="https://github.com/macdirtycow/qadbak/blob/main/docs/agent/PANEL-LINKING.md" rel="noopener">PANEL-LINKING.md</a>.</div>
+            </div>
+            <div class="faq-item">
+              <button type="button" class="faq-q" aria-expanded="false">
+                Can the iOS app manage my HestiaCP or Coolify server?
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="faq-a">Partly. Install the Qadbak Linux agent on the same machine (Debian 12 or Ubuntu 22.04/24.04). You get system metrics, services, Docker, logs, and reboot from the app. Then link HestiaCP, Coolify, or CasaOS with an API token stored on the server — today that shows users, domains, or apps without changing panel settings. Full domain/mail control still means running the Qadbak panel or using the panel’s own UI.</div>
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
@@ -715,7 +746,7 @@
                 Who maintains Qadbak?
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
-              <div class="faq-a"><a href="https://inveil.net" rel="noopener">Inveil</a> (Netherlands). We run the panel on our own infrastructure. <a href="/about">About the name</a>.</div>
+              <div class="faq-a"><a href="https://inveil.net" rel="noopener">Inveil</a> (Netherlands) builds Qadbak and the iOS app. We run the public panel on our own VPS. <a href="/about">About the name</a>.</div>
             </div>
           </div>
         </div>
