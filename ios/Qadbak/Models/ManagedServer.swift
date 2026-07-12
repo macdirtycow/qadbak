@@ -124,7 +124,7 @@ struct ManagedServer: Codable, Identifiable, Hashable {
 
     var displayHost: String {
         if !hostname.isEmpty { return hostname }
-        URL(string: apiBaseURL)?.host ?? apiBaseURL
+        return URL(string: apiBaseURL)?.host ?? apiBaseURL
     }
 
     var subtitle: String {

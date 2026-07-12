@@ -79,7 +79,7 @@ struct AgentUpgradeView: View {
                         .frame(minHeight: 100)
                         .scrollContentBackground(.hidden)
                         .padding(8)
-                        .background(QadbakPalette.surface.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+                        .background(QadbakPalette.card.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
                     QBTextField(label: "Passphrase", placeholder: "Optional", text: $keyPassphrase, secure: true)
                 }
             }
@@ -93,7 +93,7 @@ struct AgentUpgradeView: View {
 
     private func sshSettings() -> SSHConnectionSettings {
         SSHConnectionSettings(
-            host: server.ipAddress,
+            host: server.ipAddress ?? server.hostname,
             port: 22,
             username: username.trimmingCharacters(in: .whitespacesAndNewlines),
             auth: usePassword ? .password(password) : .privateKeyPEM(privateKeyPEM, passphrase: keyPassphrase)

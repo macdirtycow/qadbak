@@ -32,7 +32,7 @@ enum SSHPrivateKeyAuth {
 
         let keyType: SSHKeyType
         do {
-            keyType = try SSHKeyTypeDetection.detectPrivateKeyType(from: trimmed)
+            keyType = try SSHKeyDetection.detectPrivateKeyType(from: trimmed)
         } catch SSHKeyDetectionError.passphraseRequired, SSHKeyDetectionError.encryptedPrivateKey {
             throw KeyError.passphraseRequired
         } catch {
@@ -43,11 +43,11 @@ enum SSHPrivateKeyAuth {
 
         switch keyType {
         case .ed25519:
-            let key = try OpenSSH.PrivateKey<Curve25519.Signing.PrivateKey>(string: trimmed, decryptionKey: passData)
-            return .ed25519(username: username, privateKey: key.privateKey)
+            let key = try Curve25519.Signing.PrivateKey(sshEd25519: trimmed, decryptionKey: passData)
+            return .ed25519(username: username, privateKey: key)
         case .rsa:
-            let key = try OpenSSH.PrivateKey<Insecure.RSA.PrivateKey>(string: trimmed, decryptionKey: passData)
-            return .rsa(username: username, privateKey: key.privateKey)
+            let key = try Insecure.RSA.PrivateKey(sshRsa: trimmed, decryptionKey: passData)
+            return .rsa(username: username, privateKey: key)
         default:
             throw KeyError.unsupportedType
         }

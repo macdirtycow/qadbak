@@ -91,7 +91,7 @@ struct LinuxServerOnboardingView: View {
                             .frame(minHeight: 120)
                             .scrollContentBackground(.hidden)
                             .padding(8)
-                            .background(QadbakPalette.surface.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+                            .background(QadbakPalette.card.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
                         QBTextField(label: "Passphrase (if encrypted)", placeholder: "Optional", text: $keyPassphrase, secure: true)
                     }
                 }

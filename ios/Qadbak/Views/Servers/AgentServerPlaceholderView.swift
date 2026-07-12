@@ -63,14 +63,6 @@ struct AgentServerPlaceholderView: View {
         }
     }
 
-    private var capabilityPreview: some View {
-        QBSectionHeader(title: "Planned modules")
-            .padding(.top, 8)
-            + Text("Overview · Services · Docker · Logs · Updates")
-            .font(.caption)
-            .foregroundStyle(QadbakPalette.muted)
-    }
-
     private func statusLabel(_ status: ConnectionStatus) -> String {
         switch status {
         case .connecting: return "Connecting…"

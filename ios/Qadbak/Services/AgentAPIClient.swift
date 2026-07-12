@@ -175,7 +175,7 @@ final class AgentAPIClient: NSObject, @unchecked Sendable {
         return ManagedLogPage(lines: res.lines ?? [], nextCursor: res.nextCursor)
     }
 
-    private func requestData(
+    func requestData(
         _ method: String,
         path: String,
         body: Encodable?,
