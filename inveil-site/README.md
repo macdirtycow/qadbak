@@ -1,25 +1,43 @@
 # Inveil company site
 
-Static marketing site for **https://inveil.net**.
+Static marketing site for **https://inveil.net**. **https://inveil.dev** redirects to inveil.net (same VPS).
 
-## Deploy
+## Deploy (main VPS, e.g. 158.220.85.245)
 
 ```bash
 cd /opt/qadbak && git pull
 sudo bash inveil-site/ops/deploy-inveil-site.sh
 ```
 
-## Cloudflare DNS
+Configures nginx + TLS for **inveil.net**, **www.inveil.net**, and **inveil.dev**.
 
-| Record | Type | Content | Proxy |
-|--------|------|---------|-------|
-| `@` | A | Your VPS IP (e.g. `158.220.85.245`) | Orange OK |
-| `www` | CNAME | `inveil.net` | Orange OK |
-| `inveil.dev` | A | Same VPS IP | Orange OK |
+## Cloudflare DNS — two zones
 
-**Error 523:** Cloudflare cannot reach your VPS on ports **80/443**. The A record **Content** in Cloudflare must be your real VPS IP — not the public `104.21.x` / `172.67.x` lookup results. Open TCP 80+443 in Contabo firewall. See [docs/CLOUDFLARE.md](../docs/CLOUDFLARE.md).
+### Zone `inveil.net`
 
-Mail (MX, SPF, DKIM): `sudo bash scripts/setup-mail.sh inveil.net`
+| Name | Type | Content |
+|------|------|---------|
+| `@` | A | `158.220.85.245` (your main VPS IP) |
+| `www` | CNAME | `inveil.net` |
+
+### Zone `inveil.dev` (separate domain in Cloudflare)
+
+| Name | Type | Content |
+|------|------|---------|
+| `@` | A | `158.220.85.245` (same VPS as inveil.net) |
+
+Orange cloud (proxy) is OK on both zones if TCP 80/443 are open on the VPS.
+
+**Verify:**
+
+```bash
+curl -sI https://inveil.net/ | head -3
+curl -sI https://inveil.dev/ | head -3   # HTTP 301 → inveil.net
+```
+
+**Error 523:** See [docs/CLOUDFLARE.md](../docs/CLOUDFLARE.md) — A record **Content** must be the VPS IP, not Cloudflare anycast lookup results.
+
+Mail: `sudo bash scripts/setup-mail.sh inveil.net`
 
 ## Build zip
 

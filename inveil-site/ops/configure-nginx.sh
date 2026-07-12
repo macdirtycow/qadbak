@@ -125,5 +125,8 @@ write_dev_vhost
 nginx -t
 systemctl reload nginx
 
+PUBLIC_IP="$(web_preflight_public_ipv4)"
 echo ""
-echo "OK — https://${APEX}/ from ${WEB_ROOT} · ${DEV_HOST} → ${APEX}"
+echo "OK — https://${APEX}/ from ${WEB_ROOT}"
+echo "OK — https://${DEV_HOST}/ → https://${APEX}/ (301 redirect)"
+[[ -n "$PUBLIC_IP" ]] && web_preflight_check_dns "$DEV_HOST" "$PUBLIC_IP"
