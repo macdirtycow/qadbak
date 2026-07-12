@@ -20,6 +20,10 @@ ORIGIN_IP="$(grep '^QADBAK_ORIGIN_IP=' "$QADBAK_DIR/.env.local" 2>/dev/null | cu
 ORIGIN_IP="${ORIGIN_IP:-$(curl -4 -sf --max-time 8 ifconfig.me 2>/dev/null || true)}"
 
 echo ""
+echo "==> Inbound SMTP (port 25 — iCloud/Gmail need 220 banner)"
+bash "$QADBAK_DIR/scripts/check-inbound-smtp.sh" "$DOMAIN" || true
+
+echo ""
 echo "==> Public DNS (must pass before send/receive works)"
 set +e
 bash "$QADBAK_DIR/scripts/check-outbound-mail-dns.sh" "$DOMAIN" "$ORIGIN_IP"

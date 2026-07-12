@@ -73,6 +73,9 @@ else
   if grep -qiE '_dc-mx|\.mx\.cloudflare\.net|route\.cloudflare' <<<"$mx"; then
     warn "MX uses Cloudflare Email Routing — disable Email Routing; mail must go to ${MAIL_HOST}"
   fi
+  if grep -qi 'mail\.qadbak\.com' <<<"$mx"; then
+    warn "MX points to mail.qadbak.com — change to ${MAIL_HOST} for ${DOMAIN}"
+  fi
 fi
 
 echo ""
