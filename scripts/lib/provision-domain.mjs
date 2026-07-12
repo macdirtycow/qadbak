@@ -59,6 +59,27 @@ async function writeLandingPage(home, user, domain) {
   ).catch(() => {});
 }
 
+async function ensureUnixUser(user) {
+  try {
+    await exec("id", [user]);
+    return false;
+  } catch {
+    /* create below */
+  }
+  const baseArgs = ["-m", "-s", "/bin/bash"];
+  try {
+    await exec("useradd", [...baseArgs, user]);
+    return true;
+  } catch (e1) {
+    const msg = e1 instanceof Error ? e1.message : String(e1);
+    if (/group .* exists/i.test(msg)) {
+      await exec("useradd", [...baseArgs, "-g", user, user]);
+      return true;
+    }
+    throw e1;
+  }
+}
+
 export async function domainCreate(domain, pass, userOpt, extraJson) {
   const name = String(domain).trim().toLowerCase();
   const opts = parseOpts(extraJson);
