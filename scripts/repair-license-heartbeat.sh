@@ -17,10 +17,13 @@ JWT_ARG="${1:-}"
 upsert_env() {
   local key="$1" val="$2"
   touch "$ENV_FILE"
+  # grep+printf — safe for secrets containing /, =, &, etc. (sed delimiter breaks on /)
   if grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
-    sed -i "s|^${key}=.*|${key}=${val}|" "$ENV_FILE"
+    grep -v "^${key}=" "$ENV_FILE" >"${ENV_FILE}.tmp"
+    printf '%s=%s\n' "$key" "$val" >>"${ENV_FILE}.tmp"
+    mv "${ENV_FILE}.tmp" "$ENV_FILE"
   else
-    echo "${key}=${val}" >>"$ENV_FILE"
+    printf '%s=%s\n' "$key" "$val" >>"$ENV_FILE"
   fi
   chown "$USER:$USER" "$ENV_FILE" 2>/dev/null || true
   chmod 600 "$ENV_FILE" 2>/dev/null || true
