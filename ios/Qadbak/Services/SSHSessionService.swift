@@ -284,9 +284,18 @@ struct SSHSessionService {
         do {
             buffer = try await client.executeCommand(command, mergeStreams: true)
         } catch let error as SSHClient.CommandFailed {
-            throw SSHServiceError.commandFailed(
-                "Remote command failed (exit \(error.exitCode)). If this was during install, run on the server: systemctl stop qadbak-agent; rm -f /tmp/qadbak-agent-*; then retry."
-            )
+            let hint: String
+            switch error.exitCode {
+            case 6:
+                hint = "Port 9443 is already used by another process. On the server run: ss -tlnp | grep 9443 — stop that service or pick another port, then retry."
+            case 7:
+                hint = "The agent did not respond on port 9443 after install (curl could not connect). On the server run: systemctl status qadbak-agent; journalctl -u qadbak-agent -n 30; ss -tlnp | grep 9443. Ensure port 9443 is free, then retry."
+            case 1:
+                hint = "Install script failed. On the server run: systemctl stop qadbak-agent; rm -f /tmp/qadbak-agent-* /etc/sudoers.d/qadbak-agent; systemctl daemon-reload; then retry."
+            default:
+                hint = "If this was during install, run on the server: systemctl stop qadbak-agent; rm -f /tmp/qadbak-agent-*; then retry."
+            }
+            throw SSHServiceError.commandFailed("Remote command failed (exit \(error.exitCode)). \(hint)")
         }
         return SSHCommandResult(output: String(buffer: buffer), hostKeyFingerprint: pinDelegate.discoveredFingerprint)
     }
@@ -382,9 +391,18 @@ struct SSHSessionService {
           >/etc/systemd/system/qadbak-agent.service
         chown -R "${AGENT_USER}:${AGENT_USER}" "$DATA_DIR"
         chmod 750 "$DATA_DIR"
+        chown root:"$AGENT_USER" "${CONFIG_DIR}/agent.env" 2>/dev/null || true
+        systemctl stop qadbak-agent.service 2>/dev/null || true
+        if command -v ss >/dev/null 2>&1; then
+          if ss -tlnH 2>/dev/null | awk -v p=":$AGENT_PORT" '$4 ~ p"$" {found=1} END{exit !found}'; then
+            occupier="$(ss -tlnpH 2>/dev/null | awk -v p=":$AGENT_PORT" '$4 ~ p"$" {print; exit}')"
+            echo "Port ${AGENT_PORT} is already in use: ${occupier:-unknown}" >&2
+            exit 6
+          fi
+        fi
         systemctl daemon-reload
-        systemctl enable --now qadbak-agent.service
-        sleep 1
+        systemctl enable qadbak-agent.service
+        systemctl restart qadbak-agent.service
         LISTEN_HOST="${AGENT_LISTEN%%:*}"
         [[ "$LISTEN_HOST" == "0.0.0.0" ]] && CURL_HOST="127.0.0.1" || CURL_HOST="$LISTEN_HOST"
         AGENT_PUBLIC_HOST="$LISTEN_HOST"
@@ -396,7 +414,28 @@ struct SSHSessionService {
           [[ -z "$AGENT_PUBLIC_HOST" ]] && AGENT_PUBLIC_HOST="127.0.0.1"
         fi
         echo "agent_listen_host:$AGENT_PUBLIC_HOST"
-        RESP=$(curl -sk -X POST "https://${CURL_HOST}:${AGENT_PORT}/api/v1/pairing/init")
+        pairing_curl_host() {
+          local host="${1:-}"
+          [[ -z "$host" || "$host" == "0.0.0.0" ]] && return 1
+          curl -4sk --max-time 8 -X POST "https://${host}:${AGENT_PORT}/api/v1/pairing/init"
+        }
+        RESP=""
+        for _attempt in $(seq 1 45); do
+          if systemctl is-active --quiet qadbak-agent.service; then
+            for _host in 127.0.0.1 "$CURL_HOST"; do
+              if RESP="$(pairing_curl_host "$_host" 2>/dev/null)" && [[ -n "$RESP" ]] && [[ "$RESP" == *pairingToken* ]]; then
+                break 2
+              fi
+            done
+          fi
+          sleep 1
+        done
+        if [[ -z "$RESP" || "$RESP" != *pairingToken* ]]; then
+          echo "qadbak-agent did not respond on port ${AGENT_PORT} (listen=${AGENT_LISTEN})" >&2
+          systemctl status qadbak-agent.service --no-pager >&2 || true
+          journalctl -u qadbak-agent.service -n 25 --no-pager >&2 || true
+          exit 7
+        fi
         TOKEN=$(printf '%s' "$RESP" | sed -n 's/.*"pairingToken":"\\([^"]*\\)".*/\\1/p')
         FP=$(printf '%s' "$RESP" | sed -n 's/.*"tlsFingerprintSha256":"\\([^"]*\\)".*/\\1/p')
         echo "pairing:$TOKEN"

@@ -134,8 +134,15 @@ WantedBy=multi-user.target
 EOF
   chown -R "${AGENT_USER}:${AGENT_USER}" "$DATA_DIR"
   chmod 750 "$DATA_DIR"
+  systemctl stop "${UNIT_NAME}" 2>/dev/null || true
+  if command -v ss >/dev/null 2>&1; then
+    if ss -tlnH 2>/dev/null | awk -v p=":$AGENT_PORT" '$4 ~ p"$" {found=1} END{exit !found}'; then
+      die "Port ${AGENT_PORT} already in use (see: ss -tlnp | grep ${AGENT_PORT})"
+    fi
+  fi
   systemctl daemon-reload
-  systemctl enable --now "${UNIT_NAME}"
+  systemctl enable "${UNIT_NAME}"
+  systemctl restart "${UNIT_NAME}"
   log "systemd unit enabled (non-root)"
 }
 
@@ -144,15 +151,32 @@ pairing_connect_host() {
   if [[ "$host" == "0.0.0.0" ]]; then
     host="127.0.0.1"
   fi
-  printf '%s:%s\n' "$host" "${AGENT_LISTEN##*:}"
+  printf '%s' "$host"
 }
 
 issue_pairing() {
-  local connect
+  local connect host resp attempt
   connect="$(pairing_connect_host)"
   local tmp
   tmp="$(mktemp)"
-  curl -sk -X POST "https://${connect}/api/v1/pairing/init" -o "$tmp" || die "Agent not responding on https://${connect}"
+  for attempt in $(seq 1 45); do
+    if systemctl is-active --quiet "${UNIT_NAME}"; then
+      for host in 127.0.0.1 "$connect"; do
+        [[ -z "$host" || "$host" == "0.0.0.0" ]] && continue
+        if curl -4sk --max-time 8 -X POST "https://${host}:${AGENT_PORT}/api/v1/pairing/init" -o "$tmp" 2>/dev/null \
+          && grep -q pairingToken "$tmp" 2>/dev/null; then
+          break 2
+        fi
+      done
+    fi
+    sleep 1
+  done
+  if ! grep -q pairingToken "$tmp" 2>/dev/null; then
+    rm -f "$tmp"
+    systemctl status "${UNIT_NAME}" --no-pager >&2 || true
+    journalctl -u "${UNIT_NAME}" -n 25 --no-pager >&2 || true
+    die "Agent not responding on https://${connect} (port ${AGENT_PORT})"
+  fi
   if command -v python3 >/dev/null 2>&1; then
     python3 - "$tmp" <<'PY'
 import json, sys
@@ -175,7 +199,6 @@ main() {
   ensure_jwt_secret
   write_sudoers
   write_unit
-  sleep 1
   printf 'agent_listen_host:%s\n' "${AGENT_LISTEN%%:*}"
   log "Pairing credentials (use within 10 minutes):"
   issue_pairing

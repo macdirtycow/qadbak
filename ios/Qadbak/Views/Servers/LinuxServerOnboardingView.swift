@@ -413,6 +413,10 @@ struct LinuxServerOnboardingView: View {
             if message.contains("SSHClientError error 4") || message.contains("allAuthenticationOptionsFailed") {
                 errorMessage = "SSH login failed during install. Go back to step 2 and re-enter your password."
                 step = .authentication
+            } else if message.contains("exit 7") || message.contains("did not respond on port") {
+                errorMessage = "\(message)\n\nThe agent service may still be starting or failed to bind. SSH in and run: systemctl status qadbak-agent && journalctl -u qadbak-agent -n 30"
+            } else if message.contains("exit 6") || message.contains("already in use") {
+                errorMessage = "\(message)\n\nAnother process is using port 9443. Run: ss -tlnp | grep 9443"
             } else if listenMode == .lan {
                 errorMessage = "\(message)\n\nLAN tip: open TCP 9443 on the VPS firewall (ufw + Contabo panel) and retry."
             } else {
