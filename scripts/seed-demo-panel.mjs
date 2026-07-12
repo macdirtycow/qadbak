@@ -155,13 +155,7 @@ async function main() {
     }
   }
 
-  console.log(
-    JSON.stringify({
-      ok: true,
-      showcase: SHOWCASE,
-      hint: `Demo panel seeded. Log in at https://${process.env.QADBAK_DEMO_HOST || "demo.qadbak.com"}/login`,
-    }),
-  );
+  console.log(JSON.stringify({ ok: true, showcase: SHOWCASE }));
 }
 
 main().catch((e) => {

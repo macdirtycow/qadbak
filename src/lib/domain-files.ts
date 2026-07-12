@@ -87,7 +87,11 @@ const LANG_BY_EXT: Record<string, string> = {
   log: "plaintext",
 };
 
-const MOCK_TREE: Record<string, DomainFileEntry[]> = {
+const MOCK_TREE: Record<string, DomainFileEntry[]> = Object.create(null) as Record<
+  string,
+  DomainFileEntry[]
+>;
+Object.assign(MOCK_TREE, {
   "": [
     { name: "public_html", path: "public_html", type: "dir" },
     { name: "cgi-bin", path: "cgi-bin", type: "dir" },
@@ -178,7 +182,7 @@ const MOCK_TREE: Record<string, DomainFileEntry[]> = {
       downloadable: true,
     },
   ],
-};
+});
 
 const MOCK_TEXT: Record<string, string> = {
   "public_html/index.html": `<!DOCTYPE html>

@@ -28,5 +28,6 @@ export function assertAllowedAgentUrl(raw: string): string {
   if (isBlockedHost(url.hostname)) {
     throw new Error("Agent URL host is not allowed.");
   }
-  return `${url.origin}${url.pathname}`.replace(/\/$/, "");
+  const port = url.port ? `:${url.port}` : "";
+  return `${url.protocol}//${url.hostname}${port}`;
 }

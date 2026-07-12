@@ -8,6 +8,7 @@ import {
   resolveDomainUser,
   QADBAK_DIR,
 } from "./provisioning-common.mjs";
+import { assertDomainName } from "./security-utils.mjs";
 
 const exec = promisify(execFile);
 const CFG = "modsecurity.json";
@@ -91,8 +92,9 @@ export async function modsecurityToggle(domain, flag) {
 }
 
 export async function modsecurityLogs(domain, linesArg, grepArg) {
+  const safeDomain = assertDomainName(domain);
   const n = Math.min(Number(linesArg) || 200, 2000);
-  const grep = String(grepArg || domain).trim();
+  const grep = String(grepArg || safeDomain).trim();
   const cfgDir = domainConfigDir(domain);
   const candidates = [
     path.join(cfgDir, "modsecurity-audit.log"),

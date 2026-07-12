@@ -1,7 +1,7 @@
 /** Minimal RFC822 header parsing for Maildir files (no MIME decoder). */
 import { stripHtmlTags } from "./security-utils.mjs";
 
-const HEADER_NAMES = [
+const HEADER_NAMES = new Set([
   "subject",
   "from",
   "to",
@@ -10,11 +10,24 @@ const HEADER_NAMES = [
   "message-id",
   "reply-to",
   "references",
-];
+]);
+
+function unfoldHeaders(block) {
+  const lines = block.split(/\r?\n/);
+  const out = [];
+  for (const line of lines) {
+    if ((line.startsWith(" ") || line.startsWith("\t")) && out.length > 0) {
+      out[out.length - 1] += ` ${line.trim()}`;
+    } else {
+      out.push(line);
+    }
+  }
+  return out;
+}
 
 function pickHeader(unfolded, name) {
   const target = `${name.toLowerCase()}:`;
-  for (const line of unfolded.split("\n")) {
+  for (const line of unfolded) {
     const idx = line.toLowerCase().indexOf(target);
     if (idx === 0) {
       return line.slice(target.length).trim();
@@ -27,9 +40,9 @@ export function parseMailHeaders(raw) {
   const text = raw.slice(0, 64 * 1024);
   const headerEnd = text.search(/\r?\n\r?\n/);
   const block = headerEnd >= 0 ? text.slice(0, headerEnd) : text;
-  const unfolded = block.replace(/\r?\n[ \t]+/g, "\n");
+  const unfolded = unfoldHeaders(block);
   const pick = (name) => {
-    if (!HEADER_NAMES.includes(name.toLowerCase())) return "";
+    if (!HEADER_NAMES.has(name.toLowerCase())) return "";
     return pickHeader(unfolded, name);
   };
   return {

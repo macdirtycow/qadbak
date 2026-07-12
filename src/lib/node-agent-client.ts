@@ -36,7 +36,8 @@ export async function probeNodeHealth(node: QadbakNode): Promise<NodeHealth> {
   }
   const start = Date.now();
   try {
-    const res = await fetch(`${agentUrl}/health`, {
+    const healthUrl = new URL("/health", `${agentUrl}/`).href;
+    const res = await fetch(healthUrl, {
       signal: AbortSignal.timeout(8000),
       cache: "no-store",
     });
@@ -73,7 +74,7 @@ export async function agentLegacyApiCall(
   if (!agentUrl || !token) {
     throw new Error("Node agent URL or QADBAK_NODE_AGENT_TOKEN not configured");
   }
-  const res = await fetch(`${agentUrl}/v1/legacy-api/call`, {
+  const res = await fetch(new URL("/v1/legacy-api/call", `${agentUrl}/`).href, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -104,7 +105,7 @@ export async function agentProvisionDomain(
   if (!agentUrl || !token) {
     throw new Error("Node agent URL or QADBAK_NODE_AGENT_TOKEN not configured");
   }
-  const res = await fetch(`${agentUrl}/v1/provision/domain`, {
+  const res = await fetch(new URL("/v1/provision/domain", `${agentUrl}/`).href, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,

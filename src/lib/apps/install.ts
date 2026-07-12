@@ -34,7 +34,7 @@ const ALLOWED_FIELD_PATTERNS = new Set([
 ]);
 
 function isValidEmail(value: string): boolean {
-  if (value.length > 254 || /\s/.test(value)) return false;
+  if (value.length > 254 || value.includes(" ")) return false;
   const at = value.indexOf("@");
   if (at <= 0 || at >= value.length - 1) return false;
   const domain = value.slice(at + 1);
@@ -42,6 +42,58 @@ function isValidEmail(value: string): boolean {
     return false;
   }
   return true;
+}
+
+function isValidDomainName(value: string): boolean {
+  if (value.length < 3 || value.length > 253 || !value.includes(".")) return false;
+  const labels = value.split(".");
+  for (const label of labels) {
+    if (!label || label.length > 63) return false;
+    if (label.startsWith("-") || label.endsWith("-")) return false;
+    for (const ch of label) {
+      const lower = ch.toLowerCase();
+      const ok =
+        (lower >= "a" && lower <= "z") ||
+        (ch >= "0" && ch <= "9") ||
+        ch === "-";
+      if (!ok) return false;
+    }
+  }
+  return true;
+}
+
+function isValidSubdomainLabel(value: string): boolean {
+  if (value.length < 1 || value.length > 63) return false;
+  if (value.startsWith("-") || value.endsWith("-")) return false;
+  for (const ch of value) {
+    const lower = ch.toLowerCase();
+    const ok = (lower >= "a" && lower <= "z") || (ch >= "0" && ch <= "9") || ch === "-";
+    if (!ok) return false;
+  }
+  return true;
+}
+
+function isValidDbIdentifier(value: string): boolean {
+  if (value.length < 1 || value.length > 32) return false;
+  for (const ch of value) {
+    const ok =
+      (ch >= "a" && ch <= "z") ||
+      (ch >= "A" && ch <= "Z") ||
+      (ch >= "0" && ch <= "9") ||
+      ch === "_";
+    if (!ok) return false;
+  }
+  return true;
+}
+
+function matchesAllowedPattern(pattern: string, value: string): boolean {
+  if (pattern === "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$") {
+    return isValidSubdomainLabel(value);
+  }
+  if (pattern === "^[a-zA-Z0-9_]{1,32}$") {
+    return isValidDbIdentifier(value);
+  }
+  return false;
 }
 
 function validate(template: AppTemplate, input: Record<string, unknown>): Record<string, string> {
@@ -66,7 +118,7 @@ function validate(template: AppTemplate, input: Record<string, unknown>): Record
       continue;
     }
     if (field.type === "domain") {
-      if (!/^[a-z0-9.-]{3,253}$/i.test(value) || !value.includes(".")) {
+      if (!isValidDomainName(value)) {
         throw new AppValidationError(`"${field.label}" must look like a domain.`);
       }
     } else if (field.type === "email") {
@@ -77,8 +129,7 @@ function validate(template: AppTemplate, input: Record<string, unknown>): Record
       if (!ALLOWED_FIELD_PATTERNS.has(field.pattern)) {
         throw new AppValidationError(`"${field.label}" has an unsupported validation pattern.`);
       }
-      const re = new RegExp(field.pattern);
-      if (!re.test(value)) {
+      if (!matchesAllowedPattern(field.pattern, value)) {
         throw new AppValidationError(
           `"${field.label}" does not match the required format (${field.pattern}).`,
         );

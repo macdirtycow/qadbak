@@ -11,7 +11,7 @@ import {
   QADBAK_DIR,
 } from "./provisioning-common.mjs";
 import { validateDnsRecord } from "./validate-dns-record.mjs";
-import { assertDomainName, escapeRegExp, escapeShellSingle } from "./security-utils.mjs";
+import { assertDomainName, escapeShellSingle } from "./security-utils.mjs";
 
 const exec = promisify(execFile);
 
@@ -45,6 +45,7 @@ async function zoneFromLegacyHostCli(domain) {
 
 async function zoneFromNamedConf(domain) {
   const safeDomain = assertDomainName(domain);
+  const zoneNeedle = `zone "${safeDomain}"`;
   const confs = [
     "/etc/bind/named.conf.local",
     "/etc/bind/named.conf",
@@ -53,16 +54,18 @@ async function zoneFromNamedConf(domain) {
   for (const conf of confs) {
     if (!(await fileExists(conf))) continue;
     const text = await readFile(conf, "utf8");
-    const re = new RegExp(
-      `zone\\s+"${escapeRegExp(safeDomain)}"[\\s\\S]*?file\\s+"([^"]+)"`,
-      "i",
-    );
-    const m = text.match(re);
-    if (m?.[1]) {
-      let p = m[1].trim();
-      if (!p.startsWith("/")) p = path.join("/etc/bind", p);
-      if (await fileExists(p)) return p;
-    }
+    const idx = text.indexOf(zoneNeedle);
+    if (idx < 0) continue;
+    const slice = text.slice(idx, idx + 4096);
+    const fileIdx = slice.search(/\bfile\s+"/i);
+    if (fileIdx < 0) continue;
+    const after = slice.slice(fileIdx);
+    const openQuote = after.indexOf('"');
+    const closeQuote = openQuote >= 0 ? after.indexOf('"', openQuote + 1) : -1;
+    if (closeQuote < 0) continue;
+    let p = after.slice(openQuote + 1, closeQuote).trim();
+    if (!p.startsWith("/")) p = path.join("/etc/bind", p);
+    if (await fileExists(p)) return p;
   }
   return null;
 }

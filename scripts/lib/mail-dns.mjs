@@ -3,7 +3,6 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import { findZonePath, dnsAdd } from "./provision-dns.mjs";
-import { escapeRegExp } from "./security-utils.mjs";
 
 const exec = promisify(execFile);
 
@@ -54,8 +53,7 @@ export function isIpAddress(value) {
 }
 
 export function isMailFqdn(value) {
-  const v = String(value || "").trim();
-  return v.includes(".") && !isIpAddress(v);
+  return isValidHostname(value);
 }
 
 export async function resolveMailHost() {
@@ -65,7 +63,7 @@ export async function resolveMailHost() {
     process.env.QADBAK_PUBLIC_HOST?.trim(),
   ].filter(Boolean);
   for (const c of candidates) {
-    if (isMailFqdn(c)) return c.replace(/\.$/, "");
+    if (isMailFqdn(c)) return String(c).trim().replace(/\.$/, "");
   }
   for (const c of candidates) {
     if (isIpAddress(c)) {
@@ -223,8 +221,14 @@ function zoneHasMx(text) {
 
 function zoneHasMailA(text, label) {
   if (!isValidHostname(label)) return false;
-  const re = new RegExp(`^\\s*${escapeRegExp(label)}\\s+`, "im");
-  return re.test(text);
+  const needle = `${label.toLowerCase()} `;
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim().toLowerCase();
+    if (trimmed.startsWith(needle) || trimmed.startsWith(`${label.toLowerCase()}\t`)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /** Add MX + mail A to local BIND zone when QADBAK_MAIL_AUTODNS is not false. */

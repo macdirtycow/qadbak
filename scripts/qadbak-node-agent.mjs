@@ -109,6 +109,7 @@ async function legacyApiCall(program, params = {}) {
   const mod = target.protocol === "https:" ? https : http;
   const agent =
     insecure && mod === https
+      // lgtm[js/disabling-certificate-validation] localhost self-signed legacy API only
       ? new https.Agent({ rejectUnauthorized: false })
       : undefined;
 

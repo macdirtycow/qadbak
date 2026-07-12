@@ -33,11 +33,11 @@ const sharedPassword =
 
 function usage() {
   console.error(`Usage:
-  node scripts/rotate-weak-passwords.mjs [--fix] [--generate] [--password PASS]
+  node scripts/rotate-weak-passwords.mjs [--fix] [--generate] [--password <value>]
 
   --fix         Rotate weak passwords (otherwise check only)
-  --generate    With --fix: assign a random password per user and print once
-  --password    With --fix: use this password for all weak users (min ${process.env.QADBAK_PASSWORD_MIN_LENGTH ?? 12} chars)
+  --generate    With --fix: assign a random password per user (written to a credentials file)
+  --password    With --fix: use one shared password for all weak users
 
 Environment:
   QADBAK_DIR              Panel root (default: cwd)
@@ -113,8 +113,8 @@ async function main() {
   }
 
   console.log(`\nFound ${weak.length} user(s) with weak password(s):\n`);
-  for (const { user, matchedWeak } of weak) {
-    console.log(`  - ${user.username} (${user.role}) — matches "${matchedWeak}"`);
+  for (const { user } of weak) {
+    console.log(`  - ${user.username} (${user.role})`);
   }
 
   if (!fix) {
@@ -157,10 +157,9 @@ async function main() {
   await writeFile(credsPath, `${JSON.stringify(rotated, null, 2)}\n`, "utf8");
   await chmod(credsPath, USERS_MODE).catch(() => undefined);
 
-  console.log("\nUpdated passwords written to:");
-  console.log(`  ${credsPath}`);
-  console.log("\nStore that file securely (mode 600) and remove it after distributing credentials.");
-  console.log("Users must sign in again.");
+  console.log("\nCredential rotation complete.");
+  console.log(`Credentials file: ${credsPath}`);
+  console.log("Store that file securely (mode 600) and remove it after distributing credentials.");
 }
 
 main().catch((e) => {

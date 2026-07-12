@@ -21,14 +21,6 @@ export function legacyApiTlsInsecureEnabled(): boolean {
   if (flag === "false" || flag === "0" || flag === "no") return false;
   if (flag === "true" || flag === "1" || flag === "yes") return true;
 
-  if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === "0") {
-    console.warn(
-      "[qadbak] NODE_TLS_REJECT_UNAUTHORIZED=0 affects all HTTPS from this process. " +
-        "Prefer QADBAK_LEGACY_API_TLS_INSECURE=true in .env.local for the hosting API only.",
-    );
-    return true;
-  }
-
   return legacyApiUrlIsLocal();
 }
 
@@ -36,6 +28,7 @@ function localhostInsecureAgent(target: URL): https.Agent {
   if (!legacyApiUrlIsLocal(target.href)) {
     throw new Error("Insecure TLS is only allowed for localhost legacy API URLs.");
   }
+  // lgtm[js/disabling-certificate-validation] localhost self-signed legacy API only
   return new https.Agent({ rejectUnauthorized: false });
 }
 

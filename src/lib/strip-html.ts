@@ -16,6 +16,29 @@ function removeBalancedTag(html: string, tagName: string): string {
   return result;
 }
 
+function insertBreaksBeforeTags(html: string): string {
+  let out = "";
+  let i = 0;
+  const lower = html.toLowerCase();
+  while (i < html.length) {
+    if (lower.startsWith("<br", i)) {
+      out += "\n";
+      i = html.indexOf(">", i);
+      if (i < 0) break;
+      i += 1;
+      continue;
+    }
+    if (lower.startsWith("</p>", i)) {
+      out += "\n";
+      i += 4;
+      continue;
+    }
+    out += html[i]!;
+    i += 1;
+  }
+  return out;
+}
+
 function decodeBasicEntities(text: string): string {
   return text
     .split("&nbsp;").join(" ")
@@ -28,8 +51,7 @@ function decodeBasicEntities(text: string): string {
 export function stripHtmlTags(html: string): string {
   let text = removeBalancedTag(html, "style");
   text = removeBalancedTag(text, "script");
-  text = text.split(/<br\s*\/?>/gi).join("\n");
-  text = text.split(/<\/p>/gi).join("\n");
+  text = insertBreaksBeforeTags(text);
   let out = "";
   let inTag = false;
   for (const ch of text) {

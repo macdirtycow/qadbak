@@ -28,9 +28,16 @@ export function assertComposePolicyYaml(yaml: string): void {
   for (const line of yaml.split("\n")) {
     const trimmed = line.trim();
     if (!trimmed.startsWith("-")) continue;
-    const hostMatch = trimmed.match(/^-\s*['"]?([^'":\s]+)\s*:\s*/);
-    if (!hostMatch?.[1]) continue;
-    const hostPath = hostMatch[1].replace(/^['"]|['"]$/g, "");
+    const rest = trimmed.slice(1).trim();
+    const colon = rest.indexOf(":");
+    if (colon < 0) continue;
+    let hostPath = rest.slice(0, colon).trim();
+    if (
+      (hostPath.startsWith('"') && hostPath.endsWith('"')) ||
+      (hostPath.startsWith("'") && hostPath.endsWith("'"))
+    ) {
+      hostPath = hostPath.slice(1, -1);
+    }
     if (hostPath.includes("docker.sock")) {
       throw new Error("Mounting docker.sock is not allowed.");
     }
