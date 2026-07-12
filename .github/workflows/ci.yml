@@ -71,6 +71,7 @@ jobs:
         run: npm run test:e2e
         env:
           SESSION_SECRET: ci-e2e-secret-minimum-32-characters-long
+          QADBAK_ALLOW_WEAK_PASSWORDS: "true"
           QADBAK_LEGACY_API_MOCK: "true"
           E2E_PORT: "3099"
           CI: "true"

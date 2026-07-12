@@ -60,6 +60,13 @@ export function isWeakPassword(password: string): boolean {
   return WEAK_PASSWORDS.has(password.trim().toLowerCase());
 }
 
+/** Block default passwords on production login (E2E sets QADBAK_ALLOW_WEAK_PASSWORDS=true). */
+export function isWeakPasswordLoginBlocked(password: string): boolean {
+  if (process.env.NODE_ENV !== "production") return false;
+  if (process.env.QADBAK_ALLOW_WEAK_PASSWORDS === "true") return false;
+  return isWeakPassword(password);
+}
+
 export async function loadUsers(): Promise<PanelUser[]> {
   await ensureUsersFile();
   const { mtimeMs } = await stat(USERS_PATH);

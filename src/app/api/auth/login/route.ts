@@ -14,7 +14,7 @@ import {
 import { verifyTotpCode } from "@/lib/totp";
 import { requireAdminTotp } from "@/lib/security-config";
 import { getPanelPolicy } from "@/lib/panel-policy";
-import { findUserById, findUserByUsername, verifyPassword, isWeakPassword } from "@/lib/users";
+import { findUserById, findUserByUsername, verifyPassword, isWeakPasswordLoginBlocked } from "@/lib/users";
 
 async function authFailureDelay(): Promise<void> {
   const ms = 200 + Math.floor(Math.random() * 300);
@@ -91,11 +91,7 @@ export async function POST(request: Request) {
       return jsonError("Invalid credentials.", 401);
     }
 
-    if (
-      process.env.NODE_ENV === "production" &&
-      process.env.QADBAK_ALLOW_WEAK_PASSWORDS !== "true" &&
-      isWeakPassword(body.password)
-    ) {
+    if (isWeakPasswordLoginBlocked(body.password)) {
       await auditLog(body.username, "login-weak-password-blocked", user.id, clientIp);
       return jsonError(
         "This account uses a default password. Change it on the server (data/users.json) before signing in.",
