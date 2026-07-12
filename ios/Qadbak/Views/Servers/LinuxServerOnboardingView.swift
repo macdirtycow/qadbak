@@ -326,6 +326,7 @@ struct LinuxServerOnboardingView: View {
             let verified = try AgentInstallService.verifiedBinary(architecture: probe.architecture)
             installManifest = verified.manifest
             let settings = sshSettings()
+            progressMessage = "Uploading agent via SSH… (~5–15 min, keep app open)"
             let result = try await ssh.uploadAndInstall(
                 settings: settings,
                 knownHostFingerprint: sshHostKeyFingerprint,
