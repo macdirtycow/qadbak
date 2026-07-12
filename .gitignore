@@ -8,6 +8,8 @@ tsconfig.tsbuildinfo
 data/branding.json
 data/branding/
 data/users.json
+data/instance-id
+data/license.json
 data/api-keys.json
 data/mobile-refresh-tokens.json
 data/mobile-push-tokens.json
