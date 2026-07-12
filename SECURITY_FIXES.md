@@ -130,6 +130,7 @@ Existing e2e: `e2e/security.spec.ts` (CSRF, IDOR, path traversal, legacy redirec
 2. Change default `changeme` passwords before exposing panel
 3. Enable `QADBAK_REQUIRE_ADMIN_TOTP=true` for admins
 4. Run `sudo bash scripts/check-panel-security.sh` on VPS
+5. Restart after deploy: `sudo bash scripts/pull-build-restart.sh` or `sudo systemctl restart qadbak` (after `install-qadbak-systemd.sh`)
 
 ---
 

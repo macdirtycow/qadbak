@@ -22,3 +22,7 @@ visudo -cf "$SUDOERS"
 
 sudo -u "$QADBAK_USER" sudo -n "$SCRIPT" __probe__ | grep -q OK
 echo "OK — panel pm2 control"
+
+if [[ -f "$QADBAK_DIR/scripts/install-qadbak-systemd.sh" ]]; then
+  bash "$QADBAK_DIR/scripts/install-qadbak-systemd.sh"
+fi
