@@ -67,3 +67,30 @@ describe("provisioning command allowlist", () => {
     expect(() => assertProvisioningCommand("evil-command")).toThrow(/Disallowed/i);
   });
 });
+
+describe("weak password check", () => {
+  it("detects changeme hash", async () => {
+    const bcrypt = await import("bcryptjs");
+    const { findWeakPasswordUsers } = await import(
+      "../../../scripts/lib/weak-password-check.mjs"
+    );
+    const hash = await bcrypt.hash("changeme", 12);
+    const weak = await findWeakPasswordUsers([
+      { id: "1", username: "admin", passwordHash: hash, role: "admin" },
+    ]);
+    expect(weak).toHaveLength(1);
+    expect(weak[0]?.matchedWeak).toBe("changeme");
+  });
+
+  it("ignores strong passwords", async () => {
+    const bcrypt = await import("bcryptjs");
+    const { findWeakPasswordUsers } = await import(
+      "../../../scripts/lib/weak-password-check.mjs"
+    );
+    const hash = await bcrypt.hash("xK9!mN2pQ7vR4wL8zT1", 12);
+    const weak = await findWeakPasswordUsers([
+      { id: "1", username: "admin", passwordHash: hash, role: "admin" },
+    ]);
+    expect(weak).toHaveLength(0);
+  });
+});

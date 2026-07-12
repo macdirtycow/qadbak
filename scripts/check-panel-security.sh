@@ -33,10 +33,10 @@ fi
 
 USERS="$ROOT/data/users.json"
 if [[ -f "$USERS" ]]; then
-  if grep -qE 'changeme|password123|admin123' "$USERS" 2>/dev/null; then
-    warn "data/users.json may contain weak credentials — verify and rotate passwords"
+  if ! bash "$ROOT/scripts/rotate-weak-passwords.sh" >/dev/null 2>&1; then
+    warn "panel user(s) still use default/weak password — run: sudo bash scripts/rotate-weak-passwords.sh --fix --generate"
   else
-    ok "users.json has no obvious weak password strings"
+    ok "no default/weak panel passwords (bcrypt check)"
   fi
   if [[ "$(stat -c '%a' "$USERS" 2>/dev/null || stat -f '%OLp' "$USERS")" != *600* ]] && \
      [[ "$(stat -c '%a' "$USERS" 2>/dev/null || echo)" != "600" ]]; then
