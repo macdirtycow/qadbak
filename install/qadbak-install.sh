@@ -9,55 +9,46 @@ QADBAK_USER="${QADBAK_USER:-qadbak}"
 NODE_MAJOR="${NODE_MAJOR:-20}"
 export QADBAK_NATIVE_INSTALL=1
 
+INSTALL_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck source=../scripts/lib/linux-distro.sh
 source "$(dirname "$0")/../scripts/lib/linux-distro.sh"
+# shellcheck source=../scripts/lib/installer-ui.sh
+source "$(dirname "$0")/../scripts/lib/installer-ui.sh"
 
 NATIVE_FEATURES="${QADBAK_NATIVE_FEATURES:-ssl,dns,mail,db,domain,backup,cron,aliases,redirects,features,logs,php,ftp,limits,lifecycle,mail-settings,mail-logs,imap,protected,shared,proxies,scripts,security,resellers}"
+
+QADBAK_INSTALL_VERSION="$(qadbak_install_version_from_repo "$INSTALL_ROOT" || echo "")"
 
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Run as root: sudo bash install/qadbak-install.sh" >&2
   exit 1
 fi
 
-echo ""
-echo "  Qadbak install - nginx, Apache, MariaDB, Postfix, Dovecot, BIND"
-echo "  Independent hosting panel (native provisioning on this server)."
-echo "  Guide: docs/QADBAK-NATIVE-INSTALL.md"
-echo ""
+qadbak_install_banner
+qadbak_install_full_components
 
 if [[ -f "$QADBAK_DIR/.env.local" ]]; then
-  echo "  An existing Qadbak install was detected at $QADBAK_DIR"
-  echo "    To resume after a partial install:"
-  echo "      sudo bash $QADBAK_DIR/install/qadbak-install-resume.sh"
-  echo "    To remove first:"
-  echo "      sudo bash $QADBAK_DIR/install/qadbak-uninstall.sh"
+  echo "An existing Qadbak install was detected at $QADBAK_DIR"
+  echo "  Resume:  sudo bash $QADBAK_DIR/install/qadbak-install-resume.sh"
+  echo "  Remove:  sudo bash $QADBAK_DIR/install/qadbak-uninstall.sh"
   echo ""
-  read -rp "  Continue and OVERWRITE existing config? [y/N]: " CONFIRM
+  read -rp "Continue and OVERWRITE existing config? [y/N]: " CONFIRM
   if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
     exit 0
   fi
 else
-  read -rp "Continue? [y/N]: " CONFIRM
-  if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
-    exit 0
-  fi
+  qadbak_install_prompt_continue "Would you like to continue with the installation? [y/N]: "
 fi
 
-if [[ -f "$(dirname "$0")/../scripts/check-linux-support.sh" ]]; then
-  echo ""
-  bash "$(dirname "$0")/../scripts/check-linux-support.sh" || {
-    echo "Fix Linux support issues above before continuing." >&2
+if [[ -f "$INSTALL_ROOT/scripts/check-linux-support.sh" ]]; then
+  bash "$INSTALL_ROOT/scripts/check-linux-support.sh" || {
+    qadbak_install_warn "Fix Linux support issues above before continuing."
     exit 1
   }
 fi
 
 FQDN="$(hostname -f 2>/dev/null || hostname)"
-read -rp "Panel hostname [$FQDN]: " PANEL_HOST
-PANEL_HOST="${PANEL_HOST:-$FQDN}"
-if [[ "$PANEL_HOST" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "  Do not use a bare IP as panel hostname (breaks TLS/mail). Using $FQDN instead." >&2
-  PANEL_HOST="$FQDN"
-fi
+qadbak_install_prompt_fqdn PANEL_HOST "$FQDN"
 read -rp "Also expose panel on TCP 11000? [Y/n]: " USE_ALT_PORT
 PANEL_ALT_PORT=""
 if [[ ! "${USE_ALT_PORT:-Y}" =~ ^[Nn]$ ]]; then
@@ -65,17 +56,9 @@ if [[ ! "${USE_ALT_PORT:-Y}" =~ ^[Nn]$ ]]; then
   PANEL_ALT_PORT="${PANEL_ALT_PORT:-11000}"
 fi
 SERVER_FQDN="$FQDN"
-read -rp "Panel admin username (web login, not Linux user qadbak) [admin]: " QB_USER
-QB_USER="${QB_USER:-admin}"
-while true; do
-  read -rsp "Panel admin password (web login): " QB_PASS
-  echo
-  if [[ -n "$QB_PASS" ]]; then
-    break
-  fi
-  echo "  Password cannot be empty." >&2
-done
-read -rp "Certbot email (optional): " LE_EMAIL
+qadbak_install_prompt_username QB_USER admin
+qadbak_install_prompt_password QB_PASS
+qadbak_install_prompt_email LE_EMAIL 1
 read -rp "Optional demo client user (RBAC tests)? [y/N]: " ADD_CLIENT
 ADD_CLIENT="${ADD_CLIENT:-N}"
 CLIENT_USER="client"
@@ -87,46 +70,62 @@ if [[ "$ADD_CLIENT" =~ ^[Yy]$ ]]; then
   echo
 fi
 
-qadbak_pkg_update || apt-get update -qq
-bash "$(dirname "$0")/../scripts/install-native-stack.sh"
+DEFAULT_ORIGIN_IP="$(curl -4 -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')"
+read -rp "Mail hostname for MX/IMAP (FQDN) [$PANEL_HOST]: " MAIL_HOST
+MAIL_HOST="${MAIL_HOST:-$PANEL_HOST}"
+if [[ "$MAIL_HOST" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  qadbak_install_warn "Do not use a bare IP as mail hostname. Using $FQDN instead."
+  MAIL_HOST="$FQDN"
+fi
+read -rp "Public server IP (for DNS hints) [$DEFAULT_ORIGIN_IP]: " ORIGIN_IP_IN
+ORIGIN_IP="${ORIGIN_IP_IN:-$DEFAULT_ORIGIN_IP}"
 
+read -rp "Premium license key (Enter to skip - Core evaluation only): " LICENSE_KEY_IN
+if [[ -n "${LICENSE_KEY_IN// /}" ]]; then
+  QADBAK_LICENSE_KEY="$LICENSE_KEY_IN"
+fi
+
+qadbak_install_begin_logging
+
+qadbak_install_packages_preamble
+qadbak_pkg_update || apt-get update -qq
+qadbak_install_packages_note
+bash "$INSTALL_ROOT/scripts/install-native-stack.sh"
+
+qadbak_install_step "Installing panel dependencies (curl, git, certbot, nginx)..."
 qadbak_pkg_install curl git nginx certbot python3-certbot-nginx || \
   apt-get install -y -qq curl git nginx certbot python3-certbot-nginx
 qadbak_load_os_release || true
+qadbak_install_step "Installing Node.js ${NODE_MAJOR}..."
 qadbak_install_nodejs "$NODE_MAJOR"
 command -v pm2 &>/dev/null || npm install -g pm2
 
+qadbak_install_step "Creating Qadbak service user..."
 if ! id "$QADBAK_USER" &>/dev/null; then
-  # Service account for pm2 - no login/sudo password (panel login is separate in users.json).
   useradd -r -m -d "$QADBAK_DIR" -s /bin/bash "$QADBAK_USER"
 fi
+qadbak_install_step "Cloning Qadbak repository..."
 [[ -d "$QADBAK_DIR/.git" ]] || git clone -b "$QADBAK_GIT_BRANCH" "$QADBAK_REPO" "$QADBAK_DIR"
 if [[ -f "$QADBAK_DIR/scripts/git-sync-origin.sh" ]]; then
   QADBAK_DIR="$QADBAK_DIR" bash "$QADBAK_DIR/scripts/git-sync-origin.sh"
 else
   git -C "$QADBAK_DIR" pull --ff-only || true
 fi
+QADBAK_INSTALL_VERSION="$(qadbak_install_version_from_repo "$QADBAK_DIR" || echo "$QADBAK_INSTALL_VERSION")"
 chown -R "$QADBAK_USER:$QADBAK_USER" "$QADBAK_DIR"
 
+qadbak_install_step "Building Qadbak panel (npm install + build)..."
 bash "$QADBAK_DIR/scripts/install-node-build-deps.sh"
 sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && npm install && npm run build"
 
 SECRET="$(openssl rand -base64 32)"
-DEFAULT_ORIGIN_IP="$(curl -4 -s --max-time 5 ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')"
-read -rp "Mail hostname for MX/IMAP (FQDN) [$PANEL_HOST]: " MAIL_HOST
-MAIL_HOST="${MAIL_HOST:-$PANEL_HOST}"
-if [[ "$MAIL_HOST" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "  Do not use a bare IP as mail hostname (breaks inbound delivery). Using $FQDN instead." >&2
-  MAIL_HOST="$FQDN"
-fi
-read -rp "Public server IP (for DNS hints) [$DEFAULT_ORIGIN_IP]: " ORIGIN_IP_IN
-ORIGIN_IP="${ORIGIN_IP_IN:-$DEFAULT_ORIGIN_IP}"
 
 INSTALL_SALT="$(openssl rand -hex 8 2>/dev/null || true)"
 if [[ -z "${INSTALL_SALT// }" ]]; then
   INSTALL_SALT="$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')"
 fi
 
+qadbak_install_step "Writing panel configuration..."
 ENV_FILE="$QADBAK_DIR/.env.local"
 cat >"$ENV_FILE" <<EOF
 SESSION_SECRET=$SECRET
@@ -164,11 +163,7 @@ fi
 chmod 600 "$ENV_FILE"
 chown "$QADBAK_USER:$QADBAK_USER" "$ENV_FILE"
 
-read -rp "Premium license key (Enter to skip - Core evaluation only): " LICENSE_KEY_IN
-if [[ -n "${LICENSE_KEY_IN// /}" ]]; then
-  QADBAK_LICENSE_KEY="$LICENSE_KEY_IN"
-fi
-
+qadbak_install_step "Configuring system permissions (sudo helpers)..."
 for s in configure-domain-fs-sudo configure-domain-repair-sudo configure-domain-terminal-sudo \
   configure-panel-vhost-sudo configure-updates-sudo configure-php-fpm-sudo \
   configure-panel-pm2-sudo configure-host-services-sudo \
@@ -177,12 +172,13 @@ for s in configure-domain-fs-sudo configure-domain-repair-sudo configure-domain-
   configure-backup-download-sudo; do
   if ! bash "$QADBAK_DIR/scripts/${s}.sh"; then
     echo "" >&2
-    echo "WARN: $s failed - install paused. Resume without rebuilding:" >&2
+    qadbak_install_warn "$s failed - install paused. Resume without rebuilding:"
     echo "  sudo bash $QADBAK_DIR/install/qadbak-install-resume.sh" >&2
     exit 1
   fi
 done
 
+qadbak_install_step "Creating panel administrator account..."
 HASH="$(sudo -u "$QADBAK_USER" node "$QADBAK_DIR/scripts/hash-password.mjs" "$QB_PASS")"
 mkdir -p "$QADBAK_DIR/data"
 if [[ "$ADD_CLIENT" =~ ^[Yy]$ && -n "$CLIENT_PASS" ]]; then
@@ -216,59 +212,52 @@ chmod 600 "$INSTALL_TEST_ENV"
 chown "$QADBAK_USER:$QADBAK_USER" "$INSTALL_TEST_ENV"
 
 export PANEL_HOST SERVER_FQDN QADBAK_NATIVE_INSTALL=1 QADBAK_DISABLE_LEGACY_PANEL=true
+qadbak_install_step "Configuring hosting stack (nginx vhosts, mail, DNS)..."
 bash "$QADBAK_DIR/scripts/install-hosting-stack.sh"
 [[ -n "$PANEL_ALT_PORT" ]] && bash "$QADBAK_DIR/scripts/enable-panel-port.sh" "$PANEL_ALT_PORT"
 
-echo "==> nginx default-deny (block unknown hostnames)"
-# --strip-conflicts: install-hosting-stack.sh just generated the panel
-# vhost with default_server (legacy fallback for fresh installs). The
-# default-deny vhost wants the same slot, so let it auto-strip the
-# conflict. apply-hosting-nginx.sh on subsequent re-runs sees the
-# default-deny vhost and emits the panel listen lines without
-# default_server, so this is a one-time bootstrap fix.
+qadbak_install_step "Enabling nginx default-deny (block unknown hostnames)..."
 if bash "$QADBAK_DIR/scripts/apply-nginx-default-deny.sh" --strip-conflicts; then
   echo "  Unknown Host headers now get HTTP 444 instead of leaking to another vhost."
-  # Re-apply the panel vhost so its on-disk template no longer claims
-  # default_server (default-deny is now active). Future repair runs stay
-  # idempotent regardless of which entry point operators use.
   bash "$QADBAK_DIR/scripts/apply-hosting-nginx.sh" || true
 else
-  echo "  WARN: default-deny not enabled - see message above (often a default_server conflict)." >&2
-  echo "        Backfill later with: sudo bash $QADBAK_DIR/scripts/apply-nginx-default-deny.sh --strip-conflicts" >&2
+  qadbak_install_warn "default-deny not enabled - see message above."
+  echo "  Backfill: sudo bash $QADBAK_DIR/scripts/apply-nginx-default-deny.sh --strip-conflicts" >&2
 fi || true
-[[ -n "$LE_EMAIL" ]] && certbot --nginx -d "$PANEL_HOST" --non-interactive --agree-tos -m "$LE_EMAIL" && {
-  if grep -q '^QADBAK_COOKIE_SECURE=' "$ENV_FILE"; then
-    sed -i 's/^QADBAK_COOKIE_SECURE=.*/QADBAK_COOKIE_SECURE=true/' "$ENV_FILE"
-  else
-    echo "QADBAK_COOKIE_SECURE=true" >>"$ENV_FILE"
-  fi
-} || true
+if [[ -n "$LE_EMAIL" ]]; then
+  qadbak_install_step "Requesting Let's Encrypt certificate for $PANEL_HOST..."
+  certbot --nginx -d "$PANEL_HOST" --non-interactive --agree-tos -m "$LE_EMAIL" && {
+    if grep -q '^QADBAK_COOKIE_SECURE=' "$ENV_FILE"; then
+      sed -i 's/^QADBAK_COOKIE_SECURE=.*/QADBAK_COOKIE_SECURE=true/' "$ENV_FILE"
+    else
+      echo "QADBAK_COOKIE_SECURE=true" >>"$ENV_FILE"
+    fi
+  } || qadbak_install_warn "Certbot failed - panel may stay on HTTP until fixed."
+fi
 
-echo "==> Domain registry"
+qadbak_install_step "Syncing domain registry..."
 bash "$QADBAK_DIR/scripts/export-native-domains.sh" 2>/dev/null || true
-echo "==> Native provisioning"
+qadbak_install_step "Applying native provisioning..."
 bash "$QADBAK_DIR/scripts/apply-phase8-independent.sh" || true
 
-echo "==> Inbound mail (Postfix receive + Dovecot + maps)"
+qadbak_install_step "Configuring inbound mail (Postfix + Dovecot)..."
 bash "$QADBAK_DIR/scripts/configure-native-mail.sh" --force
 sudo -u "$QADBAK_USER" sudo -n "$QADBAK_DIR/scripts/run-provisioning-helper.sh" mail-sync 2>/dev/null || true
 
+qadbak_install_step "Starting Qadbak panel (pm2)..."
 bash "$QADBAK_DIR/scripts/ensure-terminal-deps.sh"
 bash "$QADBAK_DIR/scripts/pm2-restart-qadbak.sh"
-# pm2 startup prints an "env PATH=... sudo..." command to enable systemd integration.
-# Extract only that line (not any error/banner output) before piping to bash.
 PM2_STARTUP_CMD="$(env PATH="$PATH:/usr/bin" pm2 startup systemd -u "$QADBAK_USER" --hp "$QADBAK_DIR" 2>&1 \
   | grep -E '^(sudo[[:space:]]+)?env[[:space:]]+PATH=' \
   | tail -1 || true)"
 if [[ -n "$PM2_STARTUP_CMD" ]]; then
   bash -c "$PM2_STARTUP_CMD" || true
 else
-  echo "  WARN: pm2 startup line not found - start Qadbak manually after reboot with:" >&2
-  echo "    sudo -u $QADBAK_USER pm2 resurrect" >&2
+  qadbak_install_warn "pm2 startup line not found - after reboot run: sudo -u $QADBAK_USER pm2 resurrect"
 fi
 
 if [[ -n "${QADBAK_LICENSE_KEY:-}" ]]; then
-  echo "==> Activate Premium license"
+  qadbak_install_step "Activating Premium license..."
   ACTIVATE_OUT="$(sudo -u "$QADBAK_USER" bash -c "set -a && source '$ENV_FILE' && set +a && node '$QADBAK_DIR/scripts/qadbak-license-cli.mjs' activate '$QADBAK_LICENSE_KEY'" 2>&1)" || true
   echo "$ACTIVATE_OUT"
   if echo "$ACTIVATE_OUT" | grep -q '"ok":true'; then
@@ -276,37 +265,29 @@ if [[ -n "${QADBAK_LICENSE_KEY:-}" ]]; then
     sudo -u "$QADBAK_USER" bash -c "set -a && source '$ENV_FILE' && set +a && node '$QADBAK_DIR/scripts/qadbak-license-cli.mjs' heartbeat" 2>/dev/null || true
     bash "$QADBAK_DIR/scripts/pm2-restart-qadbak.sh" 2>/dev/null || true
     if [[ -f "$QADBAK_DIR/scripts/repair-panel-premium.sh" ]]; then
-      echo "==> Premium + mobile app setup"
-      bash "$QADBAK_DIR/scripts/repair-panel-premium.sh" || echo "  WARN: repair-panel-premium.sh failed" >&2
+      qadbak_install_step "Premium + mobile app setup..."
+      bash "$QADBAK_DIR/scripts/repair-panel-premium.sh" || qadbak_install_warn "repair-panel-premium.sh failed"
     fi
   else
-    echo "  WARN: license activation failed on install." >&2
-    echo "    Common fixes:" >&2
-    echo "    1) License admin → open your key → raise Max servers (VPS) or Remove old server activation" >&2
-    echo "    2) curl -sf https://license.inveil.dev/health" >&2
-    echo "    3) sudo -u $QADBAK_USER bash -c \"set -a && source $ENV_FILE && set +a && node $QADBAK_DIR/scripts/qadbak-license-cli.mjs activate YOUR_KEY\"" >&2
-    echo "    Then: Server admin → License in the panel" >&2
+    qadbak_install_warn "License activation failed on install."
+    echo "  Retry: sudo -u $QADBAK_USER bash -c \"set -a && source $ENV_FILE && set +a && node $QADBAK_DIR/scripts/qadbak-license-cli.mjs activate YOUR_KEY\"" >&2
   fi
 fi
 
 VERIFY_OK=0
-echo "==> Post-install verify"
+qadbak_install_step "Running post-install verification..."
 if bash "$QADBAK_DIR/scripts/post-install-verify.sh"; then
   VERIFY_OK=1
 fi
 
+PANEL_URL="https://$PANEL_HOST/login"
+qadbak_install_congratulations "$PANEL_URL" "$QB_USER"
+[[ -n "$PANEL_ALT_PORT" ]] && echo "  Alt port: http://${ORIGIN_IP}:${PANEL_ALT_PORT}/login"
+echo "  Re-verify: sudo bash $QADBAK_DIR/scripts/post-install-verify.sh"
+echo "  Updates:   sudo bash $QADBAK_DIR/scripts/update-qadbak.sh"
+[[ "$ADD_CLIENT" =~ ^[Yy]$ ]] && echo "  Demo client: $CLIENT_USER"
+[[ "$VERIFY_OK" -eq 1 ]] && echo "  Post-install: PASSED" || echo "  Post-install: check warnings above"
+echo "  Firewall:  sudo bash $QADBAK_DIR/scripts/configure-ufw-qadbak.sh"
+echo "  iOS app:   docs/MOBILE-IOS-APP.md"
+echo "  Guide:     docs/QADBAK-NATIVE-INSTALL.md"
 echo ""
-echo "============================================"
-echo " Qadbak install complete"
-echo " Panel: https://$PANEL_HOST/login"
-[[ -n "$PANEL_ALT_PORT" ]] && echo "        http://${ORIGIN_IP}:${PANEL_ALT_PORT}/login"
-echo " User:  $QB_USER"
-echo " Re-verify: sudo bash $QADBAK_DIR/scripts/post-install-verify.sh"
-echo " Updates:   sudo bash $QADBAK_DIR/scripts/update-qadbak.sh"
-[[ "$ADD_CLIENT" =~ ^[Yy]$ ]] && echo " Client: $CLIENT_USER"
-[[ "$VERIFY_OK" -eq 1 ]] && echo " Post-install: PASSED" || echo " Post-install: check warnings above"
-echo ""
-echo " Optional: sudo bash $QADBAK_DIR/scripts/configure-ufw-qadbak.sh"
-echo " iOS app:  docs/MOBILE-IOS-APP.md (HTTPS + Premium)"
-echo " Guide:    docs/QADBAK-NATIVE-INSTALL.md"
-echo "============================================"

@@ -9,30 +9,56 @@ QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
 QADBAK_USER="${QADBAK_USER:-qadbak}"
 NODE_MAJOR="${NODE_MAJOR:-20}"
 
+INSTALL_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=../scripts/lib/linux-distro.sh
+source "$(dirname "$0")/../scripts/lib/linux-distro.sh"
+# shellcheck source=../scripts/lib/installer-ui.sh
+source "$(dirname "$0")/../scripts/lib/installer-ui.sh"
+
+QADBAK_INSTALL_VERSION="$(qadbak_install_version_from_repo "$INSTALL_ROOT" || echo "")"
+
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Run as root: sudo bash install/qadbak-install-panel.sh" >&2
   exit 1
 fi
 
-# shellcheck source=../scripts/lib/linux-distro.sh
-source "$(dirname "$0")/../scripts/lib/linux-distro.sh"
-
-echo ""
-echo "  Qadbak panel-only - Next.js UI + pm2 (no nginx/mail/BIND stack on this host)"
-echo "  Guide: docs/LINUX-SUPPORT.md#panel-only"
-echo ""
+qadbak_install_panel_banner
+qadbak_install_panel_components
 
 if [[ -f "$QADBAK_DIR/.env.local" ]]; then
-  echo "  Existing install at $QADBAK_DIR - aborting to avoid overwrite."
-  echo "  Remove .env.local first or use install/qadbak-uninstall.sh"
+  echo "Existing install at $QADBAK_DIR - aborting to avoid overwrite."
+  echo "Remove .env.local first or use install/qadbak-uninstall.sh"
   exit 1
 fi
 
-read -rp "Continue? [y/N]: " CONFIRM
-if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
-  exit 0
+qadbak_install_prompt_continue "Would you like to continue with the installation? [y/N]: "
+
+FQDN="$(hostname -f 2>/dev/null || hostname)"
+qadbak_install_prompt_fqdn PANEL_HOST "$FQDN"
+qadbak_install_prompt_username QB_USER admin
+qadbak_install_prompt_password QB_PASS
+qadbak_install_prompt_email LE_EMAIL 1
+
+echo ""
+echo "Provisioning mode:"
+echo "  1) Mock/demo (no server backend - UI development)"
+echo "  2) Hybrid remote API (legacy hosting API on another host)"
+read -rp "Choice [1]: " PROV_MODE
+PROV_MODE="${PROV_MODE:-1}"
+
+LEGACY_URL=""
+LEGACY_USER=""
+LEGACY_PASS=""
+if [[ "$PROV_MODE" == "2" ]]; then
+  read -rp "Legacy API URL: " LEGACY_URL
+  read -rp "API user: " LEGACY_USER
+  read -rsp "API password: " LEGACY_PASS
+  echo
 fi
 
+qadbak_install_begin_logging
+
+qadbak_install_step "Updating packages and installing Node.js ${NODE_MAJOR}..."
 qadbak_load_os_release || true
 if qadbak_has_apt; then
   qadbak_pkg_update || true
@@ -49,9 +75,11 @@ fi
 
 command -v pm2 &>/dev/null || npm install -g pm2
 
+qadbak_install_step "Creating Qadbak service user..."
 if ! id "$QADBAK_USER" &>/dev/null; then
   useradd -r -m -d "$QADBAK_DIR" -s /bin/bash "$QADBAK_USER"
 fi
+qadbak_install_step "Cloning Qadbak repository..."
 [[ -d "$QADBAK_DIR/.git" ]] || git clone -b "$QADBAK_GIT_BRANCH" "$QADBAK_REPO" "$QADBAK_DIR"
 if [[ -f "$QADBAK_DIR/scripts/git-sync-origin.sh" ]]; then
   QADBAK_DIR="$QADBAK_DIR" bash "$QADBAK_DIR/scripts/git-sync-origin.sh"
@@ -60,30 +88,11 @@ else
 fi
 chown -R "$QADBAK_USER:$QADBAK_USER" "$QADBAK_DIR"
 
+qadbak_install_step "Building Qadbak panel..."
 if qadbak_has_apt; then
   bash "$QADBAK_DIR/scripts/install-node-build-deps.sh" || true
 fi
 sudo -u "$QADBAK_USER" bash -c "cd '$QADBAK_DIR' && npm install && npm run build"
-
-FQDN="$(hostname -f 2>/dev/null || hostname)"
-read -rp "Panel hostname (for links) [$FQDN]: " PANEL_HOST
-PANEL_HOST="${PANEL_HOST:-$FQDN}"
-read -rp "Panel admin username [admin]: " QB_USER
-QB_USER="${QB_USER:-admin}"
-while true; do
-  read -rsp "Panel admin password: " QB_PASS
-  echo
-  [[ -n "$QB_PASS" ]] && break
-  echo "  Password cannot be empty." >&2
-done
-read -rp "Certbot email (optional, for HTTPS nginx proxy): " LE_EMAIL
-
-echo ""
-echo "Provisioning mode:"
-echo "  1) Mock/demo (no server backend - UI development)"
-echo "  2) Hybrid remote API (legacy hosting API on another host)"
-read -rp "Choice [1]: " PROV_MODE
-PROV_MODE="${PROV_MODE:-1}"
 
 SECRET="$(openssl rand -base64 32)"
 INSTALL_SALT="$(openssl rand -hex 8 2>/dev/null || head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')"
@@ -106,10 +115,6 @@ if [[ -n "${LE_EMAIL// }" ]]; then
 fi
 
 if [[ "$PROV_MODE" == "2" ]]; then
-  read -rp "Legacy API URL: " LEGACY_URL
-  read -rp "API user: " LEGACY_USER
-  read -rsp "API password: " LEGACY_PASS
-  echo
   cat >>"$ENV_FILE" <<EOF
 QADBAK_PROVISIONER=hybrid
 QADBAK_LEGACY_API_FALLBACK=true
@@ -152,10 +157,12 @@ chown "$QADBAK_USER:$QADBAK_USER" "$INSTALL_TEST_ENV"
 
 for s in configure-panel-pm2-sudo configure-updates-sudo; do
   if [[ -f "$QADBAK_DIR/scripts/${s}.sh" ]]; then
+    qadbak_install_step "Running ${s}..."
     bash "$QADBAK_DIR/scripts/${s}.sh" || true
   fi
 done
 
+qadbak_install_step "Starting Qadbak panel (pm2)..."
 bash "$QADBAK_DIR/scripts/pm2-restart-qadbak.sh"
 
 PM2_STARTUP_CMD="$(env PATH="$PATH:/usr/bin" pm2 startup systemd -u "$QADBAK_USER" --hp "$QADBAK_DIR" 2>&1 \
@@ -175,25 +182,23 @@ if qadbak_has_apt; then
 fi
 
 VERIFY_OK=0
+qadbak_install_step "Running post-install verification..."
 if bash "$QADBAK_DIR/scripts/post-install-verify.sh"; then
   VERIFY_OK=1
 fi
 
-echo ""
-echo "============================================"
-echo " Qadbak panel-only install complete"
 if [[ -f /etc/nginx/sites-enabled/qadbak-panel-only ]]; then
-  echo " Panel: https://${PANEL_HOST}/login (or http if no cert yet)"
+  PANEL_URL="https://${PANEL_HOST}/login"
 else
-  echo " Panel: http://127.0.0.1:3000/login"
+  PANEL_URL="http://127.0.0.1:3000/login"
 fi
-echo " User:  $QB_USER"
-[[ "$VERIFY_OK" -eq 1 ]] && echo " Verify: PASSED" || echo " Verify: check warnings above"
-echo " Updates: sudo bash $QADBAK_DIR/scripts/update-qadbak.sh"
+qadbak_install_congratulations "$PANEL_URL" "$QB_USER"
 if [[ "$PROV_MODE" == "2" ]]; then
-  echo " Hybrid: domains come from your remote legacy API"
+  echo "  Hybrid: domains come from your remote legacy API"
 else
-  echo " Mock:   UI demo only - use install/qadbak-install.sh for real hosting"
+  echo "  Mock:   UI demo only - use install/qadbak-install.sh for real hosting"
 fi
-echo " Docs:   docs/LINUX-SUPPORT.md"
-echo "============================================"
+[[ "$VERIFY_OK" -eq 1 ]] && echo "  Verify: PASSED" || echo "  Verify: check warnings above"
+echo "  Updates: sudo bash $QADBAK_DIR/scripts/update-qadbak.sh"
+echo "  Docs:    docs/LINUX-SUPPORT.md"
+echo ""

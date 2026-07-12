@@ -5,6 +5,8 @@ set -euo pipefail
 QADBAK_DIR="${QADBAK_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 # shellcheck source=lib/linux-distro.sh
 source "$(dirname "$0")/lib/linux-distro.sh"
+# shellcheck source=lib/installer-ui.sh
+source "$(dirname "$0")/lib/installer-ui.sh"
 
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Run as root: sudo bash scripts/install-native-stack.sh" >&2
@@ -19,7 +21,7 @@ qadbak_detect_linux_distro || {
 BIND_PKGS="$(qadbak_bind_apt_packages)"
 PHP_EXTRA="$(qadbak_php_extra_apt_packages)"
 
-echo "==> Native stack packages ($(qadbak_linux_release_label))"
+qadbak_install_step "Native stack packages ($(qadbak_linux_release_label))"
 qadbak_pkg_update
 # shellcheck disable=SC2086
 qadbak_pkg_install \
@@ -45,7 +47,7 @@ for pkg in mariadb-client unzip zip proftpd-basic proftpd-core; do
   apt-mark manual "$pkg" 2>/dev/null || true
 done
 
-echo "==> AWS CLI (optional — S3 admin)"
+qadbak_install_step "AWS CLI (optional — S3 admin)"
 qadbak_install_aws_cli
 
 systemctl unmask proftpd 2>/dev/null || true
@@ -59,21 +61,21 @@ systemctl enable nginx apache2 mariadb postfix dovecot bind9 2>/dev/null || true
 bash "$QADBAK_DIR/scripts/ensure-fail2ban.sh"
 
 if [[ -f "$QADBAK_DIR/scripts/configure-bind-native.sh" ]]; then
-  echo "==> BIND9 (native DNS zones)"
+  qadbak_install_step "BIND9 (native DNS zones)"
   bash "$QADBAK_DIR/scripts/configure-bind-native.sh"
 fi
 
 if [[ -f "$QADBAK_DIR/scripts/configure-native-mail.sh" ]]; then
-  echo "==> Postfix + Dovecot (native mail)"
-  bash "$QADBAK_DIR/scripts/configure-native-mail.sh" || echo "WARN: configure-native-mail.sh failed" >&2
+  qadbak_install_step "Postfix + Dovecot (native mail)"
+  bash "$QADBAK_DIR/scripts/configure-native-mail.sh" || qadbak_install_warn "configure-native-mail.sh failed"
 fi
 
-echo "==> Apache backend (nginx front on :80/:443)"
+qadbak_install_step "Apache backend (nginx front on :80/:443)"
 if [[ -f "$QADBAK_DIR/scripts/ensure-apache-backend.sh" ]]; then
   bash "$QADBAK_DIR/scripts/ensure-apache-backend.sh"
 else
-  echo "WARN: ensure-apache-backend.sh missing — git pull" >&2
+  qadbak_install_warn "ensure-apache-backend.sh missing — git pull"
 fi
 
-echo "OK — native stack packages installed"
+qadbak_install_step "Native stack packages installed"
 echo "    Apache: 127.0.0.1:8080 behind nginx (php-fpm)"
