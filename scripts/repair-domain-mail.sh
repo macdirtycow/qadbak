@@ -13,8 +13,16 @@ MAIL_USER="${2:-info}"
   exit 1
 }
 
+echo ""
 echo "==> Mail stack (Postfix, Dovecot, OpenDKIM)"
 bash "$QADBAK_DIR/scripts/setup-mail.sh" "$DOMAIN"
+
+if [[ -f "$QADBAK_DIR/scripts/dedupe-nginx-vhosts.sh" ]]; then
+  echo ""
+  echo "==> nginx duplicate vhosts (e.g. inveil.net static site vs customer vhost)"
+  bash "$QADBAK_DIR/scripts/dedupe-nginx-vhosts.sh" --apply --prefer="${DOMAIN}.conf" 2>/dev/null || \
+    bash "$QADBAK_DIR/scripts/dedupe-nginx-vhosts.sh" --apply 2>/dev/null || true
+fi
 
 ORIGIN_IP="$(grep '^QADBAK_ORIGIN_IP=' "$QADBAK_DIR/.env.local" 2>/dev/null | cut -d= -f2- || true)"
 ORIGIN_IP="${ORIGIN_IP:-$(curl -4 -sf --max-time 8 ifconfig.me 2>/dev/null || true)}"

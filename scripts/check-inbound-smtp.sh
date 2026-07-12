@@ -19,7 +19,12 @@ miss() { echo "  MISS $*"; fail=1; }
 
 smtp_banner() {
   local host="$1"
-  timeout 8 bash -c "exec 3<>/dev/tcp/${host}/25; echo quit >&3; head -1 <&3" 2>/dev/null || true
+  timeout 8 bash -c "
+    exec 3<>/dev/tcp/${host}/25
+    IFS= read -r -t 6 line <&3 || exit 1
+    printf '%s\n' \"\$line\"
+    printf 'QUIT\r\n' >&3
+  " 2>/dev/null || true
 }
 
 echo "==> Services"
@@ -37,7 +42,11 @@ echo "==> Postfix config"
 if command -v postconf &>/dev/null; then
   ok "myhostname=$(postconf -h myhostname 2>/dev/null || echo '?')"
   ok "inet_interfaces=$(postconf -h inet_interfaces 2>/dev/null || echo '?')"
-  ok "smtpd_milters=$(postconf -h smtpd_milters 2>/dev/null || echo '(none)')"
+  milters="$(postconf -h smtpd_milters 2>/dev/null || true)"
+  ok "smtpd_milters=${milters:-'(none)'}"
+  if [[ -n "$milters" && "$milters" == *"@"* ]]; then
+    warn "smtpd_milters uses OpenDKIM socket format — run: sudo bash $QADBAK_DIR/scripts/configure-opendkim-native.sh"
+  fi
 else
   miss "postconf not found — install postfix"
 fi

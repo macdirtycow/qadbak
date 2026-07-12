@@ -5,7 +5,9 @@ set -euo pipefail
 
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
 DKIM_DIR="/etc/opendkim"
-MILTER_SOCKET="${QADBAK_OPENDKIM_SOCKET:-inet:8891@127.0.0.1}"
+# OpenDKIM Socket= uses inet:PORT@HOST; Postfix smtpd_milters needs inet:HOST:PORT.
+OPENDKIM_SOCKET="${QADBAK_OPENDKIM_SOCKET:-inet:8891@127.0.0.1}"
+POSTFIX_MILTER="${QADBAK_POSTFIX_MILTER:-inet:127.0.0.1:8891}"
 
 [[ "$(id -u)" -eq 0 ]] || {
   echo "Run as root: sudo bash $0" >&2
@@ -47,7 +49,7 @@ AutoRestartRate         10/1M
 Background              yes
 DNSTimeout              5
 SignatureAlgorithm      rsa-sha256
-Socket                  ${MILTER_SOCKET}
+Socket                  ${OPENDKIM_SOCKET}
 PidFile                 /run/opendkim/opendkim.pid
 UserID                  opendkim
 KeyTable                file:${DKIM_DIR}/KeyTable
@@ -57,19 +59,19 @@ InternalHosts           refile:${DKIM_DIR}/TrustedHosts
 EOF
 
 if [[ -f /etc/default/opendkim ]]; then
-  sed -i "s|^SOCKET=.*|SOCKET=${MILTER_SOCKET}|" /etc/default/opendkim
-  grep -q '^SOCKET=' /etc/default/opendkim || echo "SOCKET=${MILTER_SOCKET}" >>/etc/default/opendkim
+  sed -i "s|^SOCKET=.*|SOCKET=${OPENDKIM_SOCKET}|" /etc/default/opendkim
+  grep -q '^SOCKET=' /etc/default/opendkim || echo "SOCKET=${OPENDKIM_SOCKET}" >>/etc/default/opendkim
 fi
 
 if command -v postconf &>/dev/null; then
   postconf -e "milter_default_action = accept"
   postconf -e "milter_protocol = 6"
-  postconf -e "smtpd_milters = ${MILTER_SOCKET}"
-  postconf -e "non_smtpd_milters = ${MILTER_SOCKET}"
+  postconf -e "smtpd_milters = ${POSTFIX_MILTER}"
+  postconf -e "non_smtpd_milters = ${POSTFIX_MILTER}"
 fi
 
 systemctl enable opendkim >/dev/null 2>&1 || true
 systemctl restart opendkim
 systemctl reload postfix 2>/dev/null || systemctl restart postfix 2>/dev/null || true
 
-echo "OK — OpenDKIM milters wired (${MILTER_SOCKET})"
+echo "OK — OpenDKIM socket ${OPENDKIM_SOCKET} · Postfix milters ${POSTFIX_MILTER}"

@@ -17,8 +17,10 @@ async function dkimTxt(domain) {
   for (const p of paths) {
     try {
       const raw = await readFile(p, "utf8");
-      const m = raw.match(/"\s*([^"]+)\s*"/);
-      if (m) return m[1].replace(/\s+/g, "");
+      const parts = [...raw.matchAll(/"([^"]+)"/g)].map((m) =>
+        m[1].replace(/\s+/g, ""),
+      );
+      if (parts.length) return parts.join("");
     } catch {
       /* */
     }

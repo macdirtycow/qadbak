@@ -1,11 +1,41 @@
 import { readFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import path from "node:path";
 import { findZonePath, dnsAdd } from "./provision-dns.mjs";
 
 const exec = promisify(execFile);
 
 const IPV4 = /^(\d{1,3}\.){3}\d{1,3}$/;
+
+let envLoaded = false;
+
+async function loadEnvLocal() {
+  if (envLoaded) return;
+  envLoaded = true;
+  const root = process.env.QADBAK_DIR || "/opt/qadbak";
+  try {
+    const raw = await readFile(path.join(root, ".env.local"), "utf8");
+    for (const line of raw.split("\n")) {
+      const t = line.trim();
+      if (!t || t.startsWith("#")) continue;
+      const i = t.indexOf("=");
+      if (i < 1) continue;
+      const k = t.slice(0, i).trim();
+      if (!k || process.env[k] !== undefined) continue;
+      let v = t.slice(i + 1).trim();
+      if (
+        (v.startsWith('"') && v.endsWith('"')) ||
+        (v.startsWith("'") && v.endsWith("'"))
+      ) {
+        v = v.slice(1, -1);
+      }
+      process.env[k] = v;
+    }
+  } catch {
+    /* optional */
+  }
+}
 
 export function isIpAddress(value) {
   return IPV4.test(String(value || "").trim());
@@ -17,6 +47,7 @@ export function isMailFqdn(value) {
 }
 
 export async function resolveMailHost() {
+  await loadEnvLocal();
   const candidates = [
     process.env.QADBAK_MAIL_HOST?.trim(),
     process.env.QADBAK_PUBLIC_HOST?.trim(),
@@ -40,6 +71,7 @@ export async function resolveMailHost() {
 }
 
 export async function resolveOriginIp() {
+  await loadEnvLocal();
   const fromEnv = process.env.QADBAK_ORIGIN_IP?.trim();
   if (fromEnv) return fromEnv;
   try {
