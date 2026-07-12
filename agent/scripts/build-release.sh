@@ -7,12 +7,14 @@ VERSION="$(grep 'const version' "${ROOT}/cmd/qadbak-agent/main.go" | sed -n 's/.
 MIN_APP="1.2.0"
 mkdir -p "$OUT"
 
+export GOTOOLCHAIN="${GOTOOLCHAIN:-go1.22.0}"
+
 for spec in "linux amd64" "linux arm64"; do
   set -- $spec
   os=$1
   arch=$2
   name="qadbak-agent-${os}-${arch}"
-  env GOOS=$os GOARCH=$arch CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w" -o "${OUT}/${name}" ./cmd/qadbak-agent
+  env GOOS=$os GOARCH=$arch CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w -buildid=" -o "${OUT}/${name}" ./cmd/qadbak-agent
   echo "built ${OUT}/${name}"
 done
 

@@ -45,6 +45,8 @@ Go binaries may still differ across Go toolchain versions or `-ldflags` changes.
 - `-trimpath -buildvcs=false`
 - `-ldflags="-s -w"`
 
+Pin the Go **toolchain** in `agent/go.mod` (`toolchain go1.22.0`). CI and local builds use the same version via `GOTOOLCHAIN` in `build-release.sh`. After agent changes, run `bash scripts/copy-agent-to-ios.sh` before commit so Linux CI and the iOS bundle stay in sync.
+
 Record the Go version from CI when auditing a release. Cosign/minisign signatures are planned (see `docs/agent/BETA.md`).
 
 ## App Store considerations

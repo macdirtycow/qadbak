@@ -4,11 +4,11 @@
   "minAgentVersion": "0.6.1",
   "binaries": {
     "linux-amd64": {
-      "sha256": "57b31b9da59530891cd447cd9f62fa3b7a3b589b471fb7d2de4e4415c1db8598",
+      "sha256": "4a14d008cfe93bd6e8330ba75efbd896ab37403c340392241895b226a80a6271",
       "file": "qadbak-agent-linux-amd64"
     },
     "linux-arm64": {
-      "sha256": "43cf1a5fa6f22f48bcf470df7ddb32f0d98ff056248d66702ee2568207704442",
+      "sha256": "e487235e21400b5cac9c5a286d1e86481622cd35e5e75cea2a722fbd41e1e610",
       "file": "qadbak-agent-linux-arm64"
     }
   }
