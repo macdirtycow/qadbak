@@ -135,6 +135,7 @@ export async function verifySessionToken(
       username: String(payload.username),
       role: payload.role as SessionPayload["role"],
       domains: (payload.domains as string[]) ?? [],
+      jti,
     };
   } catch {
     return null;

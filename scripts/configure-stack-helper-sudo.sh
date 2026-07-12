@@ -10,10 +10,16 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+LIB_DIR="$(readlink -f "$SCRIPT_DIR/lib")"
 HELPER="$(readlink -f "$QADBAK_DIR/scripts/stack-helper.mjs")"
 WRAPPER="$(readlink -f "$QADBAK_DIR/scripts/run-stack-helper.sh")"
-if [[ ! -f "$HELPER" || ! -f "$WRAPPER" ]]; then
-  echo "Missing helper or wrapper — git pull first." >&2
+ALLOWLIST="$LIB_DIR/stack-helper-commands.txt"
+GEN="$LIB_DIR/generate-sudoers-allowlist.sh"
+WRITE="$LIB_DIR/write-wrapper-allowlist.sh"
+
+if [[ ! -f "$HELPER" ]]; then
+  echo "Missing helper — git pull first." >&2
   exit 1
 fi
 
@@ -21,18 +27,12 @@ NODE_BIN="$(sudo -u "$QADBAK_USER" -H bash -lc 'command -v node' 2>/dev/null | h
 [[ -z "$NODE_BIN" ]] && NODE_BIN="$(command -v node)"
 NODE_BIN="$(readlink -f "$NODE_BIN")"
 
-chmod 755 "$HELPER" "$WRAPPER"
-if grep -q '^QADBAK_NODE_BIN=' "$WRAPPER"; then
-  sed -i "s|^QADBAK_NODE_BIN=.*|QADBAK_NODE_BIN=$NODE_BIN|" "$WRAPPER"
-else
-  sed -i "2i QADBAK_NODE_BIN=$NODE_BIN" "$WRAPPER"
-fi
+chmod 755 "$HELPER" "$GEN" "$WRITE"
+bash "$WRITE" "$WRAPPER" "$ALLOWLIST" "$NODE_BIN" "$HELPER"
 
 SUDOERS="/etc/sudoers.d/qadbak-stack-helper"
-cat >"$SUDOERS" <<EOF
-# Qadbak stack config helper (phase 5)
-$QADBAK_USER ALL=(root) NOPASSWD: $WRAPPER *
-EOF
+bash "$GEN" "$QADBAK_USER" "$WRAPPER" "$ALLOWLIST" \
+  "# Qadbak stack config helper — per-command sudo" >"$SUDOERS"
 chmod 440 "$SUDOERS"
 visudo -cf "$SUDOERS"
 
@@ -41,4 +41,3 @@ if ! sudo -u "$QADBAK_USER" sudo -n "$WRAPPER" ping 2>/dev/null | grep -q '"ok"'
   exit 1
 fi
 echo "OK — wrapper: $WRAPPER"
-echo "     node:    $NODE_BIN"

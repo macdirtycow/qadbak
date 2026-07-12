@@ -10,8 +10,14 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+LIB_DIR="$(readlink -f "$SCRIPT_DIR/lib")"
 HELPER="$(readlink -f "$QADBAK_DIR/scripts/domain-fs-helper.mjs")"
 WRAPPER="$(readlink -f "$QADBAK_DIR/scripts/run-domain-fs-helper.sh")"
+ALLOWLIST="$LIB_DIR/domain-fs-commands.txt"
+GEN="$LIB_DIR/generate-sudoers-allowlist.sh"
+WRITE="$LIB_DIR/write-wrapper-allowlist.sh"
+
 if [[ ! -f "$HELPER" || ! -f "$WRAPPER" ]]; then
   echo "Missing helper or wrapper under $QADBAK_DIR/scripts — git pull first." >&2
   exit 1
@@ -27,24 +33,17 @@ if [[ -z "$NODE_BIN" ]]; then
 fi
 NODE_BIN="$(readlink -f "$NODE_BIN")"
 
-chmod 755 "$HELPER" "$WRAPPER"
-if grep -q '^QADBAK_NODE_BIN=' "$WRAPPER"; then
-  sed -i "s|^QADBAK_NODE_BIN=.*|QADBAK_NODE_BIN=$NODE_BIN|" "$WRAPPER"
-else
-  sed -i "2i QADBAK_NODE_BIN=$NODE_BIN" "$WRAPPER"
-fi
+chmod 755 "$HELPER" "$GEN" "$WRITE"
+bash "$WRITE" "$WRAPPER" "$ALLOWLIST" "$NODE_BIN" "$HELPER"
 
 SUDOERS="/etc/sudoers.d/qadbak-domain-fs"
-cat >"$SUDOERS" <<EOF
-# Qadbak native file browser — list/read/write under /home/
-$QADBAK_USER ALL=(root) NOPASSWD: $WRAPPER *
-EOF
+bash "$GEN" "$QADBAK_USER" "$WRAPPER" "$ALLOWLIST" \
+  "# Qadbak native file browser — per-command sudo" >"$SUDOERS"
 chmod 440 "$SUDOERS"
 visudo -cf "$SUDOERS"
 
 pick_test_home() {
   local td u h reg
-  # Prefer a real hosting user (public_html), not system accounts like syslog.
   for h in /home/*/public_html; do
     [[ -d "$h" ]] || continue
     u="$(basename "$(dirname "$h")")"
@@ -72,16 +71,6 @@ pick_test_home() {
       fi
     fi
   fi
-  if command -v "${QADBAK_LEGACY_HOST_BIN:-}" &>/dev/null; then
-    td="$("${QADBAK_LEGACY_HOST_BIN}" list-domains --name-only 2>/dev/null | sed '/^$/d' | grep -E '^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$' | head -1 || true)"
-    if [[ -n "$td" ]]; then
-      u="${td%%.*}"
-      if [[ -d "/home/$u" ]]; then
-        echo "/home/$u"
-        return
-      fi
-    fi
-  fi
   echo "/home"
 }
 
@@ -94,17 +83,6 @@ verify_domain_fs_sudo() {
     rm -f "$errf"
     return 0
   fi
-  echo "FAILED verify list $test_path (qadbak → sudo -n wrapper)" >&2
-  echo "  exit=$rc stdout=${out:-<empty>}" >&2
-  echo "  stderr=$(tr '\n' ' ' <"$errf" 2>/dev/null || true)" >&2
-  rm -f "$errf"
-  errf="$(mktemp)"
-  if out="$(sudo -n "$WRAPPER" list "$test_path" 2>"$errf")" && echo "$out" | grep -qE '"ok"[[:space:]]*:[[:space:]]*true'; then
-    echo "  hint: wrapper works as root; check sudoers for user $QADBAK_USER" >&2
-  else
-    echo "  hint: wrapper as root also failed — node=$NODE_BIN" >&2
-    echo "  root stderr=$(tr '\n' ' ' <"$errf" 2>/dev/null || true)" >&2
-  fi
   rm -f "$errf"
   return 1
 }
@@ -112,9 +90,7 @@ verify_domain_fs_sudo() {
 echo "==> Verify file helper sudo (must return ok JSON)"
 TEST_HOME="$(pick_test_home)"
 if ! verify_domain_fs_sudo "$TEST_HOME"; then
-  echo "Check:" >&2
-  echo "  cat $SUDOERS" >&2
-  echo "  sudo -u $QADBAK_USER sudo -l" >&2
+  echo "Check: cat $SUDOERS" >&2
   exit 1
 fi
 

@@ -104,13 +104,15 @@ Existing e2e: `e2e/security.spec.ts` (CSRF, IDOR, path traversal, legacy redirec
 
 - **QAD-SEC-022:** File-based rate limits are single-node (cluster deployments need Redis or similar)
 - **QAD-SEC-027:** Domain cron arbitrary commands (accepted hosting feature)
+- **External validation:** Docker escape, multi-tenant isolation, live VPS pentest — see `docs/SECURITY_VALIDATION.md` and `.github/workflows/security.yml` (Semgrep, CodeQL, Trivy)
 
 ## Additional fixes (open items pass)
 
 | ID | Fix |
 |----|-----|
-| QAD-SEC-002 | Provisioning command allowlist in wrapper + helper (`provisioning-helper-commands.txt`) |
-| QAD-SEC-014 | Session revocation via `session-revocation.ts` + logout invalidation |
+| QAD-SEC-002 | Per-command sudoers (`generate-sudoers-allowlist.sh`) + shell allowlists on all helper wrappers |
+| QAD-SEC-014 | Session revocation in Node middleware (`session-revocation-sync.ts`); mobile logout revokes access jti |
+| QAD-SEC-018 | Admin terminal TOTP step-up (`QADBAK_ADMIN_TERMINAL_TOTP`); terminal JWT binds session jti; WS verifies iss/aud + revocation |
 | QAD-SEC-017 | Terminal WS token query string removed — subprotocol only |
 | QAD-SEC-019 | S3 upload source restricted to `/home/`, `/opt/qadbak/data/`, `/tmp/qadbak-*` |
 | QAD-SEC-020 | NodeSource script downloaded to `/tmp` before execution (no pipe-to-bash) |
@@ -128,9 +130,10 @@ Existing e2e: `e2e/security.spec.ts` (CSRF, IDOR, path traversal, legacy redirec
 
 1. Set `QADBAK_HEALTH_MINIMAL=true` explicitly if not in production mode
 2. Change default `changeme` passwords before exposing panel
-3. Enable `QADBAK_REQUIRE_ADMIN_TOTP=true` for admins
-4. Run `sudo bash scripts/check-panel-security.sh` on VPS
-5. Restart after deploy: `sudo bash scripts/pull-build-restart.sh` or `sudo systemctl restart qadbak` (after `install-qadbak-systemd.sh`)
+3. Enable `QADBAK_REQUIRE_ADMIN_TOTP=true` and `QADBAK_ADMIN_TERMINAL_TOTP=true` for admins
+4. Re-run all `configure-*-sudo.sh` after pull (per-command sudoers)
+5. Run `sudo bash scripts/check-panel-security.sh` on VPS
+6. Restart after deploy: `sudo bash scripts/pull-build-restart.sh` and `sudo bash scripts/pm2-restart-qadbak.sh`
 
 ---
 

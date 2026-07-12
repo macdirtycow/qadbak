@@ -19,6 +19,9 @@ import {
 } from "./middleware/request-security";
 import { applySecurityHeaders } from "./middleware/security-headers";
 import { sessionSecretMinLength } from "./lib/security-config";
+import { sessionRevokedSync } from "./lib/session-revocation-sync";
+
+export const runtime = "nodejs";
 
 const PUBLIC_EXACT = new Set([
   "/",
@@ -141,6 +144,22 @@ export async function middleware(request: NextRequest) {
       issuer: JWT_ISSUER,
       audience: JWT_AUDIENCE,
     });
+    const jti = payload.jti ? String(payload.jti) : undefined;
+    const userId = String(payload.userId ?? "");
+    const iat =
+      typeof payload.iat === "number" ? payload.iat : Math.floor(Date.now() / 1000);
+    if (sessionRevokedSync(jti, userId, iat)) {
+      if (pathname.startsWith("/api/")) {
+        return finish(
+          request,
+          NextResponse.json({ error: "Session revoked." }, { status: 401 }),
+        );
+      }
+      return finish(
+        request,
+        NextResponse.redirect(new URL("/login", request.url)),
+      );
+    }
     const role = String(payload.role ?? "");
     const username = String(payload.username ?? "");
     if (demoMutationBlocked(pathname, request.method, username)) {

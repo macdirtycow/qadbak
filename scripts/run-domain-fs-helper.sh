@@ -2,6 +2,11 @@
 # NOPASSWD sudo entry for native Files (see configure-domain-fs-sudo.sh).
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-# Patched by configure-domain-fs-sudo.sh — must match pm2/qadbak node binary.
-QADBAK_NODE_BIN="${QADBAK_NODE_BIN:-/usr/bin/node}"
+QADBAK_NODE_BIN="${QADBAK_NODE_BIN:-$(command -v node 2>/dev/null || echo /usr/bin/node)}"
+ALLOWLIST="$SCRIPT_DIR/lib/domain-fs-shell-commands.txt"
+CMD="${1:-}"
+if [[ -z "$CMD" ]] || ! grep -qxF "$CMD" "$ALLOWLIST" 2>/dev/null; then
+  echo "Disallowed command: ${CMD:-(empty)}" >&2
+  exit 1
+fi
 exec "$QADBAK_NODE_BIN" "$SCRIPT_DIR/domain-fs-helper.mjs" "$@"

@@ -1,0 +1,9 @@
+ping
+linux-status
+linux-refresh
+linux-upgrade-start
+ubuntu-release-status
+ubuntu-release-start
+qadbak-status
+qadbak-upgrade-start
+job-status

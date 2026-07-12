@@ -1,0 +1,12 @@
+list *
+read *
+stream *
+write *
+mkdir *
+unlink *
+move *
+crontab-list *
+write-bytes *
+archive-extract *
+archive-create *
+install-upload *

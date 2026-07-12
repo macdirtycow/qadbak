@@ -10,6 +10,7 @@ export default async function AdminTerminalPage() {
       wsPath="/ws/admin-terminal"
       title="Server terminal"
       subtitle="Root shell on this VPS - no separate SSH. Only Qadbak administrators can open this session."
+      stepUpTotp
     />
   );
 }

@@ -15,6 +15,8 @@ export interface SessionPayload {
   username: string;
   role: Role;
   domains: string[];
+  /** Present when decoded from a session JWT (not set on createSession input). */
+  jti?: string;
 }
 
 export interface HostedDomain {

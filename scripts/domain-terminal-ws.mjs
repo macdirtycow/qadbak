@@ -58,6 +58,34 @@ function secretKey() {
   return new TextEncoder().encode(secret);
 }
 
+const JWT_ISSUER = "qadbak";
+const JWT_AUDIENCE = "qadbak-panel";
+const REVOCATIONS_PATH = path.join(ROOT, "data", "session-revocations.json");
+
+function loadRevocationStore() {
+  try {
+    if (!existsSync(REVOCATIONS_PATH)) return {};
+    return JSON.parse(readFileSync(REVOCATIONS_PATH, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function sessionRevoked(payload) {
+  const store = loadRevocationStore();
+  const now = Math.floor(Date.now() / 1000);
+  const jti = payload.sid ? String(payload.sid) : payload.jti ? String(payload.jti) : "";
+  if (jti) {
+    const exp = store[jti];
+    if (exp && exp > now) return true;
+  }
+  const userId = String(payload.sub || "");
+  const iat = typeof payload.iat === "number" ? payload.iat : now;
+  const logoutAt = store[`user:${userId}`];
+  if (logoutAt && iat <= logoutAt) return true;
+  return false;
+}
+
 function demoUsername() {
   return (process.env.QADBAK_DEMO_USERNAME || "demo").trim().toLowerCase();
 }
@@ -80,9 +108,14 @@ function assertDemoTerminalUsername(username) {
 async function verifyDomainToken(token) {
   const { payload } = await jwtVerify(token, secretKey(), {
     algorithms: ["HS256"],
+    issuer: JWT_ISSUER,
+    audience: JWT_AUDIENCE,
   });
   if (payload.purpose !== "terminal-ws") {
     throw new Error("Invalid token purpose.");
+  }
+  if (sessionRevoked(payload)) {
+    throw new Error("Session revoked.");
   }
   const domain = String(payload.domain || "");
   const unixUser = String(payload.unixUser || "");
@@ -94,9 +127,14 @@ async function verifyDomainToken(token) {
 async function verifyAdminToken(token) {
   const { payload } = await jwtVerify(token, secretKey(), {
     algorithms: ["HS256"],
+    issuer: JWT_ISSUER,
+    audience: JWT_AUDIENCE,
   });
   if (payload.purpose !== "admin-terminal-ws") {
     throw new Error("Invalid token purpose.");
+  }
+  if (sessionRevoked(payload)) {
+    throw new Error("Session revoked.");
   }
   assertDemoTerminalUsername(payload.username);
   return true;

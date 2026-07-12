@@ -1,0 +1,6 @@
+list
+bandwidth
+status
+start
+stop
+restart

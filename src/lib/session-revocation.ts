@@ -1,11 +1,17 @@
 import { mkdir, readFile, writeFile, chmod } from "node:fs/promises";
 import path from "node:path";
 
-const REVOCATIONS_PATH = path.join(process.cwd(), "data", "session-revocations.json");
+function revocationsPath(): string {
+  return (
+    process.env.QADBAK_SESSION_REVOCATIONS_PATH?.trim() ||
+    path.join(process.cwd(), "data", "session-revocations.json")
+  );
+}
 
 type RevocationStore = Record<string, number>;
 
 async function loadStore(): Promise<RevocationStore> {
+  const REVOCATIONS_PATH = revocationsPath();
   try {
     const raw = await readFile(REVOCATIONS_PATH, "utf8");
     const parsed = JSON.parse(raw) as RevocationStore;
@@ -16,6 +22,7 @@ async function loadStore(): Promise<RevocationStore> {
 }
 
 async function saveStore(store: RevocationStore): Promise<void> {
+  const REVOCATIONS_PATH = revocationsPath();
   await mkdir(path.dirname(REVOCATIONS_PATH), { recursive: true });
   const now = Math.floor(Date.now() / 1000);
   const pruned: RevocationStore = {};
@@ -30,6 +37,12 @@ async function saveStore(store: RevocationStore): Promise<void> {
   }
   await writeFile(REVOCATIONS_PATH, JSON.stringify(pruned), "utf8");
   await chmod(REVOCATIONS_PATH, 0o600).catch(() => undefined);
+  try {
+    const { bumpRevocationCache } = await import("./session-revocation-sync");
+    bumpRevocationCache();
+  } catch {
+    /* sync module unavailable in edge builds */
+  }
 }
 
 export async function revokeSessionJti(

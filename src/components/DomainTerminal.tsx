@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, Button, Card } from "@/components/ui";
+import { Alert, Button, Card, Input, Label } from "@/components/ui";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -8,6 +8,7 @@ import "@xterm/xterm/css/xterm.css";
 
 type SessionInfo = {
   available: boolean;
+  requiresTotp?: boolean;
   token?: string;
   wsUrl?: string;
   wsProtocols?: string[];
@@ -41,12 +42,15 @@ export function DomainTerminal({
   wsPath = "/ws/domain-terminal",
   title = "Domain shell",
   subtitle,
+  stepUpTotp = false,
 }: {
   domain?: string;
   fetchUrl: string;
   wsPath?: string;
   title?: string;
   subtitle?: string;
+  /** Admin root terminal: require POST with TOTP before connecting. */
+  stepUpTotp?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
@@ -56,6 +60,8 @@ export function DomainTerminal({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
+  const [totp, setTotp] = useState("");
+  const [awaitingTotp, setAwaitingTotp] = useState(false);
 
   const disconnect = useCallback(() => {
     wsRef.current?.close();
@@ -144,29 +150,50 @@ export function DomainTerminal({
     [disconnect, wsPath],
   );
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    disconnect();
-    termRef.current?.dispose();
-    termRef.current = null;
-    fitRef.current = null;
-    try {
-      const res = await fetch(fetchUrl, { credentials: "include" });
-      const data = (await res.json()) as SessionInfo & { error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Could not start terminal.");
-      setInfo(data);
-      if (!data.available) {
-        setError(data.error ?? "Native terminal not available on this server.");
-        return;
+  const load = useCallback(
+    async (totpCode?: string) => {
+      setLoading(true);
+      setError("");
+      disconnect();
+      termRef.current?.dispose();
+      termRef.current = null;
+      fitRef.current = null;
+      try {
+        const needsPost = stepUpTotp && totpCode?.trim();
+        const res = needsPost
+          ? await fetch(fetchUrl, {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ totp: totpCode?.trim() }),
+            })
+          : await fetch(fetchUrl, { credentials: "include" });
+        const data = (await res.json()) as SessionInfo & { error?: string };
+        if (!res.ok) throw new Error(data.error ?? "Could not start terminal.");
+        setInfo(data);
+        if (!data.available) {
+          setError(data.error ?? "Native terminal not available on this server.");
+          setAwaitingTotp(false);
+          return;
+        }
+        if (stepUpTotp && data.requiresTotp && !data.token) {
+          setAwaitingTotp(true);
+          return;
+        }
+        setAwaitingTotp(false);
+        if (!data.token) {
+          setError("Terminal token missing.");
+          return;
+        }
+        await connect(data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Error.");
+      } finally {
+        setLoading(false);
       }
-      await connect(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Error.");
-    } finally {
-      setLoading(false);
-    }
-  }, [connect, disconnect, fetchUrl]);
+    },
+    [connect, disconnect, fetchUrl, stepUpTotp],
+  );
 
   useEffect(() => {
     void load();
@@ -201,7 +228,7 @@ export function DomainTerminal({
           <p className="mt-1 text-sm text-panel-muted">{description}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={load} disabled={loading}>
+          <Button variant="secondary" onClick={() => void load()} disabled={loading}>
             {loading ? "Connecting…" : "New session"}
           </Button>
           {connected && (
@@ -211,6 +238,30 @@ export function DomainTerminal({
           )}
         </div>
       </div>
+      {awaitingTotp && (
+        <Card className="max-w-md space-y-3 p-4">
+          <p className="text-sm text-panel-muted">
+            Enter your authenticator code to open the server terminal.
+          </p>
+          <div>
+            <Label htmlFor="terminal-totp">Authenticator code</Label>
+            <Input
+              id="terminal-totp"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={totp}
+              onChange={(e) => setTotp(e.target.value)}
+              placeholder="000000"
+            />
+          </div>
+          <Button
+            onClick={() => void load(totp)}
+            disabled={loading || totp.trim().length < 6}
+          >
+            Verify and connect
+          </Button>
+        </Card>
+      )}
       {error && <Alert>{error}</Alert>}
       <Card className="overflow-hidden p-0">
         <div

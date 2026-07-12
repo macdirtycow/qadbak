@@ -10,6 +10,14 @@ export function requireAdminTotp(): boolean {
   return v === "true" || v === "1" || v === "yes";
 }
 
+/** Re-verify TOTP before issuing admin root terminal tokens (default on in production). */
+export function requireAdminTerminalStepUp(): boolean {
+  const v = process.env.QADBAK_ADMIN_TERMINAL_TOTP?.trim().toLowerCase();
+  if (v === "false" || v === "0" || v === "no") return false;
+  if (v === "true" || v === "1" || v === "yes") return true;
+  return process.env.NODE_ENV === "production";
+}
+
 export function healthMinimalPublic(): boolean {
   const v = process.env.QADBAK_HEALTH_MINIMAL?.trim().toLowerCase();
   if (v === "false" || v === "0" || v === "no") return false;

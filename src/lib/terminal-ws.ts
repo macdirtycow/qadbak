@@ -1,6 +1,11 @@
 import { SignJWT } from "jose";
 import type { SessionPayload } from "./types";
 import { assertDemoTerminalAllowed } from "./demo-mode";
+import {
+  JWT_AUDIENCE,
+  JWT_ISSUER,
+} from "./session-cookies";
+import { isSessionRevoked } from "./session-revocation";
 
 function secretKey(): Uint8Array {
   const secret = process.env.SESSION_SECRET;
@@ -10,20 +15,30 @@ function secretKey(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
+async function assertSessionActive(session: SessionPayload): Promise<void> {
+  if (session.jti && (await isSessionRevoked(session.jti))) {
+    throw new Error("Session expired.");
+  }
+}
+
 export async function createTerminalWsToken(
   domain: string,
   unixUser: string,
   session: SessionPayload,
 ): Promise<string> {
   assertDemoTerminalAllowed(session.username);
+  await assertSessionActive(session);
   return new SignJWT({
     purpose: "terminal-ws",
     domain,
     unixUser,
     sub: session.userId,
     username: session.username,
+    sid: session.jti,
   })
     .setProtectedHeader({ alg: "HS256" })
+    .setIssuer(JWT_ISSUER)
+    .setAudience(JWT_AUDIENCE)
     .setIssuedAt()
     .setExpirationTime("120s")
     .sign(secretKey());
@@ -37,12 +52,16 @@ export async function createAdminTerminalWsToken(
     throw new Error("Only administrators may use the server terminal.");
   }
   assertDemoTerminalAllowed(session.username);
+  await assertSessionActive(session);
   return new SignJWT({
     purpose: "admin-terminal-ws",
     sub: session.userId,
     username: session.username,
+    sid: session.jti,
   })
     .setProtectedHeader({ alg: "HS256" })
+    .setIssuer(JWT_ISSUER)
+    .setAudience(JWT_AUDIENCE)
     .setIssuedAt()
     .setExpirationTime("120s")
     .sign(secretKey());

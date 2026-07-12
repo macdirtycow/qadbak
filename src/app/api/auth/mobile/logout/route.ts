@@ -4,7 +4,8 @@ import {
   revokeAllMobileRefreshTokens,
   revokeMobileRefreshToken,
 } from "@/lib/mobile-auth";
-import { markUserLoggedOut } from "@/lib/session-revocation";
+import { MOBILE_ACCESS_TTL_SEC } from "@/lib/mobile-auth-constants";
+import { markUserLoggedOut, revokeSessionJti } from "@/lib/session-revocation";
 import { requireSession } from "@/lib/session";
 
 export async function POST(request: Request) {
@@ -28,6 +29,10 @@ export async function POST(request: Request) {
     }
 
     await revokeMobileRefreshToken(refreshToken);
+    if (session.jti) {
+      const exp = Math.floor(Date.now() / 1000) + MOBILE_ACCESS_TTL_SEC;
+      await revokeSessionJti(session.jti, exp);
+    }
     await auditLog(session.username, "mobile-logout");
     return jsonOk({ ok: true });
   } catch (err) {

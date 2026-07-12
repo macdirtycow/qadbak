@@ -1,0 +1,9 @@
+ping
+validate
+nginx-reload
+apache-reload
+apply-nginx-vhosts
+apply-php-fpm-pools
+ufw-status
+ufw-allow *
+domain-validate *

@@ -108,7 +108,7 @@ Volledige endpoint-tabel: [`docs/SECURITY_AUDIT_ENDPOINTS.md`](docs/SECURITY_AUD
 - Technische oorzaak: brede NOPASSWD wildcard
 - Impact: volledige server takeover
 - Aanbevolen oplossing: per-command wrappers of argv allowlist in wrapper
-- Status: **Partially fixed** — command allowlist in wrapper + helper; sudoers still `NOPASSWD: *` (phased hardening)
+- Status: **Fixed** — per-command sudoers via `generate-sudoers-allowlist.sh` (242 rules for provisioning; stack/host-services/updates/domain-fs likewise). Shell + helper allowlists remain as defense-in-depth. **Operator:** re-run all `configure-*-sudo.sh` after deploy.
 
 ## QAD-SEC-003 Git deploy shell injection
 
@@ -210,7 +210,7 @@ Volledige endpoint-tabel: [`docs/SECURITY_AUDIT_ENDPOINTS.md`](docs/SECURITY_AUD
 ## QAD-SEC-014 Stateless JWT geen revocation
 
 - Ernst: High | CWE: CWE-613
-- Status: **Partially fixed** — jti + logout revocation in `verifySessionToken`; Edge middleware still JWT-only until expiry
+- Status: **Fixed** — jti + logout revocation in `verifySessionToken`; Node middleware checks `session-revocations.json` (sync cache). Mobile logout revokes access jti.
 
 ## QAD-SEC-015 Mobile refresh unrate-limited
 
@@ -234,7 +234,7 @@ Volledige endpoint-tabel: [`docs/SECURITY_AUDIT_ENDPOINTS.md`](docs/SECURITY_AUD
 
 - Ernst: High (by design) | CWE: CWE-269
 - Bestand(en): `scripts/run-admin-terminal.sh`
-- Status: **Accepted risk** — admin feature; requires TOTP + short JWT
+- Status: **Mitigated** — accepted admin feature; TOTP step-up before ws-token (`QADBAK_ADMIN_TERMINAL_TOTP`), 120s JWT bound to session jti, revocation checked at WS server. External pentest still recommended (`docs/SECURITY_VALIDATION.md`).
 
 ## QAD-SEC-019 Cloud S3 upload arbitrary source path
 
@@ -297,8 +297,8 @@ Volledige endpoint-tabel: [`docs/SECURITY_AUDIT_ENDPOINTS.md`](docs/SECURITY_AUD
 ## 6. Prioriteitenplan
 
 1. **P0 (done):** compose policy, safe extract, git deploy, proxy SSRF, weak password gate
-2. **P1 (partial):** refresh RL, DNS/proxy/webhook/health fixes; open: sudo hardening, JWT revocation
-3. **P2:** CSP, cluster rate limits, supply chain pinning
+2. **P1 (done):** refresh RL, DNS/proxy/webhook/health fixes; sudo per-command sudoers, JWT revocation in middleware
+3. **P2:** CSP, cluster rate limits, supply chain pinning; **external:** Docker escape, tenant isolation, live VPS pentest (see `docs/SECURITY_VALIDATION.md`)
 
 ---
 
