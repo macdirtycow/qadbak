@@ -55,7 +55,25 @@ async function run(cmd, args, opts = {}) {
     maxBuffer: opts.maxBuffer ?? 8 * 1024 * 1024,
     env: { ...process.env, DEBIAN_FRONTEND: "noninteractive", ...opts.env },
   });
+  if (opts.jsonStdout) {
+    return stdout;
+  }
   return [stdout, stderr].filter(Boolean).join("\n");
+}
+
+/** Parse JSON from script stdout; ignore trailing apt/dpkg stderr noise. */
+function parseJsonOutput(raw) {
+  const trimmed = raw.trim();
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return JSON.parse(trimmed.slice(start, end + 1));
+    }
+    throw new Error(trimmed.slice(0, 200) || "Invalid JSON from helper script.");
+  }
 }
 
 async function readJson(p, fallback = null) {
@@ -225,7 +243,10 @@ async function cmdUbuntuReleaseStatus() {
   const rebootRequired = await exists("/var/run/reboot-required");
   let raw = "";
   try {
-    raw = await run("bash", [script, "status-json"], { timeout: 120_000 });
+    raw = await run("bash", [script, "status-json"], {
+      timeout: 120_000,
+      jsonStdout: true,
+    });
   } catch (e) {
     return {
       ubuntuRelease: {
@@ -235,16 +256,16 @@ async function cmdUbuntuReleaseStatus() {
       },
     };
   }
-  const status = JSON.parse(raw.trim());
+  const status = parseJsonOutput(raw);
   let preflight = null;
   if (status.nextTarget?.version) {
     try {
       const pfRaw = await run(
         "bash",
         [script, "preflight", status.nextTarget.version],
-        { timeout: 300_000 },
+        { timeout: 300_000, jsonStdout: true },
       );
-      preflight = JSON.parse(pfRaw.trim());
+      preflight = parseJsonOutput(pfRaw);
     } catch (e) {
       preflight = {
         preflightOk: false,
@@ -276,8 +297,9 @@ async function cmdUbuntuReleaseStart(target) {
   try {
     const pfRaw = await run("bash", [script, "preflight", target], {
       timeout: 300_000,
+      jsonStdout: true,
     });
-    preflight = JSON.parse(pfRaw.trim());
+    preflight = parseJsonOutput(pfRaw);
   } catch (e) {
     fail(`Preflight failed: ${e.message ?? e}`);
   }

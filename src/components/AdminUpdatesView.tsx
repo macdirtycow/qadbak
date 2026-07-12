@@ -146,42 +146,56 @@ export function AdminUpdatesView() {
     };
   }, [linuxJobId, ubuntuJobId, qadbakJobId, pollJob]);
 
-  async function post(
-    endpoint: "linux" | "ubuntu" | "qadbak",
+  async function postJson(
+    path: string,
     action: "refresh" | "upgrade",
     extra?: { targetVersion?: string },
   ) {
-    const key = `${endpoint}-${action}`;
+    const key = `${path}-${action}`;
     setActing(key);
     setError("");
     try {
-      const res = await fetch(`/api/admin/updates/${endpoint}`, {
+      const res = await fetch(path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, ...extra }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Action failed.");
-      if (endpoint === "linux") {
-        if (data.linux) setLinux(data.linux);
-        if (data.job?.id) {
-          setLinuxJobId(data.job.id);
+      const text = await res.text();
+      let data: Record<string, unknown>;
+      try {
+        data = JSON.parse(text) as Record<string, unknown>;
+      } catch {
+        throw new Error(
+          text.startsWith("<!")
+            ? "Server returned HTML instead of JSON. Check that you are logged in as admin."
+            : "Invalid response from server.",
+        );
+      }
+      if (!res.ok) throw new Error(String(data.error ?? "Action failed."));
+      if (path.includes("/linux")) {
+        if (data.linux) setLinux(data.linux as LinuxUpdateStatus);
+        const job = data.job as { id?: string } | undefined;
+        if (job?.id) {
+          setLinuxJobId(job.id);
           setLinuxLog("Upgrade started…\n");
         }
-      } else if (endpoint === "ubuntu") {
-        if (data.ubuntuRelease) setUbuntuRelease(data.ubuntuRelease);
-        if (data.job?.id) {
-          setUbuntuJobId(data.job.id);
+      } else if (path.includes("/ubuntu-release")) {
+        if (data.ubuntuRelease) setUbuntuRelease(data.ubuntuRelease as UbuntuReleaseStatus);
+        const job = data.job as { id?: string } | undefined;
+        if (job?.id) {
+          setUbuntuJobId(job.id);
           setUbuntuLog("Ubuntu release upgrade started…\n");
         }
       } else {
-        if (data.qadbak) setQadbak(data.qadbak);
-        if (data.job?.id) {
-          setQadbakJobId(data.job.id);
+        if (data.qadbak) setQadbak(data.qadbak as QadbakUpdateStatus);
+        const job = data.job as { id?: string } | undefined;
+        if (job?.id) {
+          setQadbakJobId(job.id);
           setQadbakLog("Update started…\n");
           if (data.backupDir) {
+            const copied = data.copied as string[] | undefined;
             setBackupNote(
-              `Backed up panel data to ${data.backupDir} (${(data.copied ?? []).join(", ") || "none"})`,
+              `Backed up panel data to ${String(data.backupDir)} (${(copied ?? []).join(", ") || "none"})`,
             );
           }
         }
@@ -191,6 +205,18 @@ export function AdminUpdatesView() {
     } finally {
       setActing(null);
     }
+  }
+
+  async function post(
+    endpoint: "linux" | "ubuntu" | "qadbak",
+    action: "refresh" | "upgrade",
+    extra?: { targetVersion?: string },
+  ) {
+    const path =
+      endpoint === "ubuntu"
+        ? "/api/admin/updates/ubuntu-release"
+        : `/api/admin/updates/${endpoint}`;
+    await postJson(path, action, extra);
   }
 
   return (

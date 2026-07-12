@@ -88,12 +88,26 @@ async function runUpdateHelper(args: string[]): Promise<HelperPayload> {
       maxBuffer: 8 * 1024 * 1024,
     },
   );
-  const line = stdout.trim().split("\n").pop() ?? "{}";
-  const parsed = JSON.parse(line) as HelperPayload;
-  if (parsed.ok === false) {
-    throw new Error(parsed.error ?? "Update helper failed");
+  const trimmed = stdout.trim();
+  const line = trimmed.split("\n").pop() ?? "{}";
+  try {
+    const parsed = JSON.parse(line) as HelperPayload;
+    if (parsed.ok === false) {
+      throw new Error(parsed.error ?? "Update helper failed");
+    }
+    return parsed;
+  } catch {
+    const start = trimmed.lastIndexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      const parsed = JSON.parse(trimmed.slice(start, end + 1)) as HelperPayload;
+      if (parsed.ok === false) {
+        throw new Error(parsed.error ?? "Update helper failed");
+      }
+      return parsed;
+    }
+    throw new Error(trimmed.slice(0, 200) || "Update helper returned invalid JSON.");
   }
-  return parsed;
 }
 
 export async function probeUpdatesHelperSudo(): Promise<boolean> {
