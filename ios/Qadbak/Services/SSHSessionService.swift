@@ -286,6 +286,8 @@ struct SSHSessionService {
         } catch let error as SSHClient.CommandFailed {
             let hint: String
             switch error.exitCode {
+            case 5:
+                hint = "The agent binary is not executable by the qadbak-agent user. This is usually a directory permission issue on /usr/lib/qadbak-agent."
             case 6:
                 hint = "Port 9443 is already used by another process. On the server run: ss -tlnp | grep 9443 — stop that service or pick another port, then retry."
             case 7:
@@ -345,7 +347,9 @@ struct SSHSessionService {
         usermod -aG adm "$AGENT_USER" 2>/dev/null || true
         if getent group docker &>/dev/null; then usermod -aG docker "$AGENT_USER" 2>/dev/null || true; fi
         install -d -m 0750 "$INSTALL_DIR" "$DATA_DIR" "$CONFIG_DIR"
-        install -m 0755 "$BIN_SRC" "${INSTALL_DIR}/qadbak-agent"
+        install -m 0750 -o root -g "$AGENT_USER" "$BIN_SRC" "${INSTALL_DIR}/qadbak-agent"
+        chown root:"$AGENT_USER" "$INSTALL_DIR" "$CONFIG_DIR"
+        chmod 0750 "$INSTALL_DIR" "$CONFIG_DIR"
         ln -sf "${INSTALL_DIR}/qadbak-agent" /usr/local/bin/qadbak-agent
         if [[ ! -f "${CONFIG_DIR}/jwt.secret" ]]; then
           openssl rand -hex 32 >"${CONFIG_DIR}/jwt.secret"
@@ -392,6 +396,11 @@ struct SSHSessionService {
         chown -R "${AGENT_USER}:${AGENT_USER}" "$DATA_DIR"
         chmod 750 "$DATA_DIR"
         chown root:"$AGENT_USER" "${CONFIG_DIR}/agent.env" 2>/dev/null || true
+        if ! runuser -u "$AGENT_USER" -- test -x "${INSTALL_DIR}/qadbak-agent"; then
+          echo "Agent user cannot execute ${INSTALL_DIR}/qadbak-agent (check directory ownership)" >&2
+          ls -la "$INSTALL_DIR" >&2 || true
+          exit 5
+        fi
         systemctl stop qadbak-agent.service 2>/dev/null || true
         if command -v ss >/dev/null 2>&1; then
           if ss -tlnH 2>/dev/null | awk -v p=":$AGENT_PORT" '$4 ~ p"$" {found=1} END{exit !found}'; then
@@ -448,10 +457,13 @@ struct SSHSessionService {
         """
         set -euo pipefail
         INSTALL_DIR="/usr/lib/qadbak-agent"
+        AGENT_USER="qadbak-agent"
         BIN_SRC="$1"
         install -d -m 0750 "$INSTALL_DIR"
+        chown root:"$AGENT_USER" "$INSTALL_DIR"
+        chmod 0750 "$INSTALL_DIR"
         systemctl stop qadbak-agent.service || true
-        install -m 0755 "$BIN_SRC" "${INSTALL_DIR}/qadbak-agent"
+        install -m 0750 -o root -g "$AGENT_USER" "$BIN_SRC" "${INSTALL_DIR}/qadbak-agent"
         ln -sf "${INSTALL_DIR}/qadbak-agent" /usr/local/bin/qadbak-agent
         systemctl daemon-reload
         systemctl start qadbak-agent.service

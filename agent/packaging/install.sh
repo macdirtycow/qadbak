@@ -73,8 +73,13 @@ install_binary() {
   [[ -n "$src" && -f "$src" ]] || die "Agent binary path required as first argument"
   verify_checksum "$src"
   install -d -m 0750 "$INSTALL_DIR" "$DATA_DIR" "$CONFIG_DIR"
-  install -m 0755 "$src" "${INSTALL_DIR}/qadbak-agent"
+  install -m 0750 -o root -g "$AGENT_USER" "$src" "${INSTALL_DIR}/qadbak-agent"
+  chown root:"$AGENT_USER" "$INSTALL_DIR" "$CONFIG_DIR"
+  chmod 0750 "$INSTALL_DIR" "$CONFIG_DIR"
   ln -sf "${INSTALL_DIR}/qadbak-agent" /usr/local/bin/qadbak-agent
+  if ! runuser -u "$AGENT_USER" -- test -x "${INSTALL_DIR}/qadbak-agent"; then
+    die "Agent user cannot execute ${INSTALL_DIR}/qadbak-agent (directory ownership must be root:${AGENT_USER} 0750)"
+  fi
   log "Installed binary to ${INSTALL_DIR}/qadbak-agent"
 }
 
