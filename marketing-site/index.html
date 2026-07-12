@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Qadbak — Self-hosted hosting control panel for Linux</title>
+    <title>Qadbak - Self-hosted hosting control panel for Linux</title>
     <meta
       name="description"
-      content="Self-hosted hosting panel for Ubuntu and Debian: native iOS app (beta), Jellyfin media, 25 one-click apps, Ubuntu LTS upgrade from the panel, Site tools, REST API, and a live demo at demo.qadbak.com. Premium from €2.50/month."
+      content="Self-hosted hosting panel for Debian-based Linux (Debian 12, Ubuntu LTS): native iOS app (beta), Jellyfin media, 25 one-click apps, Ubuntu LTS upgrade from the panel, Site tools, REST API, and a live demo at demo.qadbak.com. Premium from €2.50/month."
     />
     <meta name="theme-color" content="#0f1419" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -17,10 +17,10 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/landing.css" />
-    <meta property="og:title" content="Qadbak — Hosting control panel" />
+    <meta property="og:title" content="Qadbak - Hosting control panel" />
     <meta
       property="og:description"
-      content="Run your own panel on Ubuntu or Debian — native iOS app (beta), Jellyfin, media library, app catalog, API v1, Ubuntu LTS upgrades, and GDPR-friendly admin tools on your VPS."
+      content="Run your own panel on a Debian-based Linux VPS (Debian 12 or Ubuntu LTS): native iOS app (beta), Jellyfin, media library, app catalog, API v1, Ubuntu LTS upgrades, and GDPR-friendly admin tools."
     />
     <meta property="og:url" content="https://qadbak.com" />
   </head>
@@ -82,8 +82,8 @@
             <h1>Hosting control panel you run on your own VPS.</h1>
             <p class="hero-lead">
               Qadbak replaces cPanel-style workflows on your VPS: sites, mail, DNS, TLS,
-              databases, local backups, a curated app store, and operator security tools —
-              without sending customer site data to us. Manage from the browser or the
+              databases, local backups, a curated app store, and operator security tools.
+              Customer site data stays on your hardware. Manage from the browser or the
               <strong>native iOS app</strong> (public beta).
             </p>
             <p class="hero-note">
@@ -106,14 +106,14 @@
           <aside class="hero-aside">
             <h2>What’s new</h2>
             <ul>
-              <li><strong>iOS app (beta)</strong> — domains, DNS, mail, SSL, backups, Qmail, files, terminal, and panel updates from iPhone/iPad</li>
-              <li><strong>Ubuntu LTS upgrade</strong> — 22.04→24.04 or 24.04→26.04 from Admin → Updates (Premium)</li>
-              <li><strong>Media</strong> — Jellyfin one-click, domain media library, HTML5 quick player</li>
-              <li><strong>Linux installs</strong> — native stack on Debian 12 + Ubuntu 26.04; panel-only on any Linux + Node 20+</li>
-              <li><strong>Live demo</strong> — <a href="https://demo.qadbak.com/login" rel="noopener">demo.qadbak.com</a> (read-only panel tour)</li>
-              <li><strong>Site tools</strong> — deliverability, Git deploy, staging, analytics, support tickets</li>
-              <li><strong>Newsletter</strong> — subscribers, campaigns, open/click tracking, GDPR export</li>
-              <li><strong>App store</strong> — 25 one-click apps (CMS, shops, wiki, forums, Jellyfin, gallery, helpdesk)</li>
+              <li><strong>iOS app (beta)</strong>: domains, DNS, mail, SSL, backups, Qmail, files, terminal, and panel updates from iPhone/iPad</li>
+              <li><strong>Ubuntu LTS upgrade</strong>: 22.04→24.04 or 24.04→26.04 from Admin → Updates (Premium)</li>
+              <li><strong>Media</strong>: Jellyfin one-click, domain media library, HTML5 quick player</li>
+              <li><strong>Linux installs</strong>: native stack on Debian 12 + Ubuntu 26.04; panel-only on any Linux + Node 20+</li>
+              <li><strong>Live demo</strong>: <a href="https://demo.qadbak.com/login" rel="noopener">demo.qadbak.com</a> (read-only panel tour)</li>
+              <li><strong>Site tools</strong>: deliverability, Git deploy, staging, analytics, support tickets</li>
+              <li><strong>Newsletter</strong>: subscribers, campaigns, open/click tracking, GDPR export</li>
+              <li><strong>App store</strong>: 25 one-click apps (CMS, shops, wiki, forums, Jellyfin, gallery, helpdesk)</li>
               <li>REST API v1 + scoped API keys (WHMCS / Blesta starters)</li>
               <li>Local backups + restore wizard (offsite upload → Premium)</li>
               <li>ModSecurity WAF, ClamAV, fail2ban, metrics &amp; alert webhooks</li>
@@ -129,7 +129,7 @@
           <p class="section-lead">
             Core features ship in the public repository. Install once on a fresh VPS and
             manage everything from the browser as the <strong>panel administrator</strong>.
-            Scoped <strong>client logins</strong> (RBAC) are a Premium module — the free
+            Scoped <strong>client logins</strong> (RBAC) are a Premium module. The free
             tier is built for a single operator or internal team, not a full reseller panel.
           </p>
           <div class="grid-3">
@@ -139,7 +139,7 @@
             </article>
             <article class="card">
               <h3>Mail &amp; newsletter</h3>
-              <p>Mailboxes, SPF/DKIM/DMARC, delivery logs, plus built-in newsletters — subscribers, campaigns, tracking pixel, and GDPR export.</p>
+              <p>Mailboxes, SPF/DKIM/DMARC, delivery logs, plus built-in newsletters, subscribers, campaigns, tracking pixel, and GDPR export.</p>
             </article>
             <article class="card">
               <h3>Site tools</h3>
@@ -155,7 +155,7 @@
             </article>
             <article class="card">
               <h3>Files &amp; shell</h3>
-              <p>File manager and terminal as the domain user — not shared root access.</p>
+              <p>File manager and terminal as the domain user, not shared root access.</p>
             </article>
             <article class="card">
               <h3>Backups</h3>
@@ -163,27 +163,27 @@
             </article>
             <article class="card">
               <h3>Security</h3>
-              <p>Per-domain ModSecurity WAF, ClamAV malware scans, host firewall rules, fail2ban — plus domain security tab and journal entries.</p>
+              <p>Per-domain ModSecurity WAF, ClamAV malware scans, host firewall rules, fail2ban, plus domain security tab and journal entries.</p>
             </article>
             <article class="card">
               <h3>Runtimes</h3>
-              <p>Node, Python, and Docker compose helpers beside PHP-FPM — one pool per customer unix user (Ghost uses Node 18+).</p>
+              <p>Node, Python, and Docker compose helpers beside PHP-FPM, one pool per customer unix user (Ghost uses Node 18+).</p>
             </article>
             <article class="card">
               <h3>Media library</h3>
-              <p>Jellyfin one-click (Docker on <span class="code-chip">media.domain</span>), upload folder per domain, disk usage, and an in-panel HTML5 player for MP4/WebM — no extra app required for quick streams.</p>
+              <p>Jellyfin one-click (Docker on <span class="code-chip">media.domain</span>), upload folder per domain, disk usage, and an in-panel HTML5 player for MP4/WebM, no extra app required for quick streams.</p>
             </article>
             <article class="card">
               <h3>App store</h3>
-              <p>25 installable apps with search, categories, and one-click flow — Server admin → App store or per-domain Apps tab.</p>
+              <p>25 installable apps with search, categories, and one-click flow, Server admin → App store or per-domain Apps tab.</p>
             </article>
             <article class="card">
               <h3>Trust &amp; privacy</h3>
-              <p>TOTP two-factor login, local activity log with retention, privacy report export — no third-party analytics on the panel.</p>
+              <p>TOTP two-factor login, local activity log with retention, privacy report export, no third-party analytics on the panel.</p>
             </article>
             <article class="card">
               <h3>Mobile app (beta)</h3>
-              <p>Native iOS client for iPhone and iPad — domains, DNS, mail, SSL, backups, Qmail, files, terminal, and panel updates against your panel URL.</p>
+              <p>Native iOS client for iPhone and iPad, domains, DNS, mail, SSL, backups, Qmail, files, terminal, and panel updates against your panel URL.</p>
             </article>
           </div>
         </div>
@@ -195,7 +195,7 @@
           <h2 class="section-title">See the panel before you install</h2>
           <p class="section-lead">
             Open <a href="https://demo.qadbak.com/login" rel="noopener"><strong>demo.qadbak.com</strong></a> for a
-            read-only tour of the real Qadbak UI — domains, mail, newsletters, Site tools, app store, and server admin.
+            read-only tour of the real Qadbak UI, domains, mail, newsletters, Site tools, app store, and server admin.
             Credentials are prefilled on the login page. Changes are blocked so the demo stays stable for everyone.
           </p>
           <div class="grid-2">
@@ -205,7 +205,7 @@
             </article>
             <article class="card">
               <h3>Run your own copy</h3>
-              <p>Clone the repo, run the installer on Ubuntu 22.04/24.04/26.04 or Debian 12, or use panel-only on any Linux with Node 20+. Enable the demo host with <span class="code-chip">sudo bash scripts/apply-demo-vhost.sh</span> — see <code>docs/DEMO.md</code> on GitHub.</p>
+              <p>Clone the repo, run the installer on Ubuntu 22.04/24.04/26.04 or Debian 12, or use panel-only on any Linux with Node 20+. Enable the demo host with <span class="code-chip">sudo bash scripts/apply-demo-vhost.sh</span>, see <code>docs/DEMO.md</code> on GitHub.</p>
             </article>
           </div>
           <div class="hero-cta" style="margin-top: 2rem">
@@ -218,10 +218,10 @@
       <section id="mobile-app">
         <div class="container">
           <p class="section-label">iOS app</p>
-          <h2 class="section-title">Your panel in your pocket — public beta</h2>
+          <h2 class="section-title">Your panel in your pocket (public beta)</h2>
           <p class="section-lead">
             The native <strong>Qadbak</strong> app for iPhone and iPad connects to <em>your</em> panel
-            over HTTPS — not a cloud dashboard we host. Sign in with your panel URL once; access and
+            over HTTPS, not a cloud dashboard we host. Sign in with your panel URL once; access and
             refresh tokens stay in the iOS Keychain. TOTP, client logins (Premium), and Qmail work the
             same as in the browser.
           </p>
@@ -232,7 +232,7 @@
                 Browse and add domains, edit DNS, manage mail accounts, renew TLS, trigger backups,
                 read and send mail with <strong>Qmail</strong> (Premium), browse domain files, open a
                 web terminal with extra keys, check server health, and run panel or Linux package
-                updates — all from the app.
+                updates, all from the app.
               </p>
             </article>
             <article class="card">
@@ -240,7 +240,7 @@
               <p>
                 Home Screen widget for domain count and SSL alerts, push notifications for critical
                 events, and the same Bearer-token mobile API the panel exposes for integrations.
-                Open source in the repo — see <code>docs/MOBILE-IOS-APP.md</code> on GitHub.
+                Open source in the repo, see <code>docs/MOBILE-IOS-APP.md</code> on GitHub.
               </p>
             </article>
           </div>
@@ -260,13 +260,13 @@
           <p class="section-label">App store</p>
           <h2 class="section-title">25 apps you can install today</h2>
           <p class="section-lead">
-            Real installers on your VPS — not placeholders. Browse by category in
+            Real installers on your VPS, not placeholders. Browse by category in
             <strong>Server admin → App store</strong>, or pick an app on any domain’s
             <strong>Apps</strong> tab. MySQL is created when needed; every install is journaled.
           </p>
           <p class="section-lead app-store-honesty">
-            <strong>Scope:</strong> 25 maintained apps (CMS, shops, collaboration, education, media, support) —
-            not a Softaculous-scale catalog of hundreds of scripts. We add installers after they
+            <strong>Scope:</strong> 25 maintained apps (CMS, shops, collaboration, education, media, support).
+            Not a Softaculous-scale catalog of hundreds of scripts. We add installers after they
             pass on real Ubuntu VPS installs; use SSH or your own scripts for anything else.
           </p>
           <div class="app-store-hero">
@@ -312,7 +312,7 @@
             <article class="app-chip" role="listitem"><span class="app-chip-icon" aria-hidden="true">⚙️</span><div><h3>ProcessWire</h3><p class="app-chip-cat">CMS</p><p>Flexible field-based CMS</p></div></article>
           </div>
           <p class="section-lead" style="margin-top: 2rem; margin-bottom: 0">
-            Catalog lives in <code>data/app-catalog.json</code> — add apps with a shell installer in <code>scripts/lib/</code>.
+            Catalog lives in <code>data/app-catalog.json</code>, add apps with a shell installer in <code>scripts/lib/</code>.
           </p>
         </div>
       </section>
@@ -336,11 +336,11 @@
             </article>
             <article class="card">
               <h3>Privacy center</h3>
-              <p>Outbound connections table, privacy report download, audit export, and trim tools — built for GDPR-minded hosts.</p>
+              <p>Outbound connections table, privacy report download, audit export, and trim tools, built for GDPR-minded hosts.</p>
             </article>
             <article class="card">
               <h3>Install fingerprint</h3>
-              <p>Each VPS gets a stable <span class="code-chip">qb-…</span> tag on license heartbeat (not customer PII) — auto-provisioned on install and update.</p>
+              <p>Each VPS gets a stable <span class="code-chip">qb-…</span> tag on license heartbeat (not customer PII), auto-provisioned on install and update.</p>
             </article>
             <article class="card">
               <h3>WAF &amp; malware</h3>
@@ -348,7 +348,7 @@
             </article>
             <article class="card">
               <h3>Alerts &amp; metrics</h3>
-              <p>Disk, SSL expiry, and backup health on the status dashboard — email, Slack, or Telegram when thresholds breach.</p>
+              <p>Disk, SSL expiry, and backup health on the status dashboard, email, Slack, or Telegram when thresholds breach.</p>
             </article>
           </div>
         </div>
@@ -365,11 +365,11 @@
           <div class="grid-2">
             <article class="card">
               <h3>REST API v1</h3>
-              <p>Domains, mail, DNS, SSL, backups, suspend — rate-limited keys with scopes. Admin → API keys.</p>
+              <p>Domains, mail, DNS, SSL, backups, suspend, rate-limited keys with scopes. Admin → API keys.</p>
             </article>
             <article class="card">
               <h3>WHMCS module</h3>
-              <p>Create, terminate, suspend, and unsuspend accounts against your panel origin — see <code>docs/integrations/WHMCS-INTEGRATION.md</code> on GitHub.</p>
+              <p>Create, terminate, suspend, and unsuspend accounts against your panel origin, see <code>docs/integrations/WHMCS-INTEGRATION.md</code> on GitHub.</p>
             </article>
             <article class="card">
               <h3>Cloudflare-ready panels</h3>
@@ -390,7 +390,7 @@
           <div class="grid-2">
             <article class="card">
               <h3>Action journal</h3>
-              <p>Each change records the commands and config files touched — readable audit trail, not raw syslog hunting.</p>
+              <p>Each change records the commands and config files touched, readable audit trail, not raw syslog hunting.</p>
             </article>
             <article class="card">
               <h3>Undo (selected actions)</h3>
@@ -402,7 +402,7 @@
             </article>
             <article class="card">
               <h3>App store admin</h3>
-              <p>Browse featured apps, requirements (PHP, DB, Node), and install paths — same catalog on every domain’s Apps tab.</p>
+              <p>Browse featured apps, requirements (PHP, DB, Node), and install paths, same catalog on every domain’s Apps tab.</p>
             </article>
             <article class="card">
               <h3>Install journal</h3>
@@ -410,15 +410,15 @@
             </article>
             <article class="card">
               <h3>Website health</h3>
-              <p>Public probe plus origin checks — hints for Cloudflare 502/523 and one-click repair on the server.</p>
+              <p>Public probe plus origin checks, hints for Cloudflare 502/523 and one-click repair on the server.</p>
             </article>
             <article class="card">
               <h3>Ubuntu LTS upgrades</h3>
-              <p>Premium: move 22.04→24.04 or 24.04→26.04 from Admin → Updates — preflight, background job log, stack repair, reboot.</p>
+              <p>Premium: move 22.04→24.04 or 24.04→26.04 from Admin → Updates, preflight, background job log, stack repair, reboot.</p>
             </article>
             <article class="card">
               <h3>Site tools</h3>
-              <p>Deliverability dashboard, Git deploy with webhooks, staging promote, bandwidth history, CI pipeline hooks, and light billing — one screen per domain.</p>
+              <p>Deliverability dashboard, Git deploy with webhooks, staging promote, bandwidth history, CI pipeline hooks, and light billing, one screen per domain.</p>
             </article>
           </div>
         </div>
@@ -446,57 +446,57 @@
               <tr>
                 <td>Admin + single operator</td>
                 <td><span class="tag tag-free">Included</span></td>
-                <td>—</td>
+                <td>–</td>
               </tr>
               <tr>
                 <td>Client logins &amp; RBAC</td>
-                <td>—</td>
+                <td>–</td>
                 <td><span class="tag">Premium</span></td>
               </tr>
               <tr>
                 <td>Per-client vhosts &amp; PHP-FPM pools</td>
-                <td>—</td>
+                <td>–</td>
                 <td><span class="tag">Premium</span></td>
               </tr>
               <tr>
                 <td>Webmail UI</td>
-                <td>—</td>
+                <td>–</td>
                 <td><span class="tag">Premium</span></td>
               </tr>
               <tr>
                 <td>White-label (logo, colours, panel URL)</td>
-                <td>—</td>
+                <td>–</td>
                 <td><span class="tag">Premium</span></td>
               </tr>
               <tr>
                 <td>License slot management / VPS moves</td>
-                <td>—</td>
+                <td>–</td>
                 <td><span class="tag">Premium</span></td>
               </tr>
               <tr>
                 <td>In-panel admin updates + Ubuntu LTS upgrade</td>
-                <td>—</td>
+                <td>–</td>
                 <td><span class="tag">Premium</span></td>
               </tr>
               <tr>
                 <td>Offsite backup credentials (S3 / B2 / GCS)</td>
-                <td>—</td>
+                <td>–</td>
                 <td><span class="tag">Premium</span></td>
               </tr>
               <tr>
                 <td>REST API v1 + billing modules (included with panel)</td>
                 <td><span class="tag tag-free">Included</span></td>
-                <td>—</td>
+                <td>–</td>
               </tr>
               <tr>
                 <td>App store (25 one-click apps)</td>
                 <td><span class="tag tag-free">Included</span></td>
-                <td>—</td>
+                <td>–</td>
               </tr>
               <tr>
                 <td>TOTP 2FA, activity log, privacy center</td>
                 <td><span class="tag tag-free">Included</span></td>
-                <td>—</td>
+                <td>–</td>
               </tr>
             </tbody>
           </table>
@@ -591,7 +591,7 @@
             <div class="step">
               <div class="step-num">1</div>
               <h3>VPS + DNS</h3>
-              <p>Ubuntu 22.04 / 24.04 / 26.04 or Debian 12, 1 GB+ RAM. Point your panel hostname A-record to the server. Panel-only UI: any Linux + Node 20+.</p>
+              <p>Debian-based Linux VPS (Debian 12 or Ubuntu 22.04/24.04/26.04 LTS), 1 GB+ RAM. Point your panel hostname A-record to the server. Panel-only UI: any Linux with Node 20+.</p>
             </div>
             <div class="step">
               <div class="step-num">2</div>
@@ -631,14 +631,14 @@
                 Is there an iOS app?
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
-              <div class="faq-a">Yes — a native <strong>iOS app</strong> is in <strong>public beta</strong> on TestFlight. It talks to your own panel URL (not our servers): domains, DNS, mail, SSL, backups, Qmail, files, terminal, and updates. Requires iOS 17+ and HTTPS to your panel. Request access via <a href="mailto:support@inveil.net">support@inveil.net</a> or read <a href="https://github.com/macdirtycow/qadbak/blob/main/docs/MOBILE-IOS-APP.md" rel="noopener">MOBILE-IOS-APP.md</a> on GitHub.</div>
+              <div class="faq-a">Yes. A native <strong>iOS app</strong> is in <strong>public beta</strong> on TestFlight. It talks to your own panel URL (not our servers): domains, DNS, mail, SSL, backups, Qmail, files, terminal, and updates. Requires iOS 17+ and HTTPS to your panel. Request access via <a href="mailto:support@inveil.net">support@inveil.net</a> or read <a href="https://github.com/macdirtycow/qadbak/blob/main/docs/MOBILE-IOS-APP.md" rel="noopener">MOBILE-IOS-APP.md</a> on GitHub.</div>
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
                 Is there a live demo?
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
-              <div class="faq-a">Yes — <a href="https://demo.qadbak.com/login" rel="noopener">demo.qadbak.com</a> runs the real panel in <strong>read-only</strong> mode. Use the prefilled <span class="code">demo</span> login to browse domains, mail, newsletters, Site tools, and server admin. To make changes, install Qadbak on your own VPS.</div>
+              <div class="faq-a">Yes. <a href="https://demo.qadbak.com/login" rel="noopener">demo.qadbak.com</a> runs the real panel in <strong>read-only</strong> mode. Use the prefilled <span class="code">demo</span> login to browse domains, mail, newsletters, Site tools, and server admin. To make changes, install Qadbak on your own VPS.</div>
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
@@ -656,17 +656,17 @@
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
-                Why only 25 apps — not like Softaculous?
+                Why only 25 apps, not like Softaculous?
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
-              <div class="faq-a">Softaculous bundles hundreds of third-party installers; Qadbak ships a <strong>growing, tested set of 25 apps</strong> (WordPress, Joomla, Drupal, Nextcloud, Moodle, Roundcube, BookStack, Piwigo, Jellyfin, osTicket, Firefly III, shops, wikis, forums, surveys, phpMyAdmin, Adminer, …) with real shell installers and journal/rollback on your VPS. That keeps support predictable. Need more? Install manually via SSH, Docker, or your own scripts — the panel still handles the site, mail, and TLS around it.</div>
+              <div class="faq-a">Softaculous bundles hundreds of third-party installers; Qadbak ships a <strong>growing, tested set of 25 apps</strong> (WordPress, Joomla, Drupal, Nextcloud, Moodle, Roundcube, BookStack, Piwigo, Jellyfin, osTicket, Firefly III, shops, wikis, forums, surveys, phpMyAdmin, Adminer, …) with real shell installers and journal/rollback on your VPS. That keeps support predictable. Need more? Install manually via SSH, Docker, or your own scripts, the panel still handles the site, mail, and TLS around it.</div>
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
                 What data leaves my server?
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
-              <div class="faq-a">Customer sites, mail, and databases stay on your VPS. With Premium, the panel sends a short license heartbeat to <span class="code">license.inveil.dev</span> — see our <a href="/privacy">privacy policy</a>. The panel also offers optional TOTP two-factor login, a local activity log, and admin privacy controls — all on your hardware.</div>
+              <div class="faq-a">Customer sites, mail, and databases stay on your VPS. With Premium, the panel sends a short license heartbeat to <span class="code">license.inveil.dev</span>, see our <a href="/privacy">privacy policy</a>. The panel also offers optional TOTP two-factor login, a local activity log, and admin privacy controls, all on your hardware.</div>
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
@@ -694,7 +694,7 @@
                 Cloudflare and panel.<span class="code">domain</span>?
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
-              <div class="faq-a">Point <span class="code">panel</span> A-record to your VPS. Use SSL mode <strong>Flexible</strong> until Let's Encrypt succeeds, then <strong>Full</strong>. After updates run <span class="code">sudo bash scripts/fix-panel-now.sh</span> on the server — see <a href="https://github.com/macdirtycow/qadbak/blob/main/docs/CLOUDFLARE.md" rel="noopener">docs/CLOUDFLARE.md</a>.</div>
+              <div class="faq-a">Point <span class="code">panel</span> A-record to your VPS. Use SSL mode <strong>Flexible</strong> until Let's Encrypt succeeds, then <strong>Full</strong>. After updates run <span class="code">sudo bash scripts/fix-panel-now.sh</span> on the server, see <a href="https://github.com/macdirtycow/qadbak/blob/main/docs/CLOUDFLARE.md" rel="noopener">docs/CLOUDFLARE.md</a>.</div>
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">
@@ -708,7 +708,7 @@
                 Can I upgrade Ubuntu from the panel?
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </button>
-              <div class="faq-a">Yes — with <strong>Premium</strong>, native Ubuntu VPS hosts can run an in-place LTS upgrade (22.04→24.04, then 24.04→26.04) from <strong>Admin → Updates</strong>. Snapshot your VPS first; expect 30–90+ minutes downtime and an automatic reboot. Install pending package updates before starting.</div>
+              <div class="faq-a">Yes. With <strong>Premium</strong>, native Ubuntu VPS hosts can run an in-place LTS upgrade (22.04→24.04, then 24.04→26.04) from <strong>Admin → Updates</strong>. Snapshot your VPS first; expect 30–90+ minutes downtime and an automatic reboot. Install pending package updates before starting.</div>
             </div>
             <div class="faq-item">
               <button type="button" class="faq-q" aria-expanded="false">

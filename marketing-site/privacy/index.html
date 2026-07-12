@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Privacy Policy — Qadbak</title>
+    <title>Privacy Policy - Qadbak</title>
     <meta
       name="description"
-      content="How Qadbak (by Inveil) collects, uses and protects personal data — GDPR-compliant privacy policy."
+      content="How Qadbak (by Inveil) collects, uses and protects personal data, GDPR-compliant privacy policy."
     />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#0f1419" />
@@ -83,10 +83,10 @@
 
       <h3>2.1 When you buy a license</h3>
       <ul>
-        <li><strong>Email address</strong> — to deliver your license key and send service emails (receipt, renewal).</li>
-        <li><strong>Stripe payment metadata</strong> — Stripe checkout session ID, amount, currency, country, payment method type (card / iDEAL / etc.). We do <em>not</em> see or store card numbers, IBANs, or CVCs; Stripe processes those directly.</li>
-        <li><strong>License order record</strong> — plan you bought, timestamp, fulfilment status, email delivery status.</li>
-        <li><strong>Billing country</strong> (from Stripe) — required for EU VAT and tax reporting.</li>
+        <li><strong>Email address</strong>: to deliver your license key and send service emails (receipt, renewal).</li>
+        <li><strong>Stripe payment metadata</strong>: Stripe checkout session ID, amount, currency, country, payment method type (card / iDEAL / etc.). We do <em>not</em> see or store card numbers, IBANs, or CVCs; Stripe processes those directly.</li>
+        <li><strong>License order record</strong>: plan you bought, timestamp, fulfilment status, email delivery status.</li>
+        <li><strong>Billing country</strong> (from Stripe), required for EU VAT and tax reporting.</li>
       </ul>
 
       <h3>2.2 When your panel uses Premium features</h3>
@@ -96,9 +96,9 @@
       </p>
       <ul>
         <li>Your license key (hashed before storage).</li>
-        <li>An <strong>instance ID</strong> — random per-server identifier so we can enforce the "one VPS per license" limit.</li>
-        <li>Your server's <strong>public IP address</strong> — visible in nginx/Cloudflare access logs (standard for any HTTPS request), and stored alongside each activation so you can recognise which server is which in the panel.</li>
-        <li>The panel version and a list of unlocked module names — so we can warn you about incompatible upgrades.</li>
+        <li>An <strong>instance ID</strong>: random per-server identifier so we can enforce the "one VPS per license" limit.</li>
+        <li>Your server's <strong>public IP address</strong>: visible in nginx/Cloudflare access logs (standard for any HTTPS request), and stored alongside each activation so you can recognise which server is which in the panel.</li>
+        <li>The panel version and a list of unlocked module names, so we can warn you about incompatible upgrades.</li>
       </ul>
       <p>
         We do <strong>not</strong> receive any of the data on your VPS: no domains hosted, no email content, no
@@ -117,14 +117,14 @@
         your customer websites, mailboxes, databases, or files. On your server the panel may store:
       </p>
       <ul>
-        <li><strong>Panel login accounts</strong> — usernames and bcrypt password hashes in <span class="code-chip">data/users.json</span> on your VPS.</li>
-        <li><strong>Optional two-factor (TOTP)</strong> — if you enable it, a shared secret stays in that same file; authenticator codes are verified locally and are never sent to us.</li>
-        <li><strong>Activity / audit log</strong> — sign-ins, API actions, and admin changes in <span class="code-chip">data/audit.log</span>, retained on your hardware (configurable line count and age). You can export or trim it from <strong>Admin → Privacy &amp; data</strong>.</li>
-        <li><strong>Session cookie</strong> — strictly necessary, httpOnly, set by your panel hostname only.</li>
+        <li><strong>Panel login accounts</strong>: usernames and bcrypt password hashes in <span class="code-chip">data/users.json</span> on your VPS.</li>
+        <li><strong>Optional two-factor (TOTP)</strong>: if you enable it, a shared secret stays in that same file; authenticator codes are verified locally and are never sent to us.</li>
+        <li><strong>Activity / audit log</strong>: sign-ins, API actions, and admin changes in <span class="code-chip">data/audit.log</span>, retained on your hardware (configurable line count and age). You can export or trim it from <strong>Admin → Privacy &amp; data</strong>.</li>
+        <li><strong>Session cookie</strong>: strictly necessary, httpOnly, set by your panel hostname only.</li>
       </ul>
       <p>
         Premium adds the small license heartbeat described in §2.2. Offsite backups, alert webhooks, and legacy
-        panel embeds are <em>optional</em> and only run when you configure them — data goes to destinations you choose.
+        panel embeds are <em>optional</em> and only run when you configure them, data goes to destinations you choose.
       </p>
 
       <h3>2.5 When you email us</h3>
@@ -135,10 +135,10 @@
 
       <h2 id="legal-basis">3. Legal basis (GDPR Art. 6)</h2>
       <ul>
-        <li><strong>Contract</strong> — for processing a license purchase, delivering the key, and verifying activations.</li>
-        <li><strong>Legal obligation</strong> — for invoice retention (Dutch tax law: 7 years).</li>
-        <li><strong>Legitimate interest</strong> — for fraud prevention, abuse prevention (one VPS per license), and server access logs.</li>
-        <li><strong>Consent</strong> — only if you opt in to a newsletter (we currently have none). No marketing emails are sent without explicit opt-in.</li>
+        <li><strong>Contract</strong>: for processing a license purchase, delivering the key, and verifying activations.</li>
+        <li><strong>Legal obligation</strong>: for invoice retention (Dutch tax law: 7 years).</li>
+        <li><strong>Legitimate interest</strong>: for fraud prevention, abuse prevention (one VPS per license), and server access logs.</li>
+        <li><strong>Consent</strong>: only if you opt in to a newsletter (we currently have none). No marketing emails are sent without explicit opt-in.</li>
       </ul>
 
       <h2 id="sharing">4. Who we share data with</h2>
@@ -165,9 +165,9 @@
       <ul>
         <li><strong>Access</strong> the personal data we hold about you (Art. 15).</li>
         <li><strong>Rectify</strong> incorrect data (Art. 16).</li>
-        <li><strong>Erase</strong> data ("right to be forgotten") — except where we must legally keep it, e.g. invoices (Art. 17).</li>
+        <li><strong>Erase</strong> data ("right to be forgotten"), except where we must legally keep it, e.g. invoices (Art. 17).</li>
         <li><strong>Restrict</strong> or <strong>object</strong> to processing (Art. 18, 21).</li>
-        <li><strong>Portability</strong> — receive your data in a machine-readable format (Art. 20).</li>
+        <li><strong>Portability</strong>: receive your data in a machine-readable format (Art. 20).</li>
         <li><strong>Withdraw consent</strong> at any time, where processing is based on consent.</li>
       </ul>
       <p>
@@ -188,7 +188,7 @@
       </p>
       <p>
         The Qadbak panel that you self-host uses a strictly-necessary session cookie to keep you logged in.
-        That cookie never leaves your VPS — we have no access to it.
+        That cookie never leaves your VPS, we have no access to it.
       </p>
       <p>
         license.inveil.dev uses one strictly-necessary cookie during checkout (the Stripe checkout session
@@ -202,7 +202,7 @@
         <li>Stripe webhook events are verified with HMAC signatures.</li>
         <li>VPS hosts are kept patched; SSH is key-only.</li>
         <li>Database backups are stored encrypted, on the same EU region.</li>
-        <li>The self-hosted panel supports optional TOTP two-factor authentication, login rate limiting, API key IP allowlists, and a local audit log — all enforced on your VPS.</li>
+        <li>The self-hosted panel supports optional TOTP two-factor authentication, login rate limiting, API key IP allowlists, and a local audit log, all enforced on your VPS.</li>
       </ul>
       <p>
         No system is 100% secure. If you spot a vulnerability, please email
