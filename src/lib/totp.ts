@@ -19,7 +19,12 @@ function base32Encode(buf: Buffer): string {
 }
 
 function base32Decode(input: string): Buffer {
-  const clean = input.replace(/=+$/, "").toUpperCase().replace(/\s/g, "");
+  let clean = "";
+  for (const ch of input) {
+    if (ch === "=") break;
+    if (ch === " " || ch === "\t" || ch === "\n" || ch === "\r") continue;
+    clean += ch.toUpperCase();
+  }
   let bits = 0;
   let value = 0;
   const out: number[] = [];

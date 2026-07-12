@@ -102,14 +102,15 @@ export async function modsecurityLogs(domain, linesArg, grepArg) {
   ];
   for (const logPath of candidates) {
     try {
-      const { stdout } = await exec(
-        "bash",
-        [
-          "-c",
-          `grep -F "${grep.replace(/"/g, '\\"')}" "${logPath}" 2>/dev/null | tail -n ${n} || tail -n ${n} "${logPath}"`,
-        ],
-        { timeout: 30_000, maxBuffer: 2 * 1024 * 1024 },
-      );
+      const raw = await readFile(logPath, "utf8");
+      const filtered = grep
+        ? raw.split("\n").filter((line) => line.includes(grep)).join("\n")
+        : raw;
+      const stdout = filtered
+        .split("\n")
+        .filter(Boolean)
+        .slice(-n)
+        .join("\n");
       const parsed = parseModsecAudit(stdout);
       emit({
         ok: true,

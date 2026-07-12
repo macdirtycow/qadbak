@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { queueSendmail, deliverLocalMessage } from "./mail-queue.mjs";
+import { stripHtmlTags } from "./security-utils.mjs";
 
 function panelBaseUrl() {
   const host =
@@ -58,12 +59,7 @@ export function buildNewsletterHtmlMessage(from, to, subject, html, text, opts =
 }
 
 function stripHtml(html) {
-  return html
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return stripHtmlTags(html);
 }
 
 export function wrapNewsletterLinksForTracking(html, opts) {

@@ -25,10 +25,12 @@ export function assertComposePolicyYaml(yaml: string): void {
       );
     }
   }
-  const bindRe = /-\s*['"]?([^'":\s]+)\s*:\s*/g;
-  let m: RegExpExecArray | null;
-  while ((m = bindRe.exec(yaml)) !== null) {
-    const hostPath = m[1].replace(/^['"]|['"]$/g, "");
+  for (const line of yaml.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith("-")) continue;
+    const hostMatch = trimmed.match(/^-\s*['"]?([^'":\s]+)\s*:\s*/);
+    if (!hostMatch?.[1]) continue;
+    const hostPath = hostMatch[1].replace(/^['"]|['"]$/g, "");
     if (hostPath.includes("docker.sock")) {
       throw new Error("Mounting docker.sock is not allowed.");
     }

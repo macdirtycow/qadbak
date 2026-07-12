@@ -220,7 +220,22 @@ export function domainHomePath(domain: HostedDomain | string): string {
 }
 
 export function normalizeDir(dir: string): string {
-  return dir.replace(/^\/+/, "").replace(/\/+$/, "");
+  return dir.split("/").filter((part) => part.length > 0 && part !== ".").join("/");
+}
+
+function assertSafeTreeKey(key: string): string {
+  if (key === "__proto__" || key === "constructor" || key === "prototype") {
+    throw new PanelError("Invalid path.");
+  }
+  return key;
+}
+
+function mockTreeEntries(key: string): DomainFileEntry[] {
+  const safe = assertSafeTreeKey(key);
+  if (!Object.prototype.hasOwnProperty.call(MOCK_TREE, safe)) {
+    MOCK_TREE[safe] = [];
+  }
+  return MOCK_TREE[safe]!;
 }
 
 /** Reject path traversal in panel-relative paths (live file manager). */
@@ -356,8 +371,8 @@ export function enrichEntry(entry: DomainFileEntry): DomainFileEntry {
 function touchEntry(path: string, sizeBytes: number, text = true): void {
   const parent = path.includes("/") ? path.replace(/\/[^/]+$/, "") : "";
   const name = path.split("/").pop() ?? path;
-  if (!MOCK_TREE[parent]) MOCK_TREE[parent] = [];
-  const idx = MOCK_TREE[parent].findIndex((e) => e.path === path);
+  const bucket = mockTreeEntries(parent);
+  const idx = bucket.findIndex((e) => e.path === path);
   const entry: DomainFileEntry = enrichEntry({
     name,
     path,
@@ -367,8 +382,8 @@ function touchEntry(path: string, sizeBytes: number, text = true): void {
     editable: text && isTextFileName(name),
     downloadable: true,
   });
-  if (idx >= 0) MOCK_TREE[parent][idx] = entry;
-  else MOCK_TREE[parent].push(entry);
+  if (idx >= 0) bucket[idx] = entry;
+  else bucket.push(entry);
 }
 
 export function isPanelFilesMode(): boolean {
@@ -626,7 +641,8 @@ export function moveDomainPath(
   }
   const finalName = destPath.split("/").pop() ?? entry.name;
   const overwrite = options?.overwrite === true;
-  const existing = MOCK_TREE[destParent]?.find((e) => e.name === finalName);
+  const destBucket = mockTreeEntries(destParent);
+  const existing = destBucket.find((e) => e.name === finalName);
   if (existing) {
     if (!overwrite) {
       throw new PanelError(
@@ -648,8 +664,7 @@ export function moveDomainPath(
     name: finalName,
     path: destPath,
   });
-  if (!MOCK_TREE[destParent]) MOCK_TREE[destParent] = [];
-  MOCK_TREE[destParent].push(moved);
+  destBucket.push(moved);
 
   if (entry.type === "dir") {
     rekeyMockPathPrefix(srcNorm, destPath);
@@ -691,12 +706,12 @@ export function createDomainDirectory(parent: string, name: string): string {
   assertWritableDir(parentNorm);
   const safe = safeFileName(name);
   const path = parentNorm ? `${parentNorm}/${safe}` : safe;
-  if (!MOCK_TREE[parentNorm]) MOCK_TREE[parentNorm] = [];
-  if (MOCK_TREE[parentNorm].some((e) => e.name === safe)) {
+  const parentBucket = mockTreeEntries(parentNorm);
+  if (parentBucket.some((e) => e.name === safe)) {
     throw new PanelError("Directory already exists.");
   }
-  MOCK_TREE[parentNorm].push({ name: safe, path, type: "dir" });
-  MOCK_TREE[path] = [];
+  parentBucket.push({ name: safe, path, type: "dir" });
+  mockTreeEntries(path);
   return path;
 }
 

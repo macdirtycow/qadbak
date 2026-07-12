@@ -53,9 +53,8 @@ function randomPassword(length = 20) {
   const alphabet =
     "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*";
   let out = "";
-  const bytes = crypto.randomBytes(length);
   for (let i = 0; i < length; i++) {
-    out += alphabet[bytes[i] % alphabet.length];
+    out += alphabet[crypto.randomInt(alphabet.length)];
   }
   return out;
 }
@@ -105,7 +104,7 @@ async function main() {
   const weak = await findWeakPasswordUsers(users);
 
   console.log(`Panel users file: ${USERS_PATH}`);
-  console.log(`Weak password list: ${WEAK_PASSWORDS.join(", ")}`);
+  console.log(`Known weak password patterns: ${WEAK_PASSWORDS.length}`);
   console.log(`Total users: ${users.length}`);
 
   if (weak.length === 0) {
@@ -154,11 +153,14 @@ async function main() {
   await writeFile(USERS_PATH, `${JSON.stringify(users, null, 2)}\n`, "utf8");
   await chmod(USERS_PATH, USERS_MODE).catch(() => undefined);
 
-  console.log("\nUpdated passwords:\n");
-  for (const row of rotated) {
-    console.log(`  ${row.username} (${row.role}): ${row.password}`);
-  }
-  console.log("\nStore these credentials securely. Users must sign in again.");
+  const credsPath = `${backup}.credentials.json`;
+  await writeFile(credsPath, `${JSON.stringify(rotated, null, 2)}\n`, "utf8");
+  await chmod(credsPath, USERS_MODE).catch(() => undefined);
+
+  console.log("\nUpdated passwords written to:");
+  console.log(`  ${credsPath}`);
+  console.log("\nStore that file securely (mode 600) and remove it after distributing credentials.");
+  console.log("Users must sign in again.");
 }
 
 main().catch((e) => {

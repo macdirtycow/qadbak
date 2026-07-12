@@ -28,6 +28,22 @@ export class AppNotFoundError extends Error {
   }
 }
 
+const ALLOWED_FIELD_PATTERNS = new Set([
+  "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$",
+  "^[a-zA-Z0-9_]{1,32}$",
+]);
+
+function isValidEmail(value: string): boolean {
+  if (value.length > 254 || /\s/.test(value)) return false;
+  const at = value.indexOf("@");
+  if (at <= 0 || at >= value.length - 1) return false;
+  const domain = value.slice(at + 1);
+  if (!domain.includes(".") || domain.startsWith(".") || domain.endsWith(".")) {
+    return false;
+  }
+  return true;
+}
+
 function validate(template: AppTemplate, input: Record<string, unknown>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const field of template.inputs) {
@@ -54,10 +70,13 @@ function validate(template: AppTemplate, input: Record<string, unknown>): Record
         throw new AppValidationError(`"${field.label}" must look like a domain.`);
       }
     } else if (field.type === "email") {
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) {
+      if (!isValidEmail(value)) {
         throw new AppValidationError(`"${field.label}" must be a valid email.`);
       }
     } else if ("pattern" in field && field.pattern) {
+      if (!ALLOWED_FIELD_PATTERNS.has(field.pattern)) {
+        throw new AppValidationError(`"${field.label}" has an unsupported validation pattern.`);
+      }
       const re = new RegExp(field.pattern);
       if (!re.test(value)) {
         throw new AppValidationError(

@@ -1,5 +1,6 @@
 import type { QadbakNode } from "./servers";
 import { nodeAgentToken } from "./servers";
+import { assertAllowedAgentUrl } from "./agent-url";
 
 export type NodeHealth = {
   id: string;
@@ -12,7 +13,18 @@ export type NodeHealth = {
 };
 
 export async function probeNodeHealth(node: QadbakNode): Promise<NodeHealth> {
-  const agentUrl = node.agentUrl?.replace(/\/$/, "");
+  let agentUrl: string;
+  try {
+    agentUrl = node.agentUrl ? assertAllowedAgentUrl(node.agentUrl) : "";
+  } catch (e) {
+    return {
+      id: node.id,
+      name: node.name,
+      agentUrl: node.agentUrl ?? "",
+      ok: false,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
   if (!agentUrl) {
     return {
       id: node.id,
@@ -57,7 +69,7 @@ export async function agentLegacyApiCall(
   params: Record<string, string> = {},
 ): Promise<{ status: number; body: string }> {
   const token = nodeAgentToken();
-  const agentUrl = node.agentUrl?.replace(/\/$/, "");
+  const agentUrl = node.agentUrl ? assertAllowedAgentUrl(node.agentUrl) : "";
   if (!agentUrl || !token) {
     throw new Error("Node agent URL or QADBAK_NODE_AGENT_TOKEN not configured");
   }
@@ -88,7 +100,7 @@ export async function agentProvisionDomain(
   payload: { domain: string; user?: string; plan?: string; pass?: string },
 ): Promise<Record<string, unknown>> {
   const token = nodeAgentToken();
-  const agentUrl = node.agentUrl?.replace(/\/$/, "");
+  const agentUrl = node.agentUrl ? assertAllowedAgentUrl(node.agentUrl) : "";
   if (!agentUrl || !token) {
     throw new Error("Node agent URL or QADBAK_NODE_AGENT_TOKEN not configured");
   }

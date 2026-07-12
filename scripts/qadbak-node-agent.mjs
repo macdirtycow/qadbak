@@ -46,6 +46,11 @@ function json(res, status, obj) {
   res.end(JSON.stringify(obj));
 }
 
+function safeErrorMessage(err) {
+  if (!(err instanceof Error)) return String(err);
+  return err.message || "Internal error";
+}
+
 function unauthorized(res) {
   json(res, 401, { ok: false, error: "Unauthorized" });
 }
@@ -88,20 +93,49 @@ async function legacyApiCall(program, params = {}) {
     body.set("simple-multiline", "");
   }
   const insecure = vmTlsInsecure(VM_URL);
-  const init = {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${VM_USER}:${VM_PASS}`).toString("base64")}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: body.toString(),
-  };
+  const target = new URL(VM_URL);
   if (insecure) {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+    const host = target.hostname;
+    if (host !== "127.0.0.1" && host !== "localhost" && host !== "::1") {
+      throw new Error("Insecure TLS is only allowed for localhost legacy API URLs.");
+    }
   }
-  const res = await fetch(VM_URL, init);
-  const text = await res.text();
-  return { status: res.status, text };
+  const payload = body.toString();
+  const headers = {
+    Authorization: `Basic ${Buffer.from(`${VM_USER}:${VM_PASS}`).toString("base64")}`,
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Content-Length": String(Buffer.byteLength(payload)),
+  };
+  const mod = target.protocol === "https:" ? https : http;
+  const agent =
+    insecure && mod === https
+      ? new https.Agent({ rejectUnauthorized: false })
+      : undefined;
+
+  const { status, text } = await new Promise((resolve, reject) => {
+    const req = mod.request(
+      {
+        protocol: target.protocol,
+        hostname: target.hostname,
+        port: target.port || (target.protocol === "https:" ? 443 : 80),
+        path: `${target.pathname}${target.search}`,
+        method: "POST",
+        headers,
+        agent,
+      },
+      (res) => {
+        const chunks = [];
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () => {
+          resolve({ status: res.statusCode ?? 500, text: Buffer.concat(chunks).toString("utf8") });
+        });
+      },
+    );
+    req.on("error", reject);
+    req.write(payload);
+    req.end();
+  });
+  return { status, text };
 }
 
 function readBody(req) {
@@ -185,7 +219,7 @@ const server = http.createServer(async (req, res) => {
       if (code !== 0 || !parsed.ok) {
         json(res, 500, {
           ok: false,
-          error: parsed.error || stderr || `domain-create exit ${code}`,
+          error: safeErrorMessage(new Error(parsed.error || stderr || `domain-create exit ${code}`)),
         });
         return;
       }
@@ -195,7 +229,7 @@ const server = http.createServer(async (req, res) => {
 
     json(res, 404, { ok: false, error: "Not found" });
   } catch (e) {
-    json(res, 500, { ok: false, error: e instanceof Error ? e.message : String(e) });
+    json(res, 500, { ok: false, error: safeErrorMessage(e) });
   }
 });
 

@@ -158,9 +158,8 @@ async function main() {
   console.log(
     JSON.stringify({
       ok: true,
-      username: DEMO_USER,
       showcase: SHOWCASE,
-      hint: `Log in at https://${process.env.QADBAK_DEMO_HOST || "demo.qadbak.com"}/login`,
+      hint: `Demo panel seeded. Log in at https://${process.env.QADBAK_DEMO_HOST || "demo.qadbak.com"}/login`,
     }),
   );
 }

@@ -11,6 +11,7 @@ import {
   QADBAK_DIR,
 } from "./provisioning-common.mjs";
 import { validateDnsRecord } from "./validate-dns-record.mjs";
+import { assertDomainName, escapeRegExp, escapeShellSingle } from "./security-utils.mjs";
 
 const exec = promisify(execFile);
 
@@ -43,6 +44,7 @@ async function zoneFromLegacyHostCli(domain) {
 }
 
 async function zoneFromNamedConf(domain) {
+  const safeDomain = assertDomainName(domain);
   const confs = [
     "/etc/bind/named.conf.local",
     "/etc/bind/named.conf",
@@ -52,7 +54,7 @@ async function zoneFromNamedConf(domain) {
     if (!(await fileExists(conf))) continue;
     const text = await readFile(conf, "utf8");
     const re = new RegExp(
-      `zone\\s+"${domain.replace(/\./g, "\\.")}"[\\s\\S]*?file\\s+"([^"]+)"`,
+      `zone\\s+"${escapeRegExp(safeDomain)}"[\\s\\S]*?file\\s+"([^"]+)"`,
       "i",
     );
     const m = text.match(re);
@@ -66,12 +68,20 @@ async function zoneFromNamedConf(domain) {
 }
 
 async function zoneFromFind(domain) {
+  const safeDomain = assertDomainName(domain);
+  const names = [
+    `${safeDomain}.hosts`,
+    `${safeDomain}.host`,
+    `${safeDomain}.zone`,
+    safeDomain,
+    `db.${safeDomain}`,
+  ];
   try {
     const { stdout } = await exec(
       "bash",
       [
         "-c",
-        `find /var/lib/bind /etc/bind -maxdepth 4 -type f \\( -name '${domain}.hosts' -o -name '${domain}.host' -o -name '${domain}.zone' -o -name '${domain}' -o -name 'db.${domain}' \\) 2>/dev/null | head -1`,
+        `find /var/lib/bind /etc/bind -maxdepth 4 -type f \\( ${names.map((n) => `-name ${escapeShellSingle(n)}`).join(" -o ")} \\) 2>/dev/null | head -1`,
       ],
       { maxBuffer: 1024 * 1024 },
     );

@@ -1,13 +1,36 @@
 /** Minimal RFC822 header parsing for Maildir files (no MIME decoder). */
+import { stripHtmlTags } from "./security-utils.mjs";
+
+const HEADER_NAMES = [
+  "subject",
+  "from",
+  "to",
+  "cc",
+  "date",
+  "message-id",
+  "reply-to",
+  "references",
+];
+
+function pickHeader(unfolded, name) {
+  const target = `${name.toLowerCase()}:`;
+  for (const line of unfolded.split("\n")) {
+    const idx = line.toLowerCase().indexOf(target);
+    if (idx === 0) {
+      return line.slice(target.length).trim();
+    }
+  }
+  return "";
+}
 
 export function parseMailHeaders(raw) {
   const text = raw.slice(0, 64 * 1024);
   const headerEnd = text.search(/\r?\n\r?\n/);
   const block = headerEnd >= 0 ? text.slice(0, headerEnd) : text;
-  const unfolded = block.replace(/\r?\n[ \t]+/g, " ");
+  const unfolded = block.replace(/\r?\n[ \t]+/g, "\n");
   const pick = (name) => {
-    const m = unfolded.match(new RegExp(`^${name}:\\s*(.+)$`, "im"));
-    return m ? m[1].trim() : "";
+    if (!HEADER_NAMES.includes(name.toLowerCase())) return "";
+    return pickHeader(unfolded, name);
   };
   return {
     subject: pick("Subject") || pick("subject"),
@@ -34,18 +57,7 @@ export function splitHeadersAndBody(raw) {
 
 /** Strip HTML tags for a simple text preview. */
 export function htmlToText(html) {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return stripHtmlTags(html);
 }
 
 export function bodyPreview(body, max = 8000) {

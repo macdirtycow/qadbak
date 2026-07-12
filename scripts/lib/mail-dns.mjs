@@ -3,10 +3,17 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import { findZonePath, dnsAdd } from "./provision-dns.mjs";
+import { escapeRegExp } from "./security-utils.mjs";
 
 const exec = promisify(execFile);
 
-const IPV4 = /^(\d{1,3}\.){3}\d{1,3}$/;
+const HOSTNAME_RE =
+  /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i;
+
+function isValidHostname(value) {
+  const v = String(value || "").trim().toLowerCase();
+  return v.length > 0 && v.length <= 253 && HOSTNAME_RE.test(v);
+}
 
 let envLoaded = false;
 
@@ -38,7 +45,12 @@ async function loadEnvLocal() {
 }
 
 export function isIpAddress(value) {
-  return IPV4.test(String(value || "").trim());
+  const v = String(value || "").trim();
+  if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(v)) return false;
+  return v.split(".").every((part) => {
+    const n = Number(part);
+    return Number.isInteger(n) && n >= 0 && n <= 255;
+  });
 }
 
 export function isMailFqdn(value) {
@@ -210,7 +222,8 @@ function zoneHasMx(text) {
 }
 
 function zoneHasMailA(text, label) {
-  const re = new RegExp(`^\\s*${label.replace(/\./g, "\\.")}\\s+`, "im");
+  if (!isValidHostname(label)) return false;
+  const re = new RegExp(`^\\s*${escapeRegExp(label)}\\s+`, "im");
   return re.test(text);
 }
 

@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import { assertPathWithinRoot } from "./safe-path";
 
 const BUCKET_DIR = path.join(process.cwd(), "data", "rate-buckets");
 const LEGACY_FILE = path.join(process.cwd(), "data", "api-rate-buckets.json");
@@ -14,7 +15,8 @@ function safeKey(bucketKey: string): string {
 }
 
 function bucketFile(bucketKey: string): string {
-  return path.join(BUCKET_DIR, `${safeKey(bucketKey)}.json`);
+  const file = path.join(BUCKET_DIR, `${safeKey(bucketKey)}.json`);
+  return assertPathWithinRoot(BUCKET_DIR, file);
 }
 
 async function readBucket(bucketKey: string): Promise<BucketRow | null> {

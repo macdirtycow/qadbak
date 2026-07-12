@@ -1,12 +1,12 @@
 import http from "node:http";
 import https from "node:https";
 
-function legacyApiUrlIsLocal(): boolean {
-  const url = process.env.QADBAK_LEGACY_API_URL?.trim();
+function legacyApiUrlIsLocal(urlString?: string): boolean {
+  const url = urlString?.trim() || process.env.QADBAK_LEGACY_API_URL?.trim();
   if (!url) return false;
   try {
     const host = new URL(url).hostname;
-    return host === "127.0.0.1" || host === "localhost";
+    return host === "127.0.0.1" || host === "localhost" || host === "::1";
   } catch {
     return false;
   }
@@ -32,7 +32,12 @@ export function legacyApiTlsInsecureEnabled(): boolean {
   return legacyApiUrlIsLocal();
 }
 
-const insecureHttpsAgent = new https.Agent({ rejectUnauthorized: false });
+function localhostInsecureAgent(target: URL): https.Agent {
+  if (!legacyApiUrlIsLocal(target.href)) {
+    throw new Error("Insecure TLS is only allowed for localhost legacy API URLs.");
+  }
+  return new https.Agent({ rejectUnauthorized: false });
+}
 
 function headersToRecord(headers: HeadersInit | undefined): Record<string, string> {
   if (!headers) return {};
@@ -124,5 +129,5 @@ export async function hostingRemoteFetch(
   if (target.protocol === "http:") {
     return nodeRequest(http, url, init);
   }
-  return nodeRequest(https, url, init, insecureHttpsAgent);
+  return nodeRequest(https, url, init, localhostInsecureAgent(target));
 }
