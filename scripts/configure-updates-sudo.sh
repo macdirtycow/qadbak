@@ -23,12 +23,8 @@ if [[ ! -f "$HELPER" ]]; then
   exit 1
 fi
 
-NODE_BIN="$(sudo -u "$QADBAK_USER" -H bash -lc 'command -v node' 2>/dev/null | head -1)"
-[[ -z "$NODE_BIN" ]] && NODE_BIN="$(command -v node)"
-NODE_BIN="$(readlink -f "$NODE_BIN")"
-
 chmod 755 "$HELPER" "$GEN" "$WRITE"
-bash "$WRITE" "$WRAPPER" "$ALLOWLIST" "$NODE_BIN" "$HELPER"
+bash "$WRITE" "$WRAPPER" "$ALLOWLIST" "update-status-helper.mjs"
 
 mkdir -p "$QADBAK_DIR/data/update-jobs" "$QADBAK_DIR/data/pre-update-backups"
 chown -R "$QADBAK_USER:$QADBAK_USER" "$QADBAK_DIR/data/update-jobs" "$QADBAK_DIR/data/pre-update-backups" 2>/dev/null || true

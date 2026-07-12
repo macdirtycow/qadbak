@@ -9,7 +9,9 @@ for rel in \
   scripts/lib/linux-distro.sh \
   scripts/lib/ubuntu-release.sh \
   scripts/run-domain-fs-helper.sh \
+  scripts/run-host-services-helper.sh \
   scripts/run-stack-helper.sh \
+  scripts/run-update-helper.sh \
   scripts/run-provisioning-helper.sh; do
   if ! git diff --quiet "$rel" 2>/dev/null; then
     echo "    Reset $rel (local drift — re-applied after pull)"

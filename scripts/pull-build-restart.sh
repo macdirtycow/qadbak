@@ -12,6 +12,7 @@ fi
 
 cd "$ROOT"
 echo "==> git pull"
+bash "$ROOT/scripts/reset-git-drift-before-pull.sh"
 git pull
 
 if [[ -f "$ROOT/scripts/fix-qadbak-ownership.sh" ]]; then

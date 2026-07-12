@@ -23,18 +23,8 @@ if [[ ! -f "$HELPER" || ! -f "$WRAPPER" ]]; then
   exit 1
 fi
 
-NODE_BIN="$(sudo -u "$QADBAK_USER" -H bash -lc 'command -v node' 2>/dev/null | head -1)"
-if [[ -z "$NODE_BIN" || ! -x "$NODE_BIN" ]]; then
-  NODE_BIN="$(command -v node)"
-fi
-if [[ -z "$NODE_BIN" ]]; then
-  echo "node not found for user $QADBAK_USER" >&2
-  exit 1
-fi
-NODE_BIN="$(readlink -f "$NODE_BIN")"
-
 chmod 755 "$HELPER" "$GEN" "$WRITE"
-bash "$WRITE" "$WRAPPER" "$ALLOWLIST" "$NODE_BIN" "$HELPER"
+bash "$WRITE" "$WRAPPER" "$ALLOWLIST" "domain-fs-helper.mjs"
 
 SUDOERS="/etc/sudoers.d/qadbak-domain-fs"
 bash "$GEN" "$QADBAK_USER" "$WRAPPER" "$ALLOWLIST" \
