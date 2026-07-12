@@ -1,15 +1,76 @@
 import CryptoKit
 import Foundation
 
+/// Retained URLSession delegate for self-signed Qadbak agent TLS (Tailscale / LAN IPs).
+final class AgentURLSessionDelegate: NSObject, URLSessionDelegate, URLSessionTaskDelegate, @unchecked Sendable {
+    private let pinnedFingerprint: String?
+
+    init(pinnedFingerprint: String?) {
+        self.pinnedFingerprint = pinnedFingerprint?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        super.init()
+    }
+
+    @objc
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        handle(challenge, completionHandler: completionHandler)
+    }
+
+    @objc
+    func urlSession(
+        _ session: URLSession,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        handle(challenge, completionHandler: completionHandler)
+    }
+
+    private func handle(
+        _ challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+              let trust = challenge.protectionSpace.serverTrust else {
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+
+        if let pinnedFingerprint, !pinnedFingerprint.isEmpty {
+            guard let fp = ServerTrustFingerprint.sha256(trust), fp == pinnedFingerprint else {
+                completionHandler(.cancelAuthenticationChallenge, nil)
+                return
+            }
+        }
+
+        completionHandler(.useCredential, URLCredential(trust: trust))
+    }
+}
+
+enum ServerTrustFingerprint {
+    static func sha256(_ trust: SecTrust) -> String? {
+        guard let chain = SecTrustCopyCertificateChain(trust) as? [SecCertificate],
+              let cert = chain.first else { return nil }
+        let data = SecCertificateCopyData(cert) as Data
+        let digest = SHA256.hash(data: data)
+        return digest.map { String(format: "%02x", $0) }.joined()
+    }
+}
+
 /// HTTPS client for the Qadbak Linux agent with TLS certificate pinning.
-final class AgentAPIClient: NSObject, @unchecked Sendable, URLSessionDelegate, URLSessionTaskDelegate {
+final class AgentAPIClient: @unchecked Sendable {
     private let baseURL: URL
     private let pinnedFingerprint: String?
     private var accessToken: String?
     private let refreshTokenProvider: () -> String?
     private let onTokensRefreshed: (String, String) -> Void
-    private var session: URLSession!
-    private let delegateQueue = OperationQueue()
+    private let tlsDelegate: AgentURLSessionDelegate
+    private let session: URLSession
 
     init(
         baseURL: URL,
@@ -25,14 +86,15 @@ final class AgentAPIClient: NSObject, @unchecked Sendable, URLSessionDelegate, U
         self.accessToken = accessToken
         self.refreshTokenProvider = refreshTokenProvider
         self.onTokensRefreshed = onTokensRefreshed
-        super.init()
-        delegateQueue.maxConcurrentOperationCount = 1
-        delegateQueue.name = "com.qadbak.agent-api-client"
-        let config = URLSessionConfiguration.default
+        self.tlsDelegate = AgentURLSessionDelegate(pinnedFingerprint: self.pinnedFingerprint)
+        let queue = OperationQueue()
+        queue.maxConcurrentOperationCount = 1
+        queue.name = "com.qadbak.agent-api-client"
+        let config = URLSessionConfiguration.ephemeral
         config.timeoutIntervalForRequest = 90
         config.timeoutIntervalForResource = 180
         config.waitsForConnectivity = true
-        session = URLSession(configuration: config, delegate: self, delegateQueue: delegateQueue)
+        self.session = URLSession(configuration: config, delegate: tlsDelegate, delegateQueue: queue)
     }
 
     deinit {
@@ -228,14 +290,8 @@ final class AgentAPIClient: NSObject, @unchecked Sendable, URLSessionDelegate, U
             req.httpBody = try JSONEncoder().encode(AnyEncodableAgent(body))
         }
 
-        let (data, response): (Data, URLResponse)
-        do {
-            (data, response) = try await session.data(for: req)
-        } catch let error as URLError where error.code == .secureConnectionFailed || error.code == .serverCertificateUntrusted || error.code == .clientCertificateRejected {
-            throw APIError.message(
-                "Agent TLS connection failed (\(error.code.rawValue)). Confirm Tailscale is on, host is the agent IP (not SSH IP), and install Qadbak build 8+ from Desktop."
-            )
-        }
+        let (data, response) = try await performRequest(req)
+
         guard let http = response as? HTTPURLResponse else {
             throw APIError.message("No response from agent.")
         }
@@ -259,61 +315,54 @@ final class AgentAPIClient: NSObject, @unchecked Sendable, URLSessionDelegate, U
         return data
     }
 
+    private func performRequest(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        try await withCheckedThrowingContinuation { continuation in
+            let task = session.dataTask(with: request) { data, response, error in
+                if let error {
+                    if let urlError = error as? URLError,
+                       urlError.code == .secureConnectionFailed
+                        || urlError.code == .serverCertificateUntrusted
+                        || urlError.code == .clientCertificateRejected
+                        || urlError.code == .cannotConnectToHost
+                        || urlError.code == .timedOut {
+                        continuation.resume(throwing: APIError.message(Self.userFacingNetworkError(urlError)))
+                    } else {
+                        continuation.resume(throwing: error)
+                    }
+                    return
+                }
+                guard let data, let response else {
+                    continuation.resume(throwing: APIError.message("No response from agent."))
+                    return
+                }
+                continuation.resume(returning: (data, response))
+            }
+            task.resume()
+        }
+    }
+
+    private static func userFacingNetworkError(_ error: URLError) -> String {
+        switch error.code {
+        case .secureConnectionFailed, .serverCertificateUntrusted, .clientCertificateRejected:
+            return """
+            Could not verify the agent TLS certificate (\(error.code.rawValue)). \
+            Install Qadbak build 9+ from Desktop, keep Tailscale enabled, and allow Local Network access for Qadbak in iOS Settings.
+            """
+        case .cannotConnectToHost, .networkConnectionLost:
+            return "Could not reach the agent at the given host. Turn on Tailscale on this iPhone and use the Tailscale IP (100.x), not the SSH IP."
+        case .timedOut:
+            return "Agent connection timed out. Confirm Tailscale is connected on this iPhone."
+        default:
+            return "Agent connection failed (\(error.code.rawValue)): \(error.localizedDescription)"
+        }
+    }
+
     private func resolveURL(_ path: String) throws -> URL {
         let normalized = path.hasPrefix("/") ? path : "/\(path)"
         guard let url = URL(string: normalized, relativeTo: baseURL)?.absoluteURL else {
             throw APIError.message("Invalid agent URL.")
         }
         return url
-    }
-}
-
-extension AgentAPIClient {
-    func urlSession(
-        _ session: URLSession,
-        task: URLSessionTask,
-        didReceive challenge: URLAuthenticationChallenge,
-        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
-    ) {
-        handleAuthenticationChallenge(challenge, completionHandler: completionHandler)
-    }
-
-    func urlSession(
-        _ session: URLSession,
-        didReceive challenge: URLAuthenticationChallenge,
-        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
-    ) {
-        handleAuthenticationChallenge(challenge, completionHandler: completionHandler)
-    }
-
-    private func handleAuthenticationChallenge(
-        _ challenge: URLAuthenticationChallenge,
-        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
-    ) {
-        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-              let trust = challenge.protectionSpace.serverTrust else {
-            completionHandler(.performDefaultHandling, nil)
-            return
-        }
-
-        if let pinnedFingerprint, !pinnedFingerprint.isEmpty {
-            guard let fp = ServerTrustFingerprint.sha256(trust), fp == pinnedFingerprint else {
-                completionHandler(.cancelAuthenticationChallenge, nil)
-                return
-            }
-        }
-
-        completionHandler(.useCredential, URLCredential(trust: trust))
-    }
-}
-
-enum ServerTrustFingerprint {
-    static func sha256(_ trust: SecTrust) -> String? {
-        guard let chain = SecTrustCopyCertificateChain(trust) as? [SecCertificate],
-              let cert = chain.first else { return nil }
-        let data = SecCertificateCopyData(cert) as Data
-        let digest = SHA256.hash(data: data)
-        return digest.map { String(format: "%02x", $0) }.joined()
     }
 }
 
