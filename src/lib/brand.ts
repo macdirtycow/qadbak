@@ -16,8 +16,8 @@ export const APP_SITE = process.env.QADBAK_PUBLIC_HOST ?? "qadbak.com";
 export const APP_URL = `https://${APP_SITE}`;
 
 /** Parent brand / official sites (not the panel host). */
-export const ORG_NAME = "Omiiba";
+export const ORG_NAME = "Inveil";
 
-export const ORG_SITE = "omiiba.dev";
+export const ORG_SITE = "inveil.net";
 
 export const ORG_URL = `https://${ORG_SITE}`;

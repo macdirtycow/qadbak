@@ -1,6 +1,6 @@
 # Hosting migration (manual)
 
-Move customer sites from **old VPS** (`vmi2930777`) to **new Contabo** (24 GB / 400 GB). Leave **license-server only** on the old box (`license.omiiba.dev`).
+Move customer sites from **old VPS** (`vmi2930777`) to **new Contabo** (24 GB / 400 GB). Leave **license-server only** on the old box (`license.inveil.dev`).
 
 ## Prerequisites
 
@@ -61,7 +61,7 @@ sudo chown -R qadbak:qadbak /opt/qadbak/data /opt/qadbak/.env.local
 sudo -u qadbak pm2 restart qadbak --update-env
 ```
 
-`QADBAK_LICENSE_SERVER` stays `https://license.omiiba.dev` (old IP / same hostname).
+`QADBAK_LICENSE_SERVER` stays `https://license.inveil.dev` (old IP / same hostname).
 
 ### After 7 days
 

@@ -18,7 +18,7 @@ tagged release. Older versions are not maintained.
 
 **Please do not open a public GitHub issue for security problems.**
 
-Email **security@omiiba.dev** with:
+Email **security@inveil.net** with:
 
 - A description of the issue and where you found it (file, route, etc.).
 - A proof-of-concept or step-by-step reproduction.
@@ -43,7 +43,7 @@ In scope:
 
 - The Qadbak panel code in this repository (`src/`, `scripts/`, `install/`).
 - The `marketing-site/` static pages on qadbak.com.
-- The licensing flow on `license.omiiba.dev` (server code is private; please
+- The licensing flow on `license.inveil.dev` (server code is private; please
   describe the request you sent and the response you got).
 
 Out of scope:

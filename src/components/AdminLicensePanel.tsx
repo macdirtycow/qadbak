@@ -236,7 +236,7 @@ export function AdminLicensePanel({
       <Card>
         <h3 className="font-medium text-white">Activate Premium</h3>
         <p className="mt-2 text-sm text-panel-muted">
-          Enter your commercial license key from MacDirtyCow / Omiiba. Premium
+          Enter your commercial license key from MacDirtyCow / Inveil. Premium
           modules unlock on this panel only while your key is active and
           heartbeat checks succeed.
         </p>

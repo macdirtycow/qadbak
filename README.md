@@ -14,13 +14,13 @@ Admin and client UI for domains, mail, DNS, TLS, databases, backups, and cron �
 [![Node](https://img.shields.io/badge/Node-20%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=next.js)](https://nextjs.org)
 [![Premium from €2.50](https://img.shields.io/badge/Premium-from%20%E2%82%AC2.50-14b8a6)](https://qadbak.com/#pricing)
-[![Made by Omiiba](https://img.shields.io/badge/by-Omiiba-94a3b8)](https://omiiba.dev)
+[![Made by Inveil](https://img.shields.io/badge/by-Inveil-94a3b8)](https://inveil.net)
 
 [**Website**](https://qadbak.com) ·
 [**Pricing**](https://qadbak.com/#pricing) ·
 [**iOS app**](ios/README.md) ·
-[**Buy a license**](https://license.omiiba.dev/buy) ·
-[**Check a license**](https://license.omiiba.dev) ·
+[**Buy a license**](https://license.inveil.dev/buy) ·
+[**Check a license**](https://license.inveil.dev) ·
 [**Docs**](docs/) ·
 [**About the name**](docs/ABOUT-THE-NAME.md)
 
@@ -149,7 +149,7 @@ the app reads `premiumActive` and capabilities from `GET /api/mobile/v1/me`.
 | **Sideload (unsigned IPA)** | `bash ios/scripts/build-ipa.sh` → sign with ESign / DefianceSign / Sideloadly |
 | **Xcode** | `open ios/Qadbak.xcodeproj` — set Development Team, run on device or simulator |
 
-TestFlight access (public beta): email **support@omiiba.dev**. The iOS app is
+TestFlight access (public beta): email **support@inveil.net**. The iOS app is
 licensed separately — see [ios/LICENSE](ios/LICENSE).
 
 ## Pricing
@@ -168,7 +168,7 @@ runs without a Premium key for single-admin use — Premium unlocks multi-tenant
 client modules, RBAC, panel-vhost provisioning, per-user PHP-FPM isolation,
 Qmail, and live admin updates.
 
-> [Buy a license →](https://license.omiiba.dev/buy) · [Check or refund an existing key →](https://license.omiiba.dev) · [Refund policy](https://qadbak.com/refund)
+> [Buy a license →](https://license.inveil.dev/buy) · [Check or refund an existing key →](https://license.inveil.dev) · [Refund policy](https://qadbak.com/refund)
 
 ## Why Qadbak vs the classics?
 
@@ -293,7 +293,7 @@ flowchart LR
     N -->|"customer domain"| A[Apache + PHP-FPM]
     Q -->|"server-side only"| P["Native provisioner<br/>scripts/provisioning-helper.mjs"]
     P --> S["nginx · Apache · MariaDB<br/>Postfix · Dovecot · BIND"]
-    Q -.->|"license heartbeat"| L[("license.omiiba.dev")]
+    Q -.->|"license heartbeat"| L[("license.inveil.dev")]
 ```
 
 - **Auth:** JWT (httpOnly cookie), users in `data/users.json`.
@@ -322,6 +322,7 @@ marketing-site/   static HTML for qadbak.com + legal pages
 
 | File | Contents |
 |------|----------|
+| [docs/INVEIL-MIGRATION.md](docs/INVEIL-MIGRATION.md) | Rebrand checklist — DNS, license server, email |
 | [docs/MOBILE-IOS-APP.md](docs/MOBILE-IOS-APP.md) | Mobile API, Bearer auth, push, widgets, iCloud backups |
 | [ios/README.md](ios/README.md) | Xcode setup, IPA build, TestFlight, feature list |
 | [ios/docs/APP-STORE.md](ios/docs/APP-STORE.md) | App Store / TestFlight submission |
@@ -376,7 +377,7 @@ bash scripts/build-marketing-zip.sh   # dist/qadbak-site-upload.zip
 ```
 
 Static pages included: landing, about, privacy, terms, refund. Checkout prices
-always come from `license.omiiba.dev/buy` (license-server repo).
+always come from `license.inveil.dev/buy` (license-server repo).
 
 ## Contributing
 
@@ -384,7 +385,7 @@ External pull requests are accepted for bug fixes and documentation only — see
 [CONTRIBUTING.md](CONTRIBUTING.md). New features are scoped through GitHub
 issues first.
 
-Security disclosures: please email **security@omiiba.dev** rather than opening
+Security disclosures: please email **security@inveil.net** rather than opening
 a public issue. See [SECURITY.md](.github/SECURITY.md).
 
 ## About the name
@@ -398,12 +399,12 @@ code on **your** server (not affiliated with that entity). Full story:
 ## License
 
 **Qadbak Panel License** — panel use only. Copyright © 2026 MacDirtyCow /
-Qadbak and Omiiba.
+Qadbak and Inveil.
 
 You may install and run the panel on servers you control to manage hosting.
 You may **not** redistribute, mirror, or republish the software as your own
 product. Premium modules require a paid license key (heartbeat via
-`license.omiiba.dev`) — see [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md).
+`license.inveil.dev`) — see [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md).
 
 The iOS companion app has separate terms: [ios/LICENSE](ios/LICENSE).
 

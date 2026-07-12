@@ -32,7 +32,7 @@ echo "    panel: $ROOT"
 
 echo ""
 echo "==> License server"
-if curl -sf "${QADBAK_LICENSE_SERVER:-https://license.omiiba.dev}/health" >/dev/null; then
+if curl -sf "${QADBAK_LICENSE_SERVER:-https://license.inveil.dev}/health" >/dev/null; then
   ok "license server reachable"
 else
   warn "cannot reach license server"

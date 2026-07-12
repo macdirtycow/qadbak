@@ -104,7 +104,7 @@ struct DomainListView: View {
                             }
                         }
                         Divider()
-                        Link(destination: URL(string: "https://license.omiiba.dev/buy")!) {
+                        Link(destination: URL(string: "https://license.inveil.dev/buy")!) {
                             Label("Support Qadbak", systemImage: "heart.fill")
                         }
                         Button("Switch server") {

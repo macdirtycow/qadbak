@@ -106,11 +106,11 @@ write_qadbak_landing() {
     <p>This site is live and ready. Upload your files to <code>public_html</code> via the Qadbak file manager to replace this page.</p>
     <div class="row">
       <a class="btn" href="https://qadbak.com" rel="noopener">Get Qadbak</a>
-      <a class="btn ghost" href="https://omiiba.dev" rel="noopener">By Omiiba</a>
+      <a class="btn ghost" href="https://inveil.net" rel="noopener">By Inveil</a>
     </div>
     <p class="foot">
       Hosted on <a href="https://qadbak.com" rel="noopener">Qadbak</a> · open-source hosting panel by
-      <a href="https://omiiba.dev" rel="noopener">Omiiba</a>.
+      <a href="https://inveil.net" rel="noopener">Inveil</a>.
     </p>
   </main>
 </body>

@@ -7,7 +7,7 @@ redistribution of the software is not permitted.
 ## License of contributions
 
 By submitting a contribution (pull request, patch, or otherwise), you grant
-MacDirtyCow / Qadbak and Omiiba the rights needed to use your contribution
+MacDirtyCow / Qadbak and Inveil the rights needed to use your contribution
 under the same [LICENSE](LICENSE) terms as the rest of the project.
 
 ## Pull requests
@@ -18,8 +18,8 @@ direction before you spend time on an implementation.
 
 ## Security reports
 
-Responsible disclosure of security issues is welcome at **security@omiiba.dev**
-(or **info@omiiba.dev**). Do not publish exploit details before a fix
+Responsible disclosure of security issues is welcome at **security@inveil.net**
+(or **info@inveil.net**). Do not publish exploit details before a fix
 window is agreed. See also [.github/SECURITY.md](.github/SECURITY.md).
 
 ## Premium development

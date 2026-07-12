@@ -1,6 +1,6 @@
 # Qadbak iOS — App Store upload
 
-The app is **free on the App Store** (companion for self-hosted Qadbak panels). Premium is sold separately via [license.omiiba.dev](https://license.omiiba.dev/buy) on the user's VPS — not as an in-app purchase.
+The app is **free on the App Store** (companion for self-hosted Qadbak panels). Premium is sold separately via [license.inveil.dev](https://license.inveil.dev/buy) on the user's VPS — not as an in-app purchase.
 
 ## Prerequisites
 

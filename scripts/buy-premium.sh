@@ -12,7 +12,7 @@
 # Steps, in order:
 #   1. Pull latest Qadbak (carries any unreleased Core + Premium fixes)
 #   2. Rebuild + restart pm2 as the qadbak user
-#   3. Activate the key against license.omiiba.dev
+#   3. Activate the key against license.inveil.dev
 #   4. Run repair-panel-premium (Qmail, mobile API, license sync)
 #
 # Idempotent: safe to re-run if any step fails.
@@ -63,8 +63,8 @@ step "3/4 Activate license"
 ACTIVATE_OUT=$(sudo -u "$USER" bash -c "cd '$ROOT' && node scripts/qadbak-license-cli.mjs activate '$KEY'" 2>&1) || {
   echo "$ACTIVATE_OUT" >&2
   echo "License activation failed. Common causes:" >&2
-  echo "  - Key already activated on another VPS (remove old slot at https://license.omiiba.dev first)" >&2
-  echo "  - Network: this server can't reach license.omiiba.dev" >&2
+  echo "  - Key already activated on another VPS (remove old slot at https://license.inveil.dev first)" >&2
+  echo "  - Network: this server can't reach license.inveil.dev" >&2
   exit 1
 }
 echo "$ACTIVATE_OUT"
@@ -80,5 +80,5 @@ echo "  Premium is now active on this server."
 echo ""
 echo "  Open:   https://$(hostname -f)/admin/license"
 echo "  Try:    /admin/updates, /admin/clients, /admin/resellers"
-echo "  iOS:    docs/MOBILE-IOS-APP.md — TestFlight via support@omiiba.dev"
+echo "  iOS:    docs/MOBILE-IOS-APP.md — TestFlight via support@inveil.net"
 echo "──────────────────────────────────────────────────────────────"

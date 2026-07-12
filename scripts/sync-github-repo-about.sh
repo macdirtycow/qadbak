@@ -8,7 +8,7 @@ DESC="${QADBAK_GITHUB_DESCRIPTION:-Self-hosted hosting panel (Ubuntu) — native
 HOME="${QADBAK_GITHUB_HOMEPAGE:-https://qadbak.com}"
 
 # Discoverability — keep concise and SEO-relevant.
-TOPICS_DEFAULT="hosting,hosting-panel,control-panel,vps,nginx,mariadb,postfix,dovecot,bind9,ubuntu,self-hosted,nextjs,typescript,cpanel-alternative,plesk-alternative,hestiacp-alternative,php-fpm,lets-encrypt,gdpr,omiiba"
+TOPICS_DEFAULT="hosting,hosting-panel,control-panel,vps,nginx,mariadb,postfix,dovecot,bind9,ubuntu,self-hosted,nextjs,typescript,cpanel-alternative,plesk-alternative,hestiacp-alternative,php-fpm,lets-encrypt,gdpr,inveil"
 TOPICS="${QADBAK_GITHUB_TOPICS:-$TOPICS_DEFAULT}"
 
 if ! command -v gh >/dev/null 2>&1; then

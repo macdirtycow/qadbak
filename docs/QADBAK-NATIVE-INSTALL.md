@@ -87,6 +87,6 @@ After `install/qadbak-install.sh` finishes, verification runs automatically via 
 
 **Mail:** open **Domains → Email** for DNS records (MX, SPF, DKIM). Port **25** must be open at your provider and in UFW if you use it.
 
-**iOS app (public beta):** needs HTTPS on the panel, Premium license (Qmail/webmail), and mobile API v1.1+. See [MOBILE-IOS-APP.md](./MOBILE-IOS-APP.md). TestFlight access: `support@omiiba.dev`.
+**iOS app (public beta):** needs HTTPS on the panel, Premium license (Qmail/webmail), and mobile API v1.1+. See [MOBILE-IOS-APP.md](./MOBILE-IOS-APP.md). TestFlight access: `support@inveil.net`.
 
 **Manual QA:** [E2E-CHECKLIST.md](./E2E-CHECKLIST.md) — create a test domain, mailbox, and DNS record in the panel.

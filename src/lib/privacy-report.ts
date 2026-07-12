@@ -79,7 +79,7 @@ export async function buildPrivacyReport(): Promise<PrivacyReport> {
   const meta = licenseClientMeta();
   const licenseServer =
     process.env.QADBAK_LICENSE_SERVER?.replace(/\/$/, "") ||
-    "https://license.omiiba.dev";
+    "https://license.inveil.dev";
   const mock = process.env.QADBAK_LEGACY_API_MOCK === "true";
   const hybrid =
     process.env.QADBAK_PROVISIONER === "hybrid" ||

@@ -75,7 +75,7 @@ type HeartbeatResponse = {
 function licenseServer(): string {
   return (
     process.env.QADBAK_LICENSE_SERVER?.replace(/\/$/, "") ??
-    "https://license.omiiba.dev"
+    "https://license.inveil.dev"
   );
 }
 
@@ -373,7 +373,7 @@ export async function getLicensePublicInfo(
   // "why am I locked out" message regardless of which trust path is in use.
   const heartbeatStaleError =
     verified.mode === "heartbeat" && !fresh
-      ? `last heartbeat is older than the ${graceHours}h grace window — panel cannot reach license.omiiba.dev or the license server hasn't responded. Click "Heartbeat now" to retry.`
+      ? `last heartbeat is older than the ${graceHours}h grace window — panel cannot reach license.inveil.dev or the license server hasn't responded. Click "Heartbeat now" to retry.`
       : undefined;
   const { effectivePremiumFeatures } = await import("./premium/effective-features");
   return {

@@ -2,7 +2,7 @@
 # Repair panel webmail (IMAP read/send) on an existing server — run as root.
 # Usage:
 #   sudo bash scripts/repair-panel-webmail.sh
-#   sudo bash scripts/repair-panel-webmail.sh omiiba.dev info
+#   sudo bash scripts/repair-panel-webmail.sh inveil.net info
 set -euo pipefail
 
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
@@ -76,11 +76,11 @@ if [[ -n "$DOMAIN" ]]; then
   echo "==> IMAP test $DOMAIN ${MAIL_USER:-}"
   bash "$QADBAK_DIR/scripts/check-imap-dovecot.sh" "$DOMAIN" "$MAIL_USER" || true
 else
-  echo "==> IMAP (no domain arg — pass: sudo bash $0 omiiba.dev info)"
+  echo "==> IMAP (no domain arg — pass: sudo bash $0 inveil.net info)"
   bash "$QADBAK_DIR/scripts/check-imap-dovecot.sh" 2>/dev/null || true
 fi
 
 echo ""
 echo "Next: pull latest panel + restart"
 echo "  sudo bash $QADBAK_DIR/scripts/update-qadbak.sh"
-echo "Then open: Domains → omiiba.dev → Webmail (or IMAP → Open webmail)"
+echo "Then open: Domains → inveil.net → Webmail (or IMAP → Open webmail)"

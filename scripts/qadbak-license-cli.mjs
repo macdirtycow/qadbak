@@ -69,7 +69,7 @@ async function postLicenseServer(pathname, body) {
   const server =
     process.env.QADBAK_LICENSE_SERVER_INTERNAL?.trim().replace(/\/$/, "") ??
     process.env.QADBAK_LICENSE_SERVER?.replace(/\/$/, "") ??
-    "https://license.omiiba.dev";
+    "https://license.inveil.dev";
   const res = await fetch(`${server}${pathname}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

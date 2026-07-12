@@ -1,6 +1,6 @@
 # Qadbak commercial tiers
 
-Copyright 2026 MacDirtyCow / Qadbak and Omiiba. The panel is licensed for
+Copyright 2026 MacDirtyCow / Qadbak and Inveil. The panel is licensed for
 **panel use only** — see [LICENSE](../LICENSE). Premium modules require a
 paid key (below).
 
@@ -21,7 +21,7 @@ software as a competing product. See [LICENSE](../LICENSE) and
 In `/opt/qadbak/.env.local`:
 
 ```env
-QADBAK_LICENSE_SERVER=https://license.omiiba.dev
+QADBAK_LICENSE_SERVER=https://license.inveil.dev
 QADBAK_GIT_BRANCH=main
 ```
 
@@ -47,7 +47,7 @@ Idempotent — safe to re-run if any step fails.
 On the **old** server: *Server admin → License* → **Other servers using this
 license** → **Remove** the stale row (or **Deactivate** if the old box still
 runs). On the **new** server: paste the same key and **Activate**. If the old
-VPS is unreachable, email [info@omiiba.dev](mailto:info@omiiba.dev) with your
+VPS is unreachable, email [info@inveil.net](mailto:info@inveil.net) with your
 key to release the slot.
 
 ## Updates

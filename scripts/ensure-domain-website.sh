@@ -63,7 +63,7 @@ is_safe_to_overwrite_landing() {
     ""|"hello"|"ok"|"hellofromqadbak") return 0 ;;
   esac
 
-  # Our own Qadbak landing — safe to refresh (not the omiiba.dev marketing site).
+  # Our own Qadbak landing — safe to refresh (not the inveil.net marketing site).
   if grep -qF 'hosted on Qadbak' "$file" 2>/dev/null \
      || grep -qF 'Qadbak file manager' "$file" 2>/dev/null; then
     return 0

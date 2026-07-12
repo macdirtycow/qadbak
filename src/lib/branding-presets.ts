@@ -24,7 +24,7 @@ export const BRANDING_PRESETS: BrandingPreset[] = [
   {
     id: "slate",
     name: "Stone",
-    description: "Cool slate gray — Omiiba / Qadbak default",
+    description: "Cool slate gray — Inveil / Qadbak default",
     colors: DEFAULT_BRANDING_THEME,
   },
   {

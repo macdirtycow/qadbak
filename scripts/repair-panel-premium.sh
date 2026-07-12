@@ -22,7 +22,7 @@ FEATURES_CSV="$(IFS=,; echo "${ALL_FEATURES[*]}")"
 }
 
 echo "==> License server reachability"
-curl -sf "${QADBAK_LICENSE_SERVER:-https://license.omiiba.dev}/health" && echo " OK" || {
+curl -sf "${QADBAK_LICENSE_SERVER:-https://license.inveil.dev}/health" && echo " OK" || {
   echo "WARN: cannot reach license server" >&2
 }
 

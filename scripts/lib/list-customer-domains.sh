@@ -26,7 +26,7 @@ _should_skip_nginx_customer_domain() {
   local panel="${QADBAK_PUBLIC_HOST:-}"
   [[ -n "$panel" && "$domain" == "$panel" ]] && return 0
   [[ -n "$panel" && "$domain" == "www.${panel}" ]] && return 0
-  [[ "$domain" == "license.omiiba.dev" ]] && return 0
+  [[ "$domain" == "license.inveil.dev" ]] && return 0
 
   # If an operator-managed nginx vhost already exists for this domain
   # (any file not named qadbak-customer-*), skip auto-generating a

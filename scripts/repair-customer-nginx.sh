@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Remove broken qadbak-customer-* symlinks and rebuild all customer vhosts.
-# Run after git pull if nginx -t fails on qadbak-customer-omiiba.dev.conf (dangling symlink).
+# Run after git pull if nginx -t fails on qadbak-customer-example.com.conf (dangling symlink).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 QADBAK_DIR="${QADBAK_DIR:-$ROOT}"

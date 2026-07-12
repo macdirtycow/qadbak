@@ -147,7 +147,7 @@ PORT=3000
 QADBAK_TERMINAL_WS_PORT=3001
 QADBAK_TERMINAL_WS_HOST=127.0.0.1
 QADBAK_COOKIE_SECURE=false
-QADBAK_LICENSE_SERVER=https://license.omiiba.dev
+QADBAK_LICENSE_SERVER=https://license.inveil.dev
 QADBAK_GIT_BRANCH=$QADBAK_GIT_BRANCH
 EOF
 if [[ -n "${LE_EMAIL// /}" ]]; then
@@ -283,7 +283,7 @@ if [[ -n "${QADBAK_LICENSE_KEY:-}" ]]; then
     echo "  WARN: license activation failed on install." >&2
     echo "    Common fixes:" >&2
     echo "    1) License admin → open your key → raise Max servers (VPS) or Remove old server activation" >&2
-    echo "    2) curl -sf https://license.omiiba.dev/health" >&2
+    echo "    2) curl -sf https://license.inveil.dev/health" >&2
     echo "    3) sudo -u $QADBAK_USER bash -c \"set -a && source $ENV_FILE && set +a && node $QADBAK_DIR/scripts/qadbak-license-cli.mjs activate YOUR_KEY\"" >&2
     echo "    Then: Server admin → License in the panel" >&2
   fi

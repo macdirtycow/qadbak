@@ -12,7 +12,7 @@ be copied or offered as a competing control-panel product.
 
 ## Premium add-on (paid)
 
-Advanced modules require a paid license key from `license.omiiba.dev`:
+Advanced modules require a paid license key from `license.inveil.dev`:
 
 - Multi-tenant client management (clients table, panel-vhost provisioning)
 - Per-user PHP-FPM isolation
@@ -24,7 +24,7 @@ Advanced modules require a paid license key from `license.omiiba.dev`:
 - Offsite backups, white-label, and related Premium modules
 
 Buy a license at https://qadbak.com#premium. The key is verified at runtime
-via a periodic heartbeat to `license.omiiba.dev`.
+via a periodic heartbeat to `license.inveil.dev`.
 
 Without a key, Premium features are visible in the UI but disabled. Bypassing
 license checks in production violates the [LICENSE](LICENSE) and
@@ -32,4 +32,4 @@ license checks in production violates the [LICENSE](LICENSE) and
 
 ## Support
 
-Questions: info@omiiba.dev · Legal: legal@omiiba.dev
+Questions: info@inveil.net · Legal: legal@inveil.net
