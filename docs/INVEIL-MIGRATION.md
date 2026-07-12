@@ -8,14 +8,14 @@ outside git.
 
 ## 1. DNS (Cloudflare or registrar)
 
-| Host | Purpose |
-|------|---------|
-| `inveil.net` | Company site (can redirect to qadbak.com or a simple landing) |
-| `www.inveil.net` | Same |
-| `inveil.dev` | Developer / redirect to inveil.net |
-| `license.inveil.dev` | License server (A/AAAA to license VPS) |
-| `license.omiiba.dev` | **301 redirect** → `https://license.inveil.dev` (keep 6–12 months) |
-| `omiiba.dev` | **301 redirect** → `https://inveil.net` |
+| Host | Points to |
+|------|-----------|
+| `inveil.net`, `www.inveil.net`, `inveil.dev` | **Main VPS** (e.g. `.158`) |
+| `license.inveil.dev` | **License VPS** (e.g. `.80`) |
+| `license.omiiba.dev` | License VPS → **301** to `license.inveil.dev` |
+| `omiiba.dev` | Main VPS → **301** to `inveil.net` |
+
+During first TLS setup, set Cloudflare proxy to **DNS only** (grey cloud) until certbot succeeds.
 
 ## 2. Email (@inveil.net)
 
@@ -30,25 +30,26 @@ Create or forward:
 
 Keep `@omiiba.dev` aliases forwarding to `@inveil.net` during transition.
 
-## 3. License server VPS
+## 3. Two-server layout (recommended)
 
-**One command** (after `qadbak-premium` is cloned to `/opt/qadbak-premium`):
+**License VPS** (IP ending `.80`, vmi2930777):
 
 ```bash
-sudo bash /opt/qadbak-premium/ops/migrate-to-inveil.sh
+sudo INVEIL_MIGRATION_SCOPE=license bash /opt/qadbak-premium/ops/migrate-to-inveil.sh
 ```
 
-This script:
+**Main VPS** (IP ending `.158`) — inveil.net company site:
 
-1. Pulls latest `qadbak-premium` (includes `inveil-site/`)
-2. Updates `/etc/qadbak/license-server.env` → `license.inveil.dev` + `@inveil.net` mail
-3. Deploys **inveil.net** static site to `/var/www/inveil.net`
-4. Configures nginx for `license.inveil.dev`, `inveil.net`, `inveil.dev`, and **301 redirects** from `omiiba.dev` / `license.omiiba.dev`
-5. Restarts the license server (pm2)
+```bash
+sudo INVEIL_MIGRATION_SCOPE=site bash /opt/qadbak-premium/ops/migrate-to-inveil.sh
+```
 
-Dry run: `sudo DRY_RUN=1 bash /opt/qadbak-premium/ops/migrate-to-inveil.sh`
+Each scope only configures nginx/certs for hosts on that box. Do **not** run the full
+migrate on the license server if `inveil.net` DNS points elsewhere.
 
-Manual steps (if needed):
+Single-box (everything on one host): `INVEIL_MIGRATION_SCOPE=all`
+
+Dry run: `sudo DRY_RUN=1 INVEIL_MIGRATION_SCOPE=license bash ...`
 
 ## 4. Customer panels (already installed)
 
