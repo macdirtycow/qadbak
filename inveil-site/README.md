@@ -2,12 +2,21 @@
 
 Static marketing site for **https://inveil.net** — company home, product links, and license portal CTAs.
 
+## Deploy on main VPS (only needs qadbak)
+
+```bash
+cd /opt/qadbak && git pull
+sudo bash inveil-site/ops/migrate-site.sh
+```
+
+Cloudflare: `inveil.net`, `www`, `inveil.dev` → main VPS IP, DNS only until TLS works.
+
 ## Deploy on license VPS
 
 Bundled in `qadbak-premium/inveil-site` and deployed automatically by:
 
 ```bash
-sudo bash /opt/qadbak-premium/ops/migrate-to-inveil.sh
+sudo INVEIL_MIGRATION_SCOPE=license bash /opt/qadbak-premium/ops/migrate-to-inveil.sh
 ```
 
 Manual deploy only:
