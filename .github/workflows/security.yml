@@ -38,7 +38,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Filesystem vulnerability scan
-        uses: aquasecurity/trivy-action@0.35.0
+        # Pin to immutable SHA (GHSA-69fq-xp46-6x23 — tags <0.35.0 were compromised).
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
           scan-type: fs
           scan-ref: .
