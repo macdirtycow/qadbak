@@ -17,8 +17,7 @@ fi
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Qadbak/Info.plist)"
 BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Qadbak/Info.plist)"
 cp "$IPA" "$ROOT/build/Qadbak-${VERSION}-external-${BUILD}.ipa"
-cp "$IPA" "$HOME/Desktop/Qadbak-External-${VERSION}-${BUILD}.ipa"
-echo "✓ Desktop: ~/Desktop/Qadbak-External-${VERSION}-${BUILD}.ipa"
+echo "✓ IPA: $ROOT/build/Qadbak-${VERSION}-external-${BUILD}.ipa"
 
 if [[ -z "${ASC_ISSUER_ID:-}" ]]; then
   echo ""

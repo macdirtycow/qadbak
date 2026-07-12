@@ -9,7 +9,7 @@
 #   sudo bash scripts/dedupe-nginx-vhosts.sh --apply    # disable losers
 #
 # Preference rules (highest wins):
-#   1. Files matching $PREFERRED (env / arg)         e.g. "inveil.net.conf"
+#   1. Files matching $PREFERRED (env / arg)         e.g. "example.com.conf"
 #   2. Files NOT prefixed with "qadbak-customer-"    (marketing site beats customer vhost)
 #   3. Larger file size                              (more complete config)
 #   4. Newer mtime

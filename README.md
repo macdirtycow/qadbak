@@ -316,7 +316,6 @@ ios/              Native SwiftUI app + widget (iPhone/iPad)
 docs/             guides and checklists
 data/             users.example.json (template)
 marketing-site/   static HTML for qadbak.com + legal pages
-inveil-site/      static HTML for inveil.net (company)
 ```
 
 ## Documentation

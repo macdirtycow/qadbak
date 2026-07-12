@@ -83,4 +83,4 @@ fi
 echo ""
 echo "Next: pull latest panel + restart"
 echo "  sudo bash $QADBAK_DIR/scripts/update-qadbak.sh"
-echo "Then open: Domains → inveil.net → Webmail (or IMAP → Open webmail)"
+echo "Then open: Domains → your-domain → Webmail (or IMAP → Open webmail)"

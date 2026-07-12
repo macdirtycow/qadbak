@@ -27,8 +27,6 @@ bash ios/scripts/archive-appstore.sh
 4. Upload `ios/build/Qadbak-1.1.5-testflight.ipa` with the **Transporter** app (Mac App Store), or Xcode Organizer.
 5. In App Store Connect → TestFlight → add internal testers → install via TestFlight app.
 
-Team ID in this repo: `2PP6UH4PWA` (Leopold Siccama Hiemstra).
-
 ## Archive & upload
 
 ```bash

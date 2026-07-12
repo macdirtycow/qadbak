@@ -13,7 +13,7 @@ Content-Type: application/json
 {
   "username": "admin",
   "password": "…",
-  "deviceLabel": "Leopold's iPhone"   // optional
+  "deviceLabel": "My iPhone"   // optional
 }
 ```
 

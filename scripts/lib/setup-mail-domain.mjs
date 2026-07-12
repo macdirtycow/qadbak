@@ -16,7 +16,7 @@ if (!MAIL_DOMAIN) {
 function pickUser(rows) {
   const hit = rows.find((r) => String(r.name).toLowerCase() === MAIL_DOMAIN && r.user);
   if (hit?.user) return String(hit.user);
-  const base = MAIL_DOMAIN.split(".")[0] || "inveil";
+  const base = MAIL_DOMAIN.split(".")[0] || "site";
   if (unixUserExists(base)) return base;
   return base;
 }
