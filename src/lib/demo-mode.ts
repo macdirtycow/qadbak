@@ -41,10 +41,18 @@ export function demoTerminalBlocked(): boolean {
   return demoReadOnlyEnabled();
 }
 
+export const DEMO_TERMINAL_BLOCKED_MESSAGE =
+  "Terminal is disabled on the read-only demo panel. Install Qadbak on your own VPS for shell access.";
+
+/** True only for the read-only demo account — not for real panel users. */
+export function demoTerminalBlockedForUser(
+  username: string | null | undefined,
+): boolean {
+  return demoTerminalBlocked() && isDemoUser(username);
+}
+
 export function assertDemoTerminalAllowed(username: string | null | undefined): void {
-  if (demoTerminalBlocked() && isDemoUser(username)) {
-    throw new Error(
-      "Terminal is disabled on the read-only demo panel. Install Qadbak on your own VPS for shell access.",
-    );
+  if (demoTerminalBlockedForUser(username)) {
+    throw new Error(DEMO_TERMINAL_BLOCKED_MESSAGE);
   }
 }

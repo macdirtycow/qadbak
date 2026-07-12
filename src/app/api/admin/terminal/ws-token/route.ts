@@ -3,7 +3,10 @@ import {
   adminTerminalStepUpRequired,
   verifyAdminTerminalStepUp,
 } from "@/lib/admin-terminal-stepup";
-import { demoTerminalBlocked } from "@/lib/demo-mode";
+import {
+  DEMO_TERMINAL_BLOCKED_MESSAGE,
+  demoTerminalBlockedForUser,
+} from "@/lib/demo-mode";
 import { requireAdmin } from "@/lib/admin-api";
 import {
   TERMINAL_SETUP_HINT,
@@ -15,14 +18,6 @@ import {
 } from "@/lib/terminal-ws";
 
 async function terminalAvailability() {
-  if (demoTerminalBlocked()) {
-    return {
-      available: false as const,
-      error:
-        "Terminal is disabled on the read-only demo panel. Install Qadbak on your own VPS for shell access.",
-      demoBlocked: true,
-    };
-  }
   if (!terminalAvailable()) {
     return {
       available: false as const,
@@ -42,11 +37,18 @@ async function terminalAvailability() {
 
 export async function GET() {
   try {
+    const session = await requireAdmin();
+    if (demoTerminalBlockedForUser(session.username)) {
+      return jsonOk({
+        available: false,
+        error: DEMO_TERMINAL_BLOCKED_MESSAGE,
+        demoBlocked: true,
+      });
+    }
     const status = await terminalAvailability();
     if (!status.available) {
       return jsonOk(status);
     }
-    const session = await requireAdmin();
     const requiresTotp = await adminTerminalStepUpRequired(session.userId);
     return jsonOk({
       available: true,
@@ -62,12 +64,18 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const session = await requireAdmin();
+    if (demoTerminalBlockedForUser(session.username)) {
+      return jsonOk({
+        available: false,
+        error: DEMO_TERMINAL_BLOCKED_MESSAGE,
+        demoBlocked: true,
+      });
+    }
     const status = await terminalAvailability();
     if (!status.available) {
       return jsonOk(status);
     }
-
-    const session = await requireAdmin();
     const body = (await request.json().catch(() => ({}))) as { totp?: string };
     const stepUp = await verifyAdminTerminalStepUp(session.userId, body.totp);
     if (!stepUp.ok) {

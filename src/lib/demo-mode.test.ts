@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import {
   assertDemoTerminalAllowed,
   demoTerminalBlocked,
+  demoTerminalBlockedForUser,
   isDemoUser,
 } from "./demo-mode";
 import {
@@ -28,7 +29,10 @@ describe("demo terminal blocking", () => {
 
   it("blocks terminal when read-only demo", () => {
     expect(demoTerminalBlocked()).toBe(true);
+    expect(demoTerminalBlockedForUser("demo")).toBe(true);
+    expect(demoTerminalBlockedForUser("admin")).toBe(false);
     expect(() => assertDemoTerminalAllowed("demo")).toThrow(/disabled/i);
+    expect(() => assertDemoTerminalAllowed("admin")).not.toThrow();
   });
 
   it("blocks GET ws-token routes in middleware", () => {

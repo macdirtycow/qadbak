@@ -1,5 +1,8 @@
 import { handleApiError, jsonOk } from "@/lib/api";
-import { demoTerminalBlocked } from "@/lib/demo-mode";
+import {
+  DEMO_TERMINAL_BLOCKED_MESSAGE,
+  demoTerminalBlockedForUser,
+} from "@/lib/demo-mode";
 import { requireDomainApi } from "@/lib/domain-api";
 import {
   TERMINAL_SETUP_HINT,
@@ -15,14 +18,6 @@ type Params = { params: Promise<{ domain: string }> };
 
 export async function GET(request: Request, { params }: Params) {
   try {
-    if (demoTerminalBlocked()) {
-      return jsonOk({
-        available: false,
-        error:
-          "Terminal is disabled on the read-only demo panel. Install Qadbak on your own VPS for shell access.",
-        demoBlocked: true,
-      });
-    }
     if (!terminalAvailable()) {
       return jsonOk({
         available: false,
@@ -40,6 +35,13 @@ export async function GET(request: Request, { params }: Params) {
     }
 
     const { domain, session } = await requireDomainApi((await params).domain);
+    if (demoTerminalBlockedForUser(session.username)) {
+      return jsonOk({
+        available: false,
+        error: DEMO_TERMINAL_BLOCKED_MESSAGE,
+        demoBlocked: true,
+      });
+    }
     const unixUser = await getProvisioner().resolveDomainUnixUser(domain, session);
     const token = await createTerminalWsToken(domain, unixUser, session);
     const wsUrl = terminalWsUrl(request);
