@@ -11,6 +11,7 @@ enum SSHServiceError: LocalizedError {
     case unavailable
     case invalidHost
     case hostKeyMismatch
+    case connectionFailed(String)
     case commandFailed(String)
     case unsupportedOS(String)
 
@@ -22,6 +23,8 @@ enum SSHServiceError: LocalizedError {
             return "Invalid SSH host or port."
         case .hostKeyMismatch:
             return "SSH host key changed. Verify the server before reconnecting."
+        case .connectionFailed(let msg):
+            return msg
         case .commandFailed(let msg):
             return msg
         case .unsupportedOS(let msg):
@@ -198,6 +201,47 @@ struct SSHSessionService {
         String(value).trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
     }
 
+    private func mapSSHConnectError(_ error: Error, host: String, port: Int) -> SSHServiceError {
+        let text = String(describing: error).lowercased()
+        let posix = (error as NSError).domain == NSPOSIXErrorDomain ? (error as NSError).code : 0
+        if text.contains("authentication") || text.contains("auth fail") {
+            return .connectionFailed("SSH login failed for \(host). Check username and password.")
+        }
+        if posix == 61 || text.contains("refused") || text.contains("nio connectionerror error 1") {
+            return .connectionFailed(
+                "Could not connect to \(host):\(port). Check the IP, port 22, firewall, and try Wi-Fi (some mobile networks block SSH)."
+            )
+        }
+        if posix == 60 || text.contains("timed out") || text.contains("timeout") {
+            return .connectionFailed(
+                "SSH timed out reaching \(host):\(port). Confirm the server is online and port 22 is open."
+            )
+        }
+        if posix == 64 || text.contains("unreachable") {
+            return .connectionFailed("Network unreachable. Connect your phone to Wi-Fi and retry.")
+        }
+        return .connectionFailed("SSH connection failed (\(error.localizedDescription)). Host: \(host), port: \(port).")
+    }
+
+    static func normalizeSSHHost(_ raw: String) -> String {
+        var host = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if host.hasPrefix("ssh://") {
+            host = String(host.dropFirst(6))
+        }
+        if host.contains("@") {
+            host = String(host.split(separator: "@", maxSplits: 1).last ?? Substring(host))
+        }
+        if host.hasPrefix("[") , host.contains("]") {
+            host = String(host.dropFirst().prefix(while: { $0 != "]" }))
+        } else if host.contains(":") {
+            host = String(host.split(separator: ":", maxSplits: 1).first ?? Substring(host))
+        }
+        if host.hasPrefix("http://") || host.hasPrefix("https://") {
+            if let url = URL(string: host), let h = url.host { host = h }
+        }
+        return host.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     #if canImport(Citadel)
     private func runCitadel(_ command: String, settings: SSHConnectionSettings, knownHostFingerprint: String?) async throws -> SSHCommandResult {
         guard !settings.host.isEmpty, settings.port > 0, settings.port <= 65535 else {
@@ -229,7 +273,12 @@ struct SSHSessionService {
             hostKeyValidator: .custom(pinDelegate)
         )
 
-        let client = try await SSHClient.connect(to: clientSettings)
+        let client: SSHClient
+        do {
+            client = try await SSHClient.connect(to: clientSettings)
+        } catch {
+            throw mapSSHConnectError(error, host: settings.host, port: settings.port)
+        }
         defer { try? await client.close() }
         let buffer = try await client.executeCommand(command, mergeStreams: true)
         return SSHCommandResult(output: String(buffer: buffer), hostKeyFingerprint: pinDelegate.discoveredFingerprint)

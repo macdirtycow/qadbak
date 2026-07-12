@@ -263,7 +263,7 @@ struct LinuxServerOnboardingView: View {
 
     private func sshSettings() -> SSHConnectionSettings {
         SSHConnectionSettings(
-            host: host.trimmingCharacters(in: .whitespacesAndNewlines),
+            host: SSHSessionService.normalizeSSHHost(host),
             port: Int(port) ?? 22,
             username: username.trimmingCharacters(in: .whitespacesAndNewlines),
             auth: usePassword ? .password(password) : .privateKeyPEM(privateKeyPEM, passphrase: keyPassphrase)
@@ -303,7 +303,6 @@ struct LinuxServerOnboardingView: View {
             if sshHostKeyFingerprint == nil {
                 sshHostKeyFingerprint = detection.hostKeyFingerprint
             }
-            password = ""
         } catch {
             errorMessage = error.localizedDescription
             step = .authentication
@@ -315,6 +314,12 @@ struct LinuxServerOnboardingView: View {
         errorMessage = nil
         defer { isBusy = false }
         guard let probe else { return }
+
+        if usePassword && password.isEmpty {
+            errorMessage = "SSH password is missing. Go back to step 2 and enter it again."
+            step = .authentication
+            return
+        }
 
         do {
             progressMessage = "Verifying agent binary…"
@@ -403,10 +408,14 @@ struct LinuxServerOnboardingView: View {
             keyPassphrase = ""
             dismiss()
         } catch {
-            if listenMode == .lan {
-                errorMessage = "\(error.localizedDescription)\n\nLAN tip: open TCP 9443 on the VPS firewall (ufw + Contabo panel) and retry."
+            let message = error.localizedDescription
+            if message.contains("SSHClientError error 4") || message.contains("allAuthenticationOptionsFailed") {
+                errorMessage = "SSH login failed during install. Go back to step 2 and re-enter your password."
+                step = .authentication
+            } else if listenMode == .lan {
+                errorMessage = "\(message)\n\nLAN tip: open TCP 9443 on the VPS firewall (ufw + Contabo panel) and retry."
             } else {
-                errorMessage = error.localizedDescription
+                errorMessage = message
             }
         }
     }
