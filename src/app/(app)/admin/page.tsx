@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui";
+import { Card, PageHeader } from "@/components/ui";
 import { APP_NAME } from "@/lib/brand";
 import { adminNavItems } from "@/lib/features";
 import Link from "next/link";
@@ -10,6 +10,10 @@ export default function AdminOverviewPage() {
 
   return (
     <div className="space-y-8">
+      <PageHeader
+        title="Server admin"
+        description="Shortcuts to server status, services, networking, management, and panel settings."
+      />
       {privacy && (
         <Link href={privacy.path}>
           <Card className="border-panel-accent/50 bg-panel-accent/5 transition hover:border-panel-accent">
