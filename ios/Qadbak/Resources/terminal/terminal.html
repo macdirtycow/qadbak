@@ -60,6 +60,7 @@
       term.open(document.getElementById('term'));
       fitAddon.fit();
       sendResize();
+      term.focus();
 
       const protocols = (session.wsProtocols && session.wsProtocols.length === 2)
         ? session.wsProtocols
@@ -124,6 +125,9 @@
       fit() {
         if (fitAddon) { fitAddon.fit(); sendResize(); }
       },
+      focus() {
+        if (term) term.focus();
+      },
       sendKey(key) {
         const map = {
           ESC: '\u001b',
@@ -147,7 +151,7 @@
         if (key === 'CTRL') { ctrlActive = !ctrlActive; postStatus('modifiers', JSON.stringify({ ctrl: ctrlActive, alt: altActive })); return; }
         if (key === 'ALT') { altActive = !altActive; postStatus('modifiers', JSON.stringify({ ctrl: ctrlActive, alt: altActive })); return; }
         let out = map[key];
-        if (!out) out = applyModifier('', key);
+        if (!out) out = applyModifier(key, key);
         if (out) sendRaw(out);
         if ((ctrlActive || altActive) && key !== 'CTRL' && key !== 'ALT') {
           ctrlActive = false;

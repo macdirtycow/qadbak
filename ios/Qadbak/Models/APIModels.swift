@@ -202,8 +202,11 @@ struct DomainFileEntry: Decodable, Identifiable, Hashable {
     let editable: Bool?
     let deletable: Bool?
     let downloadable: Bool?
+    let movable: Bool?
 
     var isDirectory: Bool { type == "dir" }
+    var canDelete: Bool { deletable != false }
+    var canMove: Bool { movable != false }
 }
 
 struct DomainFileContent: Decodable {
@@ -603,6 +606,93 @@ struct TerminalSessionInfo: Decodable {
     let shellUser: String?
     let domain: String?
     let error: String?
+}
+
+struct DomainScriptsResponse: Decodable {
+    let available: [AvailableScript]?
+    let installed: [InstalledScript]?
+}
+
+struct AvailableScript: Decodable, Identifiable, Hashable {
+    var id: String { name }
+    let name: String
+    let desc: String?
+    let version: String?
+}
+
+struct InstalledScript: Decodable, Identifiable, Hashable {
+    var id: String { name }
+    let name: String
+    let version: String?
+    let path: String?
+    let url: String?
+}
+
+struct ScriptInstallResponse: Decodable {
+    let ok: Bool?
+    let postInstall: [String]?
+    let adminUrl: String?
+    let journalId: String?
+}
+
+struct AppCatalogResponse: Decodable {
+    let catalog: [AppCatalogEntry]?
+    let templates: [AppTemplateSummary]?
+    let intentIds: [String]?
+}
+
+struct AppCatalogEntry: Decodable, Identifiable, Hashable {
+    let id: String
+    let name: String?
+    let label: String?
+    let desc: String?
+    let version: String?
+    let category: String?
+    let icon: String?
+    let tagline: String?
+    let featured: Bool?
+    let comingSoon: Bool?
+    let intentMode: String?
+    let etaSeconds: Int?
+}
+
+struct AppTemplateSummary: Decodable, Identifiable, Hashable {
+    let id: String
+    let label: String?
+    let tagline: String?
+    let icon: String?
+    let description: String?
+    let etaSeconds: Int?
+}
+
+struct AppInstallResponse: Decodable {
+    let result: AppInstallResult?
+}
+
+struct AppInstallResult: Decodable {
+    let appId: String?
+    let domain: String?
+    let primaryUrl: String?
+    let secondaryUrl: String?
+    let postInstall: String?
+    let journalId: String?
+    let credentials: [AppInstallCredential]?
+}
+
+struct AppInstallCredential: Decodable, Identifiable, Hashable {
+    var id: String { label }
+    let label: String
+    let value: String
+    let isSecret: Bool?
+}
+
+struct FileUploadResponse: Decodable {
+    let uploaded: [String]?
+    let maxBytes: Int?
+}
+
+struct FilePathResponse: Decodable {
+    let path: String?
 }
 
 struct QadbakUpdateStatus: Decodable {

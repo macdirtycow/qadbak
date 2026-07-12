@@ -53,6 +53,9 @@ struct DomainDetailView: View {
                             QBActionTile(title: "Files", subtitle: "Browser", icon: "folder", tint: Color.orange)
                         }
                     }
+                    actionLink(DomainAppsView(domainName: domain.name)) {
+                        QBActionTile(title: "Apps", subtitle: "Install", icon: "shippingbox", tint: Color.purple)
+                    }
                     actionLink(SslCertificatesView(domainName: domain.name)) {
                         QBActionTile(title: "SSL", subtitle: "Certificates", icon: "lock.shield", tint: QadbakPalette.success)
                     }

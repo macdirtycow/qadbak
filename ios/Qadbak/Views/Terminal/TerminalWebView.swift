@@ -91,6 +91,10 @@ final class TerminalWebViewController {
         evaluate("window.qadbakTerminal && window.qadbakTerminal.fit()")
     }
 
+    func focus() {
+        evaluate("window.qadbakTerminal && window.qadbakTerminal.focus()")
+    }
+
     func sendKey(_ key: String) {
         let escaped = key.replacingOccurrences(of: "'", with: "\\'")
         evaluate("window.qadbakTerminal && window.qadbakTerminal.sendKey('\(escaped)')")

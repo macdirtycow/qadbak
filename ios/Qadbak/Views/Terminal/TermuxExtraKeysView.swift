@@ -2,10 +2,9 @@ import SwiftUI
 
 /// Termux-inspired extra keys bar (two rows of special terminal keys).
 struct TermuxExtraKeysView: View {
+    @Binding var ctrlActive: Bool
+    @Binding var altActive: Bool
     let onKey: (String) -> Void
-
-    @State private var ctrlActive = false
-    @State private var altActive = false
 
     private let row1: [TermuxKey] = [
         .special("ESC"), .char("|"), .char("/"), .special("HOME"),
@@ -39,8 +38,6 @@ struct TermuxExtraKeysView: View {
         let label = key.label
         let active = (label == "CTRL" && ctrlActive) || (label == "ALT" && altActive)
         return Button {
-            if label == "CTRL" { ctrlActive.toggle() }
-            if label == "ALT" { altActive.toggle() }
             onKey(label)
         } label: {
             Text(key.display)

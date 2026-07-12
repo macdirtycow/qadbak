@@ -50,6 +50,64 @@ final class APIClient {
         _ = try await requestData(method, path: path, body: body, authorized: authorized, retried: retried)
     }
 
+    func uploadMultipart(
+        path: String,
+        fields: [String: String],
+        files: [(fieldName: String, fileName: String, mimeType: String, data: Data)],
+        authorized: Bool = true,
+        retried: Bool = false
+    ) async throws -> Data {
+        let boundary = "QadbakBoundary-\(UUID().uuidString)"
+        var body = Data()
+        for (key, value) in fields {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(value)\r\n".data(using: .utf8)!)
+        }
+        for file in files {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append(
+                "Content-Disposition: form-data; name=\"\(file.fieldName)\"; filename=\"\(file.fileName)\"\r\n"
+                    .data(using: .utf8)!
+            )
+            body.append("Content-Type: \(file.mimeType)\r\n\r\n".data(using: .utf8)!)
+            body.append(file.data)
+            body.append("\r\n".data(using: .utf8)!)
+        }
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+
+        let url = try resolveURL(path)
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        req.setValue("Qadbak-iOS/1.0", forHTTPHeaderField: "User-Agent")
+        if authorized, let token = tokenProvider() {
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        req.httpBody = body
+
+        let (data, response) = try await session.data(for: req)
+        guard let http = response as? HTTPURLResponse else {
+            throw APIError.message("No response from server.")
+        }
+        if http.statusCode == 401, authorized, !retried {
+            try await refreshHandler()
+            return try await uploadMultipart(
+                path: path,
+                fields: fields,
+                files: files,
+                authorized: authorized,
+                retried: true
+            )
+        }
+        guard (200 ... 299).contains(http.statusCode) else {
+            let message = (try? JSONDecoder().decode(APIErrorResponse.self, from: data)).flatMap(\.error)
+            throw APIError.http(http.statusCode, message)
+        }
+        return data
+    }
+
     private func requestData(
         _ method: String,
         path: String,

@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct FilesBrowserView: View {
     @Environment(AppState.self) private var appState
@@ -8,9 +9,22 @@ struct FilesBrowserView: View {
     @State private var currentDir = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var successMessage: String?
     @State private var fileToView: DomainFileEntry?
     @State private var fileContent: DomainFileContent?
-    @State private var fileToDelete: DomainFileEntry?
+    @State private var entryToDelete: DomainFileEntry?
+    @State private var entryToRename: DomainFileEntry?
+    @State private var entryToMove: DomainFileEntry?
+    @State private var showNewFolder = false
+    @State private var showNewFile = false
+    @State private var showUploadPicker = false
+    @State private var isUploading = false
+    @State private var newItemName = ""
+    @State private var renameName = ""
+    @State private var moveDestDir = ""
+    @State private var moveNewName = ""
+
+    private var writable: Bool { listing?.writable != false }
 
     var body: some View {
         ZStack {
@@ -27,6 +41,12 @@ struct FilesBrowserView: View {
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 14) {
+                            if let successMessage {
+                                SuccessBanner(message: successMessage)
+                            }
+                            if let errorMessage {
+                                ErrorBanner(message: errorMessage)
+                            }
                             if !breadcrumbs.isEmpty {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 6) {
@@ -49,14 +69,11 @@ struct FilesBrowserView: View {
                                 if entry.isDirectory {
                                     Button { Task { await openDir(entry.path) } } label: { fileRow(entry) }
                                         .buttonStyle(.plain)
+                                        .contextMenu { entryMenu(entry) }
                                 } else {
                                     Button { Task { await openFile(entry) } } label: { fileRow(entry) }
                                         .buttonStyle(.plain)
-                                        .contextMenu {
-                                            if entry.deletable != false {
-                                                Button("Delete", role: .destructive) { fileToDelete = entry }
-                                            }
-                                        }
+                                        .contextMenu { entryMenu(entry) }
                                 }
                             }
                         }
@@ -64,28 +81,113 @@ struct FilesBrowserView: View {
                     }
                 }
             }
+            if isUploading {
+                Color.black.opacity(0.35).ignoresSafeArea()
+                ProgressView("Uploading…")
+                    .padding(24)
+                    .background(QadbakPalette.card, in: RoundedRectangle(cornerRadius: 14))
+            }
         }
         .navigationTitle("Files")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(QadbakPalette.bg, for: .navigationBar)
+        .toolbar {
+            if writable {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button { showUploadPicker = true } label: {
+                            Label("Upload files", systemImage: "square.and.arrow.up")
+                        }
+                        Button { showNewFolder = true } label: {
+                            Label("New folder", systemImage: "folder.badge.plus")
+                        }
+                        Button { showNewFile = true } label: {
+                            Label("New file", systemImage: "doc.badge.plus")
+                        }
+                    } label: {
+                        Image(systemName: "plus")
+                            .foregroundStyle(QadbakPalette.accent)
+                    }
+                }
+            }
+        }
         .refreshable { await load(dir: currentDir) }
         .task { await load(dir: "") }
+        .fileImporter(
+            isPresented: $showUploadPicker,
+            allowedContentTypes: [.item],
+            allowsMultipleSelection: true
+        ) { result in
+            Task { await handleUpload(result) }
+        }
         .sheet(item: $fileToView) { entry in
             NavigationStack {
                 FileContentView(domainName: domainName, entry: entry, content: fileContent, error: errorMessage)
             }
             .preferredColorScheme(.dark)
         }
-        .confirmationDialog("Delete file?", isPresented: Binding(
-            get: { fileToDelete != nil },
-            set: { if !$0 { fileToDelete = nil } }
+        .alert("New folder", isPresented: $showNewFolder) {
+            TextField("Folder name", text: $newItemName)
+            Button("Create") { Task { await createFolder() } }
+            Button("Cancel", role: .cancel) { newItemName = "" }
+        }
+        .alert("New file", isPresented: $showNewFile) {
+            TextField("File name", text: $newItemName)
+            Button("Create") { Task { await createFile() } }
+            Button("Cancel", role: .cancel) { newItemName = "" }
+        }
+        .alert("Rename", isPresented: Binding(
+            get: { entryToRename != nil },
+            set: { if !$0 { entryToRename = nil } }
+        )) {
+            TextField("New name", text: $renameName)
+            Button("Rename") { Task { await renameEntry() } }
+            Button("Cancel", role: .cancel) { entryToRename = nil }
+        }
+        .alert("Move to folder", isPresented: Binding(
+            get: { entryToMove != nil },
+            set: { if !$0 { entryToMove = nil } }
+        )) {
+            TextField("Destination folder", text: $moveDestDir)
+            TextField("New name (optional)", text: $moveNewName)
+            Button("Move") { Task { await moveEntry() } }
+            Button("Cancel", role: .cancel) { entryToMove = nil }
+        } message: {
+            Text("Path relative to home, e.g. public_html or public_html/blog")
+        }
+        .confirmationDialog("Delete?", isPresented: Binding(
+            get: { entryToDelete != nil },
+            set: { if !$0 { entryToDelete = nil } }
         )) {
             Button("Delete", role: .destructive) {
-                if let entry = fileToDelete { Task { await deleteFile(entry) } }
+                if let entry = entryToDelete { Task { await deleteEntry(entry) } }
             }
-            Button("Cancel", role: .cancel) { fileToDelete = nil }
+            Button("Cancel", role: .cancel) { entryToDelete = nil }
+        } message: {
+            Text(entryToDelete?.name ?? "")
         }
         .preferredColorScheme(.dark)
+    }
+
+    @ViewBuilder
+    private func entryMenu(_ entry: DomainFileEntry) -> some View {
+        if !entry.isDirectory {
+            Button("Open") { Task { await openFile(entry) } }
+        }
+        if writable && entry.canMove {
+            Button("Rename") {
+                entryToRename = entry
+                renameName = entry.name
+            }
+            Button("Move…") {
+                entryToMove = entry
+                moveDestDir = currentDir
+                moveNewName = ""
+            }
+        }
+        if entry.canDelete {
+            Button("Delete", role: .destructive) { entryToDelete = entry }
+        }
     }
 
     private var breadcrumbs: [FileBreadcrumb] { listing?.breadcrumbs ?? [] }
@@ -138,15 +240,105 @@ struct FilesBrowserView: View {
         } catch { errorMessage = error.localizedDescription }
     }
 
-    private func deleteFile(_ entry: DomainFileEntry) async {
+    private func deleteEntry(_ entry: DomainFileEntry) async {
         guard let api = appState.api else { return }
         do {
             try await api.deleteFile(domainName, path: entry.path)
-            fileToDelete = nil
+            entryToDelete = nil
+            successMessage = "Deleted \(entry.name)."
             await load(dir: currentDir)
         } catch {
             errorMessage = error.localizedDescription
-            fileToDelete = nil
+            entryToDelete = nil
+        }
+    }
+
+    private func createFolder() async {
+        guard let api = appState.api, !newItemName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        let name = newItemName.trimmingCharacters(in: .whitespaces)
+        newItemName = ""
+        showNewFolder = false
+        do {
+            try await api.mkdir(domainName, parent: currentDir, name: name)
+            successMessage = "Created folder \(name)."
+            await load(dir: currentDir)
+        } catch { errorMessage = error.localizedDescription }
+    }
+
+    private func createFile() async {
+        guard let api = appState.api, !newItemName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        let name = newItemName.trimmingCharacters(in: .whitespaces)
+        newItemName = ""
+        showNewFile = false
+        do {
+            try await api.createFile(domainName, parent: currentDir, name: name)
+            successMessage = "Created \(name)."
+            await load(dir: currentDir)
+        } catch { errorMessage = error.localizedDescription }
+    }
+
+    private func renameEntry() async {
+        guard let api = appState.api, let entry = entryToRename else { return }
+        let name = renameName.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty, name != entry.name else { return }
+        do {
+            try await api.moveFile(domainName, path: entry.path, newName: name)
+            entryToRename = nil
+            successMessage = "Renamed to \(name)."
+            await load(dir: currentDir)
+        } catch {
+            errorMessage = error.localizedDescription
+            entryToRename = nil
+        }
+    }
+
+    private func moveEntry() async {
+        guard let api = appState.api, let entry = entryToMove else { return }
+        let dest = moveDestDir.trimmingCharacters(in: .whitespaces)
+        let newName = moveNewName.trimmingCharacters(in: .whitespaces)
+        do {
+            try await api.moveFile(
+                domainName,
+                path: entry.path,
+                destDir: dest.isEmpty ? nil : dest,
+                newName: newName.isEmpty ? nil : newName
+            )
+            entryToMove = nil
+            successMessage = "Moved \(entry.name)."
+            await load(dir: currentDir)
+        } catch {
+            errorMessage = error.localizedDescription
+            entryToMove = nil
+        }
+    }
+
+    private func handleUpload(_ result: Result<[URL], Error>) async {
+        guard let api = appState.api else { return }
+        switch result {
+        case .failure(let error):
+            errorMessage = error.localizedDescription
+        case .success(let urls):
+            guard !urls.isEmpty else { return }
+            isUploading = true
+            defer { isUploading = false }
+            var payloads: [(name: String, data: Data, mimeType: String)] = []
+            for url in urls {
+                guard url.startAccessingSecurityScopedResource() else { continue }
+                defer { url.stopAccessingSecurityScopedResource() }
+                do {
+                    let data = try Data(contentsOf: url)
+                    let mime = UTType(filenameExtension: url.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
+                    payloads.append((name: url.lastPathComponent, data: data, mimeType: mime))
+                } catch {
+                    errorMessage = error.localizedDescription
+                    return
+                }
+            }
+            do {
+                let res = try await api.uploadFiles(domainName, dir: currentDir, files: payloads)
+                successMessage = "Uploaded \(res.uploaded?.count ?? payloads.count) file(s)."
+                await load(dir: currentDir)
+            } catch { errorMessage = error.localizedDescription }
         }
     }
 }

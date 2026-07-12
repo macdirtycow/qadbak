@@ -12,11 +12,19 @@ struct DomainTerminalView: View {
     @State private var isConnected = false
     @State private var errorMessage: String?
     @State private var inputBuffer = ""
+    @State private var ctrlActive = false
+    @State private var altActive = false
     @FocusState private var keyboardFocused: Bool
+    @State private var refreshTask: Task<Void, Never>?
 
     var body: some View {
         VStack(spacing: 0) {
             statusBar
+            if let errorMessage, !isConnected {
+                ErrorBanner(message: errorMessage)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+            }
             TerminalWebView { controller in
                 terminalController = controller
                 controller.statusHandler = { state, detail in
@@ -28,6 +36,11 @@ struct DomainTerminalView: View {
                 openTerminalIfReady()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                terminalController?.focus()
+                keyboardFocused = true
+            }
 
             if keyboardFocused {
                 HStack {
@@ -35,6 +48,7 @@ struct DomainTerminalView: View {
                         .textFieldStyle(.roundedBorder)
                         .font(.body.monospaced())
                         .submitLabel(.send)
+                        .focused($keyboardFocused)
                         .onSubmit { sendInputBuffer() }
                     Button("Send") { sendInputBuffer() }
                         .buttonStyle(.borderedProminent)
@@ -44,7 +58,7 @@ struct DomainTerminalView: View {
                 .padding(.vertical, 4)
             }
 
-            TermuxExtraKeysView { key in
+            TermuxExtraKeysView(ctrlActive: $ctrlActive, altActive: $altActive) { key in
                 terminalController?.sendKey(key)
             }
         }
@@ -55,8 +69,10 @@ struct DomainTerminalView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Button("Show keyboard") { keyboardFocused = true }
+                    Button("Focus terminal") { terminalController?.focus() }
                     Button("Reconnect") { Task { await connect() } }
                     Button("Disconnect", role: .destructive) {
+                        stopRefreshLoop()
                         terminalController?.disconnect()
                         isConnected = false
                         statusText = "Disconnected"
@@ -68,7 +84,10 @@ struct DomainTerminalView: View {
             }
         }
         .task { await connect() }
-        .onDisappear { terminalController?.disconnect() }
+        .onDisappear {
+            stopRefreshLoop()
+            terminalController?.disconnect()
+        }
         .preferredColorScheme(.dark)
     }
 
@@ -84,6 +103,16 @@ struct DomainTerminalView: View {
                 .truncationMode(.tail)
                 .layoutPriority(0)
             Spacer(minLength: 8)
+            if ctrlActive || altActive {
+                HStack(spacing: 4) {
+                    if ctrlActive {
+                        Text("CTRL").font(.caption2.weight(.bold)).foregroundStyle(QadbakPalette.accent)
+                    }
+                    if altActive {
+                        Text("ALT").font(.caption2.weight(.bold)).foregroundStyle(QadbakPalette.accent)
+                    }
+                }
+            }
             if let user = session?.unixUser ?? session?.shellUser {
                 Text(user)
                     .font(.caption.monospaced())
@@ -104,6 +133,11 @@ struct DomainTerminalView: View {
         inputBuffer = ""
     }
 
+    private struct ModifierState: Decodable {
+        let ctrl: Bool
+        let alt: Bool
+    }
+
     private func handleStatus(_ state: String, detail: String?) {
         switch state {
         case "connected":
@@ -111,18 +145,58 @@ struct DomainTerminalView: View {
             statusText = adminShell ? "Connected to server shell" : "Connected · \(domainName)"
             errorMessage = nil
             terminalController?.fit()
+            startRefreshLoop()
         case "closed":
             isConnected = false
+            stopRefreshLoop()
             statusText = detail?.isEmpty == false ? "Session closed (\(detail!))" : "Session closed"
         case "error":
             isConnected = false
+            stopRefreshLoop()
             statusText = detail ?? "Terminal error"
             errorMessage = detail
+        case "modifiers":
+            if let detail,
+               let data = detail.data(using: .utf8),
+               let mods = try? JSONDecoder().decode(ModifierState.self, from: data) {
+                ctrlActive = mods.ctrl
+                altActive = mods.alt
+            }
         case "ready":
             webReady = true
             openTerminalIfReady()
         default:
             break
+        }
+    }
+
+    private func startRefreshLoop() {
+        stopRefreshLoop()
+        refreshTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(90))
+                guard !Task.isCancelled, isConnected else { break }
+                await refreshSession()
+            }
+        }
+    }
+
+    private func stopRefreshLoop() {
+        refreshTask?.cancel()
+        refreshTask = nil
+    }
+
+    private func refreshSession() async {
+        guard let api = appState.api, isConnected else { return }
+        do {
+            let info = adminShell
+                ? try await api.adminTerminalSession()
+                : try await api.domainTerminalSession(domainName)
+            guard info.available == true else { return }
+            session = info
+            terminalController?.connect(session: info)
+        } catch {
+            // Keep existing session; token refresh is best-effort.
         }
     }
 
@@ -137,6 +211,7 @@ struct DomainTerminalView: View {
 
     private func connect() async {
         guard let api = appState.api else { return }
+        stopRefreshLoop()
         statusText = "Fetching session…"
         errorMessage = nil
         isConnected = false
@@ -150,8 +225,11 @@ struct DomainTerminalView: View {
             session = info
             if info.available != true {
                 statusText = info.error ?? "Terminal unavailable"
-                errorMessage = info.error
+                errorMessage = info.error ?? "Terminal is disabled on this server."
                 return
+            }
+            if info.backendReady == false {
+                errorMessage = "Terminal backend is not running. Try Repair on the server."
             }
             openTerminalIfReady()
         } catch {
@@ -161,7 +239,6 @@ struct DomainTerminalView: View {
     }
 }
 
-// Make TerminalSessionInfo Encodable for JS bridge
 extension TerminalSessionInfo: Encodable {
     enum CodingKeys: String, CodingKey {
         case available, backendReady, token, wsUrl, wsProtocols, unixUser, shellUser, domain, error

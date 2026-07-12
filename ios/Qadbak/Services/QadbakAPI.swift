@@ -287,6 +287,103 @@ final class QadbakAPI {
         )
     }
 
+    func mkdir(_ domain: String, parent: String, name: String) async throws {
+        let _: FilePathResponse = try await client.request(
+            "POST",
+            path: domainPath(domain, "/files"),
+            body: FileMkdirBody(action: "mkdir", parent: parent.isEmpty ? nil : parent, name: name)
+        )
+    }
+
+    func createFile(_ domain: String, parent: String, name: String, content: String = "") async throws {
+        let _: FilePathResponse = try await client.request(
+            "POST",
+            path: domainPath(domain, "/files"),
+            body: FileCreateBody(
+                action: "create-file",
+                parent: parent.isEmpty ? nil : parent,
+                name: name,
+                content: content
+            )
+        )
+    }
+
+    func moveFile(
+        _ domain: String,
+        path filePath: String,
+        destDir: String? = nil,
+        newName: String? = nil,
+        overwrite: Bool = false
+    ) async throws {
+        let _: FilePathResponse = try await client.request(
+            "POST",
+            path: domainPath(domain, "/files"),
+            body: FileMoveBody(
+                action: "move",
+                path: filePath,
+                destDir: destDir,
+                newName: newName,
+                overwrite: overwrite
+            )
+        )
+    }
+
+    func uploadFiles(
+        _ domain: String,
+        dir: String,
+        files: [(name: String, data: Data, mimeType: String)],
+        overwrite: Bool = true
+    ) async throws -> FileUploadResponse {
+        let data = try await client.uploadMultipart(
+            path: domainPath(domain, "/files/upload"),
+            fields: [
+                "dir": dir,
+                "overwrite": overwrite ? "true" : "false",
+            ],
+            files: files.map { file in
+                (fieldName: "files", fileName: file.name, mimeType: file.mimeType, data: file.data)
+            }
+        )
+        return try JSONDecoder().decode(FileUploadResponse.self, from: data)
+    }
+
+    func listDomainScripts(_ domain: String) async throws -> DomainScriptsResponse {
+        try await client.request("GET", path: domainPath(domain, "/scripts"))
+    }
+
+    func installDomainScript(
+        _ domain: String,
+        script: String,
+        path: String = "public_html",
+        forceOverwrite: Bool = false
+    ) async throws -> ScriptInstallResponse {
+        try await client.request(
+            "POST",
+            path: domainPath(domain, "/scripts"),
+            body: ScriptInstallBody(script: script, path: path, forceOverwrite: forceOverwrite)
+        )
+    }
+
+    func deleteDomainScript(_ domain: String, script: String) async throws {
+        let _: OkResponse = try await client.request(
+            "DELETE",
+            path: domainPath(domain, "/scripts"),
+            body: ScriptDeleteBody(script: script)
+        )
+    }
+
+    func appCatalog() async throws -> AppCatalogResponse {
+        try await client.request("GET", path: "/api/admin/apps/catalog")
+    }
+
+    func installApp(templateId: String, input: [String: String]) async throws -> AppInstallResponse {
+        try await client.request(
+            "POST",
+            path: "/api/admin/apps/install",
+            body: AppInstallBody(templateId: templateId, input: input)
+        )
+    }
+
     func listMailMessages(
         _ domain: String,
         user: String,
@@ -428,6 +525,42 @@ private struct FileSaveBody: Encodable {
     let action: String
     let path: String
     let content: String
+}
+
+private struct FileMkdirBody: Encodable {
+    let action: String
+    let parent: String?
+    let name: String
+}
+
+private struct FileCreateBody: Encodable {
+    let action: String
+    let parent: String?
+    let name: String
+    let content: String
+}
+
+private struct FileMoveBody: Encodable {
+    let action: String
+    let path: String
+    let destDir: String?
+    let newName: String?
+    let overwrite: Bool
+}
+
+private struct ScriptInstallBody: Encodable {
+    let script: String
+    let path: String
+    let forceOverwrite: Bool
+}
+
+private struct ScriptDeleteBody: Encodable {
+    let script: String
+}
+
+private struct AppInstallBody: Encodable {
+    let templateId: String
+    let input: [String: String]
 }
 
 private struct SendMailBody: Encodable {

@@ -13,6 +13,7 @@ struct DomainListView: View {
     private enum AdminRoute: Hashable {
         case panelUpdates
         case serverTerminal
+        case appStore
     }
 
     private let columns = [
@@ -93,6 +94,11 @@ struct DomainListView: View {
                                 Label("Add domain", systemImage: "plus.circle")
                             }
                             Button {
+                                navigationPath.append(AdminRoute.appStore)
+                            } label: {
+                                Label("App store", systemImage: "square.grid.2x2")
+                            }
+                            Button {
                                 navigationPath.append(AdminRoute.panelUpdates)
                             } label: {
                                 Label("Panel updates", systemImage: "arrow.triangle.2.circlepath")
@@ -143,6 +149,8 @@ struct DomainListView: View {
                     PanelUpdatesView()
                 case .serverTerminal:
                     DomainTerminalView(domainName: "", adminShell: true)
+                case .appStore:
+                    AdminAppStoreView()
                 }
             }
             .task { await reload() }
