@@ -34,7 +34,7 @@
 		A10000010000000000000023 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000025 /* LiveActivityManager.swift */; };
 		A10000010000000000000024 /* LiveLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000026 /* LiveLogsView.swift */; };
 		A10000010000000000000025 /* AppLockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000027 /* AppLockView.swift */; };
-		A10000010000000000000026 /* SavedServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000028 /* SavedServer.swift */; };
+		A10000010000000000000026 /* ManagedServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000028 /* ManagedServer.swift */; };
 		A10000010000000000000027 /* ServerSwitcherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000029 /* ServerSwitcherView.swift */; };
 		A10000010000000000000028 /* MailReplyHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000030 /* MailReplyHelpers.swift */; };
 		A10000010000000000000034 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000034 /* PrivacyInfo.xcprivacy */; };
@@ -60,6 +60,27 @@
 		A10000010000000000000054 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000054 /* SettingsView.swift */; };
 		A10000010000000000000055 /* CronJobsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000055 /* CronJobsView.swift */; };
 		A10000010000000000000056 /* FtpAccountsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000056 /* FtpAccountsView.swift */; };
+		A10000010000000000000057 /* ServerManagementModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000057 /* ServerManagementModels.swift */; };
+		A10000010000000000000058 /* ServerManagementProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000058 /* ServerManagementProvider.swift */; };
+		A10000010000000000000059 /* QadbakPanelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000059 /* QadbakPanelProvider.swift */; };
+		A10000010000000000000060 /* QadbakAgentProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000060 /* QadbakAgentProvider.swift */; };
+		A10000010000000000000061 /* ServerProviderFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000061 /* ServerProviderFactory.swift */; };
+		A10000010000000000000062 /* ServerBadgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000062 /* ServerBadgeView.swift */; };
+		A10000010000000000000063 /* AddServerChoiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000063 /* AddServerChoiceView.swift */; };
+		A10000010000000000000064 /* AgentServerPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000064 /* AgentServerPlaceholderView.swift */; };
+		A10000010000000000000065 /* AgentAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000065 /* AgentAPIModels.swift */; };
+		A10000010000000000000066 /* AgentAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000066 /* AgentAPIClient.swift */; };
+		A10000010000000000000067 /* SSHSessionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000067 /* SSHSessionService.swift */; };
+		A10000010000000000000068 /* AgentInstallService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000068 /* AgentInstallService.swift */; };
+		A10000010000000000000069 /* LinuxServerOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000069 /* LinuxServerOnboardingView.swift */; };
+		A10000010000000000000070 /* AgentServerDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000070 /* AgentServerDashboardView.swift */; };
+		A10000010000000000000073 /* AgentServicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000073 /* AgentServicesView.swift */; };
+		A10000010000000000000074 /* AgentDockerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000074 /* AgentDockerView.swift */; };
+		A10000010000000000000075 /* AgentLogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000075 /* AgentLogsView.swift */; };
+		A10000010000000000000076 /* AgentConfirmedAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000076 /* AgentConfirmedAction.swift */; };
+		A10000010000000000000077 /* AgentServerControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000077 /* AgentServerControlView.swift */; };
+		A10000010000000000000071 /* qadbak-agent-linux-amd64 in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000071 /* qadbak-agent-linux-amd64 */; };
+		A10000010000000000000072 /* qadbak-agent-linux-arm64 in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000072 /* qadbak-agent-linux-arm64 */; };
 		B10000010000000000000001 /* QadbakWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000001 /* QadbakWidget.swift */; };
 		B10000010000000000000002 /* QadbakWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000002 /* QadbakWidgetBundle.swift */; };
 		B10000010000000000000004 /* QadbakLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000005 /* QadbakLiveActivity.swift */; };
@@ -96,7 +117,7 @@
 		A20000010000000000000025 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
 		A20000010000000000000026 /* LiveLogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveLogsView.swift; sourceTree = "<group>"; };
 		A20000010000000000000027 /* AppLockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockView.swift; sourceTree = "<group>"; };
-		A20000010000000000000028 /* SavedServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedServer.swift; sourceTree = "<group>"; };
+		A20000010000000000000028 /* ManagedServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagedServer.swift; sourceTree = "<group>"; };
 		A20000010000000000000029 /* ServerSwitcherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSwitcherView.swift; sourceTree = "<group>"; };
 		A20000010000000000000030 /* MailReplyHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailReplyHelpers.swift; sourceTree = "<group>"; };
 		A20000010000000000000022 /* Qadbak.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Qadbak.entitlements; sourceTree = "<group>"; };
@@ -123,6 +144,27 @@
 		A20000010000000000000054 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A20000010000000000000055 /* CronJobsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CronJobsView.swift; sourceTree = "<group>"; };
 		A20000010000000000000056 /* FtpAccountsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FtpAccountsView.swift; sourceTree = "<group>"; };
+		A20000010000000000000057 /* ServerManagementModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerManagementModels.swift; sourceTree = "<group>"; };
+		A20000010000000000000058 /* ServerManagementProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerManagementProvider.swift; sourceTree = "<group>"; };
+		A20000010000000000000059 /* QadbakPanelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakPanelProvider.swift; sourceTree = "<group>"; };
+		A20000010000000000000060 /* QadbakAgentProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakAgentProvider.swift; sourceTree = "<group>"; };
+		A20000010000000000000061 /* ServerProviderFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerProviderFactory.swift; sourceTree = "<group>"; };
+		A20000010000000000000062 /* ServerBadgeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerBadgeView.swift; sourceTree = "<group>"; };
+		A20000010000000000000063 /* AddServerChoiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddServerChoiceView.swift; sourceTree = "<group>"; };
+		A20000010000000000000064 /* AgentServerPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentServerPlaceholderView.swift; sourceTree = "<group>"; };
+		A20000010000000000000065 /* AgentAPIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentAPIModels.swift; sourceTree = "<group>"; };
+		A20000010000000000000066 /* AgentAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentAPIClient.swift; sourceTree = "<group>"; };
+		A20000010000000000000067 /* SSHSessionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHSessionService.swift; sourceTree = "<group>"; };
+		A20000010000000000000068 /* AgentInstallService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentInstallService.swift; sourceTree = "<group>"; };
+		A20000010000000000000069 /* LinuxServerOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinuxServerOnboardingView.swift; sourceTree = "<group>"; };
+		A20000010000000000000070 /* AgentServerDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentServerDashboardView.swift; sourceTree = "<group>"; };
+		A20000010000000000000073 /* AgentServicesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentServicesView.swift; sourceTree = "<group>"; };
+		A20000010000000000000074 /* AgentDockerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentDockerView.swift; sourceTree = "<group>"; };
+		A20000010000000000000075 /* AgentLogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentLogsView.swift; sourceTree = "<group>"; };
+		A20000010000000000000076 /* AgentConfirmedAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentConfirmedAction.swift; sourceTree = "<group>"; };
+		A20000010000000000000077 /* AgentServerControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentServerControlView.swift; sourceTree = "<group>"; };
+		A20000010000000000000071 /* qadbak-agent-linux-amd64 */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = "qadbak-agent-linux-amd64"; sourceTree = "<group>"; };
+		A20000010000000000000072 /* qadbak-agent-linux-arm64 */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = "qadbak-agent-linux-arm64"; sourceTree = "<group>"; };
 		B20000010000000000000001 /* QadbakWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakWidget.swift; sourceTree = "<group>"; };
 		B20000010000000000000002 /* QadbakWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakWidgetBundle.swift; sourceTree = "<group>"; };
 		B20000010000000000000005 /* QadbakLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakLiveActivity.swift; sourceTree = "<group>"; };
@@ -229,9 +271,22 @@
 			isa = PBXGroup;
 			children = (
 				A20000010000000000000003 /* APIModels.swift */,
-				A20000010000000000000028 /* SavedServer.swift */,
+				A20000010000000000000028 /* ManagedServer.swift */,
+				A20000010000000000000057 /* ServerManagementModels.swift */,
+				A20000010000000000000065 /* AgentAPIModels.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		A50000010000000000000014 /* Providers */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010000000000000058 /* ServerManagementProvider.swift */,
+				A20000010000000000000059 /* QadbakPanelProvider.swift */,
+				A20000010000000000000060 /* QadbakAgentProvider.swift */,
+				A20000010000000000000061 /* ServerProviderFactory.swift */,
+			);
+			path = Providers;
 			sourceTree = "<group>";
 		};
 		A50000010000000000000006 /* Services */ = {
@@ -240,6 +295,11 @@
 				A20000010000000000000004 /* KeychainStore.swift */,
 				A20000010000000000000005 /* APIClient.swift */,
 				A20000010000000000000006 /* QadbakAPI.swift */,
+				A20000010000000000000066 /* AgentAPIClient.swift */,
+				A20000010000000000000067 /* SSHSessionService.swift */,
+				A20000010000000000000068 /* AgentInstallService.swift */,
+				A20000010000000000000076 /* AgentConfirmedAction.swift */,
+				A50000010000000000000014 /* Providers */,
 				A20000010000000000000041 /* BackupICloudService.swift */,
 				A20000010000000000000042 /* BackupICloudSettings.swift */,
 				A20000010000000000000043 /* BackupNetworkPolicy.swift */,
@@ -262,8 +322,25 @@
 				A50000010000000000000009 /* Domains */,
 				A50000010000000000000010 /* Admin */,
 				A50000010000000000000011 /* Terminal */,
+				A50000010000000000000015 /* Servers */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		A50000010000000000000015 /* Servers */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010000000000000062 /* ServerBadgeView.swift */,
+				A20000010000000000000063 /* AddServerChoiceView.swift */,
+				A20000010000000000000064 /* AgentServerPlaceholderView.swift */,
+				A20000010000000000000069 /* LinuxServerOnboardingView.swift */,
+				A20000010000000000000070 /* AgentServerDashboardView.swift */,
+				A20000010000000000000073 /* AgentServicesView.swift */,
+				A20000010000000000000074 /* AgentDockerView.swift */,
+				A20000010000000000000075 /* AgentLogsView.swift */,
+				A20000010000000000000077 /* AgentServerControlView.swift */,
+			);
+			path = Servers;
 			sourceTree = "<group>";
 		};
 		A50000010000000000000008 /* Utilities */ = {
@@ -322,10 +399,20 @@
 			path = Terminal;
 			sourceTree = "<group>";
 		};
+		A50000010000000000000016 /* Agent */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010000000000000071 /* qadbak-agent-linux-amd64 */,
+				A20000010000000000000072 /* qadbak-agent-linux-arm64 */,
+			);
+			path = Agent;
+			sourceTree = "<group>";
+		};
 		A50000010000000000000012 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
 				A50000010000000000000013 /* terminal */,
+				A50000010000000000000016 /* Agent */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -359,6 +446,9 @@
 				B70000010000000000000001 /* PBXTargetDependency */,
 			);
 			name = Qadbak;
+			packageProductDependencies = (
+				C10000010000000000000002 /* Citadel */,
+			);
 			productName = Qadbak;
 			productReference = A30000010000000000000001 /* Qadbak.app */;
 			productType = "com.apple.product-type.application";
@@ -404,6 +494,9 @@
 				Base,
 			);
 			mainGroup = A50000010000000000000001;
+			packageReferences = (
+				C10000010000000000000001 /* XCRemoteSwiftPackageReference "Citadel" */,
+			);
 			productRefGroup = A50000010000000000000003 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -425,6 +518,8 @@
 				A10000010000000000000044 /* xterm.min.js in Resources */,
 				A10000010000000000000045 /* addon-fit.min.js in Resources */,
 				A10000010000000000000046 /* xterm.css in Resources */,
+				A10000010000000000000071 /* qadbak-agent-linux-amd64 in Resources */,
+				A10000010000000000000072 /* qadbak-agent-linux-arm64 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -492,7 +587,7 @@
 				A10000010000000000000023 /* LiveActivityManager.swift in Sources */,
 				A10000010000000000000024 /* LiveLogsView.swift in Sources */,
 				A10000010000000000000025 /* AppLockView.swift in Sources */,
-				A10000010000000000000026 /* SavedServer.swift in Sources */,
+				A10000010000000000000026 /* ManagedServer.swift in Sources */,
 				A10000010000000000000027 /* ServerSwitcherView.swift in Sources */,
 				A10000010000000000000028 /* MailReplyHelpers.swift in Sources */,
 				A10000010000000000000035 /* AddDomainView.swift in Sources */,
@@ -510,6 +605,25 @@
 				A10000010000000000000054 /* SettingsView.swift in Sources */,
 				A10000010000000000000055 /* CronJobsView.swift in Sources */,
 				A10000010000000000000056 /* FtpAccountsView.swift in Sources */,
+				A10000010000000000000057 /* ServerManagementModels.swift in Sources */,
+				A10000010000000000000058 /* ServerManagementProvider.swift in Sources */,
+				A10000010000000000000059 /* QadbakPanelProvider.swift in Sources */,
+				A10000010000000000000060 /* QadbakAgentProvider.swift in Sources */,
+				A10000010000000000000061 /* ServerProviderFactory.swift in Sources */,
+				A10000010000000000000062 /* ServerBadgeView.swift in Sources */,
+				A10000010000000000000063 /* AddServerChoiceView.swift in Sources */,
+				A10000010000000000000064 /* AgentServerPlaceholderView.swift in Sources */,
+				A10000010000000000000065 /* AgentAPIModels.swift in Sources */,
+				A10000010000000000000066 /* AgentAPIClient.swift in Sources */,
+				A10000010000000000000067 /* SSHSessionService.swift in Sources */,
+				A10000010000000000000068 /* AgentInstallService.swift in Sources */,
+				A10000010000000000000069 /* LinuxServerOnboardingView.swift in Sources */,
+				A10000010000000000000070 /* AgentServerDashboardView.swift in Sources */,
+				A10000010000000000000073 /* AgentServicesView.swift in Sources */,
+				A10000010000000000000074 /* AgentDockerView.swift in Sources */,
+				A10000010000000000000075 /* AgentLogsView.swift in Sources */,
+				A10000010000000000000076 /* AgentConfirmedAction.swift in Sources */,
+				A10000010000000000000077 /* AgentServerControlView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -704,6 +818,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C10000010000000000000001 /* XCRemoteSwiftPackageReference "Citadel" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/orlandos-nl/Citadel";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.12.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C10000010000000000000002 /* Citadel */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C10000010000000000000001 /* XCRemoteSwiftPackageReference "Citadel" */;
+			productName = Citadel;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A70000010000000000000001 /* Project object */;
 }

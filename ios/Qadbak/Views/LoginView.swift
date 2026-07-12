@@ -133,7 +133,7 @@ struct LoginView: View {
                             Task { await quickSwitch(server) }
                         } label: {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(server.label)
+                                Text(server.displayName)
                                     .font(.subheadline.weight(.semibold))
                                     .foregroundStyle(QadbakPalette.text)
                                 Text(server.displayHost)
@@ -181,10 +181,10 @@ struct LoginView: View {
     }
 
     private func prefillFromActiveServer() {
-        if let server = appState.activeServer {
+        if let server = appState.activeServer, server.isQadbakPanel {
             if serverURL.isEmpty || !appState.addingNewServer {
-                serverURL = server.serverURL
-                serverLabel = server.label
+                serverURL = server.apiBaseURL
+                serverLabel = server.displayName
             }
             if username.isEmpty, let saved = server.username {
                 username = saved
@@ -197,15 +197,17 @@ struct LoginView: View {
         }
     }
 
-    private func quickSwitch(_ server: SavedServer) async {
+    private func quickSwitch(_ server: ManagedServer) async {
         localError = nil
         do {
             try await appState.switchToServer(server)
         } catch {
             appState.activeServerId = server.id
-            serverURL = server.serverURL
-            serverLabel = server.label
-            username = server.username ?? ""
+            if server.isQadbakPanel {
+                serverURL = server.apiBaseURL
+                serverLabel = server.displayName
+                username = server.username ?? ""
+            }
             localError = error.localizedDescription
         }
     }

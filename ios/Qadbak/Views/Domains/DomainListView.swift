@@ -52,7 +52,7 @@ struct DomainListView: View {
                         Image(systemName: "server.rack")
                             .foregroundStyle(QadbakPalette.accent)
                     }
-                    .accessibilityLabel(appState.activeServer?.label ?? "Switch server")
+                    .accessibilityLabel(appState.activeServer?.displayName ?? "Switch server")
                 }
                 ToolbarItem(placement: .principal) {
                     HStack(spacing: 8) {
@@ -196,7 +196,7 @@ struct DomainListView: View {
     private var headerSubtitle: String? {
         var parts: [String] = []
         if let user = appState.username { parts.append(user) }
-        if let server = appState.activeServer?.label { parts.append(server) }
+        if let server = appState.activeServer?.displayName { parts.append(server) }
         if appState.premiumActive, let plan = appState.premiumPlanLabel {
             parts.append(shortPremiumLabel(plan))
         }

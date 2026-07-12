@@ -16,9 +16,15 @@ final class AppState {
     var errorMessage: String?
     var requiresUnlock = false
     var pendingPushDomain: String?
-    var savedServers: [SavedServer] = []
+    var savedServers: [ManagedServer] = []
     var activeServerId: String?
     var addingNewServer = false
+    var addServerMode: AddServerMode?
+
+    enum AddServerMode {
+        case qadbakPanel
+        case linuxSSH
+    }
 
     private var backgroundSince: Date?
     private var lastUnlockedAt: Date?
@@ -26,8 +32,10 @@ final class AppState {
 
     private let keychain = KeychainStore()
     private(set) var api: QadbakAPI?
+    private(set) var activeProvider: (any ServerManagementProvider)?
+    private var agentClient: AgentAPIClient?
 
-    var activeServer: SavedServer? {
+    var activeServer: ManagedServer? {
         guard let activeServerId else { return nil }
         return savedServers.first(where: { $0.id == activeServerId })
     }
@@ -90,8 +98,14 @@ final class AppState {
         pendingPushDomain = domain
     }
 
-    func hasStoredSession(for server: SavedServer) -> Bool {
-        keychain.hasRefreshToken(serverId: server.id)
+    func hasStoredSession(for server: ManagedServer) -> Bool {
+        if server.isQadbakPanel {
+            return keychain.hasRefreshToken(serverId: server.id)
+        }
+        if server.isAgentManaged {
+            return keychain.hasAgentSession(serverId: server.id)
+        }
+        return false
     }
 
     init() {
@@ -117,8 +131,9 @@ final class AppState {
         api = makeAPI(for: serverURL!)
     }
 
-    func prepareAddServer() async {
+    func prepareAddServer(mode: AddServerMode? = nil) async {
         addingNewServer = true
+        addServerMode = mode
         if isSignedIn {
             await logout()
         }
@@ -130,27 +145,35 @@ final class AppState {
         capabilities = nil
         license = nil
         api = nil
+        activeProvider = nil
     }
 
-    func switchToServer(_ server: SavedServer) async throws {
+    func switchToServer(_ server: ManagedServer) async throws {
         addingNewServer = false
-        if activeServerId == server.id, isSignedIn { return }
+        if activeServerId == server.id {
+            if server.isQadbakPanel && isSignedIn { return }
+            if server.isAgentManaged { return }
+        }
         if isSignedIn {
             await PushNotificationService.shared.unregisterFromServer()
             clearSession(keepServerEntry: true)
         }
         try await activateServer(server, bootstrap: true)
+        if server.isAgentManaged {
+            return
+        }
         if !isSignedIn {
-            throw APIError.message("No saved session for \(server.label). Sign in once to store it securely.")
+            throw APIError.message("No saved session for \(server.displayName). Sign in once to store it securely.")
         }
     }
 
-    func removeServer(_ server: SavedServer) async {
+    func removeServer(_ server: ManagedServer) async {
         if activeServerId == server.id {
             await logout()
         }
         keychain.deleteRefreshToken(serverId: server.id)
-        var next = keychain.loadServers().filter { $0.id != server.id }
+        keychain.deleteAgentRefreshToken(serverId: server.id)
+        var next = keychain.loadManagedServers().filter { $0.id != server.id }
         keychain.saveServers(next)
         savedServers = next
         if activeServerId == server.id {
@@ -297,6 +320,46 @@ final class AppState {
         }
     }
 
+    var showsDomainHosting: Bool {
+        activeServer?.capabilities.domainHosting == true && isSignedIn
+    }
+
+    var showsAgentDashboard: Bool {
+        guard let server = activeServer else { return false }
+        return server.isAgentManaged && server.authenticationMethod == .agentToken && hasStoredSession(for: server)
+    }
+
+    func updateActiveServerProfile(_ profile: ManagedServer) {
+        upsertServer(profile)
+    }
+
+    func registerAgentServer(
+        _ server: ManagedServer,
+        accessToken: String,
+        refreshToken: String,
+        tlsFingerprint: String
+    ) async throws {
+        keychain.saveAgentRefreshToken(refreshToken, serverId: server.id)
+        keychain.saveAgentTlsPin(tlsFingerprint, serverId: server.id)
+        upsertServer(server)
+        activeServerId = server.id
+        keychain.saveActiveServerId(server.id)
+        agentClient = makeAgentClient(for: server, accessToken: accessToken)
+        agentClient?.setAccessToken(accessToken)
+        activeProvider = ServerProviderFactory.makeProvider(
+            for: server,
+            api: nil,
+            agentClient: agentClient,
+            keychain: keychain
+        )
+        addingNewServer = false
+    }
+
+    var showsAgentPlaceholder: Bool {
+        guard let server = activeServer else { return false }
+        return server.isAgentManaged && server.authenticationMethod == .agentTokenPendingPair
+    }
+
     // MARK: - Private
 
     private func makeAPI(for base: URL) -> QadbakAPI {
@@ -312,17 +375,51 @@ final class AppState {
         })
     }
 
-    private func activateServer(_ server: SavedServer, bootstrap: Bool) async throws {
-        let url = try Self.normalizePanelURL(server.serverURL)
-        serverURL = url
+    private func activateServer(_ server: ManagedServer, bootstrap: Bool) async throws {
         activeServerId = server.id
         keychain.saveActiveServerId(server.id)
-        api = makeAPI(for: url)
         username = server.username
+        activeProvider = nil
 
-        guard bootstrap, let refresh = keychain.loadRefreshToken(serverId: server.id) else { return }
-        api?.setRefreshToken(refresh)
-        await bootstrapFromRefresh(refreshToken: refresh)
+        if server.isQadbakPanel {
+            let url = try Self.normalizePanelURL(server.apiBaseURL)
+            serverURL = url
+            api = makeAPI(for: url)
+            activeProvider = ServerProviderFactory.makeProvider(
+                for: server,
+                api: api,
+                agentClient: agentClient,
+                keychain: keychain
+            )
+
+            guard bootstrap, let refresh = keychain.loadRefreshToken(serverId: server.id) else { return }
+            api?.setRefreshToken(refresh)
+            await bootstrapFromRefresh(refreshToken: refresh)
+            return
+        }
+
+        if server.isAgentManaged {
+            serverURL = nil
+            accessToken = nil
+            api = nil
+            if server.authenticationMethod == .agentToken {
+                agentClient = makeAgentClient(for: server, accessToken: nil)
+                activeProvider = ServerProviderFactory.makeProvider(
+                    for: server,
+                    api: nil,
+                    agentClient: agentClient,
+                    keychain: keychain
+                )
+                if bootstrap, keychain.loadAgentRefreshToken(serverId: server.id) != nil {
+                    await bootstrapAgentFromRefresh(server: server)
+                }
+            } else {
+                agentClient = nil
+            }
+            return
+        }
+
+        throw APIError.message("Unsupported server type.")
     }
 
     private func persistServerSession(
@@ -333,17 +430,19 @@ final class AppState {
     ) throws {
         let host = serverURL.host ?? "Panel"
         let existing = savedServers.first(where: {
-            ($0.serverURL == serverURL.absoluteString) || ($0.displayHost == host)
+            ($0.apiBaseURL == serverURL.absoluteString) || ($0.displayHost == host)
         })
         let serverId = existing?.id ?? UUID().uuidString
-        let profile = SavedServer(
+        let profile = ManagedServer.qadbakPanel(
             id: serverId,
-            label: label?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty ?? existing?.label ?? host,
+            label: label?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty ?? existing?.displayName ?? host,
             serverURL: serverURL.absoluteString,
             username: username,
             lastUsedAt: Date()
         )
-        upsertServer(profile)
+        var online = profile
+        online.connectionStatus = .online
+        upsertServer(online)
         activeServerId = serverId
         keychain.saveActiveServerId(serverId)
         if let refreshToken {
@@ -352,16 +451,64 @@ final class AppState {
         }
     }
 
-    private func upsertServer(_ profile: SavedServer) {
-        var next = keychain.loadServers().filter { $0.id != profile.id }
+    private func upsertServer(_ profile: ManagedServer) {
+        var next = keychain.loadManagedServers().filter { $0.id != profile.id }
         next.insert(profile, at: 0)
-        keychain.saveServers(next)
+        keychain.saveManagedServers(next)
         savedServers = next.sorted { $0.lastUsedAt > $1.lastUsedAt }
+        if let server = savedServers.first(where: { $0.id == profile.id }) {
+            activeProvider = ServerProviderFactory.makeProvider(
+                for: server,
+                api: api,
+                agentClient: agentClient,
+                keychain: keychain
+            )
+        }
+    }
+
+    private func makeAgentClient(for server: ManagedServer, accessToken: String?) -> AgentAPIClient {
+        let base = URL(string: server.apiBaseURL) ?? AgentInstallService.makeAgentBaseURL(
+            host: server.hostname,
+            port: server.agentPort ?? 9443
+        )
+        let pin = keychain.loadAgentTlsPin(serverId: server.id)
+        let serverId = server.id
+        return AgentAPIClient(
+            baseURL: base,
+            pinnedFingerprint: pin,
+            accessToken: accessToken,
+            refreshTokenProvider: { [keychain] in keychain.loadAgentRefreshToken(serverId: serverId) },
+            onTokensRefreshed: { [weak self] access, refresh in
+                guard let self else { return }
+                self.agentClient?.setAccessToken(access)
+                self.keychain.saveAgentRefreshToken(refresh, serverId: serverId)
+            }
+        )
+    }
+
+    private func bootstrapAgentFromRefresh(server: ManagedServer) async {
+        guard let client = agentClient else { return }
+        do {
+            let res = try await client.rotate()
+            if res.accessToken != nil {
+                var updated = server
+                updated.connectionStatus = .online
+                updated.lastSeen = Date()
+                if let caps = try? await client.capabilities().capabilities?.toServerCapabilities() {
+                    updated.capabilities = caps
+                }
+                upsertServer(updated)
+            }
+        } catch {
+            var failed = server
+            failed.connectionStatus = .authFailed
+            upsertServer(failed)
+        }
     }
 
     private func touchActiveServer(username: String?) {
         guard let id = activeServerId else { return }
-        var next = keychain.loadServers()
+        var next = keychain.loadManagedServers()
         guard let idx = next.firstIndex(where: { $0.id == id }) else { return }
         next[idx].lastUsedAt = Date()
         if let username, !username.isEmpty {

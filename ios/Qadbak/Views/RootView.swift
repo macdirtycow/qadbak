@@ -5,8 +5,12 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if appState.isSignedIn {
+            if appState.showsDomainHosting {
                 DomainListView()
+            } else if appState.showsAgentDashboard {
+                NavigationStack {
+                    AgentServerDashboardView()
+                }
             } else {
                 LoginView()
             }

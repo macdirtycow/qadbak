@@ -5,19 +5,40 @@ import Security
 final class KeychainStore {
     private let service = "com.qadbak.panel"
 
-    // MARK: - Server profiles
+    // MARK: - Managed server profiles
 
-    func loadServers() -> [SavedServer] {
-        guard let data = loadData(key: "savedServers"),
-              let servers = try? JSONDecoder().decode([SavedServer].self, from: data) else {
+    func loadManagedServers() -> [ManagedServer] {
+        migrateToManagedServersIfNeeded()
+        guard let data = loadData(key: "managedServers"),
+              let servers = try? JSONDecoder().decode([ManagedServer].self, from: data) else {
             return []
         }
         return servers.sorted { $0.lastUsedAt > $1.lastUsedAt }
     }
 
-    func saveServers(_ servers: [SavedServer]) {
+    func saveManagedServers(_ servers: [ManagedServer]) {
         guard let data = try? JSONEncoder().encode(servers) else { return }
-        saveData(key: "savedServers", data: data, secure: false)
+        saveData(key: "managedServers", data: data, secure: false)
+    }
+
+    /// Legacy API — returns managed servers (SavedServer is embedded in ManagedServer).
+    func loadServers() -> [ManagedServer] {
+        loadManagedServers()
+    }
+
+    func saveServers(_ servers: [ManagedServer]) {
+        saveManagedServers(servers)
+    }
+
+    func migrateToManagedServersIfNeeded() {
+        guard loadData(key: "managedServers") == nil else { return }
+        if let legacyData = loadData(key: "savedServers"),
+           let legacy = try? JSONDecoder().decode([SavedServer].self, from: legacyData) {
+            let migrated = legacy.map { $0.toManagedServer() }
+            saveManagedServers(migrated)
+            return
+        }
+        _ = migrateLegacyIfNeeded()
     }
 
     func loadActiveServerId() -> String? {
@@ -32,7 +53,7 @@ final class KeychainStore {
         }
     }
 
-    // MARK: - Per-server refresh tokens (device-only, requires unlock)
+    // MARK: - Panel refresh tokens
 
     func saveRefreshToken(_ token: String, serverId: String) {
         save(key: tokenKey(serverId), value: token, secure: true)
@@ -50,30 +71,66 @@ final class KeychainStore {
         loadRefreshToken(serverId: serverId) != nil
     }
 
+    // MARK: - Agent tokens & pins (never UserDefaults)
+
+    func saveAgentRefreshToken(_ token: String, serverId: String) {
+        save(key: "agentRefreshToken.\(serverId)", value: token, secure: true)
+    }
+
+    func loadAgentRefreshToken(serverId: String) -> String? {
+        load(key: "agentRefreshToken.\(serverId)", secure: true)
+    }
+
+    func deleteAgentRefreshToken(serverId: String) {
+        delete(key: "agentRefreshToken.\(serverId)")
+    }
+
+    func hasAgentSession(serverId: String) -> Bool {
+        loadAgentRefreshToken(serverId: serverId) != nil
+    }
+
+    func saveAgentTlsPin(_ sha256: String, serverId: String) {
+        save(key: "agentTlsPin.\(serverId)", value: sha256, secure: true)
+    }
+
+    func loadAgentTlsPin(serverId: String) -> String? {
+        load(key: "agentTlsPin.\(serverId)", secure: true)
+    }
+
+    func saveSshHostKeyFingerprint(_ fingerprint: String, serverId: String) {
+        save(key: "sshHostKey.\(serverId)", value: fingerprint, secure: true)
+    }
+
+    func loadSshHostKeyFingerprint(serverId: String) -> String? {
+        load(key: "sshHostKey.\(serverId)", secure: true)
+    }
+
     func migrateSecureTokensIfNeeded() {
-        for server in loadServers() {
-            guard let token = loadRefreshToken(serverId: server.id) else { continue }
-            saveRefreshToken(token, serverId: server.id)
+        for server in loadManagedServers() {
+            if server.isQadbakPanel, let token = loadRefreshToken(serverId: server.id) {
+                saveRefreshToken(token, serverId: server.id)
+            }
         }
     }
 
     // MARK: - Migration from single-server storage
 
-    func migrateLegacyIfNeeded() -> SavedServer? {
-        guard loadServers().isEmpty else { return nil }
+    @discardableResult
+    func migrateLegacyIfNeeded() -> ManagedServer? {
+        guard loadData(key: "managedServers") == nil, loadData(key: "savedServers") == nil else {
+            return nil
+        }
         guard let rawURL = load(key: "serverURL"),
               let url = URL(string: rawURL),
               let token = load(key: "refreshToken", secure: true) ?? load(key: "refreshToken", secure: false) else {
             return nil
         }
-        let server = SavedServer(
-            id: UUID().uuidString,
+        let server = ManagedServer.qadbakPanel(
             label: url.host ?? "Panel",
             serverURL: url.absoluteString,
-            username: load(key: "username", secure: false),
-            lastUsedAt: Date()
+            username: load(key: "username", secure: false)
         )
-        saveServers([server])
+        saveManagedServers([server])
         saveActiveServerId(server.id)
         saveRefreshToken(token, serverId: server.id)
         delete(key: "serverURL")

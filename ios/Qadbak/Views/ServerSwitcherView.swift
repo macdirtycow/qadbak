@@ -6,6 +6,7 @@ struct ServerSwitcherView: View {
 
     @State private var errorMessage: String?
     @State private var switchingId: String?
+    @State private var showAddServer = false
 
     var body: some View {
         NavigationStack {
@@ -25,12 +26,9 @@ struct ServerSwitcherView: View {
                         }
 
                         Button {
-                            Task {
-                                await appState.prepareAddServer()
-                                dismiss()
-                            }
+                            showAddServer = true
                         } label: {
-                            Label("Add another server", systemImage: "plus.circle.fill")
+                            Label("Add server", systemImage: "plus.circle.fill")
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(QadbakPalette.accent)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -51,11 +49,17 @@ struct ServerSwitcherView: View {
                         .foregroundStyle(QadbakPalette.accent)
                 }
             }
+            .sheet(isPresented: $showAddServer) {
+                NavigationStack {
+                    AddServerChoiceView()
+                }
+                .preferredColorScheme(.dark)
+            }
             .preferredColorScheme(.dark)
         }
     }
 
-    private func serverRow(_ server: SavedServer) -> some View {
+    private func serverRow(_ server: ManagedServer) -> some View {
         let isActive = appState.activeServerId == server.id
         let isSwitching = switchingId == server.id
         return Button {
@@ -70,9 +74,12 @@ struct ServerSwitcherView: View {
                         .foregroundStyle(isActive ? QadbakPalette.glow : QadbakPalette.muted)
                 }
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(server.label)
-                        .font(.headline)
-                        .foregroundStyle(QadbakPalette.text)
+                    HStack(spacing: 8) {
+                        Text(server.displayName)
+                            .font(.headline)
+                            .foregroundStyle(QadbakPalette.text)
+                        ServerBadgeView(server: server)
+                    }
                     Text(server.subtitle)
                         .font(.caption)
                         .foregroundStyle(QadbakPalette.muted)
@@ -80,8 +87,12 @@ struct ServerSwitcherView: View {
                         Label("Saved session", systemImage: "lock.shield.fill")
                             .font(.caption2)
                             .foregroundStyle(QadbakPalette.success)
-                    } else {
+                    } else if server.isQadbakPanel {
                         Label("Sign in required", systemImage: "key.fill")
+                            .font(.caption2)
+                            .foregroundStyle(QadbakPalette.warning)
+                    } else {
+                        Label("Pairing required", systemImage: "link")
                             .font(.caption2)
                             .foregroundStyle(QadbakPalette.warning)
                     }
@@ -106,7 +117,7 @@ struct ServerSwitcherView: View {
         }
     }
 
-    private func switchServer(_ server: SavedServer) async {
+    private func switchServer(_ server: ManagedServer) async {
         switchingId = server.id
         errorMessage = nil
         defer { switchingId = nil }
