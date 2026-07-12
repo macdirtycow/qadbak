@@ -403,7 +403,11 @@ struct LinuxServerOnboardingView: View {
             keyPassphrase = ""
             dismiss()
         } catch {
-            errorMessage = error.localizedDescription
+            if listenMode == .lan {
+                errorMessage = "\(error.localizedDescription)\n\nLAN tip: open TCP 9443 on the VPS firewall (ufw + Contabo panel) and retry."
+            } else {
+                errorMessage = error.localizedDescription
+            }
         }
     }
 }

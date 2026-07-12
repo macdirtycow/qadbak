@@ -132,8 +132,13 @@ final class AppState {
         api = makeAPI(for: serverURL!)
     }
 
+    func resetConnectionChoice() async {
+        addServerMode = nil
+        await prepareAddServer()
+    }
+
     func prepareAddServer(mode: AddServerMode? = nil) async {
-        addingNewServer = true
+        addingNewServer = mode != nil
         addServerMode = mode
         if isSignedIn {
             await logout()
@@ -411,6 +416,7 @@ final class AppState {
             keychain: keychain
         )
         addingNewServer = false
+        addServerMode = nil
     }
 
     var showsAgentPlaceholder: Bool {

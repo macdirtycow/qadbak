@@ -129,7 +129,7 @@ struct SSHSessionService {
             if s.hasPrefix("fingerprint:") { fingerprint = String(s.dropFirst(12)) }
             if s.hasPrefix("agent_listen_host:") {
                 let host = String(s.dropFirst(18)).trimmingCharacters(in: .whitespaces)
-                if !host.isEmpty { agentHost = host }
+                if !host.isEmpty, host != "0.0.0.0" { agentHost = host }
             }
         }
         if pairing.isEmpty {
@@ -331,7 +331,15 @@ struct SSHSessionService {
         sleep 1
         LISTEN_HOST="${AGENT_LISTEN%%:*}"
         [[ "$LISTEN_HOST" == "0.0.0.0" ]] && CURL_HOST="127.0.0.1" || CURL_HOST="$LISTEN_HOST"
-        echo "agent_listen_host:$LISTEN_HOST"
+        AGENT_PUBLIC_HOST="$LISTEN_HOST"
+        if [[ "$LISTEN_HOST" == "0.0.0.0" ]]; then
+          AGENT_PUBLIC_HOST="$(curl -4 -s --max-time 5 ifconfig.me 2>/dev/null | tr -d '[:space:]')"
+          if [[ -z "$AGENT_PUBLIC_HOST" ]]; then
+            AGENT_PUBLIC_HOST="$(hostname -I 2>/dev/null | awk '{print $1}' | tr -d '[:space:]')"
+          fi
+          [[ -z "$AGENT_PUBLIC_HOST" ]] && AGENT_PUBLIC_HOST="127.0.0.1"
+        fi
+        echo "agent_listen_host:$AGENT_PUBLIC_HOST"
         RESP=$(curl -sk -X POST "https://${CURL_HOST}:${AGENT_PORT}/api/v1/pairing/init")
         TOKEN=$(printf '%s' "$RESP" | sed -n 's/.*"pairingToken":"\\([^"]*\\)".*/\\1/p')
         FP=$(printf '%s' "$RESP" | sed -n 's/.*"tlsFingerprintSha256":"\\([^"]*\\)".*/\\1/p')

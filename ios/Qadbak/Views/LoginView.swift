@@ -2,6 +2,9 @@ import SwiftUI
 
 struct LoginView: View {
     @Environment(AppState.self) private var appState
+
+    var showBackToChoice = false
+
     @State private var serverURL = ""
     @State private var serverLabel = ""
     @State private var username = ""
@@ -12,6 +15,7 @@ struct LoginView: View {
     @State private var localError: String?
     @State private var connectionStatus: String?
     @State private var showServerSwitcher = false
+    @State private var showAddServerChoice = false
 
     var body: some View {
         QBScreenContainer {
@@ -22,13 +26,17 @@ struct LoginView: View {
                         Text("Qadbak")
                             .font(.system(size: 32, weight: .bold, design: .rounded))
                             .foregroundStyle(QadbakPalette.text)
-                        Text("Manage test and production panels — switch servers in one tap.")
+                        Text("Sign in to a Qadbak panel, or connect a Linux server with HestiaCP.")
                             .font(.subheadline)
                             .multilineTextAlignment(.center)
                             .foregroundStyle(QadbakPalette.muted)
                             .padding(.horizontal, 8)
                     }
                     .padding(.top, 24)
+
+                    if appState.savedServers.isEmpty && !showBackToChoice {
+                        otherConnectionTypesCard
+                    }
 
                     if !appState.savedServers.isEmpty {
                         savedServersSection
@@ -53,11 +61,11 @@ struct LoginView: View {
                                 )
                                 QBTextField(
                                     label: "Panel URL",
-                                    placeholder: "https://qadbak.com",
+                                    placeholder: "https://panel.example.com",
                                     text: $serverURL,
                                     keyboard: .URL
                                 )
-                                Text("Use https://qadbak.com — no www, no /login.")
+                                Text("Use your panel origin only — no www, no /login path.")
                                     .font(.caption)
                                     .foregroundStyle(QadbakPalette.muted)
                                 if let connectionStatus {
@@ -103,14 +111,55 @@ struct LoginView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .navigationBarBackButtonHidden(showBackToChoice)
+        .toolbar {
+            if showBackToChoice {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        Task { await appState.resetConnectionChoice() }
+                    } label: {
+                        Label("Connection type", systemImage: "chevron.left")
+                    }
+                    .foregroundStyle(QadbakPalette.accent)
+                }
+            }
+        }
         .sheet(isPresented: $showServerSwitcher) {
             ServerSwitcherView()
+        }
+        .sheet(isPresented: $showAddServerChoice) {
+            NavigationStack {
+                AddServerChoiceView()
+            }
+            .preferredColorScheme(.dark)
         }
         .onAppear {
             prefillFromActiveServer()
         }
         .onChange(of: appState.activeServerId) { _, _ in
             prefillFromActiveServer()
+        }
+    }
+
+    private var otherConnectionTypesCard: some View {
+        QBGlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Not a Qadbak panel?")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(QadbakPalette.text)
+                Text("Connect HestiaCP, Coolify, or plain Linux via SSH and install the Qadbak Agent.")
+                    .font(.caption)
+                    .foregroundStyle(QadbakPalette.muted)
+                Button {
+                    showAddServerChoice = true
+                } label: {
+                    Label("Linux server or existing agent", systemImage: "terminal")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.teal)
+            }
         }
     }
 
@@ -157,11 +206,7 @@ struct LoginView: View {
                         .buttonStyle(.plain)
                     }
                     Button {
-                        Task { await appState.prepareAddServer() }
-                        serverURL = ""
-                        serverLabel = ""
-                        username = ""
-                        password = ""
+                        showAddServerChoice = true
                     } label: {
                         Label("Add", systemImage: "plus")
                             .font(.caption.weight(.semibold))

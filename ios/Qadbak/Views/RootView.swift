@@ -13,8 +13,12 @@ struct RootView: View {
                 NavigationStack {
                     AgentServerDashboardView()
                 }
+            } else if appState.savedServers.isEmpty && appState.addServerMode == nil {
+                NavigationStack {
+                    AddServerChoiceView(presentation: .onboarding)
+                }
             } else {
-                LoginView()
+                LoginView(showBackToChoice: appState.savedServers.isEmpty)
             }
         }
         .tint(QadbakPalette.accent)

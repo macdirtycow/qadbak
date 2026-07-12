@@ -1,11 +1,19 @@
 import SwiftUI
 
+enum AddServerPresentation {
+    case sheet
+    case onboarding
+}
+
 struct AddServerChoiceView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
 
+    var presentation: AddServerPresentation = .sheet
+
     @State private var showLinuxOnboarding = false
     @State private var showPairExisting = false
+    @State private var showQadbakLogin = false
 
     var body: some View {
         QBScreenContainer {
@@ -27,7 +35,12 @@ struct AddServerChoiceView: View {
                         ) {
                             Task {
                                 await appState.prepareAddServer(mode: .qadbakPanel)
-                                dismiss()
+                                switch presentation {
+                                case .sheet:
+                                    dismiss()
+                                case .onboarding:
+                                    showQadbakLogin = true
+                                }
                             }
                         }
 
@@ -56,9 +69,14 @@ struct AddServerChoiceView: View {
         .navigationTitle("Add server")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+            if presentation == .sheet {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
             }
+        }
+        .navigationDestination(isPresented: $showQadbakLogin) {
+            LoginView(showBackToChoice: true)
         }
         .navigationDestination(isPresented: $showLinuxOnboarding) {
             LinuxServerOnboardingView()
