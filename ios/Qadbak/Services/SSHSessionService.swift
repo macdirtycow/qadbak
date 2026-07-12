@@ -343,52 +343,43 @@ struct SSHSessionService {
           chmod 640 "${CONFIG_DIR}/jwt.secret"
           chown root:"$AGENT_USER" "${CONFIG_DIR}/jwt.secret"
         fi
-        cat >/etc/sudoers.d/qadbak-agent <<'SUDOEOF'
-Defaults:qadbak-agent !requiretty
-qadbak-agent ALL=(root) NOPASSWD: INSTALL_DIR_PLACEHOLDER/qadbak-agent priv *
-SUDOEOF
-        sed -i "s|INSTALL_DIR_PLACEHOLDER|${INSTALL_DIR}|g" /etc/sudoers.d/qadbak-agent
+        printf '%s\\n' \\
+          'Defaults:qadbak-agent !requiretty' \\
+          "qadbak-agent ALL=(root) NOPASSWD: ${INSTALL_DIR}/qadbak-agent priv *" \\
+          >/etc/sudoers.d/qadbak-agent
         chmod 440 /etc/sudoers.d/qadbak-agent
         visudo -cf /etc/sudoers.d/qadbak-agent >/dev/null
         AGENT_LISTEN="$(resolve_listen)"
         apply_firewall
         printf '%s\\n' "QADBAK_AGENT_LISTEN=${AGENT_LISTEN}" "QADBAK_AGENT_LISTEN_MODE=${LISTEN_MODE}" >"${CONFIG_DIR}/agent.env"
         chmod 640 "${CONFIG_DIR}/agent.env"
-        cat >/etc/systemd/system/qadbak-agent.service <<'UNITEOF'
-[Unit]
-Description=Qadbak Linux Agent
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=AGENT_USER_PLACEHOLDER
-Group=AGENT_USER_PLACEHOLDER
-Environment=QADBAK_AGENT_DATA_DIR=DATA_DIR_PLACEHOLDER
-Environment=QADBAK_AGENT_LISTEN=AGENT_LISTEN_PLACEHOLDER
-Environment=QADBAK_AGENT_LISTEN_MODE=LISTEN_MODE_PLACEHOLDER
-Environment=QADBAK_AGENT_BINARY=INSTALL_DIR_PLACEHOLDER/qadbak-agent
-EnvironmentFile=-CONFIG_DIR_PLACEHOLDER/agent.env
-ExecStart=INSTALL_DIR_PLACEHOLDER/qadbak-agent -listen AGENT_LISTEN_PLACEHOLDER -data-dir DATA_DIR_PLACEHOLDER
-Restart=on-failure
-RestartSec=3
-NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=DATA_DIR_PLACEHOLDER CONFIG_DIR_PLACEHOLDER
-AmbientCapabilities=CAP_NET_BIND_SERVICE
-
-[Install]
-WantedBy=multi-user.target
-UNITEOF
-        sed -i \\
-          -e "s|AGENT_USER_PLACEHOLDER|${AGENT_USER}|g" \\
-          -e "s|DATA_DIR_PLACEHOLDER|${DATA_DIR}|g" \\
-          -e "s|CONFIG_DIR_PLACEHOLDER|${CONFIG_DIR}|g" \\
-          -e "s|INSTALL_DIR_PLACEHOLDER|${INSTALL_DIR}|g" \\
-          -e "s|AGENT_LISTEN_PLACEHOLDER|${AGENT_LISTEN}|g" \\
-          -e "s|LISTEN_MODE_PLACEHOLDER|${LISTEN_MODE}|g" \\
-          /etc/systemd/system/qadbak-agent.service
+        printf '%s\\n' \\
+          '[Unit]' \\
+          'Description=Qadbak Linux Agent' \\
+          'After=network-online.target' \\
+          'Wants=network-online.target' \\
+          '' \\
+          '[Service]' \\
+          'Type=simple' \\
+          "User=${AGENT_USER}" \\
+          "Group=${AGENT_USER}" \\
+          "Environment=QADBAK_AGENT_DATA_DIR=${DATA_DIR}" \\
+          "Environment=QADBAK_AGENT_LISTEN=${AGENT_LISTEN}" \\
+          "Environment=QADBAK_AGENT_LISTEN_MODE=${LISTEN_MODE}" \\
+          "Environment=QADBAK_AGENT_BINARY=${INSTALL_DIR}/qadbak-agent" \\
+          "EnvironmentFile=-${CONFIG_DIR}/agent.env" \\
+          "ExecStart=${INSTALL_DIR}/qadbak-agent -listen ${AGENT_LISTEN} -data-dir ${DATA_DIR}" \\
+          'Restart=on-failure' \\
+          'RestartSec=3' \\
+          'NoNewPrivileges=true' \\
+          'ProtectSystem=strict' \\
+          'ProtectHome=true' \\
+          "ReadWritePaths=${DATA_DIR} ${CONFIG_DIR}" \\
+          'AmbientCapabilities=CAP_NET_BIND_SERVICE' \\
+          '' \\
+          '[Install]' \\
+          'WantedBy=multi-user.target' \\
+          >/etc/systemd/system/qadbak-agent.service
         chown -R "${AGENT_USER}:${AGENT_USER}" "$DATA_DIR"
         chmod 750 "$DATA_DIR"
         systemctl daemon-reload
