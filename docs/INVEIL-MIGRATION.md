@@ -28,9 +28,7 @@ Create or forward:
 - `security@inveil.net`
 - `info@inveil.net`
 
-Keep `@omiiba.dev` aliases forwarding to `@inveil.net` during transition.
-
-**Restore mail + webmail on main VPS** (forwards `@inveil.net` → `@omiiba.dev`):
+Operational mailboxes stay on **`@omiiba.dev`**; **`@inveil.net`** forwards there (see restore script below).
 
 ```bash
 cd /opt/qadbak && git pull
