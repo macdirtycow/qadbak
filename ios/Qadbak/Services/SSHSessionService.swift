@@ -93,52 +93,56 @@ struct SSHSessionService {
         knownHostFingerprint: String?,
         binary: Data,
         agentPort: Int,
-        listenMode: AgentListenMode
+        listenMode: AgentListenMode,
+        onProgress: (@Sendable (String) -> Void)? = nil
     ) async throws -> (pairingToken: String, tlsFingerprint: String, hostKeyFingerprint: String?, agentHost: String) {
+        #if canImport(Citadel)
+        let (client, pinDelegate) = try await openSSHClient(settings: settings, knownHostFingerprint: knownHostFingerprint)
+        defer { try? await client.close() }
+
+        onProgress?("Checking for running agent…")
+        if let existing = try await pairRunningAgent(client: client, agentPort: agentPort, defaultHost: settings.host) {
+            onProgress?("Agent already running — pairing…")
+            return (existing.pairing, existing.fingerprint, pinDelegate.discoveredFingerprint, existing.agentHost)
+        }
+
         let remoteBin = "/tmp/qadbak-agent-\(UUID().uuidString)"
         let b64 = binary.base64EncodedString()
-        let chunkSize = 32_000
+        let chunkSize = 180_000
         var offset = b64.startIndex
         var first = true
-        var lastHostKey: String?
+        let totalChunks = max(1, Int(ceil(Double(b64.count) / Double(chunkSize))))
+        var chunkIndex = 0
         while offset < b64.endIndex {
+            chunkIndex += 1
+            if chunkIndex == 1 || chunkIndex % 5 == 0 || chunkIndex == totalChunks {
+                onProgress?("Uploading agent via SSH… (\(chunkIndex)/\(totalChunks))")
+            }
             let end = b64.index(offset, offsetBy: chunkSize, limitedBy: b64.endIndex) ?? b64.endIndex
             let chunk = String(b64[offset..<end])
             let op = first ? ">" : ">>"
             first = false
-            let res = try await run(
-                "printf '%s' '\(chunk)' | base64 -d \(op) '\(remoteBin)'",
-                settings: settings,
-                knownHostFingerprint: knownHostFingerprint
+            _ = try await executeSSHCommand(
+                client,
+                "printf '%s' '\(chunk)' | base64 -d \(op) '\(remoteBin)'"
             )
-            lastHostKey = res.hostKeyFingerprint ?? lastHostKey
             offset = end
         }
 
-        _ = try await run("chmod +x '\(remoteBin)'", settings: settings, knownHostFingerprint: knownHostFingerprint)
-
-        let installOutput = try await run(
-            "sudo QADBAK_AGENT_PORT=\(agentPort) QADBAK_AGENT_LISTEN_MODE=\(listenMode.rawValue) bash -s -- '\(remoteBin)' << 'QADBAK_INSTALL'\n" + embeddedInstallScript + "\nQADBAK_INSTALL",
-            settings: settings,
-            knownHostFingerprint: knownHostFingerprint
+        _ = try await executeSSHCommand(client, "chmod +x '\(remoteBin)'")
+        onProgress?("Installing agent service…")
+        let installOutput = try await executeSSHCommand(
+            client,
+            "sudo QADBAK_AGENT_PORT=\(agentPort) QADBAK_AGENT_LISTEN_MODE=\(listenMode.rawValue) bash -s -- '\(remoteBin)' << 'QADBAK_INSTALL'\n" + embeddedInstallScript + "\nQADBAK_INSTALL"
         )
 
-        var pairing = ""
-        var fingerprint = ""
-        var agentHost = settings.host
-        for line in installOutput.output.split(separator: "\n") {
-            let s = String(line).trimmingCharacters(in: .whitespacesAndNewlines)
-            if s.hasPrefix("pairing:") { pairing = String(s.dropFirst(8)) }
-            if s.hasPrefix("fingerprint:") { fingerprint = String(s.dropFirst(12)) }
-            if s.hasPrefix("agent_listen_host:") {
-                let host = String(s.dropFirst(18)).trimmingCharacters(in: .whitespaces)
-                if !host.isEmpty, host != "0.0.0.0" { agentHost = host }
-            }
-        }
-        if pairing.isEmpty {
+        guard let parsed = parseInstallOutput(installOutput, defaultHost: settings.host) else {
             throw SSHServiceError.commandFailed("Install did not return pairing token.")
         }
-        return (pairing, fingerprint, installOutput.hostKeyFingerprint ?? lastHostKey, agentHost)
+        return (parsed.pairing, parsed.fingerprint, pinDelegate.discoveredFingerprint, parsed.agentHost)
+        #else
+        throw SSHServiceError.unavailable
+        #endif
     }
 
     func upgradeAgent(
@@ -147,9 +151,13 @@ struct SSHSessionService {
         binary: Data,
         agentPort: Int
     ) async throws {
+        #if canImport(Citadel)
+        let (client, _) = try await openSSHClient(settings: settings, knownHostFingerprint: knownHostFingerprint)
+        defer { try? await client.close() }
+
         let remoteBin = "/tmp/qadbak-agent-upgrade-\(UUID().uuidString)"
         let b64 = binary.base64EncodedString()
-        let chunkSize = 32_000
+        let chunkSize = 180_000
         var offset = b64.startIndex
         var first = true
         while offset < b64.endIndex {
@@ -157,19 +165,43 @@ struct SSHSessionService {
             let chunk = String(b64[offset..<end])
             let op = first ? ">" : ">>"
             first = false
-            _ = try await run(
-                "printf '%s' '\(chunk)' | base64 -d \(op) '\(remoteBin)'",
-                settings: settings,
-                knownHostFingerprint: knownHostFingerprint
+            _ = try await executeSSHCommand(
+                client,
+                "printf '%s' '\(chunk)' | base64 -d \(op) '\(remoteBin)'"
             )
             offset = end
         }
-        _ = try await run("chmod +x '\(remoteBin)'", settings: settings, knownHostFingerprint: knownHostFingerprint)
-        _ = try await run(
-            "sudo QADBAK_AGENT_PORT=\(agentPort) bash -s -- '\(remoteBin)' << 'QADBAK_UPGRADE'\n" + embeddedUpgradeScript + "\nQADBAK_UPGRADE",
-            settings: settings,
-            knownHostFingerprint: knownHostFingerprint
+        _ = try await executeSSHCommand(client, "chmod +x '\(remoteBin)'")
+        _ = try await executeSSHCommand(
+            client,
+            "sudo QADBAK_AGENT_PORT=\(agentPort) bash -s -- '\(remoteBin)' << 'QADBAK_UPGRADE'\n" + embeddedUpgradeScript + "\nQADBAK_UPGRADE"
         )
+        #else
+        throw SSHServiceError.unavailable
+        #endif
+    }
+
+    private struct ParsedInstallResult {
+        var pairing: String
+        var fingerprint: String
+        var agentHost: String
+    }
+
+    private func parseInstallOutput(_ output: String, defaultHost: String) -> ParsedInstallResult? {
+        var pairing = ""
+        var fingerprint = ""
+        var agentHost = defaultHost
+        for line in output.split(separator: "\n") {
+            let s = String(line).trimmingCharacters(in: .whitespacesAndNewlines)
+            if s.hasPrefix("pairing:") { pairing = String(s.dropFirst(8)) }
+            if s.hasPrefix("fingerprint:") { fingerprint = String(s.dropFirst(12)) }
+            if s.hasPrefix("agent_listen_host:") {
+                let host = String(s.dropFirst(18)).trimmingCharacters(in: .whitespaces)
+                if !host.isEmpty, host != "0.0.0.0" { agentHost = host }
+            }
+        }
+        guard !pairing.isEmpty else { return nil }
+        return ParsedInstallResult(pairing: pairing, fingerprint: fingerprint, agentHost: agentHost)
     }
 
     private func validateSupportedOS(id: String, versionID: String) throws {
@@ -214,7 +246,7 @@ struct SSHSessionService {
         }
         if posix == 60 || text.contains("timed out") || text.contains("timeout") {
             return .connectionFailed(
-                "SSH timed out reaching \(host):\(port). Confirm the server is online and port 22 is open."
+                "SSH timed out reaching \(host):\(port). Use Wi-Fi (not mobile data), keep the app open, or use Add server → Pair existing agent if the agent is already running."
             )
         }
         if posix == 64 || text.contains("unreachable") {
@@ -243,7 +275,10 @@ struct SSHSessionService {
     }
 
     #if canImport(Citadel)
-    private func runCitadel(_ command: String, settings: SSHConnectionSettings, knownHostFingerprint: String?) async throws -> SSHCommandResult {
+    private func openSSHClient(
+        settings: SSHConnectionSettings,
+        knownHostFingerprint: String?
+    ) async throws -> (SSHClient, SSHHostKeyPinDelegate) {
         guard !settings.host.isEmpty, settings.port > 0, settings.port <= 65535 else {
             throw SSHServiceError.invalidHost
         }
@@ -266,42 +301,121 @@ struct SSHSessionService {
         }()
 
         let pinDelegate = SSHHostKeyPinDelegate(expectedFingerprint: knownHostFingerprint)
-        let clientSettings = SSHClientSettings(
+        var clientSettings = SSHClientSettings(
             host: settings.host,
             port: settings.port,
             authenticationMethod: { authMethod },
             hostKeyValidator: .custom(pinDelegate)
         )
+        clientSettings.connectTimeout = .seconds(120)
 
-        let client: SSHClient
         do {
-            client = try await SSHClient.connect(to: clientSettings)
+            let client = try await SSHClient.connect(to: clientSettings)
+            return (client, pinDelegate)
         } catch {
             throw mapSSHConnectError(error, host: settings.host, port: settings.port)
         }
-        defer { try? await client.close() }
+    }
+
+    private func executeSSHCommand(_ client: SSHClient, _ command: String) async throws -> String {
         let buffer: ByteBuffer
         do {
             buffer = try await client.executeCommand(command, mergeStreams: true)
         } catch let error as SSHClient.CommandFailed {
-            let hint: String
-            switch error.exitCode {
-            case 5:
-                hint = "The agent binary is not executable by the qadbak-agent user. This is usually a directory permission issue on /usr/lib/qadbak-agent."
-            case 6:
-                hint = "Port 9443 is already used by another process. On the server run: ss -tlnp | grep 9443 — stop that service or pick another port, then retry."
-            case 7:
-                hint = "The agent did not respond on port 9443 after install (curl could not connect). On the server run: systemctl status qadbak-agent; journalctl -u qadbak-agent -n 30; ss -tlnp | grep 9443. Ensure port 9443 is free, then retry."
-            case 1:
-                hint = "Install script failed. On the server run: systemctl stop qadbak-agent; rm -f /tmp/qadbak-agent-* /etc/sudoers.d/qadbak-agent; systemctl daemon-reload; then retry."
-            default:
-                hint = "If this was during install, run on the server: systemctl stop qadbak-agent; rm -f /tmp/qadbak-agent-*; then retry."
-            }
-            throw SSHServiceError.commandFailed("Remote command failed (exit \(error.exitCode)). \(hint)")
+            throw mapCommandFailed(error)
         }
-        return SSHCommandResult(output: String(buffer: buffer), hostKeyFingerprint: pinDelegate.discoveredFingerprint)
+        return String(buffer: buffer)
+    }
+
+    private func pairRunningAgent(
+        client: SSHClient,
+        agentPort: Int,
+        defaultHost: String
+    ) async throws -> ParsedInstallResult? {
+        let command = "QADBAK_AGENT_PORT=\(agentPort) bash -s << 'QADBAK_PAIR_EXISTING'\n" + existingAgentPairScript + "\nQADBAK_PAIR_EXISTING"
+        let buffer: ByteBuffer
+        do {
+            buffer = try await client.executeCommand(command, mergeStreams: true)
+        } catch let error as SSHClient.CommandFailed where error.exitCode == 2 {
+            return nil
+        } catch let error as SSHClient.CommandFailed {
+            throw mapCommandFailed(error)
+        }
+        return parseInstallOutput(String(buffer: buffer), defaultHost: defaultHost)
+    }
+
+    private func mapCommandFailed(_ error: SSHClient.CommandFailed) -> SSHServiceError {
+        let hint: String
+        switch error.exitCode {
+        case 2:
+            hint = "Agent is not running yet."
+        case 5:
+            hint = "The agent binary is not executable by the qadbak-agent user. This is usually a directory permission issue on /usr/lib/qadbak-agent."
+        case 6:
+            hint = "Port 9443 is already used by another process. On the server run: ss -tlnp | grep 9443 — stop that service or pick another port, then retry."
+        case 7:
+            hint = "The agent did not respond on port 9443 after install (curl could not connect). On the server run: systemctl status qadbak-agent; journalctl -u qadbak-agent -n 30; ss -tlnp | grep 9443. Ensure port 9443 is free, then retry."
+        case 1:
+            hint = "Install script failed. On the server run: systemctl stop qadbak-agent; rm -f /tmp/qadbak-agent-* /etc/sudoers.d/qadbak-agent; systemctl daemon-reload; then retry."
+        default:
+            hint = "If this was during install, run on the server: systemctl stop qadbak-agent; rm -f /tmp/qadbak-agent-*; then retry."
+        }
+        return .commandFailed("Remote command failed (exit \(error.exitCode)). \(hint)")
+    }
+
+    private func runCitadel(_ command: String, settings: SSHConnectionSettings, knownHostFingerprint: String?) async throws -> SSHCommandResult {
+        let (client, pinDelegate) = try await openSSHClient(settings: settings, knownHostFingerprint: knownHostFingerprint)
+        defer { try? await client.close() }
+        do {
+            let output = try await executeSSHCommand(client, command)
+            return SSHCommandResult(output: output, hostKeyFingerprint: pinDelegate.discoveredFingerprint)
+        } catch let error as SSHServiceError {
+            throw error
+        }
     }
     #endif
+
+    private var existingAgentPairScript: String {
+        """
+        set -euo pipefail
+        AGENT_PORT="${QADBAK_AGENT_PORT:-9443}"
+        systemctl is-active --quiet qadbak-agent.service || exit 2
+        if [[ -f /etc/qadbak-agent/agent.env ]]; then
+          # shellcheck disable=SC1091
+          source /etc/qadbak-agent/agent.env
+        fi
+        LISTEN="${QADBAK_AGENT_LISTEN:-127.0.0.1:${AGENT_PORT}}"
+        LISTEN_HOST="${LISTEN%%:*}"
+        [[ "$LISTEN_HOST" == "0.0.0.0" ]] && CURL_HOST="127.0.0.1" || CURL_HOST="$LISTEN_HOST"
+        AGENT_PUBLIC_HOST="$LISTEN_HOST"
+        if [[ "$LISTEN_HOST" == "0.0.0.0" ]]; then
+          AGENT_PUBLIC_HOST="$(curl -4 -s --max-time 5 ifconfig.me 2>/dev/null | tr -d '[:space:]')"
+          if [[ -z "$AGENT_PUBLIC_HOST" ]]; then
+            AGENT_PUBLIC_HOST="$(hostname -I 2>/dev/null | awk '{print $1}' | tr -d '[:space:]')"
+          fi
+          [[ -z "$AGENT_PUBLIC_HOST" ]] && AGENT_PUBLIC_HOST="127.0.0.1"
+        elif [[ "$LISTEN_HOST" != "127.0.0.1" ]]; then
+          AGENT_PUBLIC_HOST="$LISTEN_HOST"
+        elif command -v tailscale >/dev/null; then
+          TS="$(tailscale ip -4 2>/dev/null | head -1 | tr -d '[:space:]')"
+          [[ -n "$TS" ]] && AGENT_PUBLIC_HOST="$TS"
+        fi
+        echo "agent_listen_host:$AGENT_PUBLIC_HOST"
+        RESP=""
+        for _host in 127.0.0.1 "$CURL_HOST"; do
+          [[ -z "$_host" || "$_host" == "0.0.0.0" ]] && continue
+          if RESP="$(curl -4sk --max-time 8 -X POST "https://${_host}:${AGENT_PORT}/api/v1/pairing/init" 2>/dev/null)" && [[ "$RESP" == *pairingToken* ]]; then
+            break
+          fi
+        done
+        [[ -n "$RESP" && "$RESP" == *pairingToken* ]] || exit 7
+        TOKEN=$(printf '%s' "$RESP" | sed -n 's/.*"pairingToken":"\\([^"]*\\)".*/\\1/p')
+        FP=$(printf '%s' "$RESP" | sed -n 's/.*"tlsFingerprintSha256":"\\([^"]*\\)".*/\\1/p')
+        echo "pairing:$TOKEN"
+        echo "fingerprint:$FP"
+        echo "skip_upload:1"
+        """
+    }
 
     private var embeddedInstallScript: String {
         """

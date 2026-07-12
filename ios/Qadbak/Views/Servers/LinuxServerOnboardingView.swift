@@ -326,13 +326,17 @@ struct LinuxServerOnboardingView: View {
             let verified = try AgentInstallService.verifiedBinary(architecture: probe.architecture)
             installManifest = verified.manifest
             let settings = sshSettings()
-            progressMessage = "Uploading agent via SSH… (~5–15 min, keep app open)"
             let result = try await ssh.uploadAndInstall(
                 settings: settings,
                 knownHostFingerprint: sshHostKeyFingerprint,
                 binary: verified.data,
                 agentPort: agentPort,
-                listenMode: listenMode
+                listenMode: listenMode,
+                onProgress: { message in
+                    Task { @MainActor in
+                        progressMessage = message
+                    }
+                }
             )
             if sshHostKeyFingerprint == nil {
                 sshHostKeyFingerprint = result.hostKeyFingerprint
@@ -413,6 +417,8 @@ struct LinuxServerOnboardingView: View {
             if message.contains("SSHClientError error 4") || message.contains("allAuthenticationOptionsFailed") {
                 errorMessage = "SSH login failed during install. Go back to step 2 and re-enter your password."
                 step = .authentication
+            } else if message.contains("SSH timed out") || message.contains("timed out reaching") {
+                errorMessage = "\(message)\n\nTip: if the agent is already running, use Add server → Pair existing agent (Tailscale IP, port 9443). Otherwise use Wi-Fi and keep the app open."
             } else if message.contains("exit 7") || message.contains("did not respond on port") {
                 errorMessage = "\(message)\n\nThe agent service may still be starting or failed to bind. SSH in and run: systemctl status qadbak-agent && journalctl -u qadbak-agent -n 30"
             } else if message.contains("exit 6") || message.contains("already in use") {

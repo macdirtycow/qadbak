@@ -11,8 +11,8 @@ final class AgentAPIClient: NSObject, @unchecked Sendable {
 
     private lazy var session: URLSession = {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 45
-        config.timeoutIntervalForResource = 120
+        config.timeoutIntervalForRequest = 90
+        config.timeoutIntervalForResource = 180
         return URLSession(configuration: config, delegate: self, delegateQueue: nil)
     }()
 
