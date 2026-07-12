@@ -50,7 +50,7 @@ func main() {
 		certPath = cfg.TLSCertPath
 		keyPath = cfg.TLSKeyPath
 	}
-	if err := tlsutil.EnsureCertificate(certPath, keyPath); err != nil {
+	if err := tlsutil.EnsureCertificate(certPath, keyPath, *listen); err != nil {
 		log.Fatalf("tls: %v", err)
 	}
 

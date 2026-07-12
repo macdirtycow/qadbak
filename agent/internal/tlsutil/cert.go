@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func EnsureCertificate(certPath, keyPath string) error {
+func EnsureCertificate(certPath, keyPath, listenAddr string) error {
 	if fileExists(certPath) && fileExists(keyPath) {
 		return nil
 	}
@@ -30,6 +30,7 @@ func EnsureCertificate(certPath, keyPath string) error {
 	if err != nil {
 		return err
 	}
+	ips := certificateIPs(listenAddr)
 	template := x509.Certificate{
 		SerialNumber: serial,
 		Subject:      pkix.Name{CommonName: "qadbak-agent"},
@@ -38,7 +39,7 @@ func EnsureCertificate(certPath, keyPath string) error {
 		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		DNSNames:     []string{"localhost"},
-		IPAddresses:  []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("0.0.0.0")},
+		IPAddresses:  ips,
 	}
 	der, err := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
 	if err != nil {
@@ -90,4 +91,28 @@ func dirOf(path string) string {
 		}
 	}
 	return "."
+}
+
+func certificateIPs(listenAddr string) []net.IP {
+	ips := []net.IP{
+		net.ParseIP("127.0.0.1"),
+		net.ParseIP("0.0.0.0"),
+	}
+	host, _, err := net.SplitHostPort(listenAddr)
+	if err != nil {
+		return ips
+	}
+	if ip := net.ParseIP(host); ip != nil && !ip.IsUnspecified() {
+		seen := false
+		for _, existing := range ips {
+			if existing.Equal(ip) {
+				seen = true
+				break
+			}
+		}
+		if !seen {
+			ips = append(ips, ip)
+		}
+	}
+	return ips
 }

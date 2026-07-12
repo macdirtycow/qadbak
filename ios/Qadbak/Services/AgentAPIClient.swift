@@ -259,17 +259,24 @@ extension AgentAPIClient: URLSessionDelegate {
         completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
     ) {
         guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-              let trust = challenge.protectionSpace.serverTrust,
-              let pinnedFingerprint, !pinnedFingerprint.isEmpty else {
+              let trust = challenge.protectionSpace.serverTrust else {
             completionHandler(.performDefaultHandling, nil)
             return
         }
 
-        if let fp = ServerTrustFingerprint.sha256(trust), fp == pinnedFingerprint {
-            completionHandler(.useCredential, URLCredential(trust: trust))
-        } else {
-            completionHandler(.cancelAuthenticationChallenge, nil)
+        if let pinnedFingerprint, !pinnedFingerprint.isEmpty {
+            if let fp = ServerTrustFingerprint.sha256(trust), fp == pinnedFingerprint {
+                completionHandler(.useCredential, URLCredential(trust: trust))
+            } else {
+                completionHandler(.cancelAuthenticationChallenge, nil)
+            }
+            return
         }
+
+        // Bootstrap pairing: agent TLS is self-signed and the cert CN/SAN often won't match
+        // Tailscale or LAN IPs. Accept the connection; the UI must confirm the fingerprint
+        // from pairing/init before tokens are stored.
+        completionHandler(.useCredential, URLCredential(trust: trust))
     }
 }
 
