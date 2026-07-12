@@ -155,6 +155,26 @@ struct WidgetSummary: Decodable {
     let urgentActions: Int
     let updatedAt: String?
     let domains: [WidgetDomainSummary]?
+
+    init(
+        domainCount: Int,
+        websitesRunning: Int?,
+        sslExpiringSoon: Int,
+        backupStale: Int,
+        containersStopped: Int?,
+        urgentActions: Int,
+        updatedAt: String?,
+        domains: [WidgetDomainSummary]?
+    ) {
+        self.domainCount = domainCount
+        self.websitesRunning = websitesRunning
+        self.sslExpiringSoon = sslExpiringSoon
+        self.backupStale = backupStale
+        self.containersStopped = containersStopped
+        self.urgentActions = urgentActions
+        self.updatedAt = updatedAt
+        self.domains = domains
+    }
 }
 
 struct WidgetDomainSummary: Decodable, Identifiable {
@@ -432,6 +452,22 @@ struct HostedDomain: Decodable, Identifiable, Hashable {
         case valuesDiskLimit = "values.disk_limit"
     }
 
+    init(
+        name: String,
+        disabled: Bool? = nil,
+        plan: String? = nil,
+        user: String? = nil,
+        diskUsed: String? = nil,
+        diskLimit: String? = nil
+    ) {
+        self.name = name
+        self.disabled = disabled
+        self.plan = plan
+        self.user = user
+        self.diskUsed = diskUsed
+        self.diskLimit = diskLimit
+    }
+
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         name = try c.decode(String.self, forKey: .name)
@@ -460,15 +496,61 @@ struct DomainsListResponse: Decodable {
 struct DomainDetailResponse: Decodable {
     let domain: HostedDomain
     let disabled: Bool?
+
+    init(domain: HostedDomain, disabled: Bool? = nil) {
+        self.domain = domain
+        self.disabled = disabled
+    }
 }
 
 struct DnsRecord: Codable, Identifiable, Hashable {
-    var id: String { "\(name)|\(type)|\(value)" }
+    var id: String { recordId ?? "\(name)|\(type)|\(value)" }
     let name: String
     let type: String
     let value: String
     let ttl: String?
     let priority: String?
+    let recordId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case name, type, value, ttl, priority
+        case recordId = "id"
+    }
+
+    init(
+        name: String,
+        type: String,
+        value: String,
+        ttl: String? = nil,
+        priority: String? = nil,
+        recordId: String? = nil
+    ) {
+        self.name = name
+        self.type = type
+        self.value = value
+        self.ttl = ttl
+        self.priority = priority
+        self.recordId = recordId
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        name = try c.decode(String.self, forKey: .name)
+        type = try c.decode(String.self, forKey: .type)
+        value = try c.decode(String.self, forKey: .value)
+        ttl = try? c.decode(String.self, forKey: .ttl)
+        priority = try? c.decode(String.self, forKey: .priority)
+        recordId = try? c.decode(String.self, forKey: .recordId)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(name, forKey: .name)
+        try c.encode(type, forKey: .type)
+        try c.encode(value, forKey: .value)
+        if let ttl { try c.encode(ttl, forKey: .ttl) }
+        if let priority { try c.encode(priority, forKey: .priority) }
+    }
 }
 
 struct DnsResponse: Decodable {
@@ -653,6 +735,22 @@ struct SslCert: Decodable, Identifiable, Hashable {
     let issuer: String?
     let expiry: String?
     let type: String?
+
+    enum CodingKeys: String, CodingKey {
+        case host, issuer, expiry, type
+        case domain, expires, status
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        host = (try? c.decode(String.self, forKey: .host))
+            ?? (try? c.decode(String.self, forKey: .domain))
+        issuer = try? c.decode(String.self, forKey: .issuer)
+        expiry = (try? c.decode(String.self, forKey: .expiry))
+            ?? (try? c.decode(String.self, forKey: .expires))
+        type = (try? c.decode(String.self, forKey: .type))
+            ?? (try? c.decode(String.self, forKey: .status))
+    }
 }
 
 struct SslListResponse: Decodable {
@@ -722,6 +820,30 @@ struct CreateDomainResponse: Decodable {
     let clientPassword: String?
     let panelUrl: String?
     let journalId: String?
+
+    init(
+        ok: Bool?,
+        domain: String?,
+        hostingNote: String?,
+        dnsNote: String?,
+        premiumNote: String?,
+        unixPassword: String?,
+        clientUsername: String?,
+        clientPassword: String?,
+        panelUrl: String?,
+        journalId: String?
+    ) {
+        self.ok = ok
+        self.domain = domain
+        self.hostingNote = hostingNote
+        self.dnsNote = dnsNote
+        self.premiumNote = premiumNote
+        self.unixPassword = unixPassword
+        self.clientUsername = clientUsername
+        self.clientPassword = clientPassword
+        self.panelUrl = panelUrl
+        self.journalId = journalId
+    }
 }
 
 struct TerminalSessionInfo: Decodable {

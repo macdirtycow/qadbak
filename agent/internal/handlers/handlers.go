@@ -54,6 +54,15 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit", h.withAuth(h.auditLog))
 	mux.HandleFunc("/api/v1/detection/panel", h.withAuth(h.panelDetection))
 	mux.HandleFunc("/api/v1/panels/link", h.withAuth(h.panelLinkRoute))
+	mux.HandleFunc("/api/v1/panels/domains", h.withAuth(h.panelDomainsRoute))
+	mux.HandleFunc("/api/v1/panels/domains/{domain}", h.withAuth(h.panelDomainItemRoute))
+	mux.HandleFunc("/api/v1/panels/domains/{domain}/dns", h.withAuth(h.panelDomainDNSRoute))
+	mux.HandleFunc("/api/v1/panels/domains/{domain}/mail", h.withAuth(h.panelDomainMailRoute))
+	mux.HandleFunc("/api/v1/panels/domains/{domain}/ssl", h.withAuth(h.panelDomainSSLRoute))
+	mux.HandleFunc("/api/v1/panels/domains/{domain}/aliases", h.withAuth(h.panelDomainAliasesRoute))
+	mux.HandleFunc("/api/v1/panels/domains/{domain}/databases", h.withAuth(h.panelDomainDatabasesRoute))
+	mux.HandleFunc("/api/v1/panels/apps", h.withAuth(h.panelAppsRoute))
+	mux.HandleFunc("/api/v1/panels/apps/{id}/{action}", h.withAuth(h.panelAppActionRoute))
 	mux.HandleFunc("/api/v1/panels/overview", h.withAuth(h.panelOverview))
 	mux.HandleFunc("/api/v1/services", h.withAuth(h.servicesList))
 	mux.HandleFunc("/api/v1/docker/containers", h.withAuth(h.dockerContainers))
@@ -170,7 +179,7 @@ func (h *Handler) pairingComplete(w http.ResponseWriter, r *http.Request) {
 		"refreshToken":         refresh,
 		"expiresIn":            exp,
 		"tlsFingerprintSha256": fp,
-		"capabilities":         detection.MapCapabilities(panel.DetectedPanel),
+		"capabilities":         h.capabilitiesMap(),
 		"panelDetection":       panel,
 	})
 }
@@ -229,7 +238,7 @@ func (h *Handler) capabilities(w http.ResponseWriter, r *http.Request) {
 	panel := detection.DetectPanel()
 	WriteJSON(w, http.StatusOK, map[string]any{
 		"ok":           true,
-		"capabilities": detection.MapCapabilities(panel.DetectedPanel),
+		"capabilities": h.capabilitiesMap(),
 		"panelDetection": panel,
 	})
 }
@@ -245,7 +254,7 @@ func (h *Handler) systemMetrics(w http.ResponseWriter, r *http.Request) {
 		methodNotAllowed(w)
 		return
 	}
-	caps := detection.MapCapabilities(detection.DetectPanel().DetectedPanel)
+	caps := h.capabilitiesMap()
 	if !caps["systemMetrics"] {
 		WriteJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "Capability missing", "code": "CAPABILITY_MISSING"})
 		return
@@ -292,7 +301,7 @@ func (h *Handler) servicesList(w http.ResponseWriter, r *http.Request) {
 		methodNotAllowed(w)
 		return
 	}
-	caps := detection.MapCapabilities(detection.DetectPanel().DetectedPanel)
+	caps := h.capabilitiesMap()
 	if !caps["serviceManagement"] {
 		WriteJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "Capability missing", "code": "CAPABILITY_MISSING"})
 		return
@@ -310,7 +319,7 @@ func (h *Handler) dockerContainers(w http.ResponseWriter, r *http.Request) {
 		methodNotAllowed(w)
 		return
 	}
-	caps := detection.MapCapabilities(detection.DetectPanel().DetectedPanel)
+	caps := h.capabilitiesMap()
 	if !caps["dockerManagement"] {
 		WriteJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "Docker not available", "code": "CAPABILITY_MISSING"})
 		return
@@ -328,7 +337,7 @@ func (h *Handler) dockerContainerLogs(w http.ResponseWriter, r *http.Request) {
 		methodNotAllowed(w)
 		return
 	}
-	caps := detection.MapCapabilities(detection.DetectPanel().DetectedPanel)
+	caps := h.capabilitiesMap()
 	if !caps["dockerManagement"] {
 		WriteJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "Docker not available", "code": "CAPABILITY_MISSING"})
 		return
@@ -357,7 +366,7 @@ func (h *Handler) logsFetch(w http.ResponseWriter, r *http.Request) {
 		methodNotAllowed(w)
 		return
 	}
-	caps := detection.MapCapabilities(detection.DetectPanel().DetectedPanel)
+	caps := h.capabilitiesMap()
 	if !caps["logs"] {
 		WriteJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "Capability missing", "code": "CAPABILITY_MISSING"})
 		return

@@ -32,6 +32,7 @@ final class AppState {
 
     private let keychain = KeychainStore()
     private(set) var api: QadbakAPI?
+    private(set) var hostingAPI: (any DomainHostingAPI)?
     private(set) var activeProvider: (any ServerManagementProvider)?
     private var agentClient: AgentAPIClient?
 
@@ -145,6 +146,7 @@ final class AppState {
         capabilities = nil
         license = nil
         api = nil
+        hostingAPI = nil
         activeProvider = nil
     }
 
@@ -324,12 +326,46 @@ final class AppState {
     }
 
     var showsDomainHosting: Bool {
-        activeServer?.capabilities.domainHosting == true && isSignedIn
+        if activeServer?.isQadbakPanel == true {
+            return isSignedIn
+        }
+        if let server = activeServer, server.isAgentManaged {
+            return server.capabilities.domainHosting && hasStoredSession(for: server)
+        }
+        return false
+    }
+
+    var showsAgentPanelShell: Bool {
+        guard let server = activeServer, server.isAgentManaged else { return false }
+        guard hasStoredSession(for: server) else { return false }
+        return server.capabilities.domainHosting || server.capabilities.panelApps
     }
 
     var showsAgentDashboard: Bool {
         guard let server = activeServer else { return false }
-        return server.isAgentManaged && server.authenticationMethod == .agentToken && hasStoredSession(for: server)
+        guard server.isAgentManaged && server.authenticationMethod == .agentToken else { return false }
+        guard hasStoredSession(for: server) else { return false }
+        return !showsAgentPanelShell
+    }
+
+    var canManageDomains: Bool {
+        hostingAPI != nil
+    }
+
+    func refreshActiveServerCapabilities() async {
+        guard let server = activeServer, server.isAgentManaged,
+              let client = makeAgentClient(for: server) else { return }
+        do {
+            let res = try await client.capabilities()
+            if let caps = res.capabilities?.toServerCapabilities() {
+                var updated = server
+                updated.capabilities = caps
+                updateServerProfileIfExists(updated)
+                refreshHostingAdapter(for: updated)
+            }
+        } catch {
+            // Non-fatal.
+        }
     }
 
     func updateActiveServerProfile(_ profile: ManagedServer) {
@@ -367,6 +403,7 @@ final class AppState {
         keychain.saveActiveServerId(server.id)
         agentClient = makeAgentClient(for: server, accessToken: accessToken)
         agentClient?.setAccessToken(accessToken)
+        refreshHostingAdapter(for: server)
         activeProvider = ServerProviderFactory.makeProvider(
             for: server,
             api: nil,
@@ -381,7 +418,18 @@ final class AppState {
         return server.isAgentManaged && server.authenticationMethod == .agentTokenPendingPair
     }
 
-    // MARK: - Private
+    private func refreshHostingAdapter(for server: ManagedServer) {
+        if let api {
+            hostingAPI = QadbakDomainHostingAdapter(api: api)
+            return
+        }
+        if server.isAgentManaged, server.capabilities.domainHosting {
+            let client = agentClient ?? makeAgentClient(for: server, accessToken: nil)
+            hostingAPI = AgentPanelHostingAPI(client: client)
+            return
+        }
+        hostingAPI = nil
+    }
 
     private func makeAPI(for base: URL) -> QadbakAPI {
         QadbakAPI(baseURL: base, tokenProvider: { [weak self] in
@@ -406,6 +454,7 @@ final class AppState {
             let url = try Self.normalizePanelURL(server.apiBaseURL)
             serverURL = url
             api = makeAPI(for: url)
+            hostingAPI = QadbakDomainHostingAdapter(api: api!)
             activeProvider = ServerProviderFactory.makeProvider(
                 for: server,
                 api: api,
@@ -423,8 +472,10 @@ final class AppState {
             serverURL = nil
             accessToken = nil
             api = nil
+            hostingAPI = nil
             if server.authenticationMethod == .agentToken {
                 agentClient = makeAgentClient(for: server, accessToken: nil)
+                refreshHostingAdapter(for: server)
                 activeProvider = ServerProviderFactory.makeProvider(
                     for: server,
                     api: nil,
@@ -484,6 +535,9 @@ final class AppState {
                 agentClient: agentClient,
                 keychain: keychain
             )
+            if server.id == activeServerId {
+                refreshHostingAdapter(for: server)
+            }
         }
     }
 
@@ -519,6 +573,7 @@ final class AppState {
                     updated.capabilities = caps
                 }
                 upsertServer(updated)
+                refreshHostingAdapter(for: updated)
             }
         } catch {
             var failed = server

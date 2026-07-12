@@ -33,7 +33,7 @@ enum ServerKind: String, Codable, CaseIterable, Hashable {
         }
     }
 
-    /// Open-source panels the Linux agent can link to (read-only API).
+    /// Open-source panels the Linux agent can link to for domain hosting or app management.
     var isOpenSourceLinkable: Bool {
         switch self {
         case .hestiaCP, .coolify, .casaOS: return true
@@ -83,6 +83,7 @@ struct ServerCapabilities: Codable, Hashable {
     var panelIntegration: Bool = false
     var backups: Bool = false
     var domainHosting: Bool = false
+    var panelApps: Bool = false
 
     static var qadbakPanelDefaults: ServerCapabilities {
         var c = ServerCapabilities()

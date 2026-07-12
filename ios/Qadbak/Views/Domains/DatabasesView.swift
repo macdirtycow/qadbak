@@ -76,12 +76,12 @@ struct DatabasesView: View {
     }
 
     private func load() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            databases = try await api.listDatabases(domainName)
+            databases = try await hosting.listDatabases(domainName)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -134,15 +134,16 @@ private struct CreateDatabaseView: View {
     }
 
     private func save() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isSaving = true
         errorMessage = nil
         defer { isSaving = false }
         do {
-            try await api.createDatabase(
+            try await hosting.createDatabase(
                 domainName,
                 name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-                pass: password
+                pass: password,
+                type: "mysql"
             )
             onDone()
             dismiss()

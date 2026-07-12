@@ -141,7 +141,7 @@ struct AddDomainView: View {
     }
 
     private func create() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         let trimmed = domainName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !trimmed.isEmpty else {
             errorMessage = "Enter a domain name."
@@ -161,7 +161,7 @@ struct AddDomainView: View {
                 createClientAccount: createClientAccount,
                 createPanelVhost: createPanelVhost
             )
-            result = try await api.createDomain(request)
+            result = try await hosting.createDomain(request)
         } catch {
             errorMessage = error.localizedDescription
         }

@@ -105,11 +105,11 @@ struct PanelLinkView: View {
     private var helpText: String {
         switch panel {
         case .hestiaCP:
-            return "Credentials stay on your server inside the Qadbak agent. The app only reads users and domains — it does not change Hestia settings."
+            return "Credentials stay on your server inside the Qadbak agent. Manage domains, DNS, mail, databases, and SSL from the app."
         case .coolify:
-            return "The agent calls the Coolify API on localhost. You see projects and applications; deploys still happen in Coolify."
+            return "The agent calls the Coolify API on localhost. Deploy, start, and stop apps from the Apps tab."
         case .casaOS:
-            return "The agent reads installed apps from CasaOS on this machine. Installs and shares stay in the CasaOS UI."
+            return "The agent reads installed apps from CasaOS. View them in the Apps tab; installs stay in the CasaOS UI."
         default:
             return ""
         }
@@ -170,6 +170,13 @@ struct PanelLinkView: View {
             if res.ok != true {
                 errorMessage = res.error ?? "Could not link panel."
                 return
+            }
+            if let caps = res.capabilities?.toServerCapabilities() {
+                var updated = server
+                updated.capabilities = caps
+                appState.updateServerProfileIfExists(updated)
+            } else {
+                await appState.refreshActiveServerCapabilities()
             }
             await onLinked()
             dismiss()

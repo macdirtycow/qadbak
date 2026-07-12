@@ -64,7 +64,7 @@ struct DomainListView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
-                        if appState.isAdmin {
+                        if appState.isAdmin || appState.canManageDomains {
                             Button {
                                 showAddDomain = true
                             } label: {
@@ -94,12 +94,14 @@ struct DomainListView: View {
                         } label: {
                             Label("Settings", systemImage: "gearshape")
                         }
-                        if appState.isAdmin {
+                        if appState.isAdmin || appState.canManageDomains {
                             Button {
                                 showAddDomain = true
                             } label: {
                                 Label("Add domain", systemImage: "plus.circle")
                             }
+                        }
+                        if appState.isAdmin {
                             Button {
                                 navigationPath.append(AdminRoute.health)
                             } label: {
@@ -271,18 +273,20 @@ struct DomainListView: View {
     }
 
     private func reload() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            async let domainList = api.listDomains()
-            async let widget = api.widgetSummary()
+            async let domainList = hosting.listDomains()
+            async let widget = hosting.widgetSummary()
             domains = try await domainList
             let widgetData = try await widget
             summary = widgetData
             WidgetSummaryStore.save(widgetData)
-            await appState.refreshSessionInfo()
+            if appState.activeServer?.isQadbakPanel == true {
+                await appState.refreshSessionInfo()
+            }
         } catch {
             errorMessage = error.localizedDescription
         }

@@ -105,7 +105,11 @@ func (h *Handler) panelLinkCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	h.audit.Record("panels.link", panel, panel, clientIP(r), "ok")
 	status := panels.PublicFromConfig(&cfg, detected)
-	WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "status": status})
+	WriteJSON(w, http.StatusOK, map[string]any{
+		"ok":           true,
+		"status":       status,
+		"capabilities": h.capabilitiesMap(),
+	})
 }
 
 func (h *Handler) panelLinkDelete(w http.ResponseWriter, r *http.Request) {

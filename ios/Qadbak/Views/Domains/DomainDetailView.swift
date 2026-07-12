@@ -14,6 +14,10 @@ struct DomainDetailView: View {
         GridItem(.adaptive(minimum: 158), spacing: 12),
     ]
 
+    private var isExternalHosting: Bool {
+        appState.activeServer?.isAgentManaged == true && appState.activeServer?.capabilities.domainHosting == true
+    }
+
     var body: some View {
         QBScreenContainer {
             ScrollView {
@@ -23,13 +27,15 @@ struct DomainDetailView: View {
                         clientBanner
                     }
                     infoCard
-                    if appState.isAdmin {
+                    if appState.isAdmin && !isExternalHosting {
                         hostingToggleCard
                     }
                     moduleSection("Website", tiles: websiteTiles)
                     moduleSection("Email", tiles: emailTiles)
-                    moduleSection("Files & apps", tiles: filesTiles)
-                    moduleSection("Security", tiles: securityTiles)
+                    if !isExternalHosting {
+                        moduleSection("Files & apps", tiles: filesTiles)
+                        moduleSection("Security", tiles: securityTiles)
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
@@ -51,7 +57,13 @@ struct DomainDetailView: View {
     }
 
     private var websiteTiles: [ModuleTile] {
-        [
+        if isExternalHosting {
+            return [
+                ModuleTile("DNS", "Records", "network", QadbakPalette.glow, AnyView(DnsRecordsView(domainName: domain.name))),
+                ModuleTile("SSL", "Certificates", "lock.shield", QadbakPalette.success, AnyView(SslCertificatesView(domainName: domain.name))),
+            ]
+        }
+        return [
             ModuleTile("Health", "Website", "heart.text.square", QadbakPalette.danger, AnyView(WebsiteHealthView(domainName: domain.name))),
             ModuleTile("Logs", "Live tail", "doc.text.magnifyingglass", .teal, AnyView(LiveLogsView(domainName: domain.name))),
             ModuleTile("DNS", "Records", "network", QadbakPalette.glow, AnyView(DnsRecordsView(domainName: domain.name))),
@@ -101,7 +113,7 @@ struct DomainDetailView: View {
                     .font(.subheadline)
                     .foregroundStyle(QadbakPalette.warning)
             } else {
-                Text("Same modules as the web panel — grouped for mobile.")
+                Text(isExternalHosting ? "Linked HestiaCP — DNS, mail, databases, and SSL." : "Same modules as the web panel — grouped for mobile.")
                     .font(.subheadline)
                     .foregroundStyle(QadbakPalette.muted)
             }
@@ -192,9 +204,9 @@ struct DomainDetailView: View {
     }
 
     private func refreshDomain() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         do {
-            let detail = try await api.domainDetail(domain.name)
+            let detail = try await hosting.domainDetail(domain.name)
             domain = detail.domain
         } catch {
             // Keep list-passed domain data on failure.

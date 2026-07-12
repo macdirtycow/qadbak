@@ -90,22 +90,22 @@ struct AliasesView: View {
     }
 
     private func load() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            aliases = try await api.listAliases(domainName)
+            aliases = try await hosting.listAliases(domainName)
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
     private func delete(_ alias: MailAlias) async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         aliasToDelete = nil
         do {
-            try await api.deleteAlias(domainName, from: alias.fromLabel, to: alias.toLabel)
+            try await hosting.deleteAlias(domainName, from: alias.fromLabel, to: alias.toLabel)
             await load()
         } catch {
             errorMessage = error.localizedDescription
@@ -160,12 +160,12 @@ private struct CreateAliasView: View {
     }
 
     private func save() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isSaving = true
         errorMessage = nil
         defer { isSaving = false }
         do {
-            try await api.createAlias(
+            try await hosting.createAlias(
                 domainName,
                 from: from.trimmingCharacters(in: .whitespacesAndNewlines),
                 to: to.trimmingCharacters(in: .whitespacesAndNewlines)

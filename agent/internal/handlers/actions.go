@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/macdirtycow/qadbak/agent/internal/detection"
 	"github.com/macdirtycow/qadbak/agent/internal/docker"
 	"github.com/macdirtycow/qadbak/agent/internal/system"
 	"github.com/macdirtycow/qadbak/agent/internal/validate"
@@ -61,7 +60,7 @@ func (h *Handler) serviceControl(w http.ResponseWriter, r *http.Request, deviceI
 		methodNotAllowed(w)
 		return
 	}
-	caps := detection.MapCapabilities(detection.DetectPanel().DetectedPanel)
+	caps := h.capabilitiesMap()
 	if !caps["serviceManagement"] {
 		WriteJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "Capability missing", "code": "CAPABILITY_MISSING"})
 		return
@@ -94,7 +93,7 @@ func (h *Handler) dockerControl(w http.ResponseWriter, r *http.Request, deviceID
 		methodNotAllowed(w)
 		return
 	}
-	caps := detection.MapCapabilities(detection.DetectPanel().DetectedPanel)
+	caps := h.capabilitiesMap()
 	if !caps["dockerManagement"] {
 		WriteJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "Docker not available", "code": "CAPABILITY_MISSING"})
 		return
@@ -127,7 +126,7 @@ func (h *Handler) updatesCheck(w http.ResponseWriter, r *http.Request) {
 		methodNotAllowed(w)
 		return
 	}
-	caps := detection.MapCapabilities(detection.DetectPanel().DetectedPanel)
+	caps := h.capabilitiesMap()
 	if !caps["packageUpdates"] {
 		WriteJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "Capability missing", "code": "CAPABILITY_MISSING"})
 		return
@@ -145,7 +144,7 @@ func (h *Handler) updatesInstall(w http.ResponseWriter, r *http.Request, deviceI
 		methodNotAllowed(w)
 		return
 	}
-	caps := detection.MapCapabilities(detection.DetectPanel().DetectedPanel)
+	caps := h.capabilitiesMap()
 	if !caps["packageUpdates"] {
 		WriteJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "Capability missing", "code": "CAPABILITY_MISSING"})
 		return
@@ -174,7 +173,7 @@ func (h *Handler) systemReboot(w http.ResponseWriter, r *http.Request, deviceID 
 		methodNotAllowed(w)
 		return
 	}
-	caps := detection.MapCapabilities(detection.DetectPanel().DetectedPanel)
+	caps := h.capabilitiesMap()
 	if !caps["reboot"] {
 		WriteJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "Capability missing", "code": "CAPABILITY_MISSING"})
 		return
@@ -199,7 +198,7 @@ func (h *Handler) systemShutdown(w http.ResponseWriter, r *http.Request, deviceI
 		methodNotAllowed(w)
 		return
 	}
-	caps := detection.MapCapabilities(detection.DetectPanel().DetectedPanel)
+	caps := h.capabilitiesMap()
 	if !caps["shutdown"] {
 		WriteJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "Capability missing", "code": "CAPABILITY_MISSING"})
 		return
@@ -251,6 +250,18 @@ func validateConfirmAction(action, target string) error {
 		if target != "" && target != "*" {
 			return errors.New("invalid target")
 		}
+	case "panel.domain.create":
+		if target != "" && target != "*" {
+			return errors.New("invalid target")
+		}
+	case "panel.domain.delete":
+		if target == "" {
+			return errors.New("invalid target")
+		}
+	case "panel.app.deploy", "panel.app.start", "panel.app.stop":
+		if target == "" {
+			return errors.New("invalid target")
+		}
 	default:
 		return errors.New("unknown action")
 	}
@@ -258,7 +269,7 @@ func validateConfirmAction(action, target string) error {
 }
 
 func (h *Handler) capabilityForAction(action string) bool {
-	caps := detection.MapCapabilities(detection.DetectPanel().DetectedPanel)
+	caps := h.capabilitiesMap()
 	switch {
 	case strings.HasPrefix(action, "service."):
 		return caps["serviceManagement"]
@@ -270,6 +281,10 @@ func (h *Handler) capabilityForAction(action string) bool {
 		return caps["reboot"]
 	case action == "system.shutdown":
 		return caps["shutdown"]
+	case strings.HasPrefix(action, "panel.domain."):
+		return caps["domainHosting"]
+	case strings.HasPrefix(action, "panel.app."):
+		return caps["panelApps"]
 	default:
 		return false
 	}

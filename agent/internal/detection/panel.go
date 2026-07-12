@@ -58,7 +58,7 @@ func systemdActive(unit string) bool {
 	return err == nil
 }
 
-func MapCapabilities(panel string) map[string]bool {
+func MapCapabilities(detectedPanel string, linkedPanel string) map[string]bool {
 	caps := map[string]bool{
 		"systemMetrics":     true,
 		"logs":              true,
@@ -67,10 +67,16 @@ func MapCapabilities(panel string) map[string]bool {
 		"packageUpdates":    true,
 		"reboot":            true,
 		"shutdown":          true,
-		"panelIntegration":  panel != "genericLinux" && panel != "",
+		"panelIntegration":  detectedPanel != "genericLinux" && detectedPanel != "",
 	}
-	if panel == "coolify" && !caps["dockerManagement"] {
+	if detectedPanel == "coolify" && !caps["dockerManagement"] {
 		caps["dockerManagement"] = docker.Available()
+	}
+	switch linkedPanel {
+	case "hestiaCP":
+		caps["domainHosting"] = true
+	case "coolify", "casaOS":
+		caps["panelApps"] = true
 	}
 	return caps
 }

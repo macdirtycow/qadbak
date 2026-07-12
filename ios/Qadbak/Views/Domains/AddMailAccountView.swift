@@ -59,14 +59,14 @@ struct AddMailAccountView: View {
     }
 
     private func save() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isSaving = true
         errorMessage = nil
         defer { isSaving = false }
         do {
             let user = username.trimmingCharacters(in: .whitespacesAndNewlines)
             let real = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
-            try await api.createMailUser(
+            try await hosting.createMailUser(
                 domainName,
                 user: user,
                 pass: password,

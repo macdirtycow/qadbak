@@ -122,24 +122,24 @@ struct DnsRecordsView: View {
     }
 
     private func load() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            records = try await api.listDns(domainName)
+            records = try await hosting.listDns(domainName)
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
     private func delete(_ record: DnsRecord) async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         errorMessage = nil
         successMessage = nil
         defer { recordToDelete = nil }
         do {
-            try await api.deleteDns(domainName, record: record)
+            try await hosting.deleteDns(domainName, record: record)
             successMessage = "DNS record removed."
             await load()
         } catch {
@@ -202,13 +202,13 @@ struct AddDnsRecordView: View {
     }
 
     private func save() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isSaving = true
         errorMessage = nil
         defer { isSaving = false }
         let record = DnsRecord(name: name, type: type, value: value, ttl: ttl, priority: nil)
         do {
-            try await api.addDns(domainName, record: record)
+            try await hosting.addDns(domainName, record: record)
             onSaved()
             dismiss()
         } catch {

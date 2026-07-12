@@ -5,7 +5,9 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if appState.showsDomainHosting {
+            if appState.showsAgentPanelShell {
+                AgentServerShellView()
+            } else if appState.showsDomainHosting {
                 DomainListView()
             } else if appState.showsAgentDashboard {
                 NavigationStack {

@@ -65,11 +65,14 @@ struct PanelDetectionCard: View {
                 HStack(spacing: 12) {
                     Button("Refresh") { Task { await reload() } }
                         .font(.caption.weight(.semibold))
+                    if server.capabilities.domainHosting || server.capabilities.panelApps {
+                        QBBadge(text: server.capabilities.domainHosting ? "Domains" : "Apps", tone: .success)
+                    }
                     Button("Unlink", role: .destructive) { Task { await unlink() } }
                         .font(.caption.weight(.semibold))
                 }
             } else {
-                Text("Link \(kind.displayName) with an API token or admin login. Read-only for now — system tasks use the Linux agent below.")
+                Text("Link \(kind.displayName) with an API token or admin login. Domains, mail, and apps unlock in the app after linking.")
                     .font(.caption)
                     .foregroundStyle(QadbakPalette.muted)
                 Button("Link \(kind.displayName)") { showLinkSheet = true }
@@ -157,6 +160,7 @@ struct PanelDetectionCard: View {
             try await client.unlinkPanel()
             linkStatus = nil
             overview = nil
+            await appState.refreshActiveServerCapabilities()
             await reload()
         } catch {
             errorMessage = error.localizedDescription

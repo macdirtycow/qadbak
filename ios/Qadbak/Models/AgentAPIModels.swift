@@ -70,6 +70,8 @@ struct AgentCapabilitiesPayload: Decodable {
     let reboot: Bool?
     let shutdown: Bool?
     let panelIntegration: Bool?
+    let domainHosting: Bool?
+    let panelApps: Bool?
 
     func toServerCapabilities() -> ServerCapabilities {
         var c = ServerCapabilities()
@@ -81,6 +83,8 @@ struct AgentCapabilitiesPayload: Decodable {
         c.reboot = reboot ?? false
         c.shutdown = shutdown ?? false
         c.panelIntegration = panelIntegration ?? false
+        c.domainHosting = domainHosting ?? false
+        c.panelApps = panelApps ?? false
         return c
     }
 }
@@ -219,6 +223,7 @@ struct AgentPanelLinkStatusResponse: Decodable {
     let ok: Bool?
     let detectedPanel: String?
     let status: AgentPanelLinkStatusPayload?
+    let capabilities: AgentCapabilitiesPayload?
     let error: String?
 }
 

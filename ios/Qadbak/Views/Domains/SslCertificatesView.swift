@@ -80,22 +80,22 @@ struct SslCertificatesView: View {
     }
 
     private func load() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
-        do { certs = try await api.listSsl(domainName) }
+        do { certs = try await hosting.listSsl(domainName) }
         catch { errorMessage = error.localizedDescription }
     }
 
     private func renew() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isRenewing = true
         errorMessage = nil
         successMessage = nil
         defer { isRenewing = false }
         do {
-            try await api.renewSsl(domainName)
+            try await hosting.renewSsl(domainName, host: domainName)
             successMessage = "Certificate request started — may take a few minutes."
             await load()
         } catch {

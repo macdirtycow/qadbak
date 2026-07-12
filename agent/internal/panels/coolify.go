@@ -30,8 +30,7 @@ func fetchCoolifyOverview(cfg LinkConfig) (Overview, error) {
 	overview := Overview{
 		Panel: "coolify",
 		Notes: []string{
-			"Read-only via Coolify API on this server.",
-			"Deploy and env changes stay in the Coolify UI for now.",
+			"Managed via Coolify API through the Qadbak agent.",
 		},
 	}
 
@@ -67,30 +66,41 @@ func fetchCoolifyOverview(cfg LinkConfig) (Overview, error) {
 }
 
 func coolifyGET(baseURL, token, path string) ([]byte, error) {
-	client := &http.Client{Timeout: 20 * time.Second}
+	return coolifyRequest(baseURL, token, http.MethodGet, path, nil)
+}
+
+func coolifyRequest(baseURL, token, method, path string, body []byte) ([]byte, error) {
+	client := &http.Client{Timeout: 30 * time.Second}
 	endpoint := strings.TrimRight(baseURL, "/") + path
-	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
+	var reader io.Reader
+	if body != nil {
+		reader = strings.NewReader(string(body))
+	}
+	req, err := http.NewRequest(method, endpoint, reader)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Accept", "application/json")
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("coolify api: %w", err)
 	}
 	defer res.Body.Close()
-	body, err := io.ReadAll(io.LimitReader(res.Body, 4<<20))
+	respBody, err := io.ReadAll(io.LimitReader(res.Body, 4<<20))
 	if err != nil {
 		return nil, err
 	}
 	if res.StatusCode >= 400 {
-		msg := strings.TrimSpace(string(body))
+		msg := strings.TrimSpace(string(respBody))
 		if msg == "" {
 			msg = res.Status
 		}
 		return nil, fmt.Errorf("coolify api: %s", msg)
 	}
-	return body, nil
+	return respBody, nil
 }

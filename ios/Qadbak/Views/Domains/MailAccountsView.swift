@@ -115,23 +115,23 @@ struct MailAccountsView: View {
     }
 
     private func load() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            users = try await api.listMailUsers(domainName)
+            users = try await hosting.listMailUsers(domainName)
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
     private func delete(_ user: MailUser) async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         guard let name = user.user, !name.isEmpty else { return }
         userToDelete = nil
         do {
-            try await api.deleteMailUser(domainName, user: name)
+            try await hosting.deleteMailUser(domainName, user: name)
             await load()
         } catch {
             errorMessage = error.localizedDescription
