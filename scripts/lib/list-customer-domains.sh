@@ -28,6 +28,11 @@ _should_skip_nginx_customer_domain() {
   [[ -n "$panel" && "$domain" == "www.${panel}" ]] && return 0
   [[ "$domain" == "license.inveil.dev" ]] && return 0
 
+  # Operator-managed vhost at sites-available/DOMAIN.conf (e.g. inveil-site deploy).
+  if [[ -f "/etc/nginx/sites-available/${domain}.conf" ]]; then
+    return 0
+  fi
+
   local op="${QADBAK_OPERATOR_DOMAINS:-}"
   if [[ -z "$op" && -f "$QADBAK_DIR/.env.local" ]]; then
     op="$(grep -E '^QADBAK_OPERATOR_DOMAINS=' "$QADBAK_DIR/.env.local" 2>/dev/null | cut -d= -f2- | tr -d '"' || true)"
@@ -45,18 +50,20 @@ _should_skip_nginx_customer_domain() {
   # If an operator-managed nginx vhost already exists for this domain
   # (any file not named qadbak-customer-*), skip auto-generating a
   # customer vhost to avoid "conflicting server name" warnings.
-  local enabled_dir="/etc/nginx/sites-enabled"
-  if [[ -d "$enabled_dir" ]]; then
-    local f base
-    for f in "$enabled_dir"/*; do
+  local nginx_dir
+  for nginx_dir in /etc/nginx/sites-enabled /etc/nginx/sites-available; do
+    [[ -d "$nginx_dir" ]] || continue
+    local f base real
+    for f in "$nginx_dir"/*; do
       [[ -e "$f" ]] || continue
       base="$(basename "$f")"
       [[ "$base" == qadbak-customer-* ]] && continue
-      if grep -qE "server_name[[:space:]]+([^;]*[[:space:]])?${domain//./\\.}([[:space:]]|;)" "$f" 2>/dev/null; then
+      real="$(readlink -f "$f" 2>/dev/null || echo "$f")"
+      if grep -qE "server_name[[:space:]]+([^;]*[[:space:]])?${domain//./\\.}([[:space:]]|;)" "$real" 2>/dev/null; then
         return 0
       fi
     done
-  fi
+  done
   return 1
 }
 

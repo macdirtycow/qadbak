@@ -74,6 +74,9 @@ if [[ "${QADBAK_NATIVE_INSTALL:-}" == "1" ]]; then
   if [[ -f "$QADBAK_DIR/scripts/apply-all-php-fpm-pools.sh" ]]; then
     bash "$QADBAK_DIR/scripts/apply-all-php-fpm-pools.sh" || true
   fi
+  if [[ -f "$QADBAK_DIR/scripts/dedupe-nginx-vhosts.sh" ]]; then
+    bash "$QADBAK_DIR/scripts/dedupe-nginx-vhosts.sh" --apply 2>/dev/null || true
+  fi
 fi
 
 echo "==> Hosting stack applied"

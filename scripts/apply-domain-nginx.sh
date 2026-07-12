@@ -27,6 +27,14 @@ source "$QADBAK_DIR/scripts/lib/php-fpm-pool.sh"
 source "$QADBAK_DIR/scripts/lib/nginx-customer-vhost.sh"
 # shellcheck source=lib/ensure-home-web-access.sh
 source "$QADBAK_DIR/scripts/lib/ensure-home-web-access.sh"
+# shellcheck source=lib/list-customer-domains.sh
+source "$QADBAK_DIR/scripts/lib/list-customer-domains.sh"
+
+if _should_skip_nginx_customer_domain "$DOMAIN"; then
+  nginx_customer_conf_remove "$DOMAIN"
+  echo "SKIP — $DOMAIN uses an operator/static nginx vhost (removed qadbak-customer-* if present)"
+  exit 0
+fi
 
 if ! id "$USER" &>/dev/null; then
   echo "SKIP — unix user does not exist: $USER (domain $DOMAIN)" >&2
