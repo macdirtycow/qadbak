@@ -32,17 +32,23 @@ Keep `@omiiba.dev` aliases forwarding to `@inveil.net` during transition.
 
 ## 3. License server VPS
 
-On the machine that runs the license server (private `qadbak-premium` or equivalent):
+**One command** (after `qadbak-premium` is cloned to `/opt/qadbak-premium`):
 
-1. TLS certificate for `license.inveil.dev`
-2. Nginx/server vhost: `server_name license.inveil.dev;`
-3. Env / config: public URL `https://license.inveil.dev`
-4. Stripe Checkout success/cancel URLs → `license.inveil.dev`
-5. Stripe webhook endpoint URL updated in Stripe Dashboard
-6. Admin UI reachable at `https://license.inveil.dev/admin`
-7. Smoke test: `curl -sf https://license.inveil.dev/health`
+```bash
+sudo bash /opt/qadbak-premium/ops/migrate-to-inveil.sh
+```
 
-Existing license keys and JWT secrets **unchanged** — only hostname moves.
+This script:
+
+1. Pulls latest `qadbak-premium` (includes `inveil-site/`)
+2. Updates `/etc/qadbak/license-server.env` → `license.inveil.dev` + `@inveil.net` mail
+3. Deploys **inveil.net** static site to `/var/www/inveil.net`
+4. Configures nginx for `license.inveil.dev`, `inveil.net`, `inveil.dev`, and **301 redirects** from `omiiba.dev` / `license.omiiba.dev`
+5. Restarts the license server (pm2)
+
+Dry run: `sudo DRY_RUN=1 bash /opt/qadbak-premium/ops/migrate-to-inveil.sh`
+
+Manual steps (if needed):
 
 ## 4. Customer panels (already installed)
 
