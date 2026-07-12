@@ -9,11 +9,13 @@ struct DomainListView: View {
     @State private var navigationPath = NavigationPath()
     @State private var showServerSwitcher = false
     @State private var showAddDomain = false
+    @State private var showSettings = false
 
     private enum AdminRoute: Hashable {
         case panelUpdates
         case serverTerminal
         case appStore
+        case health
     }
 
     private let columns = [
@@ -87,11 +89,21 @@ struct DomainListView: View {
                                 .font(.caption.weight(.semibold))
                         }
                         Divider()
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Label("Settings", systemImage: "gearshape")
+                        }
                         if appState.isAdmin {
                             Button {
                                 showAddDomain = true
                             } label: {
                                 Label("Add domain", systemImage: "plus.circle")
+                            }
+                            Button {
+                                navigationPath.append(AdminRoute.health)
+                            } label: {
+                                Label("Server health", systemImage: "heart.text.square")
                             }
                             Button {
                                 navigationPath.append(AdminRoute.appStore)
@@ -138,6 +150,12 @@ struct DomainListView: View {
             .sheet(isPresented: $showServerSwitcher) {
                 ServerSwitcherView()
             }
+            .sheet(isPresented: $showSettings) {
+                NavigationStack {
+                    SettingsView()
+                }
+                .preferredColorScheme(.dark)
+            }
             .toolbarBackground(QadbakPalette.bg.opacity(0.9), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .navigationDestination(for: HostedDomain.self) { domain in
@@ -151,6 +169,8 @@ struct DomainListView: View {
                     DomainTerminalView(domainName: "", adminShell: true)
                 case .appStore:
                     AdminAppStoreView()
+                case .health:
+                    AdminHealthView()
                 }
             }
             .task { await reload() }

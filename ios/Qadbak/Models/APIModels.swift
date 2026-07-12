@@ -519,6 +519,134 @@ struct MailUsersResponse: Decodable {
     let users: [MailUser]?
 }
 
+struct HostedDatabase: Decodable, Identifiable, Hashable {
+    var id: String { dbName }
+    let name: String?
+    let type: String?
+    let host: String?
+    let valuesName: String?
+    let valuesType: String?
+    let valuesHost: String?
+
+    enum CodingKeys: String, CodingKey {
+        case name, type, host
+        case valuesName = "values.name"
+        case valuesType = "values.type"
+        case valuesHost = "values.host"
+    }
+
+    var dbName: String {
+        let n = (name ?? valuesName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return n.isEmpty ? "—" : n
+    }
+
+    var dbType: String {
+        let t = (type ?? valuesType ?? "mysql").trimmingCharacters(in: .whitespacesAndNewlines)
+        return t.isEmpty ? "mysql" : t
+    }
+
+    var dbHost: String {
+        let h = (host ?? valuesHost ?? "localhost").trimmingCharacters(in: .whitespacesAndNewlines)
+        return h.isEmpty ? "localhost" : h
+    }
+}
+
+struct DatabasesResponse: Decodable {
+    let databases: [HostedDatabase]?
+}
+
+struct MailAlias: Decodable, Identifiable, Hashable {
+    let from: String?
+    let to: String?
+
+    var id: String { from ?? to ?? UUID().uuidString }
+
+    var fromLabel: String { from ?? "—" }
+    var toLabel: String { to ?? "—" }
+}
+
+struct AliasesResponse: Decodable {
+    let aliases: [MailAlias]?
+}
+
+struct DomainRedirect: Decodable, Identifiable, Hashable {
+    let path: String?
+    let dest: String?
+    let type: String?
+
+    var id: String { path ?? dest ?? UUID().uuidString }
+
+    var pathLabel: String { path ?? "—" }
+    var destLabel: String { dest ?? "—" }
+    var typeLabel: String { type ?? "301" }
+}
+
+struct RedirectsResponse: Decodable {
+    let redirects: [DomainRedirect]?
+}
+
+struct CronJob: Decodable, Identifiable, Hashable {
+    let id: String
+    let schedule: String
+    let command: String
+    let user: String?
+    let active: Bool?
+}
+
+struct CronJobsResponse: Decodable {
+    let jobs: [CronJob]?
+    let canEdit: Bool?
+}
+
+struct FtpAccount: Decodable, Identifiable, Hashable {
+    let user: String
+    let dir: String?
+    let quota: String?
+
+    var id: String { user }
+}
+
+struct FtpAccountsResponse: Decodable {
+    let accounts: [FtpAccount]?
+}
+
+struct HealthFinding: Decodable, Identifiable, Hashable {
+    let id: String
+    let category: String?
+    let severity: String?
+    let title: String?
+    let explanation: String?
+    let suggestion: String?
+}
+
+struct HealthCheckResult: Decodable, Identifiable, Hashable {
+    var id: String { checkId }
+    let checkId: String
+    let durationMs: Int?
+    let ok: Bool?
+    let error: String?
+    let findings: [HealthFinding]?
+}
+
+struct HealthReport: Decodable {
+    let generatedAt: String?
+    let totalMs: Int?
+    let checks: [HealthCheckResult]?
+    let findings: [HealthFinding]?
+    let counts: HealthCounts?
+}
+
+struct HealthCounts: Decodable {
+    let info: Int?
+    let warning: Int?
+    let critical: Int?
+    let total: Int?
+}
+
+struct AdminHealthResponse: Decodable {
+    let report: HealthReport?
+}
+
 struct SslCert: Decodable, Identifiable, Hashable {
     var id: String { host ?? issuer ?? UUID().uuidString }
     let host: String?

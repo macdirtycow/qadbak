@@ -329,3 +329,127 @@ struct QBScreenContainer<Content: View>: View {
         }
     }
 }
+
+struct QBSectionHeader: View {
+    let title: String
+
+    var body: some View {
+        Text(title)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(QadbakPalette.muted)
+            .textCase(.uppercase)
+            .tracking(0.8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+struct QBBadge: View {
+    let text: String
+    var tone: BadgeTone = .default
+
+    enum BadgeTone {
+        case `default`, success, warning, danger
+
+        var colors: (bg: Color, fg: Color) {
+            switch self {
+            case .default: return (QadbakPalette.border.opacity(0.55), QadbakPalette.muted)
+            case .success: return (QadbakPalette.success.opacity(0.18), QadbakPalette.success)
+            case .warning: return (QadbakPalette.warning.opacity(0.18), QadbakPalette.warning)
+            case .danger: return (QadbakPalette.danger.opacity(0.18), QadbakPalette.danger)
+            }
+        }
+    }
+
+    var body: some View {
+        let palette = tone.colors
+        Text(text)
+            .font(.caption2.weight(.semibold))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .foregroundStyle(palette.fg)
+            .background(palette.bg, in: Capsule())
+    }
+}
+
+struct QBSecondaryButton: View {
+    let title: String
+    var loading = false
+    var disabled = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                if loading {
+                    ProgressView()
+                        .tint(QadbakPalette.text)
+                }
+                Text(title)
+                    .font(.headline)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .foregroundStyle(QadbakPalette.text)
+            .background(QadbakPalette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(QadbakPalette.border, lineWidth: 1)
+            }
+        }
+        .disabled(disabled || loading)
+        .opacity(disabled ? 0.55 : 1)
+    }
+}
+
+struct QBListRow<Trailing: View>: View {
+    let title: String
+    let subtitle: String?
+    let icon: String
+    var tint: Color = QadbakPalette.glow
+    @ViewBuilder var trailing: Trailing
+
+    init(
+        title: String,
+        subtitle: String? = nil,
+        icon: String,
+        tint: Color = QadbakPalette.glow,
+        @ViewBuilder trailing: () -> Trailing = { EmptyView() }
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.icon = icon
+        self.tint = tint
+        self.trailing = trailing()
+    }
+
+    var body: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(tint.opacity(0.16))
+                    .frame(width: 40, height: 40)
+                Image(systemName: icon)
+                    .foregroundStyle(tint)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(QadbakPalette.text)
+                if let subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(QadbakPalette.muted)
+                        .lineLimit(2)
+                }
+            }
+            Spacer(minLength: 0)
+            trailing
+        }
+        .padding(14)
+        .background(QadbakPalette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(QadbakPalette.border.opacity(0.45), lineWidth: 1)
+        }
+    }
+}

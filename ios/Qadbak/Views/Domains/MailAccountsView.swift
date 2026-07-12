@@ -8,10 +8,11 @@ struct MailAccountsView: View {
     @State private var users: [MailUser] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var showAdd = false
+    @State private var userToDelete: MailUser?
 
     var body: some View {
-        ZStack {
-            QadbakPalette.bg.ignoresSafeArea()
+        QBScreenContainer {
             Group {
                 if isLoading && users.isEmpty {
                     QBLoadingState(message: "Loading mail accounts…")
@@ -24,7 +25,7 @@ struct MailAccountsView: View {
                 } else if users.isEmpty {
                     QBEmptyState(
                         title: "No mail accounts",
-                        message: "Create mailboxes in the web panel first.",
+                        message: "Create a mailbox for this domain.",
                         icon: "envelope"
                     )
                 } else {
@@ -41,40 +42,65 @@ struct MailAccountsView: View {
         }
         .navigationTitle(openWebmail ? "Qmail" : "Mail")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(QadbakPalette.bg, for: .navigationBar)
+        .toolbarBackground(QadbakPalette.bg.opacity(0.95), for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbar {
+            if !openWebmail {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { showAdd = true } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundStyle(QadbakPalette.accent)
+                    }
+                }
+            }
+        }
         .refreshable { await load() }
         .task { await load() }
+        .sheet(isPresented: $showAdd) {
+            NavigationStack {
+                AddMailAccountView(domainName: domainName) {
+                    showAdd = false
+                    Task { await load() }
+                }
+            }
+            .preferredColorScheme(.dark)
+        }
+        .confirmationDialog("Delete mailbox?", isPresented: Binding(
+            get: { userToDelete != nil },
+            set: { if !$0 { userToDelete = nil } }
+        )) {
+            Button("Delete", role: .destructive) {
+                if let user = userToDelete {
+                    Task { await delete(user) }
+                }
+            }
+            Button("Cancel", role: .cancel) { userToDelete = nil }
+        }
         .preferredColorScheme(.dark)
     }
 
     @ViewBuilder
     private func mailRow(_ user: MailUser) -> some View {
         let mailbox = user.user ?? user.email?.components(separatedBy: "@").first ?? ""
-        let content = HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color.cyan.opacity(0.15))
-                    .frame(width: 40, height: 40)
-                Image(systemName: "envelope.fill")
-                    .foregroundStyle(.cyan)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(user.displayName)
-                    .font(.headline)
-                    .foregroundStyle(QadbakPalette.text)
-                Text(user.address.contains("@") ? user.address : "\(user.address)@\(domainName)")
-                    .font(.caption)
-                    .foregroundStyle(QadbakPalette.muted)
-            }
-            Spacer()
-            if openWebmail, !mailbox.isEmpty {
+        let content = QBListRow(
+            title: user.displayName,
+            subtitle: user.address.contains("@") ? user.address : "\(user.address)@\(domainName)",
+            icon: "envelope.fill",
+            tint: .cyan
+        ) {
+            if !openWebmail, let mailboxName = user.user, !mailboxName.isEmpty {
+                Button(role: .destructive) {
+                    userToDelete = user
+                } label: {
+                    Image(systemName: "trash")
+                        .foregroundStyle(QadbakPalette.danger)
+                }
+            } else if openWebmail, !mailbox.isEmpty {
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundStyle(QadbakPalette.muted)
             }
         }
-        .padding(14)
-        .background(QadbakPalette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
         if openWebmail, !mailbox.isEmpty {
             NavigationLink {
@@ -95,6 +121,18 @@ struct MailAccountsView: View {
         defer { isLoading = false }
         do {
             users = try await api.listMailUsers(domainName)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func delete(_ user: MailUser) async {
+        guard let api = appState.api else { return }
+        guard let name = user.user, !name.isEmpty else { return }
+        userToDelete = nil
+        do {
+            try await api.deleteMailUser(domainName, user: name)
+            await load()
         } catch {
             errorMessage = error.localizedDescription
         }

@@ -3,6 +3,8 @@ import SwiftUI
 struct DomainDetailView: View {
     @Environment(AppState.self) private var appState
     @State private var domain: HostedDomain
+    @State private var isTogglingHosting = false
+    @State private var toggleError: String?
 
     init(domain: HostedDomain) {
         _domain = State(initialValue: domain)
@@ -13,70 +15,80 @@ struct DomainDetailView: View {
     ]
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                hero
-                if appState.clientOwnDomainsOnly {
-                    clientBanner
+        QBScreenContainer {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    hero
+                    if appState.clientOwnDomainsOnly {
+                        clientBanner
+                    }
+                    infoCard
+                    if appState.isAdmin {
+                        hostingToggleCard
+                    }
+                    moduleSection("Website", tiles: websiteTiles)
+                    moduleSection("Email", tiles: emailTiles)
+                    moduleSection("Files & apps", tiles: filesTiles)
+                    moduleSection("Security", tiles: securityTiles)
                 }
-                infoCard
-                Text("Manage")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(QadbakPalette.muted)
-                    .textCase(.uppercase)
-                    .tracking(0.8)
-                LazyVGrid(columns: actionColumns, spacing: 12) {
-                    actionLink(WebsiteHealthView(domainName: domain.name)) {
-                        QBActionTile(title: "Health", subtitle: "Website", icon: "heart.text.square", tint: QadbakPalette.danger)
-                    }
-                    actionLink(LiveLogsView(domainName: domain.name)) {
-                        QBActionTile(title: "Logs", subtitle: "Live tail", icon: "doc.text.magnifyingglass", tint: Color.teal)
-                    }
-                    actionLink(DnsRecordsView(domainName: domain.name)) {
-                        QBActionTile(title: "DNS", subtitle: "Records", icon: "network", tint: QadbakPalette.glow)
-                    }
-                    actionLink(MailAccountsView(domainName: domain.name)) {
-                        QBActionTile(title: "Mail", subtitle: "Accounts", icon: "envelope", tint: Color.cyan)
-                    }
-                    if appState.webmailEnabled {
-                        actionLink(MailAccountsView(domainName: domain.name, openWebmail: true)) {
-                            QBActionTile(
-                                title: "Qmail",
-                                subtitle: "Inbox",
-                                icon: "envelope.open",
-                                tint: Color.mint
-                            )
-                        }
-                    }
-                    if appState.filesEnabled {
-                        actionLink(FilesBrowserView(domainName: domain.name)) {
-                            QBActionTile(title: "Files", subtitle: "Browser", icon: "folder", tint: Color.orange)
-                        }
-                    }
-                    actionLink(DomainAppsView(domainName: domain.name)) {
-                        QBActionTile(title: "Apps", subtitle: "Install", icon: "shippingbox", tint: Color.purple)
-                    }
-                    actionLink(SslCertificatesView(domainName: domain.name)) {
-                        QBActionTile(title: "SSL", subtitle: "Certificates", icon: "lock.shield", tint: QadbakPalette.success)
-                    }
-                    actionLink(BackupsView(domainName: domain.name)) {
-                        QBActionTile(title: "Backups", subtitle: "Run now", icon: "externaldrive", tint: QadbakPalette.warning)
-                    }
-                    actionLink(DomainTerminalView(domainName: domain.name)) {
-                        QBActionTile(title: "Terminal", subtitle: "Shell", icon: "terminal", tint: Color.indigo)
-                    }
-                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
         }
-        .background(QadbakPalette.bg)
         .navigationTitle(domain.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(QadbakPalette.bg.opacity(0.95), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .safeAreaInset(edge: .top) {
+            if let toggleError {
+                ErrorBanner(message: toggleError)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+            }
+        }
         .task { await refreshDomain() }
         .preferredColorScheme(.dark)
+    }
+
+    private var websiteTiles: [ModuleTile] {
+        [
+            ModuleTile("Health", "Website", "heart.text.square", QadbakPalette.danger, AnyView(WebsiteHealthView(domainName: domain.name))),
+            ModuleTile("Logs", "Live tail", "doc.text.magnifyingglass", .teal, AnyView(LiveLogsView(domainName: domain.name))),
+            ModuleTile("DNS", "Records", "network", QadbakPalette.glow, AnyView(DnsRecordsView(domainName: domain.name))),
+            ModuleTile("Redirects", "Paths", "arrow.right.circle", .orange, AnyView(RedirectsView(domainName: domain.name))),
+            ModuleTile("Cron", "Scheduled", "clock.arrow.circlepath", .pink, AnyView(CronJobsView(domainName: domain.name))),
+            ModuleTile("SSL", "Certificates", "lock.shield", QadbakPalette.success, AnyView(SslCertificatesView(domainName: domain.name))),
+            ModuleTile("Backups", "Run now", "externaldrive", QadbakPalette.warning, AnyView(BackupsView(domainName: domain.name))),
+        ]
+    }
+
+    private var emailTiles: [ModuleTile] {
+        var tiles = [
+            ModuleTile("Mail", "Accounts", "envelope", .cyan, AnyView(MailAccountsView(domainName: domain.name))),
+            ModuleTile("Aliases", "Forward", "arrow.triangle.branch", .mint, AnyView(AliasesView(domainName: domain.name))),
+        ]
+        if appState.webmailEnabled {
+            tiles.append(ModuleTile("Qmail", "Inbox", "envelope.open", .green, AnyView(MailAccountsView(domainName: domain.name, openWebmail: true))))
+        }
+        return tiles
+    }
+
+    private var filesTiles: [ModuleTile] {
+        var tiles: [ModuleTile] = [
+            ModuleTile("Databases", "MySQL", "cylinder.split.1x2", .blue, AnyView(DatabasesView(domainName: domain.name))),
+            ModuleTile("Apps", "Install", "shippingbox", .purple, AnyView(DomainAppsView(domainName: domain.name))),
+        ]
+        if appState.filesEnabled {
+            tiles.insert(ModuleTile("Files", "Browser", "folder", .orange, AnyView(FilesBrowserView(domainName: domain.name))), at: 0)
+        }
+        tiles.append(ModuleTile("FTP", "Accounts", "arrow.up.arrow.down.circle", .teal, AnyView(FtpAccountsView(domainName: domain.name))))
+        return tiles
+    }
+
+    private var securityTiles: [ModuleTile] {
+        [
+            ModuleTile("Terminal", "Shell", "terminal", .indigo, AnyView(DomainTerminalView(domainName: domain.name))),
+        ]
     }
 
     private var hero: some View {
@@ -89,7 +101,7 @@ struct DomainDetailView: View {
                     .font(.subheadline)
                     .foregroundStyle(QadbakPalette.warning)
             } else {
-                Text("Tap a module below to manage this domain.")
+                Text("Same modules as the web panel — grouped for mobile.")
                     .font(.subheadline)
                     .foregroundStyle(QadbakPalette.muted)
             }
@@ -127,6 +139,40 @@ struct DomainDetailView: View {
         }
     }
 
+    @ViewBuilder
+    private var hostingToggleCard: some View {
+        QBGlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Hosting status")
+                    .font(.headline)
+                    .foregroundStyle(QadbakPalette.text)
+                Text(domain.disabled == true ? "This domain is paused on the server." : "Website and mail are active.")
+                    .font(.caption)
+                    .foregroundStyle(QadbakPalette.muted)
+                QBSecondaryButton(
+                    title: domain.disabled == true ? "Enable hosting" : "Pause hosting",
+                    loading: isTogglingHosting
+                ) {
+                    Task { await toggleHosting() }
+                }
+            }
+        }
+    }
+
+    private func moduleSection(_ title: String, tiles: [ModuleTile]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            QBSectionHeader(title: title)
+            LazyVGrid(columns: actionColumns, spacing: 12) {
+                ForEach(tiles) { tile in
+                    NavigationLink(destination: tile.destination) {
+                        QBActionTile(title: tile.title, subtitle: tile.subtitle, icon: tile.icon, tint: tile.tint)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
     private func formatHostingPlan(_ plan: String) -> String {
         let trimmed = plan.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.lowercased() == "default" { return "Default" }
@@ -145,13 +191,6 @@ struct DomainDetailView: View {
         .font(.subheadline)
     }
 
-    private func actionLink<D: View, L: View>(_ destination: D, @ViewBuilder label: () -> L) -> some View {
-        NavigationLink(destination: destination) {
-            label()
-        }
-        .buttonStyle(.plain)
-    }
-
     private func refreshDomain() async {
         guard let api = appState.api else { return }
         do {
@@ -160,5 +199,39 @@ struct DomainDetailView: View {
         } catch {
             // Keep list-passed domain data on failure.
         }
+    }
+
+    private func toggleHosting() async {
+        guard let api = appState.api else { return }
+        isTogglingHosting = true
+        toggleError = nil
+        defer { isTogglingHosting = false }
+        do {
+            if domain.disabled == true {
+                try await api.enableDomain(domain.name)
+            } else {
+                try await api.disableDomain(domain.name)
+            }
+            await refreshDomain()
+        } catch {
+            toggleError = error.localizedDescription
+        }
+    }
+}
+
+private struct ModuleTile: Identifiable {
+    let id = UUID()
+    let title: String
+    let subtitle: String
+    let icon: String
+    let tint: Color
+    let destination: AnyView
+
+    init(_ title: String, _ subtitle: String, _ icon: String, _ tint: Color, _ destination: AnyView) {
+        self.title = title
+        self.subtitle = subtitle
+        self.icon = icon
+        self.tint = tint
+        self.destination = destination
     }
 }

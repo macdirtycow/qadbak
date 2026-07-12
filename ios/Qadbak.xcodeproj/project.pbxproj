@@ -52,6 +52,14 @@
 		A10000010000000000000043 /* BackupNetworkPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000043 /* BackupNetworkPolicy.swift */; };
 		A10000010000000000000047 /* DomainAppsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000047 /* DomainAppsView.swift */; };
 		A10000010000000000000048 /* AdminAppStoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000048 /* AdminAppStoreView.swift */; };
+		A10000010000000000000049 /* AddMailAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000049 /* AddMailAccountView.swift */; };
+		A10000010000000000000050 /* DatabasesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000050 /* DatabasesView.swift */; };
+		A10000010000000000000051 /* AliasesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000051 /* AliasesView.swift */; };
+		A10000010000000000000052 /* RedirectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000052 /* RedirectsView.swift */; };
+		A10000010000000000000053 /* AdminHealthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000053 /* AdminHealthView.swift */; };
+		A10000010000000000000054 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000054 /* SettingsView.swift */; };
+		A10000010000000000000055 /* CronJobsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000055 /* CronJobsView.swift */; };
+		A10000010000000000000056 /* FtpAccountsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000056 /* FtpAccountsView.swift */; };
 		B10000010000000000000001 /* QadbakWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000001 /* QadbakWidget.swift */; };
 		B10000010000000000000002 /* QadbakWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000002 /* QadbakWidgetBundle.swift */; };
 		B10000010000000000000004 /* QadbakLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000005 /* QadbakLiveActivity.swift */; };
@@ -107,6 +115,14 @@
 		A20000010000000000000043 /* BackupNetworkPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupNetworkPolicy.swift; sourceTree = "<group>"; };
 		A20000010000000000000047 /* DomainAppsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainAppsView.swift; sourceTree = "<group>"; };
 		A20000010000000000000048 /* AdminAppStoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminAppStoreView.swift; sourceTree = "<group>"; };
+		A20000010000000000000049 /* AddMailAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMailAccountView.swift; sourceTree = "<group>"; };
+		A20000010000000000000050 /* DatabasesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabasesView.swift; sourceTree = "<group>"; };
+		A20000010000000000000051 /* AliasesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AliasesView.swift; sourceTree = "<group>"; };
+		A20000010000000000000052 /* RedirectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedirectsView.swift; sourceTree = "<group>"; };
+		A20000010000000000000053 /* AdminHealthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminHealthView.swift; sourceTree = "<group>"; };
+		A20000010000000000000054 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A20000010000000000000055 /* CronJobsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CronJobsView.swift; sourceTree = "<group>"; };
+		A20000010000000000000056 /* FtpAccountsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FtpAccountsView.swift; sourceTree = "<group>"; };
 		B20000010000000000000001 /* QadbakWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakWidget.swift; sourceTree = "<group>"; };
 		B20000010000000000000002 /* QadbakWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakWidgetBundle.swift; sourceTree = "<group>"; };
 		B20000010000000000000005 /* QadbakLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QadbakLiveActivity.swift; sourceTree = "<group>"; };
@@ -242,6 +258,7 @@
 				A20000010000000000000008 /* LoginView.swift */,
 				A20000010000000000000027 /* AppLockView.swift */,
 				A20000010000000000000029 /* ServerSwitcherView.swift */,
+				A20000010000000000000054 /* SettingsView.swift */,
 				A50000010000000000000009 /* Domains */,
 				A50000010000000000000010 /* Admin */,
 				A50000010000000000000011 /* Terminal */,
@@ -265,6 +282,12 @@
 				A20000010000000000000010 /* DomainDetailView.swift */,
 				A20000010000000000000011 /* DnsRecordsView.swift */,
 				A20000010000000000000012 /* MailAccountsView.swift */,
+				A20000010000000000000049 /* AddMailAccountView.swift */,
+				A20000010000000000000051 /* AliasesView.swift */,
+				A20000010000000000000052 /* RedirectsView.swift */,
+				A20000010000000000000055 /* CronJobsView.swift */,
+				A20000010000000000000050 /* DatabasesView.swift */,
+				A20000010000000000000056 /* FtpAccountsView.swift */,
 				A20000010000000000000013 /* SslCertificatesView.swift */,
 				A20000010000000000000014 /* BackupsView.swift */,
 				A20000010000000000000020 /* FilesBrowserView.swift */,
@@ -284,6 +307,7 @@
 			children = (
 				A20000010000000000000036 /* PanelUpdatesView.swift */,
 				A20000010000000000000048 /* AdminAppStoreView.swift */,
+				A20000010000000000000053 /* AdminHealthView.swift */,
 			);
 			path = Admin;
 			sourceTree = "<group>";
@@ -478,6 +502,14 @@
 				A10000010000000000000039 /* TermuxExtraKeysView.swift in Sources */,
 				A10000010000000000000047 /* DomainAppsView.swift in Sources */,
 				A10000010000000000000048 /* AdminAppStoreView.swift in Sources */,
+				A10000010000000000000049 /* AddMailAccountView.swift in Sources */,
+				A10000010000000000000050 /* DatabasesView.swift in Sources */,
+				A10000010000000000000051 /* AliasesView.swift in Sources */,
+				A10000010000000000000052 /* RedirectsView.swift in Sources */,
+				A10000010000000000000053 /* AdminHealthView.swift in Sources */,
+				A10000010000000000000054 /* SettingsView.swift in Sources */,
+				A10000010000000000000055 /* CronJobsView.swift in Sources */,
+				A10000010000000000000056 /* FtpAccountsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

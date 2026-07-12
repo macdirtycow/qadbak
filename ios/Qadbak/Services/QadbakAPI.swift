@@ -196,6 +196,151 @@ final class QadbakAPI {
         return res.users ?? []
     }
 
+    func createMailUser(_ domain: String, user: String, pass: String, real: String?) async throws {
+        let _: OkResponse = try await client.request(
+            "POST",
+            path: domainPath(domain, "/users"),
+            body: MailUserCreateBody(user: user, pass: pass, real: real)
+        )
+    }
+
+    func updateMailUser(_ domain: String, user: String, pass: String?) async throws {
+        let _: OkResponse = try await client.request(
+            "PATCH",
+            path: domainPath(domain, "/users"),
+            body: MailUserUpdateBody(user: user, pass: pass)
+        )
+    }
+
+    func deleteMailUser(_ domain: String, user: String) async throws {
+        let _: OkResponse = try await client.request(
+            "DELETE",
+            path: domainPath(domain, "/users"),
+            body: MailUserDeleteBody(user: user)
+        )
+    }
+
+    func listDatabases(_ domain: String) async throws -> [HostedDatabase] {
+        let res: DatabasesResponse = try await client.request("GET", path: domainPath(domain, "/databases"))
+        return res.databases ?? []
+    }
+
+    func createDatabase(_ domain: String, name: String, pass: String, type: String = "mysql") async throws {
+        let _: OkResponse = try await client.request(
+            "POST",
+            path: domainPath(domain, "/databases"),
+            body: DatabaseCreateBody(name: name, pass: pass, type: type)
+        )
+    }
+
+    func listAliases(_ domain: String) async throws -> [MailAlias] {
+        let res: AliasesResponse = try await client.request("GET", path: domainPath(domain, "/aliases"))
+        return res.aliases ?? []
+    }
+
+    func createAlias(_ domain: String, from: String, to: String) async throws {
+        let _: OkResponse = try await client.request(
+            "POST",
+            path: domainPath(domain, "/aliases"),
+            body: AliasBody(from: from, to: to)
+        )
+    }
+
+    func deleteAlias(_ domain: String, from: String, to: String?) async throws {
+        let _: OkResponse = try await client.request(
+            "DELETE",
+            path: domainPath(domain, "/aliases"),
+            body: AliasBody(from: from, to: to)
+        )
+    }
+
+    func listRedirects(_ domain: String) async throws -> [DomainRedirect] {
+        let res: RedirectsResponse = try await client.request("GET", path: domainPath(domain, "/redirects"))
+        return res.redirects ?? []
+    }
+
+    func createRedirect(_ domain: String, path: String, dest: String, type: String = "301") async throws {
+        let _: OkResponse = try await client.request(
+            "POST",
+            path: domainPath(domain, "/redirects"),
+            body: RedirectBody(path: path, dest: dest, type: type)
+        )
+    }
+
+    func deleteRedirect(_ domain: String, path: String) async throws {
+        let _: OkResponse = try await client.request(
+            "DELETE",
+            path: domainPath(domain, "/redirects"),
+            body: RedirectDeleteBody(path: path)
+        )
+    }
+
+    func enableDomain(_ domain: String) async throws {
+        let _: OkResponse = try await client.request("POST", path: domainPath(domain, "/enable"))
+    }
+
+    func disableDomain(_ domain: String) async throws {
+        let _: OkResponse = try await client.request("POST", path: domainPath(domain, "/disable"))
+    }
+
+    func adminHealth() async throws -> HealthReport {
+        let res: AdminHealthResponse = try await client.request("GET", path: "/api/admin/health")
+        guard let report = res.report else {
+            throw APIError.message("Health report unavailable.")
+        }
+        return report
+    }
+
+    func listCronJobs(_ domain: String) async throws -> (jobs: [CronJob], canEdit: Bool) {
+        let res: CronJobsResponse = try await client.request("GET", path: domainPath(domain, "/cron"))
+        return (res.jobs ?? [], res.canEdit ?? false)
+    }
+
+    func createCronJob(_ domain: String, schedule: String, command: String, user: String?) async throws {
+        let _: OkResponse = try await client.request(
+            "POST",
+            path: domainPath(domain, "/cron"),
+            body: CronJobCreateBody(schedule: schedule, command: command, user: user)
+        )
+    }
+
+    func deleteCronJob(_ domain: String, id: String) async throws {
+        let _: OkResponse = try await client.request(
+            "DELETE",
+            path: domainPath(domain, "/cron"),
+            body: CronJobDeleteBody(id: id)
+        )
+    }
+
+    func listFtpAccounts(_ domain: String) async throws -> [FtpAccount] {
+        let res: FtpAccountsResponse = try await client.request("GET", path: domainPath(domain, "/ftp"))
+        return res.accounts ?? []
+    }
+
+    func createFtpAccount(_ domain: String, user: String, pass: String) async throws {
+        let _: OkResponse = try await client.request(
+            "POST",
+            path: domainPath(domain, "/ftp"),
+            body: FtpAccountBody(user: user, pass: pass)
+        )
+    }
+
+    func updateFtpPassword(_ domain: String, user: String, pass: String) async throws {
+        let _: OkResponse = try await client.request(
+            "PATCH",
+            path: domainPath(domain, "/ftp"),
+            body: FtpAccountBody(user: user, pass: pass)
+        )
+    }
+
+    func deleteFtpAccount(_ domain: String, user: String) async throws {
+        let _: OkResponse = try await client.request(
+            "DELETE",
+            path: domainPath(domain, "/ftp"),
+            body: FtpAccountDeleteBody(user: user)
+        )
+    }
+
     func listMailFolders(_ domain: String, user: String) async throws -> [ImapMailbox] {
         let res: MailFoldersResponse = try await client.request(
             "GET",
@@ -579,4 +724,59 @@ private struct UpdateActionBody: Encodable {
 
 private struct PanelControlBody: Encodable {
     let action: String
+}
+
+private struct MailUserCreateBody: Encodable {
+    let user: String
+    let pass: String
+    let real: String?
+}
+
+private struct MailUserUpdateBody: Encodable {
+    let user: String
+    let pass: String?
+}
+
+private struct MailUserDeleteBody: Encodable {
+    let user: String
+}
+
+private struct DatabaseCreateBody: Encodable {
+    let name: String
+    let pass: String
+    let type: String
+}
+
+private struct AliasBody: Encodable {
+    let from: String
+    let to: String?
+}
+
+private struct RedirectBody: Encodable {
+    let path: String
+    let dest: String
+    let type: String
+}
+
+private struct RedirectDeleteBody: Encodable {
+    let path: String
+}
+
+private struct CronJobCreateBody: Encodable {
+    let schedule: String
+    let command: String
+    let user: String?
+}
+
+private struct CronJobDeleteBody: Encodable {
+    let id: String
+}
+
+private struct FtpAccountBody: Encodable {
+    let user: String
+    let pass: String
+}
+
+private struct FtpAccountDeleteBody: Encodable {
+    let user: String
 }
