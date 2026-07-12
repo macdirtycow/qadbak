@@ -4,6 +4,8 @@
 
 Native **SwiftUI** client for iPhone and iPad (Phases A–C). Source of truth for the app lives in the `qadbak-ios` repository; this folder is kept in sync for panel development.
 
+**License:** the companion app is not redistributable — see [LICENSE](LICENSE). Use only with Qadbak panels you are authorised to access.
+
 ## Open in Xcode
 
 ```bash

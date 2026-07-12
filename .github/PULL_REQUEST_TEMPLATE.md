@@ -1,7 +1,7 @@
 <!--
 Thanks for the PR! A few quick notes:
 
-1. Qadbak Core is Apache 2.0-licensed open source. External PRs for bug
+1. Qadbak is licensed for panel use only (see LICENSE). External PRs for bug
    fixes and documentation are welcome; new features should be scoped via
    a GitHub issue first. See CONTRIBUTING.md for the full guidelines.
 2. Run `npm run lint && npm run test-api` before pushing.

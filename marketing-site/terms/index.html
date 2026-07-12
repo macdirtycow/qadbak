@@ -39,7 +39,7 @@
       <p class="section-label">Legal · Terms</p>
       <h1>Terms of Service</h1>
       <p class="legal-meta">
-        Last updated: 25 May 2026 · Version 1.0 · Governing law: the Netherlands
+        Last updated: 12 July 2026 · Version 1.1 · Governing law: the Netherlands
       </p>
 
       <div class="legal-toc">
@@ -47,7 +47,8 @@
         <ol>
           <li><a href="#accept">Acceptance of these terms</a></li>
           <li><a href="#service">Description of the Service</a></li>
-          <li><a href="#license">License grant &amp; restrictions</a></li>
+          <li><a href="#software">Panel software license</a></li>
+          <li><a href="#license">Premium license grant &amp; restrictions</a></li>
           <li><a href="#one-vps">One VPS per license</a></li>
           <li><a href="#purchase">Purchase, pricing &amp; renewal</a></li>
           <li><a href="#refund">Refunds</a></li>
@@ -78,9 +79,11 @@
         "Qadbak" (the "Service") is a hosting control panel published by Omiiba (the "Provider"). It consists of:
       </p>
       <ul>
-        <li>An open-source core panel (Apache 2.0-licensed) that you install and run on your own server.</li>
+        <li>The <strong>Qadbak panel</strong> software, licensed for installation on servers you control
+          (see <a href="https://github.com/macdirtycow/qadbak/blob/main/LICENSE">Panel License</a>).</li>
         <li>Optional <strong>Premium</strong> modules unlocked by a paid license key issued via
           <span class="code-chip">license.omiiba.dev</span>.</li>
+        <li>The optional <strong>iOS companion app</strong> for authorised panel users.</li>
         <li>The websites at <span class="code-chip">qadbak.com</span> and <span class="code-chip">license.omiiba.dev</span>.</li>
       </ul>
       <p>
@@ -88,11 +91,34 @@
         your own infrastructure (VPS, DNS, storage). The Service is software-only.
       </p>
 
-      <h2 id="license">3. License grant &amp; restrictions</h2>
+      <h2 id="software">3. Panel software license</h2>
+      <p>
+        The Qadbak panel is <strong>not</strong> open-source software. By downloading, installing, or using it,
+        you agree to the <a href="https://github.com/macdirtycow/qadbak/blob/main/LICENSE">Qadbak Panel License</a>
+        in addition to these Terms.
+      </p>
+      <p>You may:</p>
+      <ul>
+        <li>Install and run the panel on infrastructure you own or control to manage hosting for yourself or your customers.</li>
+        <li>Receive updates from the official repository while you comply with these Terms.</li>
+      </ul>
+      <p>You may <strong>not</strong>, without our prior written permission:</p>
+      <ul>
+        <li>Redistribute, republish, mirror, sublicense, or sell the panel software (source or binary).</li>
+        <li>Offer a competing hosting control panel or branded clone built from our codebase.</li>
+        <li>Remove or bypass license activation or Premium heartbeat checks in production use.</li>
+        <li>Redistribute or republish modified copies of the iOS companion app except through channels we authorise.</li>
+      </ul>
+
+      <h2 id="license">4. Premium license grant &amp; restrictions</h2>
       <p>
         Subject to your payment of the applicable fees and your compliance with these Terms, the Provider
         grants you a non-exclusive, non-transferable, non-sublicensable license to use the Premium modules on
         the number of VPS instances permitted by your plan, for the duration of your plan.
+      </p>
+      <p>
+        The panel software license (Section 3) applies to all use of Qadbak. Premium keys add the rights below
+        while your subscription is active.
       </p>
       <p>You may <strong>not</strong>:</p>
       <ul>
@@ -103,12 +129,8 @@
           (e.g. Art. 6 Software Directive 2009/24/EC).</li>
         <li>Use the Service to violate any law, infringe third-party rights, or cause harm.</li>
       </ul>
-      <p>
-        The open-source core panel is licensed separately under the Apache 2.0 License — that license continues to
-        apply to its code regardless of these Terms.
-      </p>
 
-      <h2 id="one-vps">4. One VPS per license</h2>
+      <h2 id="one-vps">5. One VPS per license</h2>
       <p>
         Unless your plan explicitly states otherwise, each license is valid for <strong>one (1)</strong>
         concurrent VPS activation. Moving to a new VPS is supported and free: remove the old activation in
@@ -120,7 +142,7 @@
         no charge for reasonable use.
       </p>
 
-      <h2 id="purchase">5. Purchase, pricing &amp; renewal</h2>
+      <h2 id="purchase">6. Purchase, pricing &amp; renewal</h2>
       <p>
         All prices are listed in EUR on <a href="/#pricing">qadbak.com/#pricing</a> and on the checkout page.
         VAT, if applicable, is calculated by Stripe at checkout based on your billing country.
@@ -136,12 +158,12 @@
         Stripe charges again unless you have cancelled; each renewal extends your license for the next period.
       </p>
 
-      <h2 id="refund">6. Refunds</h2>
+      <h2 id="refund">7. Refunds</h2>
       <p>
         Refund terms are set out in our <a href="/refund">Refund Policy</a>, which forms part of these Terms.
       </p>
 
-      <h2 id="aup">7. Acceptable use</h2>
+      <h2 id="aup">8. Acceptable use</h2>
       <p>You agree not to use the Service to:</p>
       <ul>
         <li>Host or distribute content that is illegal in your jurisdiction or in the Netherlands (e.g. CSAM, malware, fraud kits).</li>
@@ -150,17 +172,17 @@
         <li>Misrepresent your identity in support contact or in license registration data.</li>
       </ul>
 
-      <h2 id="account">8. Account &amp; security</h2>
+      <h2 id="account">9. Account &amp; security</h2>
       <p>
         You are responsible for keeping your license key, panel admin credentials, and any API tokens secret.
         We will treat anyone holding a valid key/token as authorised to act on your behalf, except where you
         have reported a compromise.
       </p>
 
-      <h2 id="termination">9. Suspension &amp; termination</h2>
+      <h2 id="termination">10. Suspension &amp; termination</h2>
       <p>
         We may suspend or revoke a license at any time if we reasonably believe it is being used in violation
-        of these Terms, in particular Sections 3, 4 and 7. Where the breach is curable, we will give you 14
+        of these Terms, in particular Sections 3, 4, 5 and 8. Where the breach is curable, we will give you 14
         days' notice and the chance to fix it. Severe abuse (e.g. shared key distributed publicly) may result
         in immediate revocation without refund.
       </p>
@@ -169,7 +191,7 @@
         provided in the <a href="/refund">Refund Policy</a>.
       </p>
 
-      <h2 id="warranty">10. Warranty disclaimer</h2>
+      <h2 id="warranty">11. Warranty disclaimer</h2>
       <p>
         Except for the mandatory warranties that consumers have under Dutch and EU law, the Service is
         provided <strong>"as is"</strong> and <strong>"as available"</strong>. To the maximum extent permitted
@@ -182,7 +204,7 @@
         services (Stripe, Let's Encrypt, your registrar, etc.).
       </p>
 
-      <h2 id="liability">11. Limitation of liability</h2>
+      <h2 id="liability">12. Limitation of liability</h2>
       <p>
         To the maximum extent permitted by law, the Provider's total aggregate liability for any claim
         arising out of or relating to the Service is limited to the amount you have paid for the license in
@@ -197,14 +219,14 @@
         injury; (iii) fraud; or (iv) anything else that cannot be limited under Dutch or EU consumer law.
       </p>
 
-      <h2 id="indemnify">12. Indemnification</h2>
+      <h2 id="indemnify">13. Indemnification</h2>
       <p>
         You agree to indemnify and hold the Provider harmless against any third-party claim arising from your
         use of the Service in violation of these Terms or in violation of any law, including reasonable legal
         costs.
       </p>
 
-      <h2 id="changes">13. Changes to these terms</h2>
+      <h2 id="changes">14. Changes to these terms</h2>
       <p>
         We may update these Terms from time to time. We will post the new version on this page with a new
         "last updated" date, and notify active license holders by email at least 14 days before material
@@ -215,7 +237,7 @@
         of any unused prepaid subscription period where applicable.
       </p>
 
-      <h2 id="law">14. Governing law &amp; jurisdiction</h2>
+      <h2 id="law">15. Governing law &amp; jurisdiction</h2>
       <p>
         These Terms are governed by the laws of the Netherlands, excluding its conflict-of-law rules and
         excluding the UN Convention on Contracts for the International Sale of Goods (CISG).
@@ -226,7 +248,7 @@
         <a href="https://ec.europa.eu/consumers/odr" rel="noopener">Online Dispute Resolution platform</a>.
       </p>
 
-      <h2 id="contact">15. Contact</h2>
+      <h2 id="contact">16. Contact</h2>
       <p>
         Questions about these Terms? Email
         <a href="mailto:legal@omiiba.dev">legal@omiiba.dev</a>.

@@ -4,9 +4,10 @@
 
 ### Self-hosted hosting control panel for Linux VPS.
 
-Admin and client UI for domains, mail, DNS, TLS, databases, backups, and cron — on **your** server. Open-source core; Premium for resellers, webmail, and white-label.
+Admin and client UI for domains, mail, DNS, TLS, databases, backups, and cron — on **your** server. Native **iOS app** for iPhone and iPad. Premium for resellers, webmail, and white-label.
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/badge/License-Panel%20use%20only-blue.svg)](LICENSE)
+[![iOS app](https://img.shields.io/badge/iOS%20app-1.2.3-0A84FF?logo=apple&logoColor=white)](ios/README.md)
 [![Release](https://img.shields.io/github/v/release/macdirtycow/qadbak?label=release)](https://github.com/macdirtycow/qadbak/releases)
 [![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04%20%7C%2024.04%20%7C%2026.04-E95420?logo=ubuntu&logoColor=white)](docs/LINUX-SUPPORT.md)
 [![Debian](https://img.shields.io/badge/Debian-12-D70A53?logo=debian&logoColor=white)](docs/LINUX-SUPPORT.md)
@@ -17,6 +18,7 @@ Admin and client UI for domains, mail, DNS, TLS, databases, backups, and cron �
 
 [**Website**](https://qadbak.com) ·
 [**Pricing**](https://qadbak.com/#pricing) ·
+[**iOS app**](ios/README.md) ·
 [**Buy a license**](https://license.omiiba.dev/buy) ·
 [**Check a license**](https://license.omiiba.dev) ·
 [**Docs**](docs/) ·
@@ -34,7 +36,8 @@ UI — with a clean split between administrators (who run the host) and clients
 (who only see their own domains).
 
 It's the alternative for people who want **cPanel-class workflows** without
-cPanel's price tag, license server, or 2010 UI.
+cPanel's price tag, license server, or 2010 UI — plus a **native iOS app**
+that talks to the same panel over HTTPS.
 
 ```bash
 git clone https://github.com/macdirtycow/qadbak.git /opt/qadbak
@@ -46,7 +49,7 @@ Three prompts to start (hostname, admin password, Let's Encrypt email) — then 
 
 ## Features
 
-### Core (open source)
+### Core panel
 
 | Area | What you get |
 |------|--------------|
@@ -84,6 +87,71 @@ Three prompts to start (hostname, admin password, Let's Encrypt email) — then 
 
 Website: [qadbak.com](https://qadbak.com) · Market features: [docs/MARKET-FEATURES.md](docs/MARKET-FEATURES.md)
 
+## iOS app (iPhone & iPad)
+
+Native **SwiftUI** companion for your Qadbak panel — same login, same domains,
+Bearer auth (no cookies). Requires **iOS 17+**, a reachable **HTTPS** panel URL,
+and mobile API v1 on the server ([docs/MOBILE-IOS-APP.md](docs/MOBILE-IOS-APP.md)).
+
+**Current version:** 1.2.3 (beta) · Source: [`ios/`](ios/) · Build guide: [ios/README.md](ios/README.md)
+
+### Dashboard
+
+| Feature | Description |
+|---------|-------------|
+| **Domain list** | All hosted domains with running/SSL/container/warning stats |
+| **Multi-server** | Save and switch between panel URLs (e.g. production + staging) |
+| **Account menu** | Profile, Premium plan label, add domain, panel updates, server shell |
+| **Pull to refresh** | Reload domains and widget summary from the panel |
+| **Home Screen widget** | Domain count, SSL expiring soon, urgent actions (App Group) |
+
+### Per domain
+
+| Feature | Description |
+|---------|-------------|
+| **Health** | Public/local probe, SSL days left, repair hints |
+| **Logs** | Live error/access log tail with auto-refresh |
+| **DNS** | List, add, and delete BIND records |
+| **Mail** | Mailboxes — create accounts, quotas, forwarding |
+| **Qmail** | Built-in webmail INBOX, read, compose (**Premium** `webmail-ui`) |
+| **Files** | Browse `public_html`, view text files, delete |
+| **SSL** | Certificate list and Let's Encrypt renew |
+| **Backups** | List archives, run backup now, download; **save to iCloud Drive** |
+| **Terminal** | Domain shell in-app (xterm + Termux-style extra keys) |
+
+**Backups → iCloud:** archives land in `iCloud Drive/Qadbak Backups/{domain}/`.
+Optional auto-save after “Run backup now” and Wi‑Fi-only downloads.
+
+### Admin-only (panel administrator)
+
+| Feature | Description |
+|---------|-------------|
+| **Add domain** | Provision a new hosted domain from the phone |
+| **Panel updates** | Trigger `update-qadbak.sh` flow from the app |
+| **Server terminal** | Root/admin shell on the VPS (WebSocket) |
+
+### Security & auth
+
+- Login with username/password; **TOTP** when enabled on the panel
+- Refresh tokens in **Keychain**; access tokens in memory
+- **Face ID / Touch ID** app lock and sensitive-action confirmation
+- **Push notifications** — device token registered with the panel (APNs)
+- **Client accounts** — Premium `client-rbac`: clients only see assigned domains
+
+Premium features (Qmail, client login, etc.) follow the **server license** —
+the app reads `premiumActive` and capabilities from `GET /api/mobile/v1/me`.
+
+### Get the app
+
+| Channel | How |
+|---------|-----|
+| **TestFlight** | `bash ios/scripts/archive-appstore.sh` — see [ios/docs/APP-STORE.md](ios/docs/APP-STORE.md) |
+| **Sideload (unsigned IPA)** | `bash ios/scripts/build-ipa.sh` → sign with ESign / DefianceSign / Sideloadly |
+| **Xcode** | `open ios/Qadbak.xcodeproj` — set Development Team, run on device or simulator |
+
+TestFlight access (public beta): email **support@omiiba.dev**. The iOS app is
+licensed separately — see [ios/LICENSE](ios/LICENSE).
+
 ## Pricing
 
 | Plan | Price | Use it for |
@@ -95,9 +163,10 @@ Website: [qadbak.com](https://qadbak.com) · Market features: [docs/MARKET-FEATU
 | Pro · **3 years** | **€55** | Billed every 3 years (subscription) |
 
 All plans cover **50 domains** on **1 VPS** with full Premium modules. Monthly
-plans are **Stripe subscriptions** (renew until cancelled in Stripe). The Qadbak core panel is open source and runs without a
-license — Premium unlocks the multi-tenant client modules, RBAC, panel-vhost
-provisioning, per-user PHP-FPM isolation and live admin updates.
+plans are **Stripe subscriptions** (renew until cancelled in Stripe). The panel
+runs without a Premium key for single-admin use — Premium unlocks multi-tenant
+client modules, RBAC, panel-vhost provisioning, per-user PHP-FPM isolation,
+Qmail, and live admin updates.
 
 > [Buy a license →](https://license.omiiba.dev/buy) · [Check or refund an existing key →](https://license.omiiba.dev) · [Refund policy](https://qadbak.com/refund)
 
@@ -108,8 +177,9 @@ provisioning, per-user PHP-FPM isolation and live admin updates.
 | Starting price / month          | **€2.50**  | ~€35   | ~€15  | Free     |
 | 3-year subscription (€55)       | **€55**    |   ✗    |   ✗   | Free     |
 | Modern web UI                   | ✅         | Legacy | Mixed | Functional |
+| Native iOS app                | ✅ Beta    | Apps   | Apps  | ✗        |
 | Admin / client role split       | ✅ Native  | WHM    | ✅    | ✅       |
-| Open source                     | ✅ Apache 2.0 core |   ✗    |   ✗   | GPL      |
+| Panel license (self-host)       | ✅ Panel use |   ✗    |   ✗   | GPL      |
 | EU-based vendor (GDPR)          | 🇳🇱 NL   |  🇺🇸  | EU+US | EU       |
 | Activation in <1 minute         | Email key  | License srv | License key | Install only |
 
@@ -155,7 +225,9 @@ The installer:
 6. Optionally issues a Let's Encrypt certificate for the panel host.
 7. Runs `post-install-verify.sh` (preflight + API + optional Playwright E2E).
 
-When it's done, open `https://your-panel-host/login`. Optional: `sudo bash scripts/configure-ufw-qadbak.sh` for UFW. Native iOS app (beta): [docs/MOBILE-IOS-APP.md](docs/MOBILE-IOS-APP.md).
+When it's done, open `https://your-panel-host/login`. Optional: `sudo bash scripts/configure-ufw-qadbak.sh` for UFW.
+
+**iOS app:** point the app at your panel URL after install — see [iOS app](#ios-app-iphone--ipad) and [docs/MOBILE-IOS-APP.md](docs/MOBILE-IOS-APP.md).
 
 ### Panel-only (any Linux + Node 20+)
 
@@ -186,9 +258,8 @@ sudo bash /opt/qadbak/scripts/fix-panel-now.sh
 sudo bash /opt/qadbak/scripts/diagnose-panel-access.sh panel.example.com
 ```
 
-That's the whole update flow for both Core and Premium customers. The
-panel is **open-core**: Premium source lives in this repo and is gated
-purely by `isPremiumFeatureEnabled()` against the license server's
+That's the whole update flow for all customers. Premium modules in this repo
+are gated by `isPremiumFeatureEnabled()` against the license server's
 feature list — there is no encrypted artifact to download and no
 second activation step. `git pull && npm run build && pm2 restart` is
 equivalent under the hood.
@@ -217,6 +288,7 @@ Defaults are conservative — only the Qadbak panel is removed. Use
 ```mermaid
 flowchart LR
     B[Browser] -->|"HTTPS · 80/443"| N[nginx]
+    I[iOS app] -->|"HTTPS · Bearer"| Q
     N -->|"panel host"| Q[Qadbak — Next.js]
     N -->|"customer domain"| A[Apache + PHP-FPM]
     Q -->|"server-side only"| P["Native provisioner<br/>scripts/provisioning-helper.mjs"]
@@ -240,6 +312,7 @@ src/components/   UI per domain / admin
 scripts/          install, native helpers, update, tests
 install/          qadbak-install.sh, qadbak-uninstall.sh
 deploy/           nginx examples
+ios/              Native SwiftUI app + widget (iPhone/iPad)
 docs/             guides and checklists
 data/             users.example.json (template)
 marketing-site/   static HTML for qadbak.com + legal pages
@@ -249,6 +322,9 @@ marketing-site/   static HTML for qadbak.com + legal pages
 
 | File | Contents |
 |------|----------|
+| [docs/MOBILE-IOS-APP.md](docs/MOBILE-IOS-APP.md) | Mobile API, Bearer auth, push, widgets, iCloud backups |
+| [ios/README.md](ios/README.md) | Xcode setup, IPA build, TestFlight, feature list |
+| [ios/docs/APP-STORE.md](ios/docs/APP-STORE.md) | App Store / TestFlight submission |
 | [docs/LINUX-SUPPORT.md](docs/LINUX-SUPPORT.md) | Ubuntu/Debian native + panel-only + LTS upgrade |
 | [docs/MEDIA-JELLYFIN.md](docs/MEDIA-JELLYFIN.md) | Jellyfin, media library, HTML5 player |
 | [docs/QADBAK-NATIVE-INSTALL.md](docs/QADBAK-NATIVE-INSTALL.md) | Native VPS install in depth |
@@ -321,13 +397,15 @@ code on **your** server (not affiliated with that entity). Full story:
 
 ## License
 
-**Apache License 2.0.** Copyright © 2026 MacDirtyCow / Qadbak and Omiiba.
+**Qadbak Panel License** — panel use only. Copyright © 2026 MacDirtyCow /
+Qadbak and Omiiba.
 
-The Qadbak core panel is open source under the Apache 2.0 License. You can
-install, self-host, modify, and use it commercially without paying anything.
-Premium modules (multi-tenant clients, per-user PHP-FPM isolation, live admin
-updates, RBAC, reseller plans) remain a paid add-on gated by a runtime
-license-key heartbeat — see [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md).
+You may install and run the panel on servers you control to manage hosting.
+You may **not** redistribute, mirror, or republish the software as your own
+product. Premium modules require a paid license key (heartbeat via
+`license.omiiba.dev`) — see [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md).
 
-See [LICENSE](LICENSE), [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md) and
-[NOTICE](NOTICE).
+The iOS companion app has separate terms: [ios/LICENSE](ios/LICENSE).
+
+See [LICENSE](LICENSE), [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md),
+[NOTICE](NOTICE), and [Terms of Service](https://qadbak.com/terms).

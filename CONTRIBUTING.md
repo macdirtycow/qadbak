@@ -1,13 +1,14 @@
 # Contributing to Qadbak
 
-Thank you for your interest. Qadbak Core is **open source** under the
-[Apache 2.0 License](LICENSE).
+Thank you for your interest. Qadbak is licensed for **panel use only** under
+the [Qadbak Panel License](LICENSE). You may run it on servers you control;
+redistribution of the software is not permitted.
 
 ## License of contributions
 
-By submitting a contribution (pull request, patch, or otherwise), you agree
-that your contribution is licensed under the Apache 2.0 License — the same
-license as the rest of the project. See section 5 of the [LICENSE](LICENSE).
+By submitting a contribution (pull request, patch, or otherwise), you grant
+MacDirtyCow / Qadbak and Omiiba the rights needed to use your contribution
+under the same [LICENSE](LICENSE) terms as the rest of the project.
 
 ## Pull requests
 
@@ -23,9 +24,9 @@ window is agreed. See also [.github/SECURITY.md](.github/SECURITY.md).
 
 ## Premium development
 
-Premium modules ship in this same repo but are gated at runtime by a paid
-license key (see [COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md)).
-Bug fixes against Premium code are welcome under the same Apache 2.0 terms.
+Premium modules require a paid license key at runtime (see
+[COMMERCIAL-LICENSING.md](COMMERCIAL-LICENSING.md)). Bug fixes against
+Premium code are welcome under the same license terms.
 
 ## Git branches
 

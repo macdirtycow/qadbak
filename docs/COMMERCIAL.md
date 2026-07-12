@@ -1,21 +1,20 @@
 # Qadbak commercial tiers
 
-Copyright 2026 MacDirtyCow / Qadbak and Omiiba. Core is licensed under
-[Apache 2.0](../LICENSE); Premium modules are a paid add-on (see below).
+Copyright 2026 MacDirtyCow / Qadbak and Omiiba. The panel is licensed for
+**panel use only** — see [LICENSE](../LICENSE). Premium modules require a
+paid key (below).
 
 ## Tiers
 
 | Tier | What you install |
 |------|------------------|
-| **Core** | Public [`macdirtycow/qadbak`](https://github.com/macdirtycow/qadbak) — Apache 2.0 open source, free to self-host (including commercially) |
-| **Premium** | Same repo, paid runtime add-on, activated in **Server admin → License** |
+| **Panel** | Official [`macdirtycow/qadbak`](https://github.com/macdirtycow/qadbak) — install on **your** VPS to manage hosting (not redistributable) |
+| **Premium** | Paid runtime add-on, activated in **Server admin → License** |
 
-Qadbak ships as **open-core**: the Premium feature implementations live
-directly in this public repo alongside Core. A valid license simply
-flips the runtime gate (`isPremiumFeatureEnabled`) and unlocks the
-Premium menu items — no separate download, no signed artifact, no
-second activation step. Same pattern Discourse, GitLab, Sentry,
-Mattermost, and Cal.com use.
+The repository is public so customers can install and update easily. That
+does **not** grant permission to redistribute, mirror, or resell the
+software as a competing product. See [LICENSE](../LICENSE) and
+[qadbak.com/terms](https://qadbak.com/terms).
 
 ## Licensed panel configuration
 
@@ -34,7 +33,7 @@ want defense-in-depth.
 
 ### Existing install — bought Premium later?
 
-If you already have Qadbak Core running and just bought a key, the
+If you already have Qadbak running and just bought a key, the
 one-liner below does pull + rebuild + activate in a single safe pass:
 
 ```bash
@@ -57,7 +56,7 @@ key to release the slot.
 cd /opt/qadbak && sudo bash scripts/update-qadbak.sh
 ```
 
-Identical flow for Core and Premium installs: `git pull`, `npm run
+Identical flow for all installs: `git pull`, `npm run
 build`, `pm2 restart`. The updater runs an opportunistic license
 heartbeat at the end so revocations propagate immediately instead of
 waiting for the next scheduled tick.
@@ -143,21 +142,18 @@ The License page surfaces which trust path is in effect under
 | Env var | Default | What |
 |---------|---------|------|
 | `QADBAK_HEARTBEAT_INTERVAL_HOURS` | `6` | How often the scheduler hits `/v1/heartbeat` |
-| `QADBAK_HEARTBEAT_GRACE_HOURS` | `48` | How long a stale heartbeat is still trusted before downgrading to Core |
+| `QADBAK_HEARTBEAT_GRACE_HOURS` | `48` | How long a stale heartbeat is still trusted before downgrading |
 | `QADBAK_DISABLE_HEARTBEAT_SCHEDULER` | unset | Set `true` to disable the in-process scheduler (e.g. for tests) |
 | `QADBAK_DEBUG_HEARTBEAT` | unset | Set `true` to log each successful heartbeat |
-| `QADBAK_PREMIUM_FEATURES` | unset | Comma-separated dev/CI override; bypasses the license check for the listed features only |
+| `QADBAK_PREMIUM_FEATURES` | unset | Dev/CI only — comma-separated override; ignored in production |
 
-## What about forks?
+## Redistribution and forks
 
-The Apache 2.0 License lets anyone fork Qadbak Core and use it commercially
-— including hosting paying customers — without paying us anything. That's
-intentional: the core panel is genuinely open source.
+You may **not** redistribute, mirror, or offer the Qadbak panel (source or
+binary) as a competing product without written permission. Installing from
+the official repository on servers you control is permitted.
 
-Premium modules ship in the same repo but are gated at runtime by a paid
-license key. You can fork the code and remove the gate yourself, but you'd
-be giving up automatic security updates, premium support, and the goodwill
-of the project. The gate is a fair social contract on top of open-source
-code, not a license-protected restriction.
+Removing license checks or bypassing Premium gates in production violates
+[LICENSE](../LICENSE) and may result in license revocation.
 
 See [COMMERCIAL-LICENSING.md](../COMMERCIAL-LICENSING.md).

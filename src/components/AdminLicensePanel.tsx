@@ -237,8 +237,8 @@ export function AdminLicensePanel({
         <h3 className="font-medium text-white">Activate Premium</h3>
         <p className="mt-2 text-sm text-panel-muted">
           Enter your commercial license key from MacDirtyCow / Omiiba. Premium
-          source ships with this repo (open-core model) — activation simply
-          unlocks the gated features on the running panel.
+          modules unlock on this panel only while your key is active and
+          heartbeat checks succeed.
         </p>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1">

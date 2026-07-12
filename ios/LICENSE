@@ -1,0 +1,57 @@
+Qadbak iOS Companion App License
+Version 1.0 — effective 12 July 2026
+
+Copyright © 2026 MacDirtyCow / Qadbak and Omiiba. All rights reserved.
+
+Contact: legal@omiiba.dev
+
+This license applies to the Qadbak iOS application and widget extension
+in this folder.
+
+--------------------------------------------------------------------------------
+1. Permitted use
+--------------------------------------------------------------------------------
+
+You may install and use the app on devices You own or control to connect to
+Qadbak panel servers that You are authorised to access (Your own panel or
+a panel where an administrator has granted You credentials).
+
+--------------------------------------------------------------------------------
+2. Restrictions
+--------------------------------------------------------------------------------
+
+You may **not**:
+
+  (a) redistribute, republish, sublicense, or sell the app binary or source,
+      including unsigned IPAs, rebranded builds, or app-store clones derived
+      from this codebase;
+  (b) remove copyright or license notices;
+  (c) use the app against panels You are not authorised to access;
+  (d) imply that a modified build is an official Qadbak release.
+
+Official distribution channels are those we publish (App Store, TestFlight,
+or builds we provide). Personal sideloading of an **unmodified** build for
+Your own devices is permitted.
+
+--------------------------------------------------------------------------------
+3. Premium features
+--------------------------------------------------------------------------------
+
+Some features require Premium on the connected panel. The app does not
+contain a separate license key; server-side licensing applies.
+
+--------------------------------------------------------------------------------
+4. Third-party code
+--------------------------------------------------------------------------------
+
+Bundled libraries (for example xterm.js) remain under their respective
+licenses.
+
+--------------------------------------------------------------------------------
+5. Disclaimer
+--------------------------------------------------------------------------------
+
+THE APP IS PROVIDED "AS IS" WITHOUT WARRANTY. See qadbak.com/terms for
+general service terms where applicable.
+
+By installing or using the app, You agree to this license.
