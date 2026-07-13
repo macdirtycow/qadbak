@@ -54,7 +54,11 @@ final class AgentAPIClient: @unchecked Sendable {
             authorized: authorized,
             retried: retried
         )
-        return try JSONDecoder().decode(T.self, from: data)
+        do {
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch let error as DecodingError {
+            throw APIError.message("Agent returned unexpected JSON (\(error.localizedDescription)).")
+        }
     }
 
     func pairingInit() async throws -> AgentPairingInitResponse {

@@ -459,6 +459,7 @@ struct SSHSessionService {
           useradd --system --home "$DATA_DIR" --shell /usr/sbin/nologin "$AGENT_USER"
         fi
         usermod -aG adm "$AGENT_USER" 2>/dev/null || true
+        if getent group systemd-journal &>/dev/null; then usermod -aG systemd-journal "$AGENT_USER" 2>/dev/null || true; fi
         if getent group docker &>/dev/null; then usermod -aG docker "$AGENT_USER" 2>/dev/null || true; fi
         install -d -m 0750 "$INSTALL_DIR" "$DATA_DIR" "$CONFIG_DIR"
         install -m 0750 -o root -g "$AGENT_USER" "$BIN_SRC" "${INSTALL_DIR}/qadbak-agent"

@@ -62,7 +62,10 @@ ensure_user() {
     useradd --system --home "$DATA_DIR" --shell /usr/sbin/nologin "$AGENT_USER"
     log "Created user $AGENT_USER"
   fi
-  usermod -aG adm "$AGENT_USER" 2>/dev/null || true
+	usermod -aG adm "$AGENT_USER" 2>/dev/null || true
+	if getent group systemd-journal &>/dev/null; then
+		usermod -aG systemd-journal "$AGENT_USER" 2>/dev/null || true
+	fi
   if getent group docker &>/dev/null; then
     usermod -aG docker "$AGENT_USER" 2>/dev/null || true
   fi

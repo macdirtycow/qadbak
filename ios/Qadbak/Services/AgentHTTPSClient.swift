@@ -174,30 +174,86 @@ enum AgentHTTPSClient {
     }
 
     private static func parseHTTPResponse(_ data: Data) throws -> Response {
-        guard let raw = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1) else {
-            throw APIError.message("Invalid agent response.")
-        }
-        guard let headerEnd = raw.range(of: "\r\n\r\n") else {
+        let separator = Data([0x0D, 0x0A, 0x0D, 0x0A])
+        guard let headerEnd = data.range(of: separator) else {
             throw APIError.message("Malformed agent HTTP response.")
         }
-        let headerPart = String(raw[..<headerEnd.lowerBound])
-        let bodyStart = raw[headerEnd.upperBound...]
+        let headerData = data[..<headerEnd.lowerBound]
+        guard let headerPart = String(data: headerData, encoding: .utf8)
+            ?? String(data: headerData, encoding: .isoLatin1) else {
+            throw APIError.message("Invalid agent response.")
+        }
+        let bodyData = data[headerEnd.upperBound...]
         let statusLine = headerPart.split(separator: "\r\n", maxSplits: 1).first.map(String.init) ?? ""
         let statusParts = statusLine.split(separator: " ", omittingEmptySubsequences: true)
         guard statusParts.count >= 2, let code = Int(statusParts[1]) else {
             throw APIError.message("Malformed agent status line.")
         }
-
-        var body = Data(bodyStart.utf8)
-        if let contentLength = headerPart
-            .split(separator: "\r\n")
-            .first(where: { $0.lowercased().hasPrefix("content-length:") })
-            .flatMap({ line -> Int? in
-                Int(line.split(separator: ":", maxSplits: 1).last?.trimmingCharacters(in: .whitespaces) ?? "")
-            }) {
-            body = Data(body.prefix(contentLength))
-        }
+        let body = try extractResponseBody(
+            headers: parseHeaderFields(headerPart),
+            body: Data(bodyData)
+        )
         return Response(statusCode: code, body: body)
+    }
+
+    private static func parseHeaderFields(_ headerPart: String) -> [String: String] {
+        var headers: [String: String] = [:]
+        for line in headerPart.split(separator: "\r\n").dropFirst() {
+            guard let colon = line.firstIndex(of: ":") else { continue }
+            let name = String(line[..<colon]).trimmingCharacters(in: .whitespaces).lowercased()
+            let value = String(line[line.index(after: colon)...]).trimmingCharacters(in: .whitespaces)
+            headers[name] = value
+        }
+        return headers
+    }
+
+    private static func extractResponseBody(headers: [String: String], body: Data) throws -> Data {
+        if let contentLength = headers["content-length"], let length = Int(contentLength) {
+            return Data(body.prefix(length))
+        }
+        let transferEncoding = headers["transfer-encoding"]?.lowercased() ?? ""
+        if transferEncoding.contains("chunked") || looksLikeChunkedBody(body) {
+            return try decodeChunkedBody(body)
+        }
+        return body
+    }
+
+    private static func looksLikeChunkedBody(_ body: Data) -> Bool {
+        guard let first = body.first else { return false }
+        return (first >= UInt8(ascii: "0") && first <= UInt8(ascii: "9"))
+            || (first >= UInt8(ascii: "a") && first <= UInt8(ascii: "f"))
+            || (first >= UInt8(ascii: "A") && first <= UInt8(ascii: "F"))
+    }
+
+    private static func decodeChunkedBody(_ data: Data) throws -> Data {
+        var result = Data()
+        var index = data.startIndex
+        let crlf = Data([0x0D, 0x0A])
+
+        while index < data.endIndex {
+            guard let lineEnd = data[index...].range(of: crlf) else { break }
+            let sizeLineData = data[index..<lineEnd.lowerBound]
+            guard let sizeLine = String(data: sizeLineData, encoding: .utf8) else { break }
+            let hexPart = sizeLine.split(separator: ";", maxSplits: 1).first?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard let chunkSize = Int(hexPart, radix: 16), chunkSize >= 0 else {
+                throw APIError.message("Malformed agent HTTP response.")
+            }
+            index = lineEnd.upperBound
+            if chunkSize == 0 {
+                break
+            }
+            let chunkEnd = index + chunkSize
+            guard chunkEnd <= data.endIndex else {
+                throw APIError.message("Malformed agent HTTP response.")
+            }
+            result.append(data[index..<chunkEnd])
+            index = chunkEnd
+            if index < data.endIndex, data[index] == 0x0D {
+                index = data.index(index, offsetBy: 2, limitedBy: data.endIndex) ?? data.endIndex
+            }
+        }
+        return result
     }
 
     private static func secTrustFingerprint(_ trust: sec_trust_t) -> String? {
