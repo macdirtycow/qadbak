@@ -1,7 +1,6 @@
 package panels
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,7 +8,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/macdirtycow/qadbak/agent/internal/httploopback"
 )
 
 type hestiaAuthMode int
@@ -57,22 +57,8 @@ func newHestiaClient(cfg LinkConfig) (*hestiaClient, error) {
 	return &hestiaClient{
 		endpoint: endpoint,
 		auth:     auth,
-		client:   hestiaHTTPClient(endpoint),
+		client:   httploopback.Client(endpoint.scheme, endpoint.port),
 	}, nil
-}
-
-func hestiaHTTPClient(endpoint LoopbackEndpoint) *http.Client {
-	transport := &http.Transport{}
-	if endpoint.scheme == "https" {
-		transport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true, //nolint:gosec // loopback-only panel URL validated in ResolvePanelBaseURL
-			MinVersion:         tls.VersionTLS12,
-		}
-	}
-	return &http.Client{
-		Timeout:   30 * time.Second,
-		Transport: transport,
-	}
 }
 
 func (c *hestiaClient) call(cmd string, args ...string) ([]byte, error) {
@@ -95,8 +81,7 @@ func (c *hestiaClient) exec(cmd string, args ...string) ([]byte, error) {
 		form.Set("password", c.auth.password)
 	}
 
-	endpoint := c.endpoint.URL("/api/")
-	req, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(form.Encode()))
+	req, err := http.NewRequest(http.MethodPost, httploopback.RequestURL("/api/"), strings.NewReader(form.Encode()))
 	if err != nil {
 		return nil, err
 	}
@@ -158,6 +143,6 @@ func testHestiaClient(server *httptest.Server, auth hestiaAuth) *hestiaClient {
 	return &hestiaClient{
 		endpoint: ep,
 		auth:     auth,
-		client:   server.Client(),
+		client:   httploopback.Client(ep.scheme, ep.port),
 	}
 }

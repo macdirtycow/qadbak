@@ -7,7 +7,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
+
+	"github.com/macdirtycow/qadbak/agent/internal/httploopback"
 )
 
 func defaultCasaOSBase() string { return "http://127.0.0.1" }
@@ -86,9 +87,8 @@ func casaOSLogin(endpoint LoopbackEndpoint, username, password string) (string, 
 		"username": username,
 		"password": password,
 	})
-	client := &http.Client{Timeout: 20 * time.Second}
-	url := endpoint.URL("/v2/users/login")
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(payload))
+	client := httploopback.Client(endpoint.scheme, endpoint.port)
+	req, err := http.NewRequest(http.MethodPost, httploopback.RequestURL("/v2/users/login"), bytes.NewReader(payload))
 	if err != nil {
 		return "", err
 	}
@@ -124,9 +124,8 @@ func casaOSGET(endpoint LoopbackEndpoint, token, path string) ([]byte, error) {
 	if !strings.HasPrefix(path, "/") || strings.Contains(path, "..") {
 		return nil, fmt.Errorf("invalid casaos path")
 	}
-	client := &http.Client{Timeout: 20 * time.Second}
-	url := endpoint.URL(path)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	client := httploopback.Client(endpoint.scheme, endpoint.port)
+	req, err := http.NewRequest(http.MethodGet, httploopback.RequestURL(path), nil)
 	if err != nil {
 		return nil, err
 	}

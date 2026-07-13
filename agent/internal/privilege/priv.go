@@ -23,9 +23,11 @@ func Dispatch(args []string) error {
 	case "apt-upgrade":
 		return privAptUpgrade()
 	case "reboot":
-		return RunSimple([]string{"systemctl", "reboot"})
+		_, err := execRootArgv([]string{"systemctl", "reboot"})
+		return err
 	case "shutdown":
-		return RunSimple([]string{"systemctl", "poweroff"})
+		_, err := execRootArgv([]string{"systemctl", "poweroff"})
+		return err
 	case "hestia-cmd":
 		return privHestiaCmd(args[1:])
 	case "agent-upgrade":
@@ -90,7 +92,8 @@ func privSystemctl(args []string) error {
 	if !validate.ServiceUnit(unit) {
 		return fmt.Errorf("invalid service unit")
 	}
-	return RunSimple([]string{"systemctl", action, unit})
+	_, err := execRootArgv([]string{"systemctl", action, unit})
+	return err
 }
 
 func privDocker(args []string) error {
@@ -106,24 +109,35 @@ func privDocker(args []string) error {
 	if !validate.ContainerID(id) {
 		return fmt.Errorf("invalid container id")
 	}
-	return RunSimple([]string{"docker", action, id})
+	_, err := execRootArgv([]string{"docker", action, id})
+	return err
 }
 
 func privAptUpdate() error {
-	return RunSimple([]string{"apt-get", "update", "-qq"})
+	_, err := execRootArgv([]string{"apt-get", "update", "-qq"})
+	return err
 }
 
 func privAptUpgrade() error {
-	return RunSimple([]string{
+	_, err := execRootArgv([]string{
 		"env", "DEBIAN_FRONTEND=noninteractive",
 		"apt-get", "upgrade", "-y",
 		"-o", "Dpkg::Options::=--force-confdef",
 		"-o", "Dpkg::Options::=--force-confold",
 	})
+	return err
 }
 
 // MainExit runs priv dispatch and exits the process (for sudo entrypoint).
 func MainExit(args []string) {
+	if len(args) > 0 && args[0] == "--args-stdin" {
+		decoded, err := readPrivArgvStdin()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		args = decoded
+	}
 	if err := Dispatch(args); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)

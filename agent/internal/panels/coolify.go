@@ -6,7 +6,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
+
+	"github.com/macdirtycow/qadbak/agent/internal/httploopback"
 )
 
 func defaultCoolifyBase() string { return "http://127.0.0.1:8000" }
@@ -73,13 +74,12 @@ func coolifyRequest(endpoint LoopbackEndpoint, token, method, path string, body 
 	if !strings.HasPrefix(path, "/") || strings.Contains(path, "..") {
 		return nil, fmt.Errorf("invalid coolify path")
 	}
-	url := endpoint.URL(path)
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := httploopback.Client(endpoint.scheme, endpoint.port)
 	var reader io.Reader
 	if body != nil {
 		reader = strings.NewReader(string(body))
 	}
-	req, err := http.NewRequest(method, url, reader)
+	req, err := http.NewRequest(method, httploopback.RequestURL(path), reader)
 	if err != nil {
 		return nil, err
 	}
