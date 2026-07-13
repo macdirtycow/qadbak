@@ -580,12 +580,12 @@ func (h *Handler) panelDomainBackupsDownloadRoute(w http.ResponseWriter, r *http
 	if !ok {
 		return
 	}
-	path, err := panels.HestiaResolveBackup(*cfg, domain, name)
+	filename, err := panels.HestiaResolveBackup(*cfg, domain, name)
 	if err != nil {
 		WriteJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": err.Error()})
 		return
 	}
-	if err := panels.StreamBackupFile(w, path); err != nil {
+	if err := panels.StreamBackupFile(w, filename); err != nil {
 		WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
 	}
 }

@@ -337,3 +337,51 @@ func runPrivInProcess(argv []string) ([]byte, error) {
 	}
 	return out, nil
 }
+
+func runPrivInProcessStream(argv []string, w io.Writer) error {
+	if err := validatePrivArgv(argv); err != nil {
+		return err
+	}
+	r, wPipe, err := os.Pipe()
+	if err != nil {
+		return err
+	}
+	old := os.Stdout
+	os.Stdout = wPipe
+	dispatchErr := Dispatch(argv)
+	wPipe.Close()
+	os.Stdout = old
+	_, copyErr := io.Copy(w, r)
+	r.Close()
+	if dispatchErr != nil {
+		return dispatchErr
+	}
+	return copyErr
+}
+
+func execSudoPrivStream(argv []string, w io.Writer) error {
+	if err := validatePrivArgv(argv); err != nil {
+		return err
+	}
+	bin := BinaryPath()
+	if !strings.HasPrefix(bin, "/") {
+		return fmt.Errorf("invalid agent binary path")
+	}
+	payload, err := json.Marshal(argv)
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command("sudo", "-n", bin, "priv", "--args-stdin")
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = w
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		return fmt.Errorf("%s", msg)
+	}
+	return nil
+}

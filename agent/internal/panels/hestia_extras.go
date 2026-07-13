@@ -390,5 +390,5 @@ func HestiaResolveBackup(cfg LinkConfig, domain, name string) (string, error) {
 	if !found {
 		return "", fmt.Errorf("backup not found: %s", base)
 	}
-	return filepath.Join("/backup", base), nil
+	return base, nil
 }

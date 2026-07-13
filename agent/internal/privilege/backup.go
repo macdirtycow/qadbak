@@ -10,8 +10,6 @@ import (
 	"github.com/macdirtycow/qadbak/agent/internal/validate"
 )
 
-const backupRoot = "/backup"
-
 func privBackupCat(args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("backup-cat requires filename")
@@ -20,7 +18,10 @@ func privBackupCat(args []string) error {
 	if !validate.BackupFilename(name) {
 		return fmt.Errorf("invalid backup filename")
 	}
-	path := filepath.Join(backupRoot, name)
+	path, err := validate.BackupAbsPath(name)
+	if err != nil {
+		return err
+	}
 	f, err := os.Open(path)
 	if err != nil {
 		return err
