@@ -10,7 +10,7 @@ struct AgentUpgradeView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showSSHFallback = false
-    @State private var username = "root"
+    @State private var username = ""
     @State private var password = ""
     @State private var usePassword = true
     @State private var privateKeyPEM = ""
@@ -63,6 +63,20 @@ struct AgentUpgradeView: View {
                 }
             }
             .preferredColorScheme(.dark)
+            .onAppear {
+                if username.isEmpty {
+                    let saved = server.username?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    username = saved.isEmpty ? "root" : saved
+                }
+            }
+            .task {
+                if server.capabilities.agentSelfUpgrade { return }
+                if let caps = try? await client.capabilities().capabilities?.toServerCapabilities(),
+                   caps.agentSelfUpgrade {
+                    return
+                }
+                showSSHFallback = true
+            }
         }
     }
 

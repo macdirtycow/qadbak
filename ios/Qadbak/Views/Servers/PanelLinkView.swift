@@ -175,7 +175,7 @@ struct PanelLinkView: View {
 
     private func loadSetupHints() async {
         guard panel == .hestiaCP, server.isAgentManaged else { return }
-        guard let client = appState.makeAgentClient(for: server) else { return }
+        guard let client = appState.ensureAgentClient(for: server) else { return }
         useAccessKey = true
         if baseURL.isEmpty {
             baseURL = defaultBasePlaceholder
@@ -201,14 +201,14 @@ struct PanelLinkView: View {
         errorMessage = nil
         defer { isAutoSettingUp = false }
 
-        guard let client = appState.makeAgentClient(for: server) else {
+        guard let client = appState.ensureAgentClient(for: server) else {
             errorMessage = "Agent session not available."
             return
         }
 
         do {
             let res = try await client.hestiaBootstrap(autoLink: true)
-            guard res.ok != false else {
+            if res.ok == false {
                 errorMessage = res.error ?? "Automatic Hestia setup failed."
                 if let key = res.accessKey, let secret = res.secretKey {
                     accessKey = key
@@ -221,7 +221,11 @@ struct PanelLinkView: View {
                 return
             }
             if res.linked == true {
-                await applyLinkedCapabilities(res.capabilities)
+                await appState.applyPanelLinkResult(
+                    serverId: server.id,
+                    panel: panel,
+                    capabilities: res.capabilities
+                )
                 await onLinked()
                 dismiss()
                 return
@@ -257,36 +261,24 @@ struct PanelLinkView: View {
         )
 
         do {
-            guard let client = appState.makeAgentClient(for: server) else {
+            guard let client = appState.ensureAgentClient(for: server) else {
                 errorMessage = "Agent session not available."
                 return
             }
             let res = try await client.linkPanel(request)
-            if res.ok != true {
+            if res.ok == false {
                 errorMessage = res.error ?? "Could not link panel."
                 return
             }
-            await applyLinkedCapabilities(res.capabilities)
+            await appState.applyPanelLinkResult(
+                serverId: server.id,
+                panel: panel,
+                capabilities: res.capabilities
+            )
             await onLinked()
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
-        }
-    }
-
-    private func applyLinkedCapabilities(_ caps: AgentCapabilitiesPayload?) async {
-        if let caps {
-            var updated = server
-            updated.capabilities = caps.toServerCapabilities()
-            if panel == .hestiaCP {
-                updated.serverKind = .hestiaCP
-            }
-            appState.updateServerProfileIfExists(updated)
-            if appState.activeServerId == server.id {
-                await appState.refreshActiveServerCapabilities()
-            }
-        } else {
-            await appState.refreshActiveServerCapabilities()
         }
     }
 }

@@ -12,7 +12,7 @@ enum AgentUpgradeService {
         let newVersion: String
     }
 
-    /// Upgrade using the paired HTTPS API when `sshSettings` is nil, otherwise SSH.
+    /// Upgrade using HTTPS when supported, otherwise SSH.
     static func upgrade(
         server: ManagedServer,
         client: AgentAPIClient,
@@ -25,7 +25,14 @@ enum AgentUpgradeService {
         let verified = try AgentInstallService.verifiedBinary(architecture: arch)
         let expectedSHA = verified.manifest.binaries[verified.architectureKey]?.sha256.lowercased() ?? ""
 
-        if sshSettings == nil {
+        let httpsSupported: Bool
+        if sshSettings != nil {
+            httpsSupported = false
+        } else {
+            httpsSupported = await supportsHTTPSUpgrade(client: client, server: server)
+        }
+
+        if httpsSupported {
             onProgress?("Uploading agent via secure connection…")
             do {
                 try await client.upgradeAgent(
@@ -34,8 +41,13 @@ enum AgentUpgradeService {
                     sha256: expectedSHA
                 )
             } catch let error as APIError {
-                if case .http(let code, _) = error, code == 404 || code == 405 {
-                    throw APIError.message("This agent version does not support in-app upgrade yet. Use SSH.")
+                if case .http(let code, let message) = error {
+                    if code == 404 || code == 405 {
+                        throw APIError.message("This agent version does not support in-app upgrade yet. Use SSH.")
+                    }
+                    if code == 403, message?.lowercased().contains("capability") == true {
+                        throw APIError.message("Agent upgrade is not enabled on this server. Use SSH.")
+                    }
                 }
                 if !isRestartDisconnect(error) {
                     throw error
@@ -54,10 +66,14 @@ enum AgentUpgradeService {
             return Outcome(method: .https, newVersion: onlineVersion)
         }
 
+        guard let sshSettings else {
+            throw APIError.message("This agent cannot upgrade over HTTPS yet. Use SSH below.")
+        }
+
         onProgress?("Uploading via SSH…")
         let fingerprint = KeychainStore().loadSshHostKeyFingerprint(serverId: server.id)
         try await SSHSessionService().upgradeAgent(
-            settings: sshSettings!,
+            settings: sshSettings,
             knownHostFingerprint: fingerprint,
             binary: verified.data,
             agentPort: server.agentPort ?? 9443
@@ -98,11 +114,32 @@ enum AgentUpgradeService {
         throw APIError.message("Agent did not come back online after upgrade.")
     }
 
+    private static func supportsHTTPSUpgrade(client: AgentAPIClient, server: ManagedServer) async -> Bool {
+        if server.capabilities.agentSelfUpgrade {
+            return true
+        }
+        if let caps = try? await client.capabilities().capabilities?.toServerCapabilities(),
+           caps.agentSelfUpgrade {
+            return true
+        }
+        return false
+    }
+
     private static func isRestartDisconnect(_ error: Error) -> Bool {
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .networkConnectionLost, .notConnectedToInternet, .cannotConnectToHost,
+                 .timedOut, .cancelled, .secureConnectionFailed:
+                return true
+            default:
+                break
+            }
+        }
         let text = error.localizedDescription.lowercased()
         return text.contains("connection reset")
             || text.contains("broken pipe")
             || text.contains("cancelled")
             || text.contains("timed out")
+            || text.contains("connection lost")
     }
 }

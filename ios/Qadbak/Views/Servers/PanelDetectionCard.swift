@@ -1,5 +1,10 @@
 import SwiftUI
 
+private struct PanelLinkSheetItem: Identifiable {
+    let panel: ServerKind
+    var id: String { panel.rawValue }
+}
+
 struct PanelDetectionCard: View {
     @Environment(AppState.self) private var appState
 
@@ -9,10 +14,25 @@ struct PanelDetectionCard: View {
     @State private var overview: AgentPanelOverviewPayload?
     @State private var isLoading = false
     @State private var errorMessage: String?
-    @State private var showLinkSheet = false
+    @State private var linkSheetItem: PanelLinkSheetItem?
+    @State private var canAutoSetupHestia = false
+
+    private var liveServer: ManagedServer {
+        appState.savedServers.first(where: { $0.id == server.id }) ?? server
+    }
+
+    private var detectedKind: ServerKind? {
+        if let kind = liveServer.panelDetection?.detectedPanel {
+            return kind
+        }
+        if liveServer.serverKind.isOpenSourceLinkable {
+            return liveServer.serverKind
+        }
+        return nil
+    }
 
     var body: some View {
-        if let detection = server.panelDetection, let kind = detection.detectedPanel {
+        if let kind = detectedKind {
             QBGlassCard {
                 VStack(alignment: .leading, spacing: 10) {
                     Label("Detected panel", systemImage: "viewfinder")
@@ -21,15 +41,20 @@ struct PanelDetectionCard: View {
 
                     HStack(spacing: 8) {
                         QBBadge(text: kind.displayName, tone: badgeTone(for: kind))
-                        if let confidence = detection.confidence, !confidence.isEmpty {
+                        if let confidence = liveServer.panelDetection?.confidence, !confidence.isEmpty {
                             QBBadge(text: "\(confidence) confidence", tone: confidenceTone(confidence))
                         }
                         if linkStatus?.linked == true {
                             QBBadge(text: "Linked", tone: .success)
                         }
+                        if liveServer.capabilities.domainHosting {
+                            QBBadge(text: "Domains", tone: .success)
+                        } else if liveServer.capabilities.panelApps {
+                            QBBadge(text: "Apps", tone: .success)
+                        }
                     }
 
-                    if let signals = detection.signals, !signals.isEmpty {
+                    if let signals = liveServer.panelDetection?.signals, !signals.isEmpty {
                         Text(signals.joined(separator: " · "))
                             .font(.caption)
                             .foregroundStyle(QadbakPalette.muted)
@@ -46,12 +71,13 @@ struct PanelDetectionCard: View {
                     }
                 }
             }
-            .task(id: server.id) { await reload() }
-            .sheet(isPresented: $showLinkSheet) {
-                if kind.isOpenSourceLinkable {
-                    PanelLinkView(server: server, panel: kind) {
-                        await reload()
-                    }
+            .task(id: server.id) {
+                await refreshDetectionIfNeeded()
+                await reload()
+            }
+            .sheet(item: $linkSheetItem) { item in
+                PanelLinkView(server: liveServer, panel: item.panel) {
+                    await reload()
                 }
             }
         }
@@ -65,19 +91,26 @@ struct PanelDetectionCard: View {
                 HStack(spacing: 12) {
                     Button("Refresh") { Task { await reload() } }
                         .font(.caption.weight(.semibold))
-                    if server.capabilities.domainHosting || server.capabilities.panelApps {
-                        QBBadge(text: server.capabilities.domainHosting ? "Domains" : "Apps", tone: .success)
-                    }
                     Button("Unlink", role: .destructive) { Task { await unlink() } }
                         .font(.caption.weight(.semibold))
                 }
             } else {
-                Text("Link \(kind.displayName) with one tap (Hestia) or paste API credentials. Domains, mail, and apps unlock after linking.")
+                Text("Link \(kind.displayName) to unlock Domains, mail, DNS, SSL, and backups in the app.")
                     .font(.caption)
                     .foregroundStyle(QadbakPalette.muted)
-                Button("Link \(kind.displayName)") { showLinkSheet = true }
+                if kind == .hestiaCP, canAutoSetupHestia {
+                    Button("Link HestiaCP automatically") {
+                        Task { await autoLinkHestia() }
+                    }
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(QadbakPalette.accent)
+                    .buttonStyle(.borderedProminent)
+                    .tint(QadbakPalette.accent)
+                }
+                Button(kind == .hestiaCP && canAutoSetupHestia ? "Enter credentials manually" : "Link \(kind.displayName)") {
+                    linkSheetItem = PanelLinkSheetItem(panel: kind)
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(QadbakPalette.accent)
             }
         } else if kind == .qadbakPanel {
             Text("Add this host as a Qadbak panel server (panel URL + mobile login) for domains, mail, and terminal.")
@@ -133,12 +166,28 @@ struct PanelDetectionCard: View {
         }
     }
 
+    private func refreshDetectionIfNeeded() async {
+        guard liveServer.panelDetection?.detectedPanel == nil else { return }
+        guard let client = appState.ensureAgentClient(for: liveServer) else { return }
+        if let detection = try? await client.panelDetection().panelDetection?.toPanelDetection() {
+            var updated = liveServer
+            updated.panelDetection = detection
+            if let kind = detection.detectedPanel, kind != .genericLinux {
+                updated.serverKind = kind
+            }
+            appState.updateServerProfileIfExists(updated)
+        }
+    }
+
     private func reload() async {
-        guard server.isAgentManaged else { return }
+        guard liveServer.isAgentManaged else { return }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
-        guard let client = appState.makeAgentClient(for: server) else { return }
+        guard let client = appState.ensureAgentClient(for: liveServer) else {
+            errorMessage = "Agent session not available. Re-open this server from the server list."
+            return
+        }
         do {
             let statusRes = try await client.panelLinkStatus()
             linkStatus = statusRes.status
@@ -147,13 +196,48 @@ struct PanelDetectionCard: View {
             } else {
                 overview = nil
             }
+            if let setup = statusRes.hestiaSetup {
+                canAutoSetupHestia = setup.canAutoSetup == true
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
+    private func autoLinkHestia() async {
+        guard let client = appState.ensureAgentClient(for: liveServer) else {
+            errorMessage = "Agent session not available."
+            return
+        }
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        do {
+            let res = try await client.hestiaBootstrap(autoLink: true)
+            if res.ok == false {
+                errorMessage = res.error ?? "Automatic Hestia setup failed."
+                linkSheetItem = PanelLinkSheetItem(panel: .hestiaCP)
+                return
+            }
+            if res.linked == true {
+                await appState.applyPanelLinkResult(
+                    serverId: liveServer.id,
+                    panel: .hestiaCP,
+                    capabilities: res.capabilities
+                )
+                await reload()
+                return
+            }
+            errorMessage = "Keys created but link did not complete. Finish in the form."
+            linkSheetItem = PanelLinkSheetItem(panel: .hestiaCP)
+        } catch {
+            errorMessage = error.localizedDescription
+            linkSheetItem = PanelLinkSheetItem(panel: .hestiaCP)
+        }
+    }
+
     private func unlink() async {
-        guard let client = appState.makeAgentClient(for: server) else { return }
+        guard let client = appState.ensureAgentClient(for: liveServer) else { return }
         isLoading = true
         defer { isLoading = false }
         do {

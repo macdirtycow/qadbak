@@ -130,7 +130,10 @@ func (h *Handler) panelLinkDelete(w http.ResponseWriter, r *http.Request) {
 		target = cfg.Panel
 	}
 	h.audit.Record("panels.unlink", target, target, clientIP(r), "ok")
-	WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
+	WriteJSON(w, http.StatusOK, map[string]any{
+		"ok":           true,
+		"capabilities": h.capabilitiesMap(),
+	})
 }
 
 func (h *Handler) panelOverview(w http.ResponseWriter, r *http.Request) {

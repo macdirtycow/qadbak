@@ -48,7 +48,7 @@ struct AgentServerDashboardView: View {
             if let server = appState.activeServer,
                let manifest = upgradeManifest,
                let version = overview?.agentVersion,
-               let client = (appState.activeProvider as? QadbakAgentProvider)?.apiClient {
+               let client = appState.activeAgentClient {
                 AgentUpgradeView(
                     server: server,
                     manifest: manifest,

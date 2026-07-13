@@ -41,6 +41,14 @@ final class AppState {
         return savedServers.first(where: { $0.id == activeServerId })
     }
 
+    /// Agent API client for the active server (HTTPS / Tailscale).
+    var activeAgentClient: AgentAPIClient? {
+        if let provider = activeProvider as? QadbakAgentProvider {
+            return provider.apiClient
+        }
+        return agentClient
+    }
+
     var isClientAccount: Bool {
         role == "client"
     }
@@ -378,7 +386,7 @@ final class AppState {
 
     func refreshActiveServerCapabilities() async {
         guard let server = activeServer, server.isAgentManaged,
-              let client = makeAgentClient(for: server) else { return }
+              let client = ensureAgentClient(for: server) else { return }
         do {
             let res = try await client.capabilities()
             if let caps = res.capabilities?.toServerCapabilities() {
@@ -392,6 +400,42 @@ final class AppState {
         }
     }
 
+    /// Apply panel link success: persist capabilities, refresh hosting API, and unlock Domains/Apps tabs.
+    func applyPanelLinkResult(
+        serverId: String,
+        panel: ServerKind,
+        capabilities: AgentCapabilitiesPayload?
+    ) async {
+        guard var profile = savedServers.first(where: { $0.id == serverId }) else { return }
+        if let capabilities {
+            profile.capabilities = capabilities.toServerCapabilities()
+        }
+        switch panel {
+        case .hestiaCP: profile.serverKind = .hestiaCP
+        case .coolify: profile.serverKind = .coolify
+        case .casaOS: profile.serverKind = .casaOS
+        default: break
+        }
+        profile.connectionStatus = .online
+        profile.lastSeen = Date()
+        upsertServer(profile)
+        if activeServerId == serverId {
+            _ = ensureAgentClient(for: profile)
+            await refreshActiveServerCapabilities()
+        }
+    }
+
+    func ensureAgentClient(for server: ManagedServer) -> AgentAPIClient? {
+        guard server.isAgentManaged, hasStoredSession(for: server) else { return nil }
+        if activeServerId == server.id {
+            if agentClient == nil {
+                agentClient = makeAgentClient(for: server, accessToken: nil)
+            }
+            return agentClient
+        }
+        return makeAgentClient(for: server, accessToken: nil)
+    }
+
     func updateActiveServerProfile(_ profile: ManagedServer) {
         upsertServer(profile)
     }
@@ -402,8 +446,7 @@ final class AppState {
     }
 
     func makeAgentClient(for server: ManagedServer) -> AgentAPIClient? {
-        guard server.isAgentManaged, hasStoredSession(for: server) else { return nil }
-        return makeAgentClient(for: server, accessToken: nil)
+        ensureAgentClient(for: server)
     }
 
     var hasAgentServers: Bool {
@@ -564,6 +607,12 @@ final class AppState {
         keychain.saveManagedServers(next)
         savedServers = next.sorted { $0.lastUsedAt > $1.lastUsedAt }
         if let server = savedServers.first(where: { $0.id == profile.id }) {
+            if server.id == activeServerId,
+               server.isAgentManaged,
+               server.authenticationMethod == .agentToken,
+               agentClient == nil {
+                agentClient = makeAgentClient(for: server, accessToken: nil)
+            }
             activeProvider = ServerProviderFactory.makeProvider(
                 for: server,
                 api: api,

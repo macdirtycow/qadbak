@@ -12,23 +12,18 @@ func OpenBackupFile(name string) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !backupFilename.MatchString(base) {
-		return nil, fmt.Errorf("invalid backup filename")
-	}
 	if strings.Contains(base, "/") || strings.Contains(base, "\\") || strings.Contains(base, "..") {
 		return nil, fmt.Errorf("invalid backup filename")
 	}
-	return os.Open(BackupDir + "/" + base)
-}
-
-// RemoveUpgradeStaging removes a validated agent upgrade staging binary.
-func RemoveUpgradeStaging(path string) error {
-	clean, err := UpgradeStagingPath(path)
+	fsys := os.DirFS(BackupDir)
+	file, err := fsys.Open(base)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err := os.Remove(clean); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("remove staging binary: %w", err)
+	f, ok := file.(*os.File)
+	if !ok {
+		_ = file.Close()
+		return nil, fmt.Errorf("backup file open failed")
 	}
-	return nil
+	return f, nil
 }
