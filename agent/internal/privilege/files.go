@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/macdirtycow/qadbak/agent/internal/validate"
 )
 
 const (
@@ -141,13 +143,21 @@ func privDomainFS(args []string) error {
 	}
 	switch args[0] {
 	case "list":
-		entries, err := domainFSList(args[1])
+		resolved, err := assertHomePath(args[1])
+		if err != nil {
+			return err
+		}
+		entries, err := domainFSList(resolved)
 		if err != nil {
 			return err
 		}
 		return emitJSON(map[string]any{"ok": true, "entries": entries})
 	case "read":
-		content, enc, size, err := domainFSRead(args[1])
+		resolved, err := assertHomePath(args[1])
+		if err != nil {
+			return err
+		}
+		content, enc, size, err := domainFSRead(resolved)
 		if err != nil {
 			return err
 		}
@@ -156,21 +166,33 @@ func privDomainFS(args []string) error {
 		if len(args) < 3 {
 			return fmt.Errorf("invalid write invocation")
 		}
+		resolved, err := assertHomePath(args[1])
+		if err != nil {
+			return err
+		}
 		raw, err := base64.StdEncoding.DecodeString(args[2])
 		if err != nil {
 			return fmt.Errorf("invalid write payload")
 		}
-		if err := domainFSWrite(args[1], string(raw)); err != nil {
+		if err := domainFSWrite(resolved, string(raw)); err != nil {
 			return err
 		}
 		return emitJSON(map[string]any{"ok": true})
 	case "mkdir":
-		if err := domainFSMkdir(args[1]); err != nil {
+		resolved, err := assertHomePath(args[1])
+		if err != nil {
+			return err
+		}
+		if err := domainFSMkdir(resolved); err != nil {
 			return err
 		}
 		return emitJSON(map[string]any{"ok": true})
 	case "delete":
-		if err := domainFSDelete(args[1]); err != nil {
+		resolved, err := assertHomePath(args[1])
+		if err != nil {
+			return err
+		}
+		if err := domainFSDelete(resolved); err != nil {
 			return err
 		}
 		return emitJSON(map[string]any{"ok": true})
@@ -178,7 +200,15 @@ func privDomainFS(args []string) error {
 		if len(args) < 3 {
 			return fmt.Errorf("invalid move invocation")
 		}
-		if err := domainFSMove(args[1], args[2]); err != nil {
+		src, err := assertHomePath(args[1])
+		if err != nil {
+			return err
+		}
+		dest, err := assertHomePath(args[2])
+		if err != nil {
+			return err
+		}
+		if err := domainFSMove(src, dest); err != nil {
 			return err
 		}
 		return emitJSON(map[string]any{"ok": true})
@@ -186,11 +216,15 @@ func privDomainFS(args []string) error {
 		if len(args) < 4 {
 			return fmt.Errorf("invalid upload invocation")
 		}
-		data, err := base64.StdEncoding.DecodeString(args[3])
+		dir, err := assertHomePath(args[1])
+		if err != nil {
+			return err
+		}
+		raw, err := base64.StdEncoding.DecodeString(args[3])
 		if err != nil {
 			return fmt.Errorf("invalid upload payload")
 		}
-		if err := domainFSUpload(args[1], args[2], data); err != nil {
+		if err := domainFSUpload(dir, args[2], raw); err != nil {
 			return err
 		}
 		return emitJSON(map[string]any{"ok": true})
@@ -200,6 +234,10 @@ func privDomainFS(args []string) error {
 }
 
 func domainFSList(resolved string) ([]fsEntry, error) {
+	resolved, err := mustHomePath(resolved)
+	if err != nil {
+		return nil, err
+	}
 	st, err := os.Stat(resolved)
 	if err != nil {
 		return nil, err
@@ -235,6 +273,10 @@ func domainFSList(resolved string) ([]fsEntry, error) {
 }
 
 func domainFSRead(resolved string) (string, string, int64, error) {
+	resolved, err := mustHomePath(resolved)
+	if err != nil {
+		return "", "", 0, err
+	}
 	st, err := os.Stat(resolved)
 	if err != nil {
 		return "", "", 0, err
@@ -262,6 +304,10 @@ func domainFSRead(resolved string) (string, string, int64, error) {
 }
 
 func domainFSWrite(resolved, content string) error {
+	resolved, err := mustHomePath(resolved)
+	if err != nil {
+		return err
+	}
 	if len(content) > maxFSWriteBytes {
 		return fmt.Errorf("file too large")
 	}
@@ -280,6 +326,10 @@ func domainFSWrite(resolved, content string) error {
 }
 
 func domainFSMkdir(resolved string) error {
+	resolved, err := mustHomePath(resolved)
+	if err != nil {
+		return err
+	}
 	parent := filepath.Dir(resolved)
 	if _, err := assertHomePath(parent); err != nil {
 		return err
@@ -292,6 +342,10 @@ func domainFSMkdir(resolved string) error {
 }
 
 func domainFSDelete(resolved string) error {
+	resolved, err := mustHomePath(resolved)
+	if err != nil {
+		return err
+	}
 	st, err := os.Stat(resolved)
 	if err != nil {
 		return err
@@ -303,6 +357,14 @@ func domainFSDelete(resolved string) error {
 }
 
 func domainFSMove(src, dest string) error {
+	src, err := mustHomePath(src)
+	if err != nil {
+		return err
+	}
+	dest, err = mustHomePath(dest)
+	if err != nil {
+		return err
+	}
 	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
 		return err
 	}
@@ -314,19 +376,15 @@ func domainFSMove(src, dest string) error {
 }
 
 func domainFSUpload(dir, name string, data []byte) error {
+	dir, err := mustHomePath(dir)
+	if err != nil {
+		return err
+	}
 	if len(data) > maxFSUploadBytes {
 		return fmt.Errorf("upload too large")
 	}
-	safe := safeBaseName(name)
-	if safe == "" {
-		return fmt.Errorf("invalid filename")
-	}
-	st, err := os.Stat(dir)
-	if err != nil || !st.IsDir() {
-		return fmt.Errorf("destination is not a directory")
-	}
-	target := filepath.Join(dir, safe)
-	if _, err := assertHomePath(target); err != nil {
+	target, err := validate.HomeJoinFile(dir, name)
+	if err != nil {
 		return err
 	}
 	if err := os.WriteFile(target, data, 0o644); err != nil {
@@ -355,44 +413,15 @@ func parseFSEntries(out []byte) ([]fsEntry, error) {
 }
 
 func assertHomePath(target string) (string, error) {
-	clean := filepath.Clean(strings.TrimSpace(target))
-	if clean == "" || !filepath.IsAbs(clean) {
-		return "", fmt.Errorf("invalid path")
-	}
-	if clean != "/home" && !strings.HasPrefix(clean, "/home/") {
-		return "", fmt.Errorf("path not allowed")
-	}
-	if strings.Contains(clean, "..") {
-		return "", fmt.Errorf("invalid path")
-	}
-	existing, err := filepath.EvalSymlinks(clean)
-	if err == nil {
-		if existing != "/home" && !strings.HasPrefix(existing, "/home/") {
-			return "", fmt.Errorf("path not allowed")
-		}
-		return existing, nil
-	}
-	parent := filepath.Dir(clean)
-	parentResolved, perr := filepath.EvalSymlinks(parent)
-	if perr != nil {
-		return "", fmt.Errorf("path not found")
-	}
-	if parentResolved != "/home" && !strings.HasPrefix(parentResolved, "/home/") {
-		return "", fmt.Errorf("path not allowed")
-	}
-	base := filepath.Base(clean)
-	if base == "" || base == "." || base == ".." {
-		return "", fmt.Errorf("invalid path")
-	}
-	return filepath.Join(parentResolved, base), nil
+	return validate.HomeAbsPath(target)
+}
+
+func mustHomePath(target string) (string, error) {
+	return validate.HomeAbsPath(target)
 }
 
 func safeBaseName(name string) string {
-	safe := strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(name, "/", ""), "\\", ""))
-	if safe == "" || safe == "." || safe == ".." || strings.Contains(safe, "..") {
-		return ""
-	}
-	return safe
+	return validate.SafeBaseName(name)
 }
 
 func IsTextFileName(name string) bool {

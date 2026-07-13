@@ -1,31 +1,23 @@
 package privilege
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
+
+	"github.com/macdirtycow/qadbak/agent/internal/validate"
 )
 
-func TestAssertHomePathRejectsOutsideHome(t *testing.T) {
-	_, err := assertHomePath("/etc/passwd")
+func TestHomeAbsPathRejectsOutsideHome(t *testing.T) {
+	_, err := validate.HomeAbsPath("/etc/passwd")
 	if err == nil {
 		t.Fatal("expected reject outside /home")
 	}
 }
 
-func TestAssertHomePathAllowsUnderHome(t *testing.T) {
+func TestDomainFSListRejectsOutsideHome(t *testing.T) {
 	root := t.TempDir()
-	home := filepath.Join(root, "home", "user", "web", "example.com", "public_html")
-	if err := os.MkdirAll(home, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	// assertHomePath hardcodes /home — test domainFSList on temp path via direct call
-	entries, err := domainFSList(home)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(entries) != 0 {
-		t.Fatalf("expected empty dir, got %d", len(entries))
+	_, err := domainFSList(root)
+	if err == nil {
+		t.Fatal("expected reject outside /home")
 	}
 }
 
@@ -39,7 +31,7 @@ func TestIsTextFileName(t *testing.T) {
 }
 
 func TestSafeBaseName(t *testing.T) {
-	if safeBaseName("../a") != "" {
+	if validate.SafeBaseName("../a") != "" {
 		t.Fatal("reject traversal name")
 	}
 }

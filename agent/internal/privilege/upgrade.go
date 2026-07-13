@@ -4,20 +4,20 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
+
+	"github.com/macdirtycow/qadbak/agent/internal/validate"
 )
 
 const (
 	agentInstallDir = "/usr/lib/qadbak-agent"
 	agentUnixUser   = "qadbak-agent"
-	stagingBaseName = "qadbak-agent-staging"
 )
 
 func privAgentUpgrade(args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("invalid agent-upgrade invocation")
 	}
-	binSrc, err := validateUpgradeStagingPath(args[0])
+	binSrc, err := validate.UpgradeStagingPath(args[0])
 	if err != nil {
 		return err
 	}
@@ -45,20 +45,5 @@ func privAgentUpgrade(args []string) error {
 	if err := RunSimple([]string{"systemctl", "start", "qadbak-agent.service"}); err != nil {
 		return err
 	}
-	_ = os.Remove(binSrc)
-	return nil
-}
-
-func validateUpgradeStagingPath(path string) (string, error) {
-	clean := filepath.Clean(strings.TrimSpace(path))
-	if clean == "" || !filepath.IsAbs(clean) {
-		return "", fmt.Errorf("invalid upgrade path")
-	}
-	if filepath.Base(clean) != stagingBaseName {
-		return "", fmt.Errorf("invalid upgrade filename")
-	}
-	if !strings.Contains(clean, string(os.PathSeparator)+"upgrade"+string(os.PathSeparator)) {
-		return "", fmt.Errorf("invalid upgrade directory")
-	}
-	return clean, nil
+	return validate.RemoveUpgradeStaging(args[0])
 }

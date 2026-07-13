@@ -24,6 +24,13 @@ func TestContainerID(t *testing.T) {
 	}
 }
 
+func TestHomeAbsPath(t *testing.T) {
+	_, err := validate.HomeAbsPath("/etc/passwd")
+	if err == nil {
+		t.Fatal("expected reject outside /home")
+	}
+}
+
 func TestBackupFilename(t *testing.T) {
 	if !validate.BackupFilename("user.2026-01-01_12-00-00.tar") {
 		t.Fatal("expected valid backup filename")

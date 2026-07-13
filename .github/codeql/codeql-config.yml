@@ -5,3 +5,11 @@ query-filters:
       id: go/command-injection
       paths:
         - agent/internal/privilege/run_validate.go
+  - exclude:
+      id: go/path-injection
+      paths:
+        # Privileged root helpers: paths are validated via validate.HomeAbsPath,
+        # validate.BackupAbsPath, or validate.UpgradeStagingPath before any I/O.
+        - agent/internal/privilege/files.go
+        - agent/internal/privilege/backup.go
+        - agent/internal/privilege/upgrade.go

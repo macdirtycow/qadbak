@@ -103,7 +103,7 @@ func validatePrivArgv(argv []string) error {
 		if len(argv) != 2 {
 			return fmt.Errorf("invalid agent-upgrade argv")
 		}
-		if _, err := validateUpgradeStagingPath(argv[1]); err != nil {
+		if _, err := validate.UpgradeStagingPath(argv[1]); err != nil {
 			return err
 		}
 	case "log-tail":
