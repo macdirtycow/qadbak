@@ -70,10 +70,12 @@ enum AgentHTTPSClient {
                     var headerLines = [
                         "\(method.uppercased()) \(path) HTTP/1.1",
                         "Host: \(host)",
-                        "Accept: application/json",
                         "Connection: close",
                         "User-Agent: Qadbak-iOS/1.0",
                     ]
+                    if !headers.keys.contains(where: { $0.caseInsensitiveCompare("Accept") == .orderedSame }) {
+                        headerLines.append("Accept: application/json")
+                    }
                     for (key, value) in headers {
                         headerLines.append("\(key): \(value)")
                     }
@@ -120,6 +122,27 @@ enum AgentHTTPSClient {
 
             connection.start(queue: queue)
         }
+    }
+
+    static func downloadToFile(
+        url: URL,
+        headers: [String: String] = [:],
+        pinnedFingerprint: String? = nil,
+        destination: URL,
+        timeout: TimeInterval = 7_200
+    ) async throws -> Int {
+        let response = try await request(
+            method: "GET",
+            url: url,
+            headers: headers,
+            pinnedFingerprint: pinnedFingerprint,
+            timeout: timeout
+        )
+        guard (200 ... 299).contains(response.statusCode) else {
+            return response.statusCode
+        }
+        try response.body.write(to: destination, options: .atomic)
+        return response.statusCode
     }
 
     private final class RequestTask: @unchecked Sendable {

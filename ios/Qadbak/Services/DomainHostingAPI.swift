@@ -12,9 +12,11 @@ protocol DomainHostingAPI: AnyObject {
     func deleteDns(_ domain: String, record: DnsRecord) async throws
     func listMailUsers(_ domain: String) async throws -> [MailUser]
     func createMailUser(_ domain: String, user: String, pass: String, real: String?) async throws
+    func updateMailUser(_ domain: String, user: String, pass: String) async throws
     func deleteMailUser(_ domain: String, user: String) async throws
     func listDatabases(_ domain: String) async throws -> [HostedDatabase]
     func createDatabase(_ domain: String, name: String, pass: String, type: String) async throws
+    func updateDatabasePassword(_ domain: String, name: String, pass: String) async throws
     func listAliases(_ domain: String) async throws -> [MailAlias]
     func createAlias(_ domain: String, from: String, to: String) async throws
     func deleteAlias(_ domain: String, from: String, to: String?) async throws
@@ -32,6 +34,7 @@ protocol DomainHostingAPI: AnyObject {
     func deleteFtpAccount(_ domain: String, user: String) async throws
     func listBackups(_ domain: String) async throws -> BackupsResponse
     func startBackup(_ domain: String) async throws -> String?
+    func downloadBackup(_ domain: String, archiveName: String) async throws -> URL
     func deleteDomain(_ domain: String) async throws
     func enableDomain(_ domain: String) async throws
     func disableDomain(_ domain: String) async throws
@@ -99,6 +102,9 @@ extension DomainHostingAPI {
     func startBackup(_ domain: String) async throws -> String? {
         throw DomainHostingError.notSupported("Backups")
     }
+    func downloadBackup(_ domain: String, archiveName: String) async throws -> URL {
+        throw DomainHostingError.notSupported("Backup download")
+    }
     func deleteDomain(_ domain: String) async throws {
         throw DomainHostingError.notSupported("Delete domain")
     }
@@ -110,6 +116,12 @@ extension DomainHostingAPI {
     }
     func deleteDatabase(_ domain: String, name: String) async throws {
         throw DomainHostingError.notSupported("Delete database")
+    }
+    func updateMailUser(_ domain: String, user: String, pass: String) async throws {
+        throw DomainHostingError.notSupported("Mail password")
+    }
+    func updateDatabasePassword(_ domain: String, name: String, pass: String) async throws {
+        throw DomainHostingError.notSupported("Database password")
     }
     func websiteHealth(_ domain: String) async throws -> WebsiteHealthReport {
         throw DomainHostingError.notSupported("Website health")

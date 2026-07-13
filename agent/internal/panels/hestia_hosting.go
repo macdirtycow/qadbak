@@ -223,6 +223,32 @@ func HestiaAddMail(cfg LinkConfig, domain, user, password string) error {
 	return err
 }
 
+func HestiaChangeMailPassword(cfg LinkConfig, domain, user, password string) error {
+	c, err := newHestiaClient(cfg)
+	if err != nil {
+		return err
+	}
+	owner, err := HestiaDomainOwner(cfg, domain)
+	if err != nil {
+		return err
+	}
+	_, err = c.call("v-change-mail-account-password", owner, domain, user, password)
+	return err
+}
+
+func HestiaChangeDatabasePassword(cfg LinkConfig, domain, dbName, password string) error {
+	c, err := newHestiaClient(cfg)
+	if err != nil {
+		return err
+	}
+	owner, err := HestiaDomainOwner(cfg, domain)
+	if err != nil {
+		return err
+	}
+	_, err = c.call("v-change-database-password", owner, dbName, password)
+	return err
+}
+
 func HestiaDeleteMail(cfg LinkConfig, domain, user string) error {
 	c, err := newHestiaClient(cfg)
 	if err != nil {

@@ -67,6 +67,7 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/panels/domains/{domain}/cron", h.withAuth(h.panelDomainCronRoute))
 	mux.HandleFunc("/api/v1/panels/domains/{domain}/ftp", h.withAuth(h.panelDomainFtpRoute))
 	mux.HandleFunc("/api/v1/panels/domains/{domain}/backups", h.withAuth(h.panelDomainBackupsRoute))
+	mux.HandleFunc("/api/v1/panels/domains/{domain}/backups/download", h.withAuth(h.panelDomainBackupsDownloadRoute))
 	mux.HandleFunc("/api/v1/panels/domains/{domain}/enable", h.withAuth(h.panelDomainEnableRoute))
 	mux.HandleFunc("/api/v1/panels/domains/{domain}/disable", h.withAuth(h.panelDomainDisableRoute))
 	mux.HandleFunc("/api/v1/panels/domains/{domain}/website-health", h.withAuth(h.panelDomainHealthRoute))

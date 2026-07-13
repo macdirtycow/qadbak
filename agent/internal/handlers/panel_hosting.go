@@ -215,6 +215,25 @@ func (h *Handler) panelDomainMailRoute(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
+	case http.MethodPatch:
+		var body struct {
+			User     string `json:"user"`
+			Password string `json:"password"`
+		}
+		if err := decodeJSON(r, &body); err != nil {
+			WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "Invalid JSON"})
+			return
+		}
+		user := strings.TrimSpace(body.User)
+		if user == "" || body.Password == "" {
+			WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "user and password required"})
+			return
+		}
+		if err := panels.HestiaChangeMailPassword(*cfg, domain, user, body.Password); err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
 	default:
 		methodNotAllowed(w)
 	}
@@ -337,6 +356,25 @@ func (h *Handler) panelDomainDatabasesRoute(w http.ResponseWriter, r *http.Reque
 			return
 		}
 		WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
+	case http.MethodPatch:
+		var body struct {
+			Name     string `json:"name"`
+			Password string `json:"password"`
+		}
+		if err := decodeJSON(r, &body); err != nil {
+			WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "Invalid JSON"})
+			return
+		}
+		name := strings.TrimSpace(body.Name)
+		if name == "" || body.Password == "" {
+			WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "name and password required"})
+			return
+		}
+		if err := panels.HestiaChangeDatabasePassword(*cfg, domain, name, body.Password); err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
 	default:
 		methodNotAllowed(w)
 	}
@@ -366,7 +404,7 @@ func (h *Handler) panelDomainRedirectsRoute(w http.ResponseWriter, r *http.Reque
 			WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "Invalid JSON"})
 			return
 		}
-		if err := panels.HestiaAddRedirect(*cfg, domain, body.Dest, body.Type); err != nil {
+		if err := panels.HestiaAddRedirect(*cfg, domain, body.Path, body.Dest, body.Type); err != nil {
 			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
 			return
 		}
@@ -524,6 +562,31 @@ func (h *Handler) panelDomainBackupsRoute(w http.ResponseWriter, r *http.Request
 		WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "result": result})
 	default:
 		methodNotAllowed(w)
+	}
+}
+
+func (h *Handler) panelDomainBackupsDownloadRoute(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		methodNotAllowed(w)
+		return
+	}
+	domain := strings.TrimSpace(r.PathValue("domain"))
+	name := strings.TrimSpace(r.URL.Query().Get("name"))
+	if name == "" {
+		WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "name query required"})
+		return
+	}
+	cfg, ok := h.requireHestiaLink(w)
+	if !ok {
+		return
+	}
+	path, err := panels.HestiaResolveBackup(*cfg, domain, name)
+	if err != nil {
+		WriteJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if err := panels.StreamBackupFile(w, path); err != nil {
+		WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
 	}
 }
 

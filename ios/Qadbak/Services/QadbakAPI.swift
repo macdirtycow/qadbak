@@ -233,6 +233,14 @@ final class QadbakAPI {
         )
     }
 
+    func updateDatabasePassword(_ domain: String, name: String, pass: String) async throws {
+        let _: OkResponse = try await client.request(
+            "PATCH",
+            path: domainPath(domain, "/databases"),
+            body: DatabasePasswordBody(name: name, pass: pass)
+        )
+    }
+
     func listAliases(_ domain: String) async throws -> [MailAlias] {
         let res: AliasesResponse = try await client.request("GET", path: domainPath(domain, "/aliases"))
         return res.aliases ?? []
@@ -281,6 +289,14 @@ final class QadbakAPI {
 
     func disableDomain(_ domain: String) async throws {
         let _: OkResponse = try await client.request("POST", path: domainPath(domain, "/disable"))
+    }
+
+    func deleteDomain(_ domain: String) async throws {
+        let _: OkResponse = try await client.request(
+            "POST",
+            path: domainPath(domain, "/lifecycle"),
+            body: DomainLifecycleBody(action: "delete", confirm: domain)
+        )
     }
 
     func adminHealth() async throws -> HealthReport {
@@ -745,6 +761,16 @@ private struct DatabaseCreateBody: Encodable {
     let name: String
     let pass: String
     let type: String
+}
+
+private struct DatabasePasswordBody: Encodable {
+    let name: String
+    let pass: String
+}
+
+private struct DomainLifecycleBody: Encodable {
+    let action: String
+    let confirm: String
 }
 
 private struct AliasBody: Encodable {

@@ -3,7 +3,10 @@ package panels
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
+
+	"github.com/macdirtycow/qadbak/agent/internal/validate"
 )
 
 type DomainRedirect struct {
@@ -90,7 +93,11 @@ func HestiaListRedirects(cfg LinkConfig, domain string) ([]DomainRedirect, error
 	}}, nil
 }
 
-func HestiaAddRedirect(cfg LinkConfig, domain, dest, code string) error {
+func HestiaAddRedirect(cfg LinkConfig, domain, path, dest, code string) error {
+	path = strings.TrimSpace(path)
+	if path != "" && path != "/" {
+		return fmt.Errorf("linked Hestia panel supports whole-domain redirects only (path must be /)")
+	}
 	c, err := newHestiaClient(cfg)
 	if err != nil {
 		return err
@@ -350,4 +357,38 @@ func HestiaDeleteDatabase(cfg LinkConfig, domain, dbName string) error {
 	}
 	_, err = c.call("v-delete-database", owner, dbName)
 	return err
+}
+
+func HestiaResolveBackup(cfg LinkConfig, domain, name string) (string, error) {
+	if !validate.BackupFilename(name) {
+		return "", fmt.Errorf("invalid backup name")
+	}
+	c, err := newHestiaClient(cfg)
+	if err != nil {
+		return "", err
+	}
+	owner, err := HestiaDomainOwner(cfg, domain)
+	if err != nil {
+		return "", err
+	}
+	raw, err := c.call("v-list-user-backups", owner, "json")
+	if err != nil {
+		return "", err
+	}
+	var backups map[string]map[string]string
+	if err := json.Unmarshal(raw, &backups); err != nil {
+		return "", err
+	}
+	base := filepath.Base(name)
+	found := false
+	for key := range backups {
+		if key == base || key == strings.TrimSuffix(base, ".tar") || key+".tar" == base {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return "", fmt.Errorf("backup not found: %s", base)
+	}
+	return filepath.Join("/backup", base), nil
 }

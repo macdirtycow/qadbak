@@ -10,6 +10,7 @@ struct MailAccountsView: View {
     @State private var errorMessage: String?
     @State private var showAdd = false
     @State private var userToDelete: MailUser?
+    @State private var userToChangePassword: MailUser?
 
     var body: some View {
         QBScreenContainer {
@@ -76,6 +77,14 @@ struct MailAccountsView: View {
             }
             Button("Cancel", role: .cancel) { userToDelete = nil }
         }
+        .sheet(item: $userToChangePassword) { user in
+            NavigationStack {
+                ChangeMailPasswordView(domainName: domainName, user: user) {
+                    userToChangePassword = nil
+                }
+            }
+            .preferredColorScheme(.dark)
+        }
         .preferredColorScheme(.dark)
     }
 
@@ -89,6 +98,12 @@ struct MailAccountsView: View {
             tint: .cyan
         ) {
             if !openWebmail, let mailboxName = user.user, !mailboxName.isEmpty {
+                Button {
+                    userToChangePassword = user
+                } label: {
+                    Image(systemName: "key.fill")
+                        .foregroundStyle(QadbakPalette.accent)
+                }
                 Button(role: .destructive) {
                     userToDelete = user
                 } label: {
@@ -133,6 +148,63 @@ struct MailAccountsView: View {
         do {
             try await hosting.deleteMailUser(domainName, user: name)
             await load()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+}
+
+private struct ChangeMailPasswordView: View {
+    let domainName: String
+    let user: MailUser
+    let onDone: () -> Void
+
+    @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var password = ""
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        QBScreenContainer {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    QBScreenHeader(
+                        title: "Change password",
+                        subtitle: user.address.contains("@") ? user.address : "\(user.address)@\(domainName)"
+                    )
+                    if let errorMessage { ErrorBanner(message: errorMessage) }
+                    QBGlassCard {
+                        QBTextField(label: "New password", placeholder: "Strong password", text: $password, secure: true)
+                    }
+                    QBPrimaryButton(title: "Save password", loading: isSaving, disabled: password.count < 8) {
+                        Task { await save() }
+                    }
+                }
+                .padding(20)
+            }
+        }
+        .navigationTitle("Mail password")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss(); onDone() }
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    private func save() async {
+        guard let hosting = appState.hostingAPI else { return }
+        guard let mailbox = user.user, !mailbox.isEmpty else { return }
+        isSaving = true
+        errorMessage = nil
+        defer { isSaving = false }
+        do {
+            try await hosting.updateMailUser(domainName, user: mailbox, pass: password)
+            onDone()
+            dismiss()
         } catch {
             errorMessage = error.localizedDescription
         }

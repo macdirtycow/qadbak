@@ -24,9 +24,15 @@ final class QadbakDomainHostingAdapter: DomainHostingAPI {
         try await api.createMailUser(domain, user: user, pass: pass, real: real)
     }
     func deleteMailUser(_ domain: String, user: String) async throws { try await api.deleteMailUser(domain, user: user) }
+    func updateMailUser(_ domain: String, user: String, pass: String) async throws {
+        try await api.updateMailUser(domain, user: user, pass: pass)
+    }
     func listDatabases(_ domain: String) async throws -> [HostedDatabase] { try await api.listDatabases(domain) }
     func createDatabase(_ domain: String, name: String, pass: String, type: String) async throws {
         try await api.createDatabase(domain, name: name, pass: pass, type: type)
+    }
+    func updateDatabasePassword(_ domain: String, name: String, pass: String) async throws {
+        try await api.updateDatabasePassword(domain, name: name, pass: pass)
     }
     func listAliases(_ domain: String) async throws -> [MailAlias] { try await api.listAliases(domain) }
     func createAlias(_ domain: String, from: String, to: String) async throws {
@@ -65,8 +71,12 @@ final class QadbakDomainHostingAdapter: DomainHostingAPI {
     }
     func listBackups(_ domain: String) async throws -> BackupsResponse { try await api.listBackups(domain) }
     func startBackup(_ domain: String) async throws -> String? { try await api.startBackup(domain) }
+    func downloadBackup(_ domain: String, archiveName: String) async throws -> URL {
+        let service = api.makeBackupICloudService()
+        return try await service.downloadBackup(domain: domain, archiveName: archiveName)
+    }
     func deleteDomain(_ domain: String) async throws {
-        throw DomainHostingError.notSupported("Delete domain")
+        try await api.deleteDomain(domain)
     }
     func enableDomain(_ domain: String) async throws { try await api.enableDomain(domain) }
     func disableDomain(_ domain: String) async throws { try await api.disableDomain(domain) }

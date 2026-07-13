@@ -348,6 +348,50 @@ final class AgentAPIClient: @unchecked Sendable {
         )
     }
 
+    func downloadFile(path: String, timeout: TimeInterval = 7_200, retried: Bool = false) async throws -> URL {
+        let url = try resolveURL(path)
+        var headers: [String: String] = ["Accept": "application/gzip"]
+        if let token = accessToken {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+
+        let safeName = (path.split(separator: "=").last.map(String.init) ?? "backup")
+            .replacingOccurrences(of: "/", with: "_")
+        let destination = FileManager.default.temporaryDirectory
+            .appendingPathComponent("qadbak-agent-backup-\(UUID().uuidString)-\(safeName)")
+        if FileManager.default.fileExists(atPath: destination.path) {
+            try FileManager.default.removeItem(at: destination)
+        }
+
+        let status = try await AgentHTTPSClient.downloadToFile(
+            url: url,
+            headers: headers,
+            pinnedFingerprint: pinnedFingerprint,
+            destination: destination,
+            timeout: timeout
+        )
+
+        if status == 401, !retried {
+            _ = try await rotate()
+            return try await downloadFile(path: path, timeout: timeout, retried: true)
+        }
+
+        guard (200 ... 299).contains(status) else {
+            let body = (try? String(contentsOf: destination, encoding: .utf8)) ?? ""
+            let message = (try? JSONDecoder().decode(AgentErrorResponse.self, from: Data(body.utf8))).flatMap(\.error)
+            try? FileManager.default.removeItem(at: destination)
+            throw APIError.http(status, message)
+        }
+
+        let attrs = try FileManager.default.attributesOfItem(atPath: destination.path)
+        let size = (attrs[.size] as? NSNumber)?.intValue ?? 0
+        guard size > 0 else {
+            try? FileManager.default.removeItem(at: destination)
+            throw APIError.message("Backup download failed — empty file from agent.")
+        }
+        return destination
+    }
+
     private func resolveURL(_ path: String) throws -> URL {
         let normalized = path.hasPrefix("/") ? path : "/\(path)"
         guard let url = URL(string: normalized, relativeTo: baseURL)?.absoluteURL else {

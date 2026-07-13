@@ -10,6 +10,7 @@ struct DatabasesView: View {
     @State private var successMessage: String?
     @State private var showCreate = false
     @State private var databaseToDelete: HostedDatabase?
+    @State private var databaseToChangePassword: HostedDatabase?
 
     var body: some View {
         QBScreenContainer {
@@ -32,6 +33,12 @@ struct DatabasesView: View {
                                     icon: "cylinder.split.1x2",
                                     tint: Color.blue
                                 ) {
+                                    Button {
+                                        databaseToChangePassword = db
+                                    } label: {
+                                        Image(systemName: "key.fill")
+                                            .foregroundStyle(QadbakPalette.accent)
+                                    }
                                     Button(role: .destructive) {
                                         databaseToDelete = db
                                     } label: {
@@ -85,6 +92,14 @@ struct DatabasesView: View {
                 Text(db.dbName)
             }
         }
+        .sheet(item: $databaseToChangePassword) { db in
+            NavigationStack {
+                ChangeDatabasePasswordView(domainName: domainName, database: db) {
+                    databaseToChangePassword = nil
+                }
+            }
+            .preferredColorScheme(.dark)
+        }
         .preferredColorScheme(.dark)
     }
 
@@ -117,6 +132,59 @@ struct DatabasesView: View {
             try await hosting.deleteDatabase(domainName, name: db.dbName)
             successMessage = "Database deleted."
             await load()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+}
+
+private struct ChangeDatabasePasswordView: View {
+    let domainName: String
+    let database: HostedDatabase
+    let onDone: () -> Void
+
+    @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var password = ""
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        QBScreenContainer {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    QBScreenHeader(title: "Change password", subtitle: database.dbName)
+                    if let errorMessage { ErrorBanner(message: errorMessage) }
+                    QBGlassCard {
+                        QBTextField(label: "New password", placeholder: "Strong password", text: $password, secure: true)
+                    }
+                    QBPrimaryButton(title: "Save password", loading: isSaving, disabled: password.count < 8) {
+                        Task { await save() }
+                    }
+                }
+                .padding(20)
+            }
+        }
+        .navigationTitle("Database password")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss(); onDone() }
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    private func save() async {
+        guard let hosting = appState.hostingAPI else { return }
+        isSaving = true
+        errorMessage = nil
+        defer { isSaving = false }
+        do {
+            try await hosting.updateDatabasePassword(domainName, name: database.dbName, pass: password)
+            onDone()
+            dismiss()
         } catch {
             errorMessage = error.localizedDescription
         }

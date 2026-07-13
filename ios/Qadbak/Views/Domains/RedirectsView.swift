@@ -10,6 +10,10 @@ struct RedirectsView: View {
     @State private var showCreate = false
     @State private var redirectToDelete: DomainRedirect?
 
+    private var isExternalHosting: Bool {
+        appState.activeServer?.isAgentManaged == true && appState.activeServer?.capabilities.domainHosting == true
+    }
+
     var body: some View {
         QBScreenContainer {
             Group {
@@ -50,10 +54,18 @@ struct RedirectsView: View {
         .toolbarBackground(QadbakPalette.bg.opacity(0.95), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .safeAreaInset(edge: .top) {
-            if let errorMessage {
-                ErrorBanner(message: errorMessage)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
+            VStack(spacing: 8) {
+                if isExternalHosting {
+                    Text("Linked Hestia panel supports whole-domain redirects only (entire site → destination).")
+                        .font(.caption)
+                        .foregroundStyle(QadbakPalette.muted)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 8)
+                }
+                if let errorMessage {
+                    ErrorBanner(message: errorMessage)
+                        .padding(.horizontal, 20)
+                }
             }
         }
         .toolbar {
@@ -120,10 +132,14 @@ private struct CreateRedirectView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
 
-    @State private var path = ""
+    @State private var path = "/"
     @State private var dest = ""
     @State private var isSaving = false
     @State private var errorMessage: String?
+
+    private var isExternalHosting: Bool {
+        appState.activeServer?.isAgentManaged == true && appState.activeServer?.capabilities.domainHosting == true
+    }
 
     var body: some View {
         QBScreenContainer {
@@ -131,9 +147,16 @@ private struct CreateRedirectView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     QBScreenHeader(title: "New redirect", subtitle: domainName)
                     if let errorMessage { ErrorBanner(message: errorMessage) }
+                    if isExternalHosting {
+                        Text("Redirects the entire domain to another URL.")
+                            .font(.caption)
+                            .foregroundStyle(QadbakPalette.muted)
+                    }
                     QBGlassCard {
                         VStack(spacing: 16) {
-                            QBTextField(label: "Path", placeholder: "/old-page", text: $path)
+                            if !isExternalHosting {
+                                QBTextField(label: "Path", placeholder: "/old-page", text: $path)
+                            }
                             QBTextField(label: "Destination", placeholder: "https://\(domainName)/new-page", text: $dest, keyboard: .URL)
                         }
                     }
@@ -155,8 +178,8 @@ private struct CreateRedirectView: View {
     }
 
     private var canSave: Bool {
-        !path.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !dest.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let pathOk = isExternalHosting || !path.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        return pathOk && !dest.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private func save() async {
@@ -165,9 +188,10 @@ private struct CreateRedirectView: View {
         errorMessage = nil
         defer { isSaving = false }
         do {
+            let redirectPath = isExternalHosting ? "/" : path.trimmingCharacters(in: .whitespacesAndNewlines)
             try await hosting.createRedirect(
                 domainName,
-                path: path.trimmingCharacters(in: .whitespacesAndNewlines),
+                path: redirectPath,
                 dest: dest.trimmingCharacters(in: .whitespacesAndNewlines),
                 type: "301"
             )

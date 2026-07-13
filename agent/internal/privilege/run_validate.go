@@ -35,6 +35,7 @@ var allowedPrivActions = map[string]bool{
 	"agent-upgrade": true,
 	"log-tail":      true,
 	"domain-fs":     true,
+	"backup-cat":    true,
 }
 
 func validatePrivArgv(argv []string) error {
@@ -118,6 +119,13 @@ func validatePrivArgv(argv []string) error {
 		}
 		if err := validateDomainFSArgv(argv[1], argv[2:]); err != nil {
 			return err
+		}
+	case "backup-cat":
+		if len(argv) != 2 {
+			return fmt.Errorf("invalid backup-cat argv")
+		}
+		if !validate.BackupFilename(argv[1]) {
+			return fmt.Errorf("invalid backup filename")
 		}
 	}
 	return nil

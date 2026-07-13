@@ -36,6 +36,8 @@ func Dispatch(args []string) error {
 		return privLogTail(args[1:])
 	case "domain-fs":
 		return privDomainFS(args[1:])
+	case "backup-cat":
+		return privBackupCat(args[1:])
 	default:
 		return fmt.Errorf("unknown priv action")
 	}

@@ -23,7 +23,7 @@ struct BackupsView: View {
     }
 
     private var canDownloadToICloud: Bool {
-        appState.api != nil
+        appState.hostingAPI != nil
     }
 
     var body: some View {
@@ -248,7 +248,7 @@ struct BackupsView: View {
     }
 
     private func saveArchiveByName(_ archiveName: String, archiveId: String? = nil) async {
-        guard let api = appState.api, canDownloadToICloud else { return }
+        guard let hosting = appState.hostingAPI, canDownloadToICloud else { return }
         let trackId = archiveId ?? archiveName
         savingArchiveId = trackId
         errorMessage = nil
@@ -260,12 +260,25 @@ struct BackupsView: View {
         )
         defer { savingArchiveId = nil }
         do {
-            let service = api.makeBackupICloudService()
-            _ = try await service.downloadAndSaveToICloud(
-                domain: domainName,
-                archiveName: archiveName,
-                wifiOnly: wifiOnlyDownloads
-            )
+            try await BackupNetworkPolicy.ensureAllowsDownload(wifiOnly: wifiOnlyDownloads)
+            let local = try await hosting.downloadBackup(domainName, archiveName: archiveName)
+            defer { try? FileManager.default.removeItem(at: local) }
+            guard BackupICloudService.iCloudAvailable else {
+                throw BackupICloudService.ServiceError.iCloudUnavailable
+            }
+            let folder = FileManager.default.url(forUbiquityContainerIdentifier: nil)?
+                .appendingPathComponent("Documents", isDirectory: true)
+                .appendingPathComponent("Qadbak Backups", isDirectory: true)
+                .appendingPathComponent(domainName, isDirectory: true)
+            guard let folder else {
+                throw BackupICloudService.ServiceError.iCloudUnavailable
+            }
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let destination = folder.appendingPathComponent(archiveName)
+            if FileManager.default.fileExists(atPath: destination.path) {
+                try FileManager.default.removeItem(at: destination)
+            }
+            try FileManager.default.copyItem(at: local, to: destination)
             successMessage = "Saved to iCloud Drive → Qadbak Backups → \(domainName)."
             LiveActivityManager.end(success: true, message: "Backup saved to iCloud.")
         } catch {

@@ -125,6 +125,14 @@ final class AgentPanelHostingAPI: DomainHostingAPI {
         )
     }
 
+    func updateMailUser(_ domain: String, user: String, pass: String) async throws {
+        let _: AgentActionResponse = try await client.request(
+            "PATCH",
+            path: panelDomainPath(domain, suffix: "/mail"),
+            body: AgentPanelMailBody(user: user, password: pass)
+        )
+    }
+
     func listDatabases(_ domain: String) async throws -> [HostedDatabase] {
         let res: DatabasesResponse = try await client.request(
             "GET",
@@ -137,6 +145,16 @@ final class AgentPanelHostingAPI: DomainHostingAPI {
         let dbName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let _: AgentActionResponse = try await client.request(
             "POST",
+            path: panelDomainPath(domain, suffix: "/databases"),
+            body: AgentPanelDatabaseBody(name: dbName, user: dbName, password: pass)
+        )
+        _ = type
+    }
+
+    func updateDatabasePassword(_ domain: String, name: String, pass: String) async throws {
+        let dbName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let _: AgentActionResponse = try await client.request(
+            "PATCH",
             path: panelDomainPath(domain, suffix: "/databases"),
             body: AgentPanelDatabaseBody(name: dbName, user: dbName, password: pass)
         )
@@ -273,6 +291,13 @@ final class AgentPanelHostingAPI: DomainHostingAPI {
             path: panelDomainPath(domain, suffix: "/backups")
         )
         return res.result?.file
+    }
+
+    func downloadBackup(_ domain: String, archiveName: String) async throws -> URL {
+        let encodedDomain = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
+        let encodedName = archiveName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? archiveName
+        let path = "/api/v1/panels/domains/\(encodedDomain)/backups/download?name=\(encodedName)"
+        return try await client.downloadFile(path: path, timeout: 7_200)
     }
 
     func deleteDomain(_ domain: String) async throws {
