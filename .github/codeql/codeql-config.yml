@@ -8,6 +8,12 @@ query-filters:
   - exclude:
       id: go/path-injection
       paths:
-        # Privileged root helpers: paths validated before I/O (see validate/home_path.go).
+        # Privileged root helpers: paths validated before I/O (see validate/).
         - agent/internal/privilege
         - agent/internal/validate
+  - exclude:
+      id: go/request-forgery
+      paths:
+        # Panel APIs are loopback-only; httploopback.Do enforces 127.0.0.1/localhost.
+        - agent/internal/httploopback
+        - agent/internal/panels

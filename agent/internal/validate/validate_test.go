@@ -31,6 +31,25 @@ func TestHomeAbsPath(t *testing.T) {
 	}
 }
 
+func TestUpgradeStagingPath(t *testing.T) {
+	ok := "/var/lib/qadbak-agent/upgrade/qadbak-agent-staging"
+	got, err := validate.UpgradeStagingPath(ok)
+	if err != nil {
+		t.Fatalf("expected valid staging path: %v", err)
+	}
+	if got != ok {
+		t.Fatalf("got %q", got)
+	}
+	_, err = validate.UpgradeStagingPath("/etc/passwd")
+	if err == nil {
+		t.Fatal("expected reject outside staging dir")
+	}
+	_, err = validate.UpgradeStagingPath("/var/lib/qadbak-agent/upgrade/../etc/passwd")
+	if err == nil {
+		t.Fatal("expected reject traversal")
+	}
+}
+
 func TestBackupFilename(t *testing.T) {
 	if !validate.BackupFilename("user.2026-01-01_12-00-00.tar") {
 		t.Fatal("expected valid backup filename")

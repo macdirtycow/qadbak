@@ -67,6 +67,19 @@ func ClientWithServerName(scheme string, port int, tlsServerName string) *http.C
 	}
 }
 
+// Do sends a loopback-only HTTP request (host must be 127.0.0.1 or localhost).
+func Do(client *http.Client, req *http.Request) (*http.Response, error) {
+	if client == nil || req == nil || req.URL == nil {
+		return nil, fmt.Errorf("invalid loopback request")
+	}
+	switch req.URL.Hostname() {
+	case "127.0.0.1", "localhost":
+	default:
+		return nil, fmt.Errorf("loopback host not allowed")
+	}
+	return client.Do(req)
+}
+
 // RequestURL builds a loopback request URL; the client dialer still pins 127.0.0.1:port.
 func RequestURL(scheme string, port int, path string) string {
 	if scheme != "http" && scheme != "https" {

@@ -89,7 +89,7 @@ func coolifyRequest(endpoint LoopbackEndpoint, token, method, path string, body 
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	res, err := client.Do(req)
+	res, err := httploopback.Do(client, req)
 	if err != nil {
 		return nil, fmt.Errorf("coolify api: %w", err)
 	}

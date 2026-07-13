@@ -2,7 +2,6 @@ package validate
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -71,16 +70,5 @@ func SafeBaseName(name string) string {
 
 // UpgradeStagingPath validates the agent self-upgrade staging binary path.
 func UpgradeStagingPath(path string) (string, error) {
-	const stagingBaseName = "qadbak-agent-staging"
-	clean := filepath.Clean(strings.TrimSpace(path))
-	if clean == "" || !filepath.IsAbs(clean) {
-		return "", fmt.Errorf("invalid upgrade path")
-	}
-	if filepath.Base(clean) != stagingBaseName {
-		return "", fmt.Errorf("invalid upgrade filename")
-	}
-	if !strings.Contains(clean, string(os.PathSeparator)+"upgrade"+string(os.PathSeparator)) {
-		return "", fmt.Errorf("invalid upgrade directory")
-	}
-	return clean, nil
+	return resolveUpgradeStagingFile(path)
 }

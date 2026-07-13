@@ -94,7 +94,7 @@ func casaOSLogin(endpoint LoopbackEndpoint, username, password string) (string, 
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	res, err := client.Do(req)
+	res, err := httploopback.Do(client, req)
 	if err != nil {
 		return "", fmt.Errorf("casaos login: %w", err)
 	}
@@ -132,7 +132,7 @@ func casaOSGET(endpoint LoopbackEndpoint, token, path string) ([]byte, error) {
 	req.Header.Set("Authorization", token)
 	req.Header.Set("Accept", "application/json")
 
-	res, err := client.Do(req)
+	res, err := httploopback.Do(client, req)
 	if err != nil {
 		return nil, fmt.Errorf("casaos api: %w", err)
 	}

@@ -87,7 +87,7 @@ func (c *hestiaClient) exec(cmd string, args ...string) ([]byte, error) {
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	res, err := c.client.Do(req)
+	res, err := httploopback.Do(c.client, req)
 	if err != nil {
 		return nil, fmt.Errorf("hestia api: %w", err)
 	}
