@@ -217,8 +217,16 @@ func execRootArgv(argv []string) ([]byte, error) {
 	if err := validateRootArgv(argv); err != nil {
 		return nil, err
 	}
-	// codeql[go/command-injection]: validateRootArgv allowlists the binary and every argument.
-	cmd := exec.Command(argv[0], argv[1:]...) // codeql[go/command-injection]
+	bin := BinaryPath()
+	if !strings.HasPrefix(bin, "/") {
+		return nil, fmt.Errorf("invalid agent binary path")
+	}
+	payload, err := json.Marshal(argv)
+	if err != nil {
+		return nil, err
+	}
+	cmd := exec.Command(bin, "priv", "--root-exec-stdin")
+	cmd.Stdin = bytes.NewReader(payload)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		msg := strings.TrimSpace(string(out))
@@ -228,6 +236,29 @@ func execRootArgv(argv []string) ([]byte, error) {
 		return out, fmt.Errorf("%s", msg)
 	}
 	return out, nil
+}
+
+func readRootArgvStdin() ([]string, error) {
+	raw, err := io.ReadAll(io.LimitReader(os.Stdin, 1<<20))
+	if err != nil {
+		return nil, err
+	}
+	var argv []string
+	if err := json.Unmarshal(raw, &argv); err != nil {
+		return nil, fmt.Errorf("invalid root exec stdin payload")
+	}
+	if err := validateRootArgv(argv); err != nil {
+		return nil, err
+	}
+	return argv, nil
+}
+
+func runRootExec(argv []string) ([]byte, error) {
+	if err := validateRootArgv(argv); err != nil {
+		return nil, err
+	}
+	cmd := exec.Command(argv[0], argv[1:]...)
+	return cmd.CombinedOutput()
 }
 
 func execSudoPriv(argv []string) ([]byte, error) {

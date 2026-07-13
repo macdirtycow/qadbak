@@ -138,6 +138,26 @@ func MainExit(args []string) {
 		}
 		args = decoded
 	}
+	if len(args) > 0 && args[0] == "--root-exec-stdin" {
+		argv, err := readRootArgvStdin()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		out, err := runRootExec(argv)
+		if err != nil {
+			msg := strings.TrimSpace(string(out))
+			if msg == "" {
+				msg = err.Error()
+			}
+			fmt.Fprintln(os.Stderr, msg)
+			os.Exit(1)
+		}
+		if len(out) > 0 {
+			os.Stdout.Write(out)
+		}
+		return
+	}
 	if err := Dispatch(args); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)

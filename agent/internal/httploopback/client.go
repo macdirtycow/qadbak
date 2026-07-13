@@ -3,12 +3,34 @@ package httploopback
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
+
+var loopbackRootCAs = loadLoopbackRootCAs()
+
+func loadLoopbackRootCAs() *x509.CertPool {
+	pool, err := x509.SystemCertPool()
+	if err != nil || pool == nil {
+		pool = x509.NewCertPool()
+	}
+	for _, path := range []string{
+		"/usr/local/hestia/ssl/certificate.crt",
+		"/usr/local/hestia/ssl/server.crt",
+	} {
+		pem, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+		pool.AppendCertsFromPEM(pem)
+	}
+	return pool
+}
 
 // Client returns an HTTP client that always dials 127.0.0.1 on the given port,
 // regardless of the URL host used in requests.
@@ -26,8 +48,9 @@ func Client(scheme string, port int) *http.Client {
 	}
 	if scheme == "https" {
 		transport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true, // codeql[go/disabled-certificate-check] dial is pinned to 127.0.0.1; local Hestia uses a self-signed cert
-			MinVersion:         tls.VersionTLS12,
+			MinVersion: tls.VersionTLS12,
+			RootCAs:    loopbackRootCAs,
+			ServerName: "localhost",
 		}
 	}
 	return &http.Client{
