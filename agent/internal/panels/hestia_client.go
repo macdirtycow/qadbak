@@ -28,13 +28,16 @@ type hestiaAuth struct {
 }
 
 type hestiaClient struct {
-	baseURL string
+	apiBase *url.URL
 	auth    hestiaAuth
 	client  *http.Client
 }
 
 func newHestiaClient(cfg LinkConfig) (*hestiaClient, error) {
-	base := ResolvePanelBaseURL(cfg.BaseURL, defaultHestiaBase)
+	apiBase, err := ResolvePanelBase(cfg.BaseURL, defaultHestiaBase)
+	if err != nil {
+		return nil, err
+	}
 
 	accessKey := strings.TrimSpace(cfg.Secrets["accessKey"])
 	secretKey := strings.TrimSpace(cfg.Secrets["secretKey"])
@@ -52,15 +55,15 @@ func newHestiaClient(cfg LinkConfig) (*hestiaClient, error) {
 	}
 
 	return &hestiaClient{
-		baseURL: base,
+		apiBase: apiBase,
 		auth:    auth,
-		client:  hestiaHTTPClient(base),
+		client:  hestiaHTTPClient(apiBase),
 	}, nil
 }
 
-func hestiaHTTPClient(baseURL string) *http.Client {
+func hestiaHTTPClient(apiBase *url.URL) *http.Client {
 	transport := &http.Transport{}
-	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(baseURL)), "https://") {
+	if apiBase != nil && apiBase.Scheme == "https" {
 		transport.TLSClientConfig = &tls.Config{
 			InsecureSkipVerify: true, //nolint:gosec // loopback-only panel URL validated in ResolvePanelBaseURL
 			MinVersion:         tls.VersionTLS12,
@@ -92,7 +95,10 @@ func (c *hestiaClient) exec(cmd string, args ...string) ([]byte, error) {
 		form.Set("password", c.auth.password)
 	}
 
-	endpoint := strings.TrimRight(c.baseURL, "/") + "/api/"
+	endpoint, err := JoinPanelPath(c.apiBase, "/api/")
+	if err != nil {
+		return nil, err
+	}
 	req, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(form.Encode()))
 	if err != nil {
 		return nil, err
@@ -151,8 +157,9 @@ func parseHestiaResponse(res *http.Response, body []byte) ([]byte, error) {
 
 // testHestiaClient wires a client to an httptest server (tests only).
 func testHestiaClient(server *httptest.Server, auth hestiaAuth) *hestiaClient {
+	u, _ := url.Parse(server.URL)
 	return &hestiaClient{
-		baseURL: server.URL,
+		apiBase: u,
 		auth:    auth,
 		client:  server.Client(),
 	}

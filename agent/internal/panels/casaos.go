@@ -79,7 +79,11 @@ func fetchCasaOSOverview(cfg LinkConfig) (Overview, error) {
 }
 
 func casaOSLogin(baseURL, username, password string) (string, error) {
-	base, err := ValidatePanelBaseURL(baseURL)
+	base, err := ParseLoopbackPanelURL(baseURL)
+	if err != nil {
+		return "", err
+	}
+	endpoint, err := JoinPanelPath(base, "/v2/users/login")
 	if err != nil {
 		return "", err
 	}
@@ -88,7 +92,6 @@ func casaOSLogin(baseURL, username, password string) (string, error) {
 		"password": password,
 	})
 	client := &http.Client{Timeout: 20 * time.Second}
-	endpoint := strings.TrimRight(base, "/") + "/v2/users/login"
 	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(payload))
 	if err != nil {
 		return "", err
@@ -122,15 +125,15 @@ func casaOSLogin(baseURL, username, password string) (string, error) {
 }
 
 func casaOSGET(baseURL, token, path string) ([]byte, error) {
-	base, err := ValidatePanelBaseURL(baseURL)
+	base, err := ParseLoopbackPanelURL(baseURL)
 	if err != nil {
 		return nil, err
 	}
-	if !strings.HasPrefix(path, "/") {
-		return nil, fmt.Errorf("invalid casaos path")
+	endpoint, err := JoinPanelPath(base, path)
+	if err != nil {
+		return nil, err
 	}
 	client := &http.Client{Timeout: 20 * time.Second}
-	endpoint := strings.TrimRight(base, "/") + path
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, err

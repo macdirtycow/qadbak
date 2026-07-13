@@ -3,7 +3,6 @@ package privilege
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 )
 
@@ -28,22 +27,13 @@ func Run(argv []string) ([]byte, error) {
 	if len(argv) == 0 {
 		return nil, fmt.Errorf("empty command")
 	}
-	var cmd *exec.Cmd
 	if os.Geteuid() == 0 {
-		cmd = exec.Command(argv[0], argv[1:]...)
-	} else {
-		bin := BinaryPath()
-		cmd = exec.Command("sudo", append([]string{"-n", bin, "priv"}, argv...)...)
-	}
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		msg := strings.TrimSpace(string(out))
-		if msg == "" {
-			msg = err.Error()
+		if isPrivAction(argv[0]) {
+			return runPrivInProcess(argv)
 		}
-		return out, fmt.Errorf("%s", msg)
+		return execRootArgv(argv)
 	}
-	return out, nil
+	return execSudoPriv(argv)
 }
 
 // RunSimple is Run without caring about stdout.

@@ -67,15 +67,15 @@ func coolifyGET(baseURL, token, path string) ([]byte, error) {
 }
 
 func coolifyRequest(baseURL, token, method, path string, body []byte) ([]byte, error) {
-	base, err := ValidatePanelBaseURL(baseURL)
+	base, err := ParseLoopbackPanelURL(baseURL)
 	if err != nil {
 		return nil, err
 	}
-	if !strings.HasPrefix(path, "/") {
-		return nil, fmt.Errorf("invalid coolify path")
+	endpoint, err := JoinPanelPath(base, path)
+	if err != nil {
+		return nil, err
 	}
 	client := &http.Client{Timeout: 30 * time.Second}
-	endpoint := strings.TrimRight(base, "/") + path
 	var reader io.Reader
 	if body != nil {
 		reader = strings.NewReader(string(body))
