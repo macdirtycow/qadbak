@@ -21,22 +21,29 @@ qadbak_install_separator() {
   printf '%*s\n' 72 '' | tr ' ' '='
 }
 
+# Figlet "standard" — letters Q A D B A K are spaced wider than the old Hestia-style banner.
+qadbak_print_logo() {
+  cat <<'EOF'
+   ___      _    ____  ____    _    _  __
+  / _ \    / \  |  _ \| __ )  / \  | |/ /
+ | | | |  / _ \ | | | |  _ \ / _ \ | ' / 
+ | |_| | / ___ \| |_| | |_) / ___ \| . \ 
+  \__\_\/_/   \_\____/|____/_/   \_\_|\_\
+EOF
+}
+
 qadbak_install_banner() {
   local version="${QADBAK_INSTALL_VERSION:-}"
   echo ""
-  cat <<'EOF'
-               _           _       _           _
-              | | __ _  __| | __ _| |__   __ _| |__
-              | |/ _` |/ _` |/ _` | '_ \ / _` | '_ \
-              | | (_| | (_| | (_| | |_) | (_| | |_) |
-              |_|\__,_|\__,_|\__,_|_.__/ \__,_|_.__/
-
-                    Qadbak Control Panel
-EOF
+  qadbak_install_separator
+  echo ""
+  qadbak_print_logo
+  echo ""
+  echo "  Qadbak Control Panel"
   if [[ -n "$version" ]]; then
-    printf '                          %s\n' "$version"
+    echo "  Version $version"
   fi
-  echo "                     https://qadbak.com"
+  echo "  https://qadbak.com"
   echo ""
   qadbak_install_separator
   echo ""
@@ -45,19 +52,15 @@ EOF
 qadbak_install_panel_banner() {
   local version="${QADBAK_INSTALL_VERSION:-}"
   echo ""
-  cat <<'EOF'
-               _           _       _           _
-              | | __ _  __| | __ _| |__   __ _| |__
-              | |/ _` |/ _` |/ _` | '_ \ / _` | '_ \
-              | | (_| | (_| | (_| | |_) | (_| | |_) |
-              |_|\__,_|\__,_|\__,_|_.__/ \__,_|_.__/
-
-                 Qadbak Panel (UI only)
-EOF
+  qadbak_install_separator
+  echo ""
+  qadbak_print_logo
+  echo ""
+  echo "  Qadbak Panel (UI only)"
   if [[ -n "$version" ]]; then
-    printf '                          %s\n' "$version"
+    echo "  Version $version"
   fi
-  echo "                     https://qadbak.com"
+  echo "  https://qadbak.com"
   echo ""
   qadbak_install_separator
   echo ""
@@ -266,4 +269,128 @@ qadbak_install_congratulations() {
   fi
   echo ""
   qadbak_install_separator
+}
+
+qadbak_update_banner() {
+  local version="${1:-}"
+  echo ""
+  qadbak_install_separator
+  echo ""
+  qadbak_print_logo
+  echo ""
+  echo "  Qadbak Update"
+  if [[ -n "$version" && "$version" != "unknown" ]]; then
+    echo "  Current version $version"
+  fi
+  echo ""
+  qadbak_install_separator
+  echo ""
+}
+
+qadbak_update_show_plan() {
+  local mode="${1:-full}"
+  local service_user="${QADBAK_USER:-qadbak}"
+  cat <<EOF
+This update will:
+
+  - Sync code from git (branch from QADBAK_GIT_BRANCH or current checkout)
+  - Run npm install + build as Linux user ${service_user} (never as root)
+  - Restart the panel (pm2) and refresh sudo helpers
+
+EOF
+  if [[ "$mode" == "full" ]]; then
+    cat <<'EOF'
+  - Refresh hosting stack (nginx, Apache), backups, mail/DNS repairs
+  - Run post-update checks (may take 10–20 minutes on a busy server)
+
+Use scripts/update.sh for a quicker panel-only refresh (no stack/E2E).
+
+EOF
+  else
+    cat <<'EOF'
+  - Skip full hosting stack, Playwright E2E, and heavy mail/DNS repairs
+
+EOF
+  fi
+  qadbak_install_note "Web login accounts are in data/users.json — not the Linux user ${service_user}."
+  echo ""
+}
+
+qadbak_read_env_local_value() {
+  local key="$1"
+  local file="${2:-}"
+  [[ -n "$file" && -f "$file" ]] || return 0
+  local line
+  line="$(grep -E "^[[:space:]]*${key}=" "$file" | tail -1 || true)"
+  [[ -n "$line" ]] || return 0
+  local val="${line#*=}"
+  val="${val#"${val%%[![:space:]]*}"}"
+  val="${val%"${val##*[![:space:]]}"}"
+  val="${val#\"}"; val="${val%\"}"
+  val="${val#\'}"; val="${val%\'}"
+  printf '%s' "$val"
+}
+
+qadbak_update_panel_urls() {
+  local root="${1:-/opt/qadbak}"
+  local env_file="$root/.env.local"
+  local host port panel_port
+  host="$(qadbak_read_env_local_value QADBAK_PUBLIC_HOST "$env_file")"
+  panel_port="$(qadbak_read_env_local_value QADBAK_PANEL_PORT "$env_file")"
+  panel_port="${panel_port:-11000}"
+  if [[ -n "$host" ]]; then
+    echo "https://${host}/login"
+    echo "http://${host}:${panel_port}/login"
+    return 0
+  fi
+  echo "http://127.0.0.1:${PORT:-3000}/login"
+}
+
+qadbak_update_summary() {
+  local root="$1"
+  local ver_before="$2"
+  local ver_after="$3"
+  local health_ok="${4:-0}"
+  echo ""
+  qadbak_install_separator
+  echo ""
+  echo "Update finished."
+  echo ""
+  if [[ -n "$ver_before" && -n "$ver_after" && "$ver_before" != "$ver_after" ]]; then
+    echo "  Version: $ver_before → $ver_after"
+  elif [[ -n "$ver_after" && "$ver_after" != "unknown" ]]; then
+    echo "  Version: $ver_after"
+  fi
+  echo ""
+  echo "  Panel login:"
+  while IFS= read -r url; do
+    [[ -n "$url" ]] && echo "    $url"
+  done < <(qadbak_update_panel_urls "$root")
+  echo ""
+  if [[ "$health_ok" == "1" ]]; then
+    echo "  API health: OK"
+  else
+    qadbak_install_warn "API health check failed — try:"
+    echo "    sudo bash $root/scripts/fix-panel-now.sh"
+  fi
+  echo ""
+  echo "  Full update:  sudo bash $root/scripts/update-qadbak.sh"
+  echo "  Quick update: sudo bash $root/scripts/update.sh"
+  echo ""
+  qadbak_install_separator
+  echo ""
+}
+
+qadbak_update_usage() {
+  cat <<'EOF'
+Usage: update-qadbak.sh [options]
+
+  (no flags)   Full update — git sync, build, hosting stack, repairs, E2E
+  --quick      Panel refresh only (git, build, pm2, sudo helpers)
+  -y, --yes    Skip confirmation prompt
+  -h, --help   Show this help
+
+Run as root on the VPS for hosting stack and repair steps:
+  sudo bash /opt/qadbak/scripts/update-qadbak.sh
+EOF
 }

@@ -38,3 +38,4 @@ if [[ -f "$ROOT/data/license.json" ]]; then
 fi
 
 echo "Done — panel, terminal WS and PHP-FPM pools refreshed."
+echo "Tip: sudo bash $ROOT/scripts/update-qadbak.sh for a full stack repair + E2E."

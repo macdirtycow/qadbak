@@ -1,8 +1,43 @@
 #!/usr/bin/env bash
 # Update Qadbak from git and restart (run on server as root or qadbak user).
 set -euo pipefail
+
 ROOT="${QADBAK_DIR:-/opt/qadbak}"
 USER="${QADBAK_USER:-qadbak}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/installer-ui.sh
+source "$SCRIPT_DIR/lib/installer-ui.sh"
+
+UPDATE_MODE=full
+UPDATE_YES=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --quick)
+      UPDATE_MODE=quick
+      shift
+      ;;
+    -y|--yes)
+      UPDATE_YES=1
+      shift
+      ;;
+    -h|--help)
+      qadbak_update_usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1 (try --help)" >&2
+      exit 1
+      ;;
+  esac
+done
+
+VERSION_BEFORE="$(qadbak_install_version_from_repo "$ROOT" 2>/dev/null || echo unknown)"
+qadbak_update_banner "$VERSION_BEFORE"
+qadbak_update_show_plan "$UPDATE_MODE"
+if [[ "$UPDATE_YES" != "1" ]] && [[ -t 0 ]]; then
+  qadbak_install_prompt_continue "Proceed with update? [y/N]: "
+fi
 
 run_as_qadbak() {
   if [[ "$(id -un)" == "$USER" ]]; then
@@ -34,7 +69,6 @@ bootstrap_env_git_branch() {
 
 echo "==> Sync git $ROOT"
 if [[ "$(id -u)" -eq 0 ]]; then
-  # Pull as root is common on VPS; fix ownership before npm run as qadbak.
   cd "$ROOT"
   bootstrap_env_git_branch || true
   bash "$ROOT/scripts/reset-git-drift-before-pull.sh"
@@ -47,7 +81,6 @@ else
 fi
 
 ENV_FILE="$ROOT/.env.local"
-# Rename pre-rebrand env keys on existing VPS installs (idempotent).
 if [[ -f "$ENV_FILE" ]]; then
   migrate_env_key() {
     local old="$1" new="$2"
@@ -69,7 +102,6 @@ if [[ -f "$ENV_FILE" ]]; then
   migrate_env_key QADBAK_WEBMIN_EMBED_BASE QADBAK_LEGACY_PANEL_EMBED_BASE
   migrate_env_key QADBAK_SHOW_WEBMIN_NAV QADBAK_SHOW_LEGACY_PANEL_NAV
 fi
-# Ensure imap is in native features (webmail + Dovecot folders on existing installs).
 if [[ -f "$ENV_FILE" ]] && grep -q '^QADBAK_NATIVE_FEATURES=' "$ENV_FILE" 2>/dev/null; then
   if ! grep '^QADBAK_NATIVE_FEATURES=' "$ENV_FILE" | grep -qE '(^|,)(imap)(,|$)'; then
     sed -i.bak -E 's/^(QADBAK_NATIVE_FEATURES=.*)$/\1,imap/' "$ENV_FILE"
@@ -96,6 +128,9 @@ bash "$ROOT/scripts/ensure-terminal-deps.sh"
 if [[ "$(id -u)" -eq 0 ]]; then
   echo "==> Sudo helpers"
   bash "$ROOT/scripts/configure-all-sudo.sh" || echo "    WARN: configure-all-sudo.sh failed" >&2
+fi
+
+if [[ "$UPDATE_MODE" == "full" ]] && [[ "$(id -u)" -eq 0 ]]; then
   echo "==> Hosting stack (nginx, Apache)"
   QADBAK_NATIVE_INSTALL=1 QADBAK_DISABLE_LEGACY_PANEL=true \
     bash "$ROOT/scripts/install-hosting-stack.sh" || echo "    WARN: install-hosting-stack.sh failed" >&2
@@ -104,7 +139,7 @@ if [[ "$(id -u)" -eq 0 ]]; then
   fi
 fi
 
-if [[ "$(id -u)" -eq 0 ]]; then
+if [[ "$UPDATE_MODE" == "full" ]] && [[ "$(id -u)" -eq 0 ]]; then
   echo "==> Backup schedules (enable automatic + refresh stale)"
   if sudo -u "$USER" sudo -n "$ROOT/scripts/run-provisioning-helper.sh" backup-schedule-ensure-all '{"runStale":true,"staleDays":1}' 2>/dev/null; then
     echo "    OK — automatic backups enabled on qadbak crontab"
@@ -117,7 +152,7 @@ fi
 echo "==> Restart (load .env.local into pm2)"
 run_as_qadbak "cd '$ROOT' && bash scripts/pm2-restart-qadbak.sh"
 
-if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/repair-panel-access.sh" ]]; then
+if [[ "$UPDATE_MODE" == "full" ]] && [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/repair-panel-access.sh" ]]; then
   echo ""
   echo "==> Panel access (panel.<domain> + main host — fixes Cloudflare 520)"
   bash "$ROOT/scripts/repair-panel-access.sh" || \
@@ -132,10 +167,16 @@ fi
 
 echo "==> Verify"
 run_as_qadbak "cd '$ROOT' && bash scripts/v1-test-preflight.sh" || true
-curl -sf "http://127.0.0.1:${PORT:-3000}/api/health" | head -c 200
-echo ""
+HEALTH_OK=0
+if HEALTH_BODY="$(curl -sf "http://127.0.0.1:${PORT:-3000}/api/health" 2>/dev/null | head -c 200)"; then
+  HEALTH_OK=1
+  echo "$HEALTH_BODY"
+  echo ""
+else
+  echo "    WARN: /api/health failed" >&2
+fi
 
-if [[ "$(id -u)" -eq 0 ]]; then
+if [[ "$UPDATE_MODE" == "full" ]] && [[ "$(id -u)" -eq 0 ]]; then
   if bash "$ROOT/scripts/sync-e2e-credentials.sh" 2>/dev/null; then
     echo "==> Install E2E (Playwright on live panel)"
     bash "$ROOT/scripts/run-install-e2e.sh" || echo "    WARN: install E2E failed (see above)" >&2
@@ -144,22 +185,25 @@ if [[ "$(id -u)" -eq 0 ]]; then
     echo "    sudo bash $ROOT/scripts/sync-e2e-credentials.sh" >&2
   fi
 fi
-if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/configure-bind-native.sh" ]]; then
+
+if [[ "$UPDATE_MODE" == "full" ]] && [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/configure-bind-native.sh" ]]; then
   echo ""
   echo "==> BIND9 (native DNS)"
   bash "$ROOT/scripts/configure-bind-native.sh" 2>/dev/null || true
 fi
-if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/repair-panel-webmail.sh" ]]; then
+if [[ "$UPDATE_MODE" == "full" ]] && [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/repair-panel-webmail.sh" ]]; then
   echo ""
   echo "==> Qmail (IMAP / Dovecot)"
   bash "$ROOT/scripts/repair-panel-webmail.sh" 2>/dev/null || true
 fi
-if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/repair-panel-premium.sh" ]]; then
+if [[ "$UPDATE_MODE" == "full" ]] && [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/repair-panel-premium.sh" ]]; then
   echo ""
   echo "==> Premium + mobile app (Qmail, push, license sync)"
   bash "$ROOT/scripts/repair-panel-premium.sh" || echo "    WARN: repair-panel-premium.sh failed" >&2
 fi
-if [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/apply-phase8-independent.sh" ]]; then
+if [[ "$UPDATE_MODE" == "full" ]] && [[ "$(id -u)" -eq 0 ]] && [[ -f "$ROOT/scripts/apply-phase8-independent.sh" ]]; then
   echo "Re-apply native flags: sudo bash $ROOT/scripts/apply-phase8-independent.sh"
 fi
-echo "Done."
+
+VERSION_AFTER="$(qadbak_install_version_from_repo "$ROOT" 2>/dev/null || echo unknown)"
+qadbak_update_summary "$ROOT" "$VERSION_BEFORE" "$VERSION_AFTER" "$HEALTH_OK"
