@@ -121,18 +121,47 @@ qadbak_install_prompt_continue() {
   fi
 }
 
+qadbak_install_explain_accounts() {
+  local service_user="${QADBAK_USER:-qadbak}"
+  cat <<EOF
+Accounts on this server (who is who):
+
+  - ${service_user}     Linux service user (runs the panel; not for web login)
+  - <panel admin>       Web login you choose next (Qadbak panel UI only)
+  - <hosting users>     Created later per domain in the panel (sites/mail/FTP)
+
+Panel admin is not your SSH/SFTP account and not a hosting customer account.
+
+EOF
+}
+
+qadbak_install_warn_default_admin() {
+  local username="$1"
+  [[ "$username" == "admin" ]] || return 0
+  echo ""
+  qadbak_install_warn 'Username "admin" is OK for demos and local tests.'
+  echo "  On a public VPS, prefer a custom name (ex. panelowner) — easier to guess usernames are targeted more often."
+  local confirm=""
+  read -rp 'Keep "admin" as panel login? [y/N]: ' confirm
+  [[ "$confirm" =~ ^[Yy]$ ]]
+}
+
 qadbak_install_prompt_username() {
   local var_name="${1:-QB_USER}"
   local default="${2:-admin}"
   local value=""
   while true; do
-    read -rp "Please enter administrator username [$default]: " value
+    read -rp "Please enter panel administrator username (web login) [$default]: " value
     value="${value:-$default}"
-    if [[ "$value" =~ ^[a-z][a-z0-9_-]{0,31}$ ]]; then
-      printf -v "$var_name" '%s' "$value"
-      return 0
+    if [[ ! "$value" =~ ^[a-z][a-z0-9_-]{0,31}$ ]]; then
+      echo "Please use a valid username (ex. panelowner)."
+      continue
     fi
-    echo "Please use a valid username (ex. user)."
+    if [[ "$value" == "admin" ]] && ! qadbak_install_warn_default_admin "$value"; then
+      continue
+    fi
+    printf -v "$var_name" '%s' "$value"
+    return 0
   done
 }
 
@@ -229,6 +258,7 @@ qadbak_install_congratulations() {
   echo "    $panel_url"
   echo ""
   echo "    Admin username: $admin_user"
+  echo "    (Panel web login only — create hosting accounts later under Domains.)"
   if [[ -n "${QADBAK_INSTALL_LOG:-}" ]]; then
     echo ""
     echo "Please review the installation log at:"

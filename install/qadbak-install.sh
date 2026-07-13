@@ -56,6 +56,7 @@ if [[ ! "${USE_ALT_PORT:-Y}" =~ ^[Nn]$ ]]; then
   PANEL_ALT_PORT="${PANEL_ALT_PORT:-11000}"
 fi
 SERVER_FQDN="$FQDN"
+qadbak_install_explain_accounts
 qadbak_install_prompt_username QB_USER admin
 qadbak_install_prompt_password QB_PASS
 qadbak_install_prompt_email LE_EMAIL 1

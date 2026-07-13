@@ -6,6 +6,9 @@ set -euo pipefail
 QADBAK_DIR="${QADBAK_DIR:-/opt/qadbak}"
 QADBAK_USER="${QADBAK_USER:-qadbak}"
 
+# shellcheck source=../scripts/lib/installer-ui.sh
+source "$(cd "$(dirname "$0")/.." && pwd)/scripts/lib/installer-ui.sh"
+
 [[ "$(id -u)" -eq 0 ]] || {
   echo "Run as root: sudo bash install/qadbak-install-resume.sh" >&2
   exit 1
@@ -32,16 +35,9 @@ done
 
 if [[ ! -f "$QADBAK_DIR/data/users.json" ]]; then
   echo "==> Create admin user (install stopped before users.json)"
-  read -rp "Panel admin username (web login) [admin]: " QB_USER
-  QB_USER="${QB_USER:-admin}"
-  while true; do
-    read -rsp "Panel admin password (web login): " QB_PASS
-    echo
-    if [[ -n "$QB_PASS" ]]; then
-      break
-    fi
-    echo "  Password cannot be empty." >&2
-  done
+  qadbak_install_explain_accounts
+  qadbak_install_prompt_username QB_USER admin
+  qadbak_install_prompt_password QB_PASS
   HASH="$(sudo -u "$QADBAK_USER" node "$QADBAK_DIR/scripts/hash-password.mjs" "$QB_PASS")"
   mkdir -p "$QADBAK_DIR/data"
   printf '[{"id":"admin-1","username":"%s","passwordHash":"%s","role":"admin","domains":[]}]\n' \

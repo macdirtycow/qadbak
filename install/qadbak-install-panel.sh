@@ -35,6 +35,7 @@ qadbak_install_prompt_continue "Would you like to continue with the installation
 
 FQDN="$(hostname -f 2>/dev/null || hostname)"
 qadbak_install_prompt_fqdn PANEL_HOST "$FQDN"
+qadbak_install_explain_accounts
 qadbak_install_prompt_username QB_USER admin
 qadbak_install_prompt_password QB_PASS
 qadbak_install_prompt_email LE_EMAIL 1
