@@ -1,3 +1,7 @@
+// Hestia administrative account name is chosen at install time and stored per server
+// as ROOT_USER in hestia.conf. Resolve it at runtime — do not hardcode deployment-
+// specific usernames, hostnames, or IPs in this repository (those belong in operator
+// notes, support chat, or your own runbooks).
 package privilege
 
 import (
@@ -27,6 +31,7 @@ func parseHestiaRootUser(data []byte) (string, error) {
 	return "", fmt.Errorf("hestia ROOT_USER not found")
 }
 
+// hestiaRootUser returns the Hestia admin account for this host (ROOT_USER).
 func hestiaRootUser() (string, error) {
 	data, err := os.ReadFile(hestiaConfPath)
 	if err != nil {

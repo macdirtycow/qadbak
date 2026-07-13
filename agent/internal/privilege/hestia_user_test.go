@@ -2,6 +2,7 @@ package privilege
 
 import "testing"
 
+// Fixture usernames only — not tied to any real deployment.
 func TestParseHestiaRootUser(t *testing.T) {
 	user, err := parseHestiaRootUser([]byte("FOO=bar\nROOT_USER='paneladmin'\n"))
 	if err != nil {

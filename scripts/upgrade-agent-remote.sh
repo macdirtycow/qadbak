@@ -2,9 +2,8 @@
 # Upload bundled agent binary from this repo to a remote Linux server and install it.
 # Usage: ./scripts/upgrade-agent-remote.sh user@host [linux-amd64|linux-arm64]
 #
-# On HestiaCP VPS hosts, web users (e.g. siteowner) are often SFTP-only — use the
-# Hestia admin SSH user instead (usually admin@host), or run the printed install
-# command in your provider console / Hestia web terminal as root.
+# On HestiaCP VPS hosts, SFTP-only site users are common — SSH as the Hestia admin
+# (ROOT_USER on that server; see docs/agent/PANEL-LINKING.md) or run install as root.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -14,7 +13,7 @@ REMOTE_DIR="qadbak-agent-upgrade"
 
 if [[ -z "${TARGET}" ]]; then
   echo "Usage: $0 user@host [linux-amd64|linux-arm64]" >&2
-  echo "Example: $0 admin@173.212.250.158 linux-amd64" >&2
+  echo "Example: $0 root@100.64.0.1 linux-amd64" >&2
   exit 1
 fi
 

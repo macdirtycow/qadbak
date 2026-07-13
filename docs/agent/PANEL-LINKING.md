@@ -73,12 +73,12 @@ Destructive actions use the existing confirm JWT flow (`POST /api/v1/actions/con
 
 ### POST link body examples
 
-**HestiaCP (password):**
+**HestiaCP (password):** use your server's Hestia admin (`ROOT_USER`), not necessarily `admin`.
 ```json
 {
   "panel": "hestiaCP",
   "baseUrl": "https://127.0.0.1:8083",
-  "username": "admin",
+  "username": "<hestia-admin>",
   "password": "…"
 }
 ```
@@ -102,6 +102,24 @@ Destructive actions use the existing confirm JWT flow (`POST /api/v1/actions/con
 ```
 
 Default `baseUrl` values target localhost on the agent host.
+
+## Per-server identity (not in source code)
+
+HestiaCP asks for an **admin username** during install. That value is stored on the
+server as `ROOT_USER` in `/usr/local/hestia/conf/hestia.conf`. It is often **not**
+the literal string `admin`. The agent reads `ROOT_USER` at runtime when auto-creating
+API keys; the repo uses only generic examples in tests and docs.
+
+**On your server** (operator / support context — personal hostnames and usernames are fine here):
+
+```bash
+grep ROOT_USER /usr/local/hestia/conf/hestia.conf
+/usr/local/hestia/bin/v-add-sys-api-ip 127.0.0.1
+/usr/local/hestia/bin/v-add-access-key '<ROOT_USER>' '*' 'qadbak-mobile' json
+```
+
+Use the printed access key + secret in the iOS app. Do not commit real keys, IPs, or
+usernames into the Qadbak repository.
 
 ## iOS flow
 

@@ -74,6 +74,7 @@ func privHestiaCmd(args []string) error {
 		if comment == "" || strings.ContainsAny(comment, "'\"\\") {
 			return fmt.Errorf("invalid hestia access key comment")
 		}
+		// v-add-access-key must target this server's ROOT_USER, not the literal name "admin".
 		rootUser, err := hestiaRootUser()
 		if err != nil {
 			return err
