@@ -57,7 +57,7 @@ func newHestiaClient(cfg LinkConfig) (*hestiaClient, error) {
 	return &hestiaClient{
 		endpoint: endpoint,
 		auth:     auth,
-		client:   httploopback.Client(endpoint.scheme, endpoint.port),
+		client:   httploopback.ClientWithServerName(endpoint.scheme, endpoint.port, hestiaTLSServerName()),
 	}, nil
 }
 

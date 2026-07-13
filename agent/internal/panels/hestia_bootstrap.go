@@ -60,6 +60,7 @@ func HestiaEnsureLoopbackAPI() error {
 
 // HestiaBootstrap creates a Hestia API access key via the local CLI (agent runs on the same host).
 // The key is created for this server's ROOT_USER (see privilege.hestiaRootUser), not a fixed name.
+// Loopback API calls dial 127.0.0.1:8083 but use the panel TLS certificate hostname for verification.
 func HestiaBootstrap() (HestiaBootstrapResult, error) {
 	if !HestiaInstalled() {
 		return HestiaBootstrapResult{}, fmt.Errorf("hestia is not installed on this server")

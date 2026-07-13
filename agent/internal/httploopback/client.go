@@ -33,8 +33,13 @@ func loadLoopbackRootCAs() *x509.CertPool {
 }
 
 // Client returns an HTTP client that always dials 127.0.0.1 on the given port,
-// regardless of the URL host used in requests.
+// regardless of the URL host used in requests. For HTTPS, tlsServerName sets TLS
+// SNI/certificate hostname verification (empty defaults to "localhost").
 func Client(scheme string, port int) *http.Client {
+	return ClientWithServerName(scheme, port, "")
+}
+
+func ClientWithServerName(scheme string, port int, tlsServerName string) *http.Client {
 	if port < 1 || port > 65535 {
 		port = 80
 	}
@@ -47,10 +52,13 @@ func Client(scheme string, port int) *http.Client {
 		},
 	}
 	if scheme == "https" {
+		if tlsServerName == "" {
+			tlsServerName = "localhost"
+		}
 		transport.TLSClientConfig = &tls.Config{
 			MinVersion: tls.VersionTLS12,
 			RootCAs:    loopbackRootCAs,
-			ServerName: "localhost",
+			ServerName: tlsServerName,
 		}
 	}
 	return &http.Client{
