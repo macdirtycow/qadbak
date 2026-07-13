@@ -1,0 +1,11 @@
+name: qadbak
+
+query-filters:
+  - exclude:
+      id: go/disabled-certificate-check
+      paths:
+        - agent/internal/httploopback/client.go
+  - exclude:
+      id: go/command-injection
+      paths:
+        - agent/internal/privilege/run_validate.go

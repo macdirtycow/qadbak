@@ -218,7 +218,7 @@ func execRootArgv(argv []string) ([]byte, error) {
 		return nil, err
 	}
 	// codeql[go/command-injection]: validateRootArgv allowlists the binary and every argument.
-	cmd := exec.Command(argv[0], argv[1:]...)
+	cmd := exec.Command(argv[0], argv[1:]...) // codeql[go/command-injection]
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		msg := strings.TrimSpace(string(out))

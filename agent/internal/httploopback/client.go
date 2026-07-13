@@ -26,7 +26,7 @@ func Client(scheme string, port int) *http.Client {
 	}
 	if scheme == "https" {
 		transport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true, //nolint:gosec // loopback-only; dial is pinned to 127.0.0.1
+			InsecureSkipVerify: true, // codeql[go/disabled-certificate-check] dial is pinned to 127.0.0.1; local Hestia uses a self-signed cert
 			MinVersion:         tls.VersionTLS12,
 		}
 	}
