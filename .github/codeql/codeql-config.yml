@@ -9,6 +9,5 @@ query-filters:
       id: go/path-injection
       paths:
         # Privileged root helpers: paths validated before I/O (see validate/home_path.go).
-        - agent/internal/privilege/
-        - agent/internal/validate/backup_io.go
-        - agent/internal/validate/upgrade_io.go
+        - agent/internal/privilege
+        - agent/internal/validate

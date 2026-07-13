@@ -3,6 +3,7 @@ package validate
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 // OpenBackupFile opens a validated Hestia backup tarball under BackupDir.
@@ -11,15 +12,13 @@ func OpenBackupFile(name string) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	path, err := BackupAbsPath(base)
-	if err != nil {
-		return nil, err
+	if !backupFilename.MatchString(base) {
+		return nil, fmt.Errorf("invalid backup filename")
 	}
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
+	if strings.Contains(base, "/") || strings.Contains(base, "\\") || strings.Contains(base, "..") {
+		return nil, fmt.Errorf("invalid backup filename")
 	}
-	return f, nil
+	return os.Open(BackupDir + "/" + base)
 }
 
 // RemoveUpgradeStaging removes a validated agent upgrade staging binary.
