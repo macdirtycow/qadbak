@@ -133,7 +133,7 @@ Restart=on-failure
 RestartSec=3
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=${DATA_DIR} ${CONFIG_DIR}
+ReadWritePaths=${DATA_DIR} ${CONFIG_DIR} /usr/local/hestia /tmp
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 
 [Install]
