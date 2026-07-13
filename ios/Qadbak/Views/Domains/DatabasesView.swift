@@ -9,6 +9,7 @@ struct DatabasesView: View {
     @State private var errorMessage: String?
     @State private var successMessage: String?
     @State private var showCreate = false
+    @State private var databaseToDelete: HostedDatabase?
 
     var body: some View {
         QBScreenContainer {
@@ -30,7 +31,14 @@ struct DatabasesView: View {
                                     subtitle: "\(db.dbType.uppercased()) · \(db.dbHost)",
                                     icon: "cylinder.split.1x2",
                                     tint: Color.blue
-                                )
+                                ) {
+                                    Button(role: .destructive) {
+                                        databaseToDelete = db
+                                    } label: {
+                                        Image(systemName: "trash")
+                                            .foregroundStyle(QadbakPalette.danger)
+                                    }
+                                }
                             }
                         }
                         .padding(20)
@@ -62,6 +70,21 @@ struct DatabasesView: View {
             }
             .preferredColorScheme(.dark)
         }
+        .confirmationDialog("Delete database?", isPresented: Binding(
+            get: { databaseToDelete != nil },
+            set: { if !$0 { databaseToDelete = nil } }
+        )) {
+            Button("Delete", role: .destructive) {
+                if let db = databaseToDelete {
+                    Task { await deleteDatabase(db) }
+                }
+            }
+            Button("Cancel", role: .cancel) { databaseToDelete = nil }
+        } message: {
+            if let db = databaseToDelete {
+                Text(db.dbName)
+            }
+        }
         .preferredColorScheme(.dark)
     }
 
@@ -82,6 +105,18 @@ struct DatabasesView: View {
         defer { isLoading = false }
         do {
             databases = try await hosting.listDatabases(domainName)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func deleteDatabase(_ db: HostedDatabase) async {
+        guard let hosting = appState.hostingAPI else { return }
+        databaseToDelete = nil
+        do {
+            try await hosting.deleteDatabase(domainName, name: db.dbName)
+            successMessage = "Database deleted."
+            await load()
         } catch {
             errorMessage = error.localizedDescription
         }

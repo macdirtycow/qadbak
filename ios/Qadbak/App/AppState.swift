@@ -54,7 +54,10 @@ final class AppState {
     }
 
     var filesEnabled: Bool {
-        capabilities?.files ?? true
+        if let server = activeServer, server.isAgentManaged {
+            return server.capabilities.fileManagement
+        }
+        return capabilities?.files ?? true
     }
 
     var premiumPlanLabel: String? {
@@ -140,31 +143,35 @@ final class AppState {
     func prepareAddServer(mode: AddServerMode? = nil) async {
         addingNewServer = mode != nil
         addServerMode = mode
-        if isSignedIn {
+        if let server = activeServer, server.isAgentManaged {
+            agentClient = nil
+            hostingAPI = nil
+            activeProvider = nil
+        } else if isSignedIn {
             await logout()
         }
-        serverURL = nil
-        accessToken = nil
-        username = nil
-        role = nil
-        domains = []
-        capabilities = nil
-        license = nil
-        api = nil
-        hostingAPI = nil
+        clearInMemoryPanelSession()
         activeProvider = nil
     }
 
     func switchToServer(_ server: ManagedServer) async throws {
         addingNewServer = false
-        if activeServerId == server.id {
-            if server.isQadbakPanel && isSignedIn { return }
-            if server.isAgentManaged { return }
+        let sameServer = activeServerId == server.id
+        let panelReady = server.isQadbakPanel && isSignedIn && api != nil && serverURL != nil
+        let agentReady = server.isAgentManaged
+            && agentClient != nil
+            && !isSignedIn
+            && api == nil
+            && server.connectionStatus != .authFailed
+        if sameServer && (panelReady || agentReady) {
+            return
         }
         if isSignedIn {
             await PushNotificationService.shared.unregisterFromServer()
             clearSession(keepServerEntry: true)
         }
+        clearInMemoryPanelSession()
+        agentClient = nil
         try await activateServer(server, bootstrap: true)
         if server.isAgentManaged {
             return
@@ -292,6 +299,18 @@ final class AppState {
     }
 
     func logout() async {
+        if let server = activeServer, server.isAgentManaged {
+            if let client = agentClient ?? makeAgentClient(for: server) {
+                try? await client.revoke()
+            }
+            if let serverId = activeServerId {
+                keychain.deleteAgentRefreshToken(serverId: serverId)
+            }
+            agentClient = nil
+            hostingAPI = nil
+            activeProvider = nil
+            return
+        }
         if let api, let token = accessToken, let serverId = activeServerId,
            let refresh = keychain.loadRefreshToken(serverId: serverId) {
             try? await api.logout(accessToken: token, refreshToken: refresh)
@@ -398,19 +417,28 @@ final class AppState {
         tlsFingerprint: String,
         sshHostKeyFingerprint: String? = nil
     ) async throws {
-        keychain.saveAgentRefreshToken(refreshToken, serverId: server.id)
-        keychain.saveAgentTlsPin(tlsFingerprint, serverId: server.id)
+        let existing = savedServers.first(where: {
+            $0.isAgentManaged && $0.apiBaseURL == server.apiBaseURL
+        })
+        var toRegister = server.reusingId(existing?.id)
+        toRegister.authenticationMethod = .agentToken
+        toRegister.connectionStatus = .online
+        toRegister.lastSeen = Date()
+
+        keychain.saveAgentRefreshToken(refreshToken, serverId: toRegister.id)
+        keychain.saveAgentTlsPin(tlsFingerprint, serverId: toRegister.id)
         if let sshHostKeyFingerprint, !sshHostKeyFingerprint.isEmpty {
-            keychain.saveSshHostKeyFingerprint(sshHostKeyFingerprint, serverId: server.id)
+            keychain.saveSshHostKeyFingerprint(sshHostKeyFingerprint, serverId: toRegister.id)
         }
-        upsertServer(server)
-        activeServerId = server.id
-        keychain.saveActiveServerId(server.id)
-        agentClient = makeAgentClient(for: server, accessToken: accessToken)
+        clearInMemoryPanelSession()
+        upsertServer(toRegister)
+        activeServerId = toRegister.id
+        keychain.saveActiveServerId(toRegister.id)
+        agentClient = makeAgentClient(for: toRegister, accessToken: accessToken)
         agentClient?.setAccessToken(accessToken)
-        refreshHostingAdapter(for: server)
+        refreshHostingAdapter(for: toRegister)
         activeProvider = ServerProviderFactory.makeProvider(
-            for: server,
+            for: toRegister,
             api: nil,
             agentClient: agentClient,
             keychain: keychain
@@ -457,6 +485,7 @@ final class AppState {
         activeProvider = nil
 
         if server.isQadbakPanel {
+            agentClient = nil
             let url = try Self.normalizePanelURL(server.apiBaseURL)
             serverURL = url
             api = makeAPI(for: url)
@@ -561,8 +590,10 @@ final class AppState {
             refreshTokenProvider: { [keychain] in keychain.loadAgentRefreshToken(serverId: serverId) },
             onTokensRefreshed: { [weak self] access, refresh in
                 guard let self else { return }
-                self.agentClient?.setAccessToken(access)
                 self.keychain.saveAgentRefreshToken(refresh, serverId: serverId)
+                if self.activeServerId == serverId {
+                    self.agentClient?.setAccessToken(access)
+                }
             }
         )
     }
@@ -605,6 +636,18 @@ final class AppState {
         username = result.username
         role = result.role
         domains = result.domains ?? []
+    }
+
+    private func clearInMemoryPanelSession() {
+        serverURL = nil
+        accessToken = nil
+        username = nil
+        role = nil
+        domains = []
+        capabilities = nil
+        license = nil
+        api = nil
+        hostingAPI = nil
     }
 
     private func bootstrapFromRefresh(refreshToken: String) async {

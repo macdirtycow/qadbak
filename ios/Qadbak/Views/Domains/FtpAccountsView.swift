@@ -130,23 +130,23 @@ struct FtpAccountsView: View {
     }
 
     private func load() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isLoading = true
         errorMessage = nil
         successMessage = nil
         defer { isLoading = false }
         do {
-            accounts = try await api.listFtpAccounts(domainName)
+            accounts = try await hosting.listFtpAccounts(domainName)
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
     private func delete(_ account: FtpAccount) async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         accountToDelete = nil
         do {
-            try await api.deleteFtpAccount(domainName, user: account.user)
+            try await hosting.deleteFtpAccount(domainName, user: account.user)
             successMessage = "FTP account deleted."
             await load()
         } catch {
@@ -201,12 +201,12 @@ private struct CreateFtpAccountView: View {
     }
 
     private func save() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isSaving = true
         errorMessage = nil
         defer { isSaving = false }
         do {
-            try await api.createFtpAccount(
+            try await hosting.createFtpAccount(
                 domainName,
                 user: user.trimmingCharacters(in: .whitespacesAndNewlines),
                 pass: password
@@ -258,12 +258,12 @@ private struct ResetFtpPasswordView: View {
     }
 
     private func save() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isSaving = true
         errorMessage = nil
         defer { isSaving = false }
         do {
-            try await api.updateFtpPassword(domainName, user: user, pass: password)
+            try await hosting.updateFtpPassword(domainName, user: user, pass: password)
             onDone()
             dismiss()
         } catch {

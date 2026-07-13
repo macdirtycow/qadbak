@@ -90,22 +90,22 @@ struct RedirectsView: View {
     }
 
     private func load() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            redirects = try await api.listRedirects(domainName)
+            redirects = try await hosting.listRedirects(domainName)
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
     private func delete(_ redirect: DomainRedirect) async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         redirectToDelete = nil
         do {
-            try await api.deleteRedirect(domainName, path: redirect.pathLabel)
+            try await hosting.deleteRedirect(domainName, path: redirect.pathLabel)
             await load()
         } catch {
             errorMessage = error.localizedDescription
@@ -160,15 +160,16 @@ private struct CreateRedirectView: View {
     }
 
     private func save() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isSaving = true
         errorMessage = nil
         defer { isSaving = false }
         do {
-            try await api.createRedirect(
+            try await hosting.createRedirect(
                 domainName,
                 path: path.trimmingCharacters(in: .whitespacesAndNewlines),
-                dest: dest.trimmingCharacters(in: .whitespacesAndNewlines)
+                dest: dest.trimmingCharacters(in: .whitespacesAndNewlines),
+                type: "301"
             )
             onDone()
             dismiss()

@@ -49,19 +49,33 @@ type SslCert struct {
 	Status  string `json:"status,omitempty"`
 }
 
+func hestiaLinkedUser(cfg LinkConfig) string {
+	if u := strings.TrimSpace(cfg.Secrets["username"]); u != "" {
+		return u
+	}
+	return ""
+}
+
 func HestiaListDomains(cfg LinkConfig) ([]HostedDomain, error) {
 	c, err := newHestiaClient(cfg)
 	if err != nil {
 		return nil, err
 	}
+	fallbackUser := hestiaLinkedUser(cfg)
 	usersRaw, err := c.call("v-list-users", "json")
 	if err != nil {
 		// fallback: list domains for linked user only
-		return hestiaListDomainsForUser(c, c.user)
+		if fallbackUser == "" {
+			return nil, err
+		}
+		return hestiaListDomainsForUser(c, fallbackUser)
 	}
 	var users map[string]json.RawMessage
 	if json.Unmarshal(usersRaw, &users) != nil {
-		return hestiaListDomainsForUser(c, c.user)
+		if fallbackUser == "" {
+			return nil, fmt.Errorf("hestia: could not parse user list")
+		}
+		return hestiaListDomainsForUser(c, fallbackUser)
 	}
 	var out []HostedDomain
 	for unixUser := range users {

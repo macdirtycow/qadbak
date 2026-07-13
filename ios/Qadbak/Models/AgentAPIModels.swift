@@ -72,6 +72,8 @@ struct AgentCapabilitiesPayload: Decodable {
     let panelIntegration: Bool?
     let domainHosting: Bool?
     let panelApps: Bool?
+    let agentSelfUpgrade: Bool?
+    let fileManagement: Bool?
 
     func toServerCapabilities() -> ServerCapabilities {
         var c = ServerCapabilities()
@@ -85,6 +87,8 @@ struct AgentCapabilitiesPayload: Decodable {
         c.panelIntegration = panelIntegration ?? false
         c.domainHosting = domainHosting ?? false
         c.panelApps = panelApps ?? false
+        c.agentSelfUpgrade = agentSelfUpgrade ?? false
+        c.fileManagement = fileManagement ?? false
         return c
     }
 }
@@ -219,10 +223,29 @@ struct AgentPanelLinkStatusPayload: Decodable {
     let openSource: Bool?
 }
 
+struct AgentHestiaSetupPayload: Decodable {
+    let detected: Bool?
+    let defaultBaseUrl: String?
+    let canAutoSetup: Bool?
+    let recommendedAuth: String?
+}
+
+struct AgentHestiaBootstrapResponse: Decodable {
+    let ok: Bool?
+    let error: String?
+    let baseUrl: String?
+    let accessKey: String?
+    let secretKey: String?
+    let linked: Bool?
+    let status: AgentPanelLinkStatusPayload?
+    let capabilities: AgentCapabilitiesPayload?
+}
+
 struct AgentPanelLinkStatusResponse: Decodable {
     let ok: Bool?
     let detectedPanel: String?
     let status: AgentPanelLinkStatusPayload?
+    let hestiaSetup: AgentHestiaSetupPayload?
     let capabilities: AgentCapabilitiesPayload?
     let error: String?
 }

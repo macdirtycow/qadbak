@@ -26,8 +26,54 @@ func Dispatch(args []string) error {
 		return RunSimple([]string{"systemctl", "reboot"})
 	case "shutdown":
 		return RunSimple([]string{"systemctl", "poweroff"})
+	case "hestia-cmd":
+		return privHestiaCmd(args[1:])
+	case "agent-upgrade":
+		return privAgentUpgrade(args[1:])
+	case "log-tail":
+		return privLogTail(args[1:])
+	case "domain-fs":
+		return privDomainFS(args[1:])
 	default:
 		return fmt.Errorf("unknown priv action")
+	}
+}
+
+func privHestiaCmd(args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("missing hestia action")
+	}
+	const hestiaBin = "/usr/local/hestia/bin"
+	switch args[0] {
+	case "add-api-ip":
+		ip := "127.0.0.1"
+		if len(args) > 1 {
+			ip = strings.TrimSpace(args[1])
+		}
+		if ip != "127.0.0.1" && ip != "::1" {
+			return fmt.Errorf("invalid hestia api ip")
+		}
+		_, err := Run([]string{hestiaBin + "/v-add-sys-api-ip", ip})
+		if err != nil {
+			msg := strings.ToLower(err.Error())
+			if strings.Contains(msg, "exists") || strings.Contains(msg, "already") {
+				return nil
+			}
+			return err
+		}
+		return nil
+	case "access-key":
+		comment := "qadbak-mobile"
+		if len(args) > 1 {
+			comment = strings.TrimSpace(args[1])
+		}
+		if comment == "" || strings.ContainsAny(comment, "'\"\\") {
+			return fmt.Errorf("invalid hestia access key comment")
+		}
+		_, err := Run([]string{hestiaBin + "/v-add-access-key", "admin", "*", comment, "json"})
+		return err
+	default:
+		return fmt.Errorf("unknown hestia action")
 	}
 }
 

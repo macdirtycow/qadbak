@@ -217,12 +217,15 @@ struct FilesBrowserView: View {
     }
 
     private func load(dir: String) async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else {
+            errorMessage = "Files are not available on this server."
+            return
+        }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            listing = try await api.listFiles(domainName, dir: dir)
+            listing = try await hosting.listFiles(domainName, dir: dir)
             currentDir = dir
         } catch { errorMessage = error.localizedDescription }
     }
@@ -230,20 +233,26 @@ struct FilesBrowserView: View {
     private func openDir(_ path: String) async { await load(dir: path) }
 
     private func openFile(_ entry: DomainFileEntry) async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else {
+            errorMessage = "Files are not available on this server."
+            return
+        }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            fileContent = try await api.readFile(domainName, path: entry.path)
+            fileContent = try await hosting.readFile(domainName, path: entry.path)
             fileToView = entry
         } catch { errorMessage = error.localizedDescription }
     }
 
     private func deleteEntry(_ entry: DomainFileEntry) async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else {
+            errorMessage = "Files are not available on this server."
+            return
+        }
         do {
-            try await api.deleteFile(domainName, path: entry.path)
+            try await hosting.deleteFile(domainName, path: entry.path)
             entryToDelete = nil
             successMessage = "Deleted \(entry.name)."
             await load(dir: currentDir)
@@ -254,35 +263,35 @@ struct FilesBrowserView: View {
     }
 
     private func createFolder() async {
-        guard let api = appState.api, !newItemName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        guard let hosting = appState.hostingAPI, !newItemName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         let name = newItemName.trimmingCharacters(in: .whitespaces)
         newItemName = ""
         showNewFolder = false
         do {
-            try await api.mkdir(domainName, parent: currentDir, name: name)
+            try await hosting.mkdir(domainName, parent: currentDir, name: name)
             successMessage = "Created folder \(name)."
             await load(dir: currentDir)
         } catch { errorMessage = error.localizedDescription }
     }
 
     private func createFile() async {
-        guard let api = appState.api, !newItemName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        guard let hosting = appState.hostingAPI, !newItemName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         let name = newItemName.trimmingCharacters(in: .whitespaces)
         newItemName = ""
         showNewFile = false
         do {
-            try await api.createFile(domainName, parent: currentDir, name: name)
+            try await hosting.createFile(domainName, parent: currentDir, name: name, content: "")
             successMessage = "Created \(name)."
             await load(dir: currentDir)
         } catch { errorMessage = error.localizedDescription }
     }
 
     private func renameEntry() async {
-        guard let api = appState.api, let entry = entryToRename else { return }
+        guard let hosting = appState.hostingAPI, let entry = entryToRename else { return }
         let name = renameName.trimmingCharacters(in: .whitespaces)
         guard !name.isEmpty, name != entry.name else { return }
         do {
-            try await api.moveFile(domainName, path: entry.path, newName: name)
+            try await hosting.moveFile(domainName, path: entry.path, destDir: nil, newName: name, overwrite: false)
             entryToRename = nil
             successMessage = "Renamed to \(name)."
             await load(dir: currentDir)
@@ -293,15 +302,16 @@ struct FilesBrowserView: View {
     }
 
     private func moveEntry() async {
-        guard let api = appState.api, let entry = entryToMove else { return }
+        guard let hosting = appState.hostingAPI, let entry = entryToMove else { return }
         let dest = moveDestDir.trimmingCharacters(in: .whitespaces)
         let newName = moveNewName.trimmingCharacters(in: .whitespaces)
         do {
-            try await api.moveFile(
+            try await hosting.moveFile(
                 domainName,
                 path: entry.path,
                 destDir: dest.isEmpty ? nil : dest,
-                newName: newName.isEmpty ? nil : newName
+                newName: newName.isEmpty ? nil : newName,
+                overwrite: false
             )
             entryToMove = nil
             successMessage = "Moved \(entry.name)."
@@ -313,7 +323,10 @@ struct FilesBrowserView: View {
     }
 
     private func handleUpload(_ result: Result<[URL], Error>) async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else {
+            errorMessage = "Files are not available on this server."
+            return
+        }
         switch result {
         case .failure(let error):
             errorMessage = error.localizedDescription
@@ -335,7 +348,7 @@ struct FilesBrowserView: View {
                 }
             }
             do {
-                let res = try await api.uploadFiles(domainName, dir: currentDir, files: payloads)
+                let res = try await hosting.uploadFiles(domainName, dir: currentDir, files: payloads, overwrite: true)
                 successMessage = "Uploaded \(res.uploaded?.count ?? payloads.count) file(s)."
                 await load(dir: currentDir)
             } catch { errorMessage = error.localizedDescription }
@@ -410,13 +423,16 @@ private struct FileContentView: View {
     }
 
     private func save() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else {
+            error = "Files are not available on this server."
+            return
+        }
         isSaving = true
         error = nil
         saveMessage = nil
         defer { isSaving = false }
         do {
-            try await api.saveFile(domainName, path: entry.path, content: editedText)
+            try await hosting.saveFile(domainName, path: entry.path, content: editedText)
             content = DomainFileContent(
                 content: editedText,
                 mime: content?.mime,

@@ -250,11 +250,19 @@ func validateConfirmAction(action, target string) error {
 		if target != "" && target != "*" {
 			return errors.New("invalid target")
 		}
+	case "agent.upgrade":
+		if target == "" {
+			return errors.New("invalid target")
+		}
 	case "panel.domain.create":
 		if target != "" && target != "*" {
 			return errors.New("invalid target")
 		}
 	case "panel.domain.delete":
+		if target == "" {
+			return errors.New("invalid target")
+		}
+	case "panel.domain.enable", "panel.domain.disable":
 		if target == "" {
 			return errors.New("invalid target")
 		}
@@ -277,6 +285,8 @@ func (h *Handler) capabilityForAction(action string) bool {
 		return caps["dockerManagement"]
 	case action == "updates.install":
 		return caps["packageUpdates"]
+	case action == "agent.upgrade":
+		return caps["agentSelfUpgrade"]
 	case action == "system.reboot":
 		return caps["reboot"]
 	case action == "system.shutdown":

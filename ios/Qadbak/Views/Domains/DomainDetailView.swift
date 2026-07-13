@@ -2,9 +2,13 @@ import SwiftUI
 
 struct DomainDetailView: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
     @State private var domain: HostedDomain
     @State private var isTogglingHosting = false
+    @State private var isDeletingDomain = false
+    @State private var showDeleteConfirm = false
     @State private var toggleError: String?
+    @State private var deleteError: String?
 
     init(domain: HostedDomain) {
         _domain = State(initialValue: domain)
@@ -27,12 +31,17 @@ struct DomainDetailView: View {
                         clientBanner
                     }
                     infoCard
-                    if appState.isAdmin && !isExternalHosting {
+                    if appState.isAdmin {
                         hostingToggleCard
+                    }
+                    if isExternalHosting && appState.isAdmin {
+                        deleteDomainCard
                     }
                     moduleSection("Website", tiles: websiteTiles)
                     moduleSection("Email", tiles: emailTiles)
-                    if !isExternalHosting {
+                    if isExternalHosting {
+                        moduleSection("Data", tiles: externalDataTiles)
+                    } else {
                         moduleSection("Files & apps", tiles: filesTiles)
                         moduleSection("Security", tiles: securityTiles)
                     }
@@ -46,11 +55,28 @@ struct DomainDetailView: View {
         .toolbarBackground(QadbakPalette.bg.opacity(0.95), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .safeAreaInset(edge: .top) {
-            if let toggleError {
-                ErrorBanner(message: toggleError)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
+            VStack(spacing: 8) {
+                if let toggleError {
+                    ErrorBanner(message: toggleError)
+                }
+                if let deleteError {
+                    ErrorBanner(message: deleteError)
+                }
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+        }
+        .confirmationDialog(
+            "Delete \(domain.name)?",
+            isPresented: $showDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete domain", role: .destructive) {
+                Task { await deleteDomain() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This removes the domain from HestiaCP. This cannot be undone.")
         }
         .task { await refreshDomain() }
         .preferredColorScheme(.dark)
@@ -59,8 +85,13 @@ struct DomainDetailView: View {
     private var websiteTiles: [ModuleTile] {
         if isExternalHosting {
             return [
+                ModuleTile("Health", "Website", "heart.text.square", QadbakPalette.danger, AnyView(WebsiteHealthView(domainName: domain.name))),
+                ModuleTile("Logs", "Live tail", "doc.text.magnifyingglass", .teal, AnyView(LiveLogsView(domainName: domain.name))),
                 ModuleTile("DNS", "Records", "network", QadbakPalette.glow, AnyView(DnsRecordsView(domainName: domain.name))),
+                ModuleTile("Redirects", "Domain", "arrow.right.circle", .orange, AnyView(RedirectsView(domainName: domain.name))),
+                ModuleTile("Cron", "Scheduled", "clock.arrow.circlepath", .pink, AnyView(CronJobsView(domainName: domain.name))),
                 ModuleTile("SSL", "Certificates", "lock.shield", QadbakPalette.success, AnyView(SslCertificatesView(domainName: domain.name))),
+                ModuleTile("Backups", "Run now", "externaldrive", QadbakPalette.warning, AnyView(BackupsView(domainName: domain.name))),
             ]
         }
         return [
@@ -81,6 +112,20 @@ struct DomainDetailView: View {
         ]
         if appState.webmailEnabled {
             tiles.append(ModuleTile("Qmail", "Inbox", "envelope.open", .green, AnyView(MailAccountsView(domainName: domain.name, openWebmail: true))))
+        }
+        return tiles
+    }
+
+    private var externalDataTiles: [ModuleTile] {
+        var tiles = [
+            ModuleTile("Databases", "MySQL", "cylinder.split.1x2", .blue, AnyView(DatabasesView(domainName: domain.name))),
+            ModuleTile("FTP", "Accounts", "arrow.up.arrow.down.circle", .teal, AnyView(FtpAccountsView(domainName: domain.name))),
+        ]
+        if appState.filesEnabled {
+            tiles.insert(
+                ModuleTile("Files", "Browser", "folder", .orange, AnyView(FilesBrowserView(domainName: domain.name))),
+                at: 0
+            )
         }
         return tiles
     }
@@ -113,7 +158,7 @@ struct DomainDetailView: View {
                     .font(.subheadline)
                     .foregroundStyle(QadbakPalette.warning)
             } else {
-                Text(isExternalHosting ? "Linked HestiaCP — DNS, mail, databases, and SSL." : "Same modules as the web panel — grouped for mobile.")
+                Text(isExternalHosting ? "Linked HestiaCP — health, DNS, mail, cron, FTP, and SSL." : "Same modules as the web panel — grouped for mobile.")
                     .font(.subheadline)
                     .foregroundStyle(QadbakPalette.muted)
             }
@@ -147,6 +192,32 @@ struct DomainDetailView: View {
                 if let used = domain.diskUsed, let limit = domain.diskLimit {
                     row("Disk", "\(used) / \(limit)")
                 }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var deleteDomainCard: some View {
+        QBGlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Danger zone")
+                    .font(.headline)
+                    .foregroundStyle(QadbakPalette.danger)
+                Text("Permanently remove this domain from the linked panel.")
+                    .font(.caption)
+                    .foregroundStyle(QadbakPalette.muted)
+                Button(role: .destructive) {
+                    showDeleteConfirm = true
+                } label: {
+                    HStack {
+                        if isDeletingDomain {
+                            ProgressView().controlSize(.small)
+                        }
+                        Text(isDeletingDomain ? "Deleting…" : "Delete domain")
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .disabled(isDeletingDomain)
             }
         }
     }
@@ -214,19 +285,32 @@ struct DomainDetailView: View {
     }
 
     private func toggleHosting() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isTogglingHosting = true
         toggleError = nil
         defer { isTogglingHosting = false }
         do {
             if domain.disabled == true {
-                try await api.enableDomain(domain.name)
+                try await hosting.enableDomain(domain.name)
             } else {
-                try await api.disableDomain(domain.name)
+                try await hosting.disableDomain(domain.name)
             }
             await refreshDomain()
         } catch {
             toggleError = error.localizedDescription
+        }
+    }
+
+    private func deleteDomain() async {
+        guard let hosting = appState.hostingAPI else { return }
+        isDeletingDomain = true
+        deleteError = nil
+        defer { isDeletingDomain = false }
+        do {
+            try await hosting.deleteDomain(domain.name)
+            dismiss()
+        } catch {
+            deleteError = error.localizedDescription
         }
     }
 }

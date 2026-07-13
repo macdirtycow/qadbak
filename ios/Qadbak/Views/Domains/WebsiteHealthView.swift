@@ -169,19 +169,19 @@ struct WebsiteHealthView: View {
     }
 
     private func load() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            report = try await api.websiteHealth(domainName)
+            report = try await hosting.websiteHealth(domainName)
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
     private func restartWebsite() async {
-        guard let api = appState.api else { return }
+        guard let api = appState.api, report?.repairAvailable == true else { return }
         isRestarting = true
         errorMessage = nil
         LiveActivityManager.start(

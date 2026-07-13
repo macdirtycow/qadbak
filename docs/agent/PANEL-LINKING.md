@@ -6,7 +6,7 @@ Agent **v0.6.0+** connects to open-source panels on the same server. The iOS app
 
 | Panel | Credentials | App features after linking |
 |-------|-------------|----------------------------|
-| **HestiaCP** | Admin username + password, or access key + secret | Domains tab: list/create domains, DNS, mail, aliases, databases, SSL |
+| **HestiaCP** | Admin username + password, or access key + secret | Domains tab: list/create/delete domains, DNS, mail, aliases, databases, SSL, redirects, cron, FTP, backups, health, logs |
 | **Coolify** | API token (Settings → Keys & Tokens) | Apps tab: list apps, deploy / start / stop |
 | **CasaOS** | API token, or username + password | Apps tab: list installed apps (read-only) |
 
@@ -47,6 +47,20 @@ All routes require `Authorization: Bearer <agent-access-token>`.
 | `GET` / `POST` / `DELETE` | `…/domains/{domain}/aliases` | Mail forwards |
 | `GET` / `POST` | `…/domains/{domain}/databases` | MySQL databases |
 | `GET` / `POST` | `…/domains/{domain}/ssl` | List / issue Let's Encrypt |
+| `POST` | `…/domains/{domain}/enable` | Unsuspend domain (`panel.domain.enable` confirm) |
+| `POST` | `…/domains/{domain}/disable` | Suspend domain (`panel.domain.disable` confirm) |
+| `GET` | `…/domains/{domain}/website-health` | HTTP probe + SSL expiry |
+| `GET` | `…/domains/{domain}/logs?type=access\|error` | Tail nginx/apache domain logs |
+| `GET` / `POST` / `DELETE` | `…/domains/{domain}/redirects` | Domain redirects |
+| `GET` / `POST` / `DELETE` | `…/domains/{domain}/cron` | Cron jobs (per unix user) |
+| `GET` / `POST` / `DELETE` | `…/domains/{domain}/ftp` | FTP accounts |
+| `GET` / `POST` | `…/domains/{domain}/backups` | List / start backups (per user) |
+| `DELETE` | `…/domains/{domain}/databases?name=` | Delete database |
+| `GET` | `/api/v1/panels/widgets/summary` | Domain stats for home screen widget |
+| `GET` | `…/domains/{domain}/files?dir=` | List files under `web/{domain}/public_html` |
+| `GET` | `…/domains/{domain}/files/content?path=` | Read file content |
+| `POST` / `DELETE` | `…/domains/{domain}/files` | Create folder/file, save, move, delete |
+| `POST` | `…/domains/{domain}/files/upload` | Multipart upload |
 
 ### Coolify apps (requires Coolify link)
 
@@ -101,8 +115,9 @@ System operations (metrics, Docker, reboot) work without linking the panel.
 ## Scope and limits
 
 - One panel link at a time (Hestia **or** Coolify **or** CasaOS).
-- Hestia path covers core hosting (no FTP, cron, files, or Qmail in the app yet).
+- Hestia path covers core hosting including **files** (`public_html`); **Qmail** is not available on linked Hestia yet.
+- Redirects are domain-level (`/`); cron/FTP/backups are per unix user, not per domain.
 - Agent calls the panel API on **localhost**; your phone talks only to the agent on port **9443**.
-- Requires agent **0.6.0+** (upgrade from the app or reinstall).
+- Requires agent **0.6.7+** for files browser, health, logs, enable/disable, and widget summary (upgrade from the app).
 
 See also [EXTERNAL_SERVERS.md](../ios/EXTERNAL_SERVERS.md) and [SUPPORTED_SYSTEMS.md](./SUPPORTED_SYSTEMS.md).

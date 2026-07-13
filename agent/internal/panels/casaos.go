@@ -13,10 +13,7 @@ import (
 func defaultCasaOSBase() string { return "http://127.0.0.1" }
 
 func fetchCasaOSOverview(cfg LinkConfig) (Overview, error) {
-	base := strings.TrimSpace(cfg.BaseURL)
-	if base == "" {
-		base = defaultCasaOSBase()
-	}
+	base := ResolvePanelBaseURL(cfg.BaseURL, defaultCasaOSBase)
 
 	token := strings.TrimSpace(cfg.Secrets["apiToken"])
 	if token == "" {
@@ -82,12 +79,16 @@ func fetchCasaOSOverview(cfg LinkConfig) (Overview, error) {
 }
 
 func casaOSLogin(baseURL, username, password string) (string, error) {
+	base, err := ValidatePanelBaseURL(baseURL)
+	if err != nil {
+		return "", err
+	}
 	payload, _ := json.Marshal(map[string]string{
 		"username": username,
 		"password": password,
 	})
 	client := &http.Client{Timeout: 20 * time.Second}
-	endpoint := strings.TrimRight(baseURL, "/") + "/v2/users/login"
+	endpoint := strings.TrimRight(base, "/") + "/v2/users/login"
 	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(payload))
 	if err != nil {
 		return "", err
@@ -121,8 +122,15 @@ func casaOSLogin(baseURL, username, password string) (string, error) {
 }
 
 func casaOSGET(baseURL, token, path string) ([]byte, error) {
+	base, err := ValidatePanelBaseURL(baseURL)
+	if err != nil {
+		return nil, err
+	}
+	if !strings.HasPrefix(path, "/") {
+		return nil, fmt.Errorf("invalid casaos path")
+	}
 	client := &http.Client{Timeout: 20 * time.Second}
-	endpoint := strings.TrimRight(baseURL, "/") + path
+	endpoint := strings.TrimRight(base, "/") + path
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, err

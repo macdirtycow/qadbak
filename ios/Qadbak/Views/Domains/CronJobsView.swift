@@ -132,12 +132,12 @@ struct CronJobsView: View {
     }
 
     private func load() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            let result = try await api.listCronJobs(domainName)
+            let result = try await hosting.listCronJobs(domainName)
             jobs = result.jobs
             canEdit = result.canEdit
         } catch {
@@ -146,10 +146,10 @@ struct CronJobsView: View {
     }
 
     private func delete(_ job: CronJob) async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         jobToDelete = nil
         do {
-            try await api.deleteCronJob(domainName, id: job.id)
+            try await hosting.deleteCronJob(domainName, id: job.id)
             await load()
         } catch {
             errorMessage = error.localizedDescription
@@ -209,13 +209,13 @@ private struct CreateCronJobView: View {
     }
 
     private func save() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isSaving = true
         errorMessage = nil
         defer { isSaving = false }
         let trimmedUser = user.trimmingCharacters(in: .whitespacesAndNewlines)
         do {
-            try await api.createCronJob(
+            try await hosting.createCronJob(
                 domainName,
                 schedule: schedule.trimmingCharacters(in: .whitespacesAndNewlines),
                 command: command.trimmingCharacters(in: .whitespacesAndNewlines),

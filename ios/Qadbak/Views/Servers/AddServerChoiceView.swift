@@ -35,12 +35,7 @@ struct AddServerChoiceView: View {
                         ) {
                             Task {
                                 await appState.prepareAddServer(mode: .qadbakPanel)
-                                switch presentation {
-                                case .sheet:
-                                    dismiss()
-                                case .onboarding:
-                                    showQadbakLogin = true
-                                }
+                                showQadbakLogin = true
                             }
                         }
 

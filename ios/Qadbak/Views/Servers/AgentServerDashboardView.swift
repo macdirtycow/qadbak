@@ -45,13 +45,21 @@ struct AgentServerDashboardView: View {
         }
         .sheet(isPresented: $showSwitcher) { ServerSwitcherView() }
         .sheet(isPresented: $showUpgrade) {
-            if let server = appState.activeServer, let manifest = upgradeManifest, let version = overview?.agentVersion {
-                AgentUpgradeView(server: server, manifest: manifest, currentVersion: version) {
+            if let server = appState.activeServer,
+               let manifest = upgradeManifest,
+               let version = overview?.agentVersion,
+               let client = (appState.activeProvider as? QadbakAgentProvider)?.apiClient {
+                AgentUpgradeView(
+                    server: server,
+                    manifest: manifest,
+                    currentVersion: version,
+                    client: client
+                ) {
                     Task { await reload() }
                 }
             }
         }
-        .task { await reload() }
+        .task(id: appState.activeServerId) { await reload() }
         .preferredColorScheme(.dark)
     }
 
@@ -148,7 +156,7 @@ struct AgentServerDashboardView: View {
             }
             if provider.supports(.updates) || provider.supports(.reboot) || provider.supports(.shutdown) {
                 NavigationLink { AgentServerControlView() } label: {
-                    featureRow(title: "Control", subtitle: "Updates, reboot & shutdown", icon: "power", tint: QadbakPalette.danger)
+                    featureRow(title: "Control", subtitle: "Agent upgrade, packages, reboot", icon: "power", tint: QadbakPalette.danger)
                 }
             }
         }

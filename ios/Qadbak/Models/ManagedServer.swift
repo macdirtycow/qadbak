@@ -84,6 +84,7 @@ struct ServerCapabilities: Codable, Hashable {
     var backups: Bool = false
     var domainHosting: Bool = false
     var panelApps: Bool = false
+    var agentSelfUpgrade: Bool = false
 
     static var qadbakPanelDefaults: ServerCapabilities {
         var c = ServerCapabilities()
@@ -252,6 +253,30 @@ extension ManagedServer {
             id: id,
             label: displayName,
             serverURL: apiBaseURL,
+            username: username,
+            lastUsedAt: lastUsedAt
+        )
+    }
+
+    func reusingId(_ existingId: String?) -> ManagedServer {
+        guard let existingId, existingId != id else { return self }
+        return ManagedServer(
+            id: existingId,
+            displayName: displayName,
+            hostname: hostname,
+            ipAddress: ipAddress,
+            apiBaseURL: apiBaseURL,
+            serverKind: serverKind,
+            operatingSystem: operatingSystem,
+            architecture: architecture,
+            agentVersion: agentVersion,
+            connectionStatus: connectionStatus,
+            lastSeen: lastSeen,
+            capabilities: capabilities,
+            panelDetection: panelDetection,
+            authenticationMethod: authenticationMethod,
+            agentPort: agentPort,
+            isBetaAgent: isBetaAgent,
             username: username,
             lastUsedAt: lastUsedAt
         )

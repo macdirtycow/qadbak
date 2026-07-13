@@ -93,7 +93,11 @@ func PublicFromConfig(cfg *LinkConfig, detectedPanel string) PublicStatus {
 	}
 	if cfg == nil {
 		if linkable {
-			st.Hint = "Add panel API credentials to read sites and apps from the iOS app."
+			if detectedPanel == "hestiaCP" {
+				st.Hint = "Tap Link HestiaCP to auto-create an API key on this server."
+			} else {
+				st.Hint = "Add panel API credentials to read sites and apps from the iOS app."
+			}
 		}
 		return st
 	}

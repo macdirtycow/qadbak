@@ -24,13 +24,19 @@ struct AddDomainView: View {
         ("alias", "Alias"),
     ]
 
+    private var isLinkedHestia: Bool {
+        appState.activeServer?.isAgentManaged == true && appState.activeServer?.capabilities.domainHosting == true
+    }
+
     var body: some View {
         QBScreenContainer {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     QBScreenHeader(
                         title: "Add domain",
-                        subtitle: "Provision hosting on your panel server."
+                        subtitle: isLinkedHestia
+                            ? "Create a web domain on linked HestiaCP."
+                            : "Provision hosting on your panel server."
                     )
 
                     if let errorMessage {
@@ -67,34 +73,43 @@ struct AddDomainView: View {
     private var formFields: some View {
         VStack(alignment: .leading, spacing: 14) {
             QBTextField(label: "Domain name", placeholder: "example.com", text: $domainName)
-            Picker("Type", selection: $domainType) {
-                ForEach(domainTypes, id: \.0) { value, label in
-                    Text(label).tag(value)
-                }
+            if isLinkedHestia {
+                QBTextField(label: "Unix user (optional)", placeholder: "Linked panel user", text: $unixUser)
+            } else {
+                qadbakPanelFields
             }
-            .pickerStyle(.menu)
-            .tint(QadbakPalette.accent)
-
-            if domainType != "top" {
-                QBTextField(label: "Parent domain", placeholder: "example.com", text: $parentDomain)
-            }
-
-            QBTextField(label: "Plan", placeholder: "Default", text: $plan)
-            QBTextField(label: "Unix user (optional)", placeholder: "Auto from domain", text: $unixUser)
-            QBTextField(label: "Unix password (optional)", placeholder: "Auto-generated", text: $unixPassword, secure: true)
-
-            Toggle(isOn: $createClientAccount) {
-                Text("Create panel client account")
-                    .foregroundStyle(QadbakPalette.text)
-            }
-            .tint(QadbakPalette.accent)
-
-            Toggle(isOn: $createPanelVhost) {
-                Text("Create panel vhost (Premium)")
-                    .foregroundStyle(QadbakPalette.text)
-            }
-            .tint(QadbakPalette.accent)
         }
+    }
+
+    @ViewBuilder
+    private var qadbakPanelFields: some View {
+        Picker("Type", selection: $domainType) {
+            ForEach(domainTypes, id: \.0) { value, label in
+                Text(label).tag(value)
+            }
+        }
+        .pickerStyle(.menu)
+        .tint(QadbakPalette.accent)
+
+        if domainType != "top" {
+            QBTextField(label: "Parent domain", placeholder: "example.com", text: $parentDomain)
+        }
+
+        QBTextField(label: "Plan", placeholder: "Default", text: $plan)
+        QBTextField(label: "Unix user (optional)", placeholder: "Auto from domain", text: $unixUser)
+        QBTextField(label: "Unix password (optional)", placeholder: "Auto-generated", text: $unixPassword, secure: true)
+
+        Toggle(isOn: $createClientAccount) {
+            Text("Create panel client account")
+                .foregroundStyle(QadbakPalette.text)
+        }
+        .tint(QadbakPalette.accent)
+
+        Toggle(isOn: $createPanelVhost) {
+            Text("Create panel vhost (Premium)")
+                .foregroundStyle(QadbakPalette.text)
+        }
+        .tint(QadbakPalette.accent)
     }
 
     @ViewBuilder

@@ -175,7 +175,7 @@ struct DomainListView: View {
                     AdminHealthView()
                 }
             }
-            .task { await reload() }
+            .task(id: appState.activeServerId) { await reload() }
             .onChange(of: appState.pendingPushDomain) { _, domain in
                 guard let domain, !domain.isEmpty else { return }
                 if let match = domains.first(where: { $0.name.lowercased() == domain.lowercased() }) {

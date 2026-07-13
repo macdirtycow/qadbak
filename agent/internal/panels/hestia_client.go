@@ -5,78 +5,155 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
 
+type hestiaAuthMode int
+
+const (
+	hestiaAuthAccessKey hestiaAuthMode = iota
+	hestiaAuthLegacyUser
+)
+
+type hestiaAuth struct {
+	mode      hestiaAuthMode
+	accessKey string
+	secretKey string
+	user      string
+	password  string
+}
+
 type hestiaClient struct {
 	baseURL string
-	user    string
-	pass    string
+	auth    hestiaAuth
+	client  *http.Client
 }
 
 func newHestiaClient(cfg LinkConfig) (*hestiaClient, error) {
-	base := strings.TrimSpace(cfg.BaseURL)
-	if base == "" {
-		base = defaultHestiaBase()
-	}
-	user := strings.TrimSpace(cfg.Secrets["username"])
-	pass := strings.TrimSpace(cfg.Secrets["password"])
+	base := ResolvePanelBaseURL(cfg.BaseURL, defaultHestiaBase)
+
 	accessKey := strings.TrimSpace(cfg.Secrets["accessKey"])
 	secretKey := strings.TrimSpace(cfg.Secrets["secretKey"])
-	if accessKey != "" && secretKey != "" {
-		user = accessKey
-		pass = secretKey
+	user := strings.TrimSpace(cfg.Secrets["username"])
+	pass := strings.TrimSpace(cfg.Secrets["password"])
+
+	var auth hestiaAuth
+	switch {
+	case accessKey != "" && secretKey != "":
+		auth = hestiaAuth{mode: hestiaAuthAccessKey, accessKey: accessKey, secretKey: secretKey}
+	case user != "" && pass != "":
+		auth = hestiaAuth{mode: hestiaAuthLegacyUser, user: user, password: pass}
+	default:
+		return nil, fmt.Errorf("hestia credentials required (access key + secret key, or admin username + password)")
 	}
-	if user == "" || pass == "" {
-		return nil, fmt.Errorf("hestia credentials required")
+
+	return &hestiaClient{
+		baseURL: base,
+		auth:    auth,
+		client:  hestiaHTTPClient(base),
+	}, nil
+}
+
+func hestiaHTTPClient(baseURL string) *http.Client {
+	transport := &http.Transport{}
+	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(baseURL)), "https://") {
+		transport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true, //nolint:gosec // loopback-only panel URL validated in ResolvePanelBaseURL
+			MinVersion:         tls.VersionTLS12,
+		}
 	}
-	return &hestiaClient{baseURL: base, user: user, pass: pass}, nil
+	return &http.Client{
+		Timeout:   30 * time.Second,
+		Transport: transport,
+	}
 }
 
 func (c *hestiaClient) call(cmd string, args ...string) ([]byte, error) {
-	return hestiaCmd(c.baseURL, c.user, c.pass, cmd, args...)
+	return c.exec(cmd, args...)
 }
 
-func hestiaCmd(baseURL, user, pass, cmd string, args ...string) ([]byte, error) {
+func (c *hestiaClient) exec(cmd string, args ...string) ([]byte, error) {
 	form := url.Values{}
-	form.Set("user", user)
-	form.Set("password", pass)
-	form.Set("returncode", "yes")
 	form.Set("cmd", cmd)
 	for i, arg := range args {
 		form.Set(fmt.Sprintf("arg%d", i+1), arg)
 	}
 
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // local panel
-		},
+	switch c.auth.mode {
+	case hestiaAuthAccessKey:
+		form.Set("access_key", c.auth.accessKey)
+		form.Set("secret_key", c.auth.secretKey)
+	default:
+		form.Set("user", c.auth.user)
+		form.Set("password", c.auth.password)
 	}
-	endpoint := strings.TrimRight(baseURL, "/") + "/api/"
+
+	endpoint := strings.TrimRight(c.baseURL, "/") + "/api/"
 	req, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(form.Encode()))
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	res, err := client.Do(req)
+	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("hestia api: %w", err)
 	}
 	defer res.Body.Close()
+
 	body, err := io.ReadAll(io.LimitReader(res.Body, 4<<20))
 	if err != nil {
 		return nil, err
 	}
-	if res.StatusCode >= 400 {
-		return nil, fmt.Errorf("hestia api HTTP %d", res.StatusCode)
-	}
+	return parseHestiaResponse(res, body)
+}
+
+func parseHestiaResponse(res *http.Response, body []byte) ([]byte, error) {
 	text := strings.TrimSpace(string(body))
-	if strings.HasPrefix(text, "Error:") {
-		return nil, fmt.Errorf("%s", text)
+
+	if code := strings.TrimSpace(res.Header.Get("Hestia-Exit-Code")); code != "" {
+		if code != "0" {
+			if text == "" {
+				return nil, fmt.Errorf("hestia command failed (exit %s)", code)
+			}
+			return nil, fmt.Errorf("hestia command failed (exit %s): %s", code, text)
+		}
 	}
-	return body, nil
+
+	switch res.StatusCode {
+	case http.StatusNoContent:
+		return nil, nil
+	case http.StatusOK:
+		if text == "" || text == "OK" {
+			return nil, nil
+		}
+		if strings.HasPrefix(text, "Error:") {
+			return nil, fmt.Errorf("%s", text)
+		}
+		return body, nil
+	default:
+		if text == "" {
+			return nil, fmt.Errorf("hestia api HTTP %d", res.StatusCode)
+		}
+		if strings.HasPrefix(text, "Error:") {
+			return nil, fmt.Errorf("%s", text)
+		}
+		if n, err := strconv.Atoi(text); err == nil && n != 0 && res.StatusCode >= 400 {
+			return nil, fmt.Errorf("hestia command failed (exit %d)", n)
+		}
+		return nil, fmt.Errorf("hestia api HTTP %d: %s", res.StatusCode, text)
+	}
+}
+
+// testHestiaClient wires a client to an httptest server (tests only).
+func testHestiaClient(server *httptest.Server, auth hestiaAuth) *hestiaClient {
+	return &hestiaClient{
+		baseURL: server.URL,
+		auth:    auth,
+		client:  server.Client(),
+	}
 }

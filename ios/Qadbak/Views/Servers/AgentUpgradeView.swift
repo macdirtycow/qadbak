@@ -4,10 +4,12 @@ struct AgentUpgradeView: View {
     let server: ManagedServer
     let manifest: AgentReleaseManifest
     let currentVersion: String
+    let client: AgentAPIClient
     let onComplete: () -> Void
 
     @Environment(\.dismiss) private var dismiss
 
+    @State private var showSSHFallback = false
     @State private var username = "root"
     @State private var password = ""
     @State private var usePassword = true
@@ -17,8 +19,6 @@ struct AgentUpgradeView: View {
     @State private var errorMessage: String?
     @State private var progressMessage = ""
 
-    private let ssh = SSHSessionService()
-
     var body: some View {
         NavigationStack {
             QBScreenContainer {
@@ -26,25 +26,29 @@ struct AgentUpgradeView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         QBScreenHeader(
                             title: "Upgrade agent",
-                            subtitle: "Update from \(currentVersion) to \(manifest.version) via SSH."
+                            subtitle: "Update from \(currentVersion) to \(manifest.version)."
                         )
                         if let errorMessage { ErrorBanner(message: errorMessage) }
                         if isBusy {
                             QBLoadingState(message: progressMessage)
                         } else {
-                            authCard
-                            QBGlassCard {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("What happens")
-                                        .font(.headline)
-                                        .foregroundStyle(QadbakPalette.text)
-                                    Text("The verified binary from the app bundle replaces /usr/lib/qadbak-agent/qadbak-agent and restarts the service. Pairing tokens are unchanged.")
-                                        .font(.caption)
-                                        .foregroundStyle(QadbakPalette.muted)
-                                }
+                            infoCard
+                            if showSSHFallback {
+                                sshAuthCard
                             }
-                            QBPrimaryButton(title: "Upgrade now", loading: isBusy, disabled: !canUpgrade) {
+                            QBPrimaryButton(
+                                title: showSSHFallback ? "Upgrade via SSH" : "Upgrade now",
+                                loading: isBusy,
+                                disabled: showSSHFallback ? !canUpgradeSSH : false
+                            ) {
                                 Task { await runUpgrade() }
+                            }
+                            if !showSSHFallback {
+                                Button("Use SSH instead") {
+                                    showSSHFallback = true
+                                }
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(QadbakPalette.muted)
                             }
                         }
                     }
@@ -62,7 +66,22 @@ struct AgentUpgradeView: View {
         }
     }
 
-    private var authCard: some View {
+    private var infoCard: some View {
+        QBGlassCard {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(showSSHFallback ? "SSH upgrade" : "Secure upgrade")
+                    .font(.headline)
+                    .foregroundStyle(QadbakPalette.text)
+                Text(showSSHFallback
+                     ? "Uploads the verified binary from this app over SSH. Pairing tokens stay on the server."
+                     : "Uploads the verified binary over your existing Tailscale / HTTPS connection. Face ID confirmation is required. Pairing tokens are unchanged.")
+                    .font(.caption)
+                    .foregroundStyle(QadbakPalette.muted)
+            }
+        }
+    }
+
+    private var sshAuthCard: some View {
         QBGlassCard {
             VStack(alignment: .leading, spacing: 16) {
                 QBTextField(label: "SSH username", placeholder: "root", text: $username)
@@ -86,13 +105,14 @@ struct AgentUpgradeView: View {
         }
     }
 
-    private var canUpgrade: Bool {
+    private var canUpgradeSSH: Bool {
         if usePassword { return !password.isEmpty && !username.isEmpty }
         return privateKeyPEM.contains("BEGIN OPENSSH PRIVATE KEY") && !username.isEmpty
     }
 
-    private func sshSettings() -> SSHConnectionSettings {
-        SSHConnectionSettings(
+    private func sshSettings() -> SSHConnectionSettings? {
+        guard canUpgradeSSH else { return nil }
+        return SSHConnectionSettings(
             host: server.ipAddress ?? server.hostname,
             port: 22,
             username: username.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -105,23 +125,27 @@ struct AgentUpgradeView: View {
         errorMessage = nil
         defer { isBusy = false }
         do {
-            progressMessage = "Verifying bundled agent…"
-            let arch = server.architecture ?? "x86_64"
-            let verified = try AgentInstallService.verifiedBinary(architecture: arch)
-            progressMessage = "Uploading via SSH…"
-            let fingerprint = KeychainStore().loadSshHostKeyFingerprint(serverId: server.id)
-            try await ssh.upgradeAgent(
-                settings: sshSettings(),
-                knownHostFingerprint: fingerprint,
-                binary: verified.data,
-                agentPort: server.agentPort ?? 9443
+            progressMessage = "Preparing upgrade…"
+            let outcome = try await AgentUpgradeService.upgrade(
+                server: server,
+                client: client,
+                manifest: manifest,
+                currentVersion: currentVersion,
+                sshSettings: showSSHFallback ? sshSettings() : nil,
+                onProgress: { progressMessage = $0 }
             )
             password = ""
             privateKeyPEM = ""
+            _ = outcome
             onComplete()
             dismiss()
         } catch {
-            errorMessage = error.localizedDescription
+            if !showSSHFallback {
+                errorMessage = "\(error.localizedDescription) You can try SSH upgrade below."
+                showSSHFallback = true
+            } else {
+                errorMessage = error.localizedDescription
+            }
         }
     }
 }

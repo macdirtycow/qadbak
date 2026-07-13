@@ -22,6 +22,10 @@ struct BackupsView: View {
         scheduled.filter(\.isArchive)
     }
 
+    private var canDownloadToICloud: Bool {
+        appState.api != nil
+    }
+
     var body: some View {
         ZStack {
             QadbakPalette.bg.ignoresSafeArea()
@@ -44,7 +48,9 @@ struct BackupsView: View {
                         }
                     }
 
-                    iCloudSection
+                    if canDownloadToICloud {
+                        iCloudSection
+                    }
 
                     if !scheduleRows.isEmpty {
                         sectionHeader("Schedule")
@@ -178,19 +184,19 @@ struct BackupsView: View {
                 .background(QadbakPalette.glow.opacity(0.35), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .foregroundStyle(QadbakPalette.primary)
             }
-            .disabled(isSaving || !BackupICloudService.iCloudAvailable)
+            .disabled(isSaving || !BackupICloudService.iCloudAvailable || !canDownloadToICloud)
         }
         .padding(14)
         .background(QadbakPalette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func load() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            let res = try await api.listBackups(domainName)
+            let res = try await hosting.listBackups(domainName)
             scheduled = res.scheduled ?? []
             canBackup = res.canBackup ?? true
         } catch {
@@ -199,7 +205,7 @@ struct BackupsView: View {
     }
 
     private func startBackup() async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         let existingArchives = Set(archiveRows.map(\.id))
         isStarting = true
         errorMessage = nil
@@ -213,10 +219,10 @@ struct BackupsView: View {
         defer { isStarting = false }
         do {
             LiveActivityManager.update(title: "Running backup", detail: "Backup in progress…", progress: 0.5)
-            let createdFile = try await api.startBackup(domainName)
+            let createdFile = try await hosting.startBackup(domainName)
             await load()
 
-            if autoSaveToICloud, BackupICloudService.iCloudAvailable {
+            if canDownloadToICloud, autoSaveToICloud, BackupICloudService.iCloudAvailable {
                 if let archiveName = createdFile ?? newestArchiveName(excluding: existingArchives) {
                     LiveActivityManager.update(title: "Saving to iCloud", detail: archiveName, progress: 0.75)
                     await saveArchiveByName(archiveName)
@@ -242,7 +248,7 @@ struct BackupsView: View {
     }
 
     private func saveArchiveByName(_ archiveName: String, archiveId: String? = nil) async {
-        guard let api = appState.api else { return }
+        guard let api = appState.api, canDownloadToICloud else { return }
         let trackId = archiveId ?? archiveName
         savingArchiveId = trackId
         errorMessage = nil

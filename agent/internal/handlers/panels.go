@@ -37,11 +37,15 @@ func (h *Handler) panelLinkStatus(w http.ResponseWriter, r *http.Request) {
 	store := panels.NewStore(h.cfg.DataDir)
 	cfg, _ := store.Load()
 	status := panels.PublicFromConfig(cfg, detected)
-	WriteJSON(w, http.StatusOK, map[string]any{
+	payload := map[string]any{
 		"ok":            true,
 		"detectedPanel": detected,
 		"status":        status,
-	})
+	}
+	if detected == "hestiaCP" || panels.HestiaInstalled() {
+		payload["hestiaSetup"] = panels.BuildHestiaSetupInfo()
+	}
+	WriteJSON(w, http.StatusOK, payload)
 }
 
 func (h *Handler) panelLinkCreate(w http.ResponseWriter, r *http.Request) {
@@ -94,6 +98,8 @@ func (h *Handler) panelLinkCreate(w http.ResponseWriter, r *http.Request) {
 		Secrets:  secrets,
 		LinkedAt: time.Now().UTC(),
 	}
+	hestiaPanelDefaults(&cfg)
+
 	if err := panels.TestLink(cfg); err != nil {
 		WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
 		return

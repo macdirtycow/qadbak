@@ -76,12 +76,12 @@ struct LiveLogsView: View {
     }
 
     private func load(silent: Bool = false) async {
-        guard let api = appState.api else { return }
+        guard let hosting = appState.hostingAPI else { return }
         if !silent { isLoading = true }
         if !silent { errorMessage = nil }
         defer { if !silent { isLoading = false } }
         do {
-            let res = try await api.websiteLogs(domainName, type: logType)
+            let res = try await hosting.websiteLogs(domainName, type: logType)
             logText = res.log ?? ""
         } catch {
             if !silent { errorMessage = error.localizedDescription }

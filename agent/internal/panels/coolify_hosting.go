@@ -17,10 +17,7 @@ type PanelApp struct {
 }
 
 func CoolifyListApps(cfg LinkConfig) ([]PanelApp, error) {
-	base := strings.TrimSpace(cfg.BaseURL)
-	if base == "" {
-		base = defaultCoolifyBase()
-	}
+	base := ResolvePanelBaseURL(cfg.BaseURL, defaultCoolifyBase)
 	token := strings.TrimSpace(cfg.Secrets["apiToken"])
 	if token == "" {
 		return nil, fmt.Errorf("coolify apiToken required")
@@ -59,10 +56,7 @@ func CoolifyStopApp(cfg LinkConfig, id string) error {
 }
 
 func coolifyPOST(cfg LinkConfig, path string, body []byte) error {
-	base := strings.TrimSpace(cfg.BaseURL)
-	if base == "" {
-		base = defaultCoolifyBase()
-	}
+	base := ResolvePanelBaseURL(cfg.BaseURL, defaultCoolifyBase)
 	token := strings.TrimSpace(cfg.Secrets["apiToken"])
 	if token == "" {
 		return fmt.Errorf("coolify apiToken required")

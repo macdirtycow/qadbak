@@ -67,6 +67,7 @@ func MapCapabilities(detectedPanel string, linkedPanel string) map[string]bool {
 		"packageUpdates":    true,
 		"reboot":            true,
 		"shutdown":          true,
+		"agentSelfUpgrade":  true,
 		"panelIntegration":  detectedPanel != "genericLinux" && detectedPanel != "",
 	}
 	if detectedPanel == "coolify" && !caps["dockerManagement"] {
@@ -75,6 +76,7 @@ func MapCapabilities(detectedPanel string, linkedPanel string) map[string]bool {
 	switch linkedPanel {
 	case "hestiaCP":
 		caps["domainHosting"] = true
+		caps["fileManagement"] = true
 	case "coolify", "casaOS":
 		caps["panelApps"] = true
 	}

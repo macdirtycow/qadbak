@@ -318,9 +318,310 @@ func (h *Handler) panelDomainDatabasesRoute(w http.ResponseWriter, r *http.Reque
 			return
 		}
 		WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
+	case http.MethodDelete:
+		name := strings.TrimSpace(r.URL.Query().Get("name"))
+		if name == "" {
+			var body struct {
+				Name string `json:"name"`
+			}
+			if err := decodeJSON(r, &body); err == nil {
+				name = strings.TrimSpace(body.Name)
+			}
+		}
+		if name == "" {
+			WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "name required"})
+			return
+		}
+		if err := panels.HestiaDeleteDatabase(*cfg, domain, name); err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
 	default:
 		methodNotAllowed(w)
 	}
+}
+
+func (h *Handler) panelDomainRedirectsRoute(w http.ResponseWriter, r *http.Request) {
+	domain := strings.TrimSpace(r.PathValue("domain"))
+	cfg, ok := h.requireHestiaLink(w)
+	if !ok {
+		return
+	}
+	switch r.Method {
+	case http.MethodGet:
+		redirects, err := panels.HestiaListRedirects(*cfg, domain)
+		if err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "redirects": redirects})
+	case http.MethodPost:
+		var body struct {
+			Path string `json:"path"`
+			Dest string `json:"dest"`
+			Type string `json:"type"`
+		}
+		if err := decodeJSON(r, &body); err != nil {
+			WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "Invalid JSON"})
+			return
+		}
+		if err := panels.HestiaAddRedirect(*cfg, domain, body.Dest, body.Type); err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
+	case http.MethodDelete:
+		var body struct {
+			Path string `json:"path"`
+		}
+		_ = decodeJSON(r, &body)
+		if err := panels.HestiaDeleteRedirect(*cfg, domain); err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
+	default:
+		methodNotAllowed(w)
+	}
+}
+
+func (h *Handler) panelDomainCronRoute(w http.ResponseWriter, r *http.Request) {
+	domain := strings.TrimSpace(r.PathValue("domain"))
+	cfg, ok := h.requireHestiaLink(w)
+	if !ok {
+		return
+	}
+	switch r.Method {
+	case http.MethodGet:
+		jobs, canEdit, err := panels.HestiaListCronJobs(*cfg, domain)
+		if err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "jobs": jobs, "canEdit": canEdit})
+	case http.MethodPost:
+		var body struct {
+			Schedule string `json:"schedule"`
+			Command  string `json:"command"`
+		}
+		if err := decodeJSON(r, &body); err != nil {
+			WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "Invalid JSON"})
+			return
+		}
+		if err := panels.HestiaAddCronJob(*cfg, domain, body.Schedule, body.Command); err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
+	case http.MethodDelete:
+		var body struct {
+			ID string `json:"id"`
+		}
+		if err := decodeJSON(r, &body); err != nil {
+			WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "Invalid JSON"})
+			return
+		}
+		if err := panels.HestiaDeleteCronJob(*cfg, domain, strings.TrimSpace(body.ID)); err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
+	default:
+		methodNotAllowed(w)
+	}
+}
+
+func (h *Handler) panelDomainFtpRoute(w http.ResponseWriter, r *http.Request) {
+	domain := strings.TrimSpace(r.PathValue("domain"))
+	cfg, ok := h.requireHestiaLink(w)
+	if !ok {
+		return
+	}
+	switch r.Method {
+	case http.MethodGet:
+		accounts, err := panels.HestiaListFtpAccounts(*cfg, domain)
+		if err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "accounts": accounts})
+	case http.MethodPost:
+		var body struct {
+			User string `json:"user"`
+			Pass string `json:"pass"`
+		}
+		if err := decodeJSON(r, &body); err != nil {
+			WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "Invalid JSON"})
+			return
+		}
+		if err := panels.HestiaAddFtpAccount(*cfg, domain, body.User, body.Pass); err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
+	case http.MethodPatch:
+		var body struct {
+			User string `json:"user"`
+			Pass string `json:"pass"`
+		}
+		if err := decodeJSON(r, &body); err != nil {
+			WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "Invalid JSON"})
+			return
+		}
+		if err := panels.HestiaChangeFtpPassword(*cfg, domain, body.User, body.Pass); err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
+	case http.MethodDelete:
+		var body struct {
+			User string `json:"user"`
+		}
+		if err := decodeJSON(r, &body); err != nil {
+			WriteJSON(w, http.StatusUnprocessableEntity, map[string]any{"ok": false, "error": "Invalid JSON"})
+			return
+		}
+		if err := panels.HestiaDeleteFtpAccount(*cfg, domain, body.User); err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
+	default:
+		methodNotAllowed(w)
+	}
+}
+
+func (h *Handler) panelDomainBackupsRoute(w http.ResponseWriter, r *http.Request) {
+	domain := strings.TrimSpace(r.PathValue("domain"))
+	cfg, ok := h.requireHestiaLink(w)
+	if !ok {
+		return
+	}
+	switch r.Method {
+	case http.MethodGet:
+		payload, err := panels.HestiaListBackups(*cfg, domain)
+		if err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{
+			"ok":        true,
+			"scheduled": payload.Scheduled,
+			"canBackup": payload.CanBackup,
+			"native":    payload.Native,
+		})
+	case http.MethodPost:
+		file, err := panels.HestiaStartBackup(*cfg, domain)
+		if err != nil {
+			WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		result := map[string]any{}
+		if file != "" {
+			result["file"] = file
+		}
+		WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "result": result})
+	default:
+		methodNotAllowed(w)
+	}
+}
+
+func (h *Handler) panelDomainEnableRoute(w http.ResponseWriter, r *http.Request) {
+	h.panelDomainSuspendRoute(w, r, false)
+}
+
+func (h *Handler) panelDomainDisableRoute(w http.ResponseWriter, r *http.Request) {
+	h.panelDomainSuspendRoute(w, r, true)
+}
+
+func (h *Handler) panelDomainSuspendRoute(w http.ResponseWriter, r *http.Request, suspend bool) {
+	if r.Method != http.MethodPost {
+		methodNotAllowed(w)
+		return
+	}
+	domain := strings.TrimSpace(r.PathValue("domain"))
+	cfg, ok := h.requireHestiaLink(w)
+	if !ok {
+		return
+	}
+	action := "panel.domain.enable"
+	if suspend {
+		action = "panel.domain.disable"
+	}
+	if err := h.requireConfirm(r, action, domain); err != nil {
+		writeConfirmError(w, err)
+		return
+	}
+	var err error
+	if suspend {
+		err = panels.HestiaSuspendDomain(*cfg, domain)
+	} else {
+		err = panels.HestiaUnsuspendDomain(*cfg, domain)
+	}
+	if err != nil {
+		WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	h.audit.Record(action, domain, domain, clientIP(r), "ok")
+	WriteJSON(w, http.StatusOK, map[string]any{"ok": true})
+}
+
+func (h *Handler) panelDomainHealthRoute(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		methodNotAllowed(w)
+		return
+	}
+	domain := strings.TrimSpace(r.PathValue("domain"))
+	cfg, ok := h.requireHestiaLink(w)
+	if !ok {
+		return
+	}
+	report, err := panels.HestiaWebsiteHealth(*cfg, domain)
+	if err != nil {
+		WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "report": report})
+}
+
+func (h *Handler) panelDomainWebsiteLogsRoute(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		methodNotAllowed(w)
+		return
+	}
+	domain := strings.TrimSpace(r.PathValue("domain"))
+	logType := strings.TrimSpace(r.URL.Query().Get("type"))
+	if logType == "" {
+		logType = "access"
+	}
+	cfg, ok := h.requireHestiaLink(w)
+	if !ok {
+		return
+	}
+	text, err := panels.HestiaWebsiteLogs(*cfg, domain, logType)
+	if err != nil {
+		WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "log": text, "type": logType})
+}
+
+func (h *Handler) panelWidgetsSummaryRoute(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		methodNotAllowed(w)
+		return
+	}
+	cfg, ok := h.requireHestiaLink(w)
+	if !ok {
+		return
+	}
+	summary, err := panels.HestiaWidgetSummary(*cfg)
+	if err != nil {
+		WriteJSON(w, http.StatusBadGateway, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "summary": summary})
 }
 
 func (h *Handler) panelAppsRoute(w http.ResponseWriter, r *http.Request) {

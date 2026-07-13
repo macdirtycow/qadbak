@@ -15,7 +15,9 @@ struct PanelLinkView: View {
     @State private var secretKey = ""
     @State private var apiToken = ""
     @State private var useAccessKey = false
+    @State private var canAutoSetup = false
     @State private var isSaving = false
+    @State private var isAutoSettingUp = false
     @State private var errorMessage: String?
 
     var body: some View {
@@ -27,12 +29,37 @@ struct PanelLinkView: View {
                         .foregroundStyle(QadbakPalette.muted)
                 }
 
+                if panel == .hestiaCP, canAutoSetup {
+                    Section {
+                        Button {
+                            Task { await autoSetupAndLink() }
+                        } label: {
+                            HStack {
+                                Text("Set up automatically")
+                                Spacer()
+                                if isAutoSettingUp {
+                                    ProgressView().controlSize(.small)
+                                }
+                            }
+                        }
+                        .disabled(isAutoSettingUp || isSaving)
+                        Text("Creates a Hestia API key on this server, whitelists localhost, and links the panel.")
+                            .font(.caption)
+                            .foregroundStyle(QadbakPalette.muted)
+                    }
+                }
+
                 if showsBaseURL {
-                    Section("Panel URL (optional)") {
+                    Section("Panel URL") {
                         TextField(defaultBasePlaceholder, text: $baseURL)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
                             .keyboardType(.URL)
+                        if panel == .hestiaCP {
+                            Text("Leave empty to use \(defaultBasePlaceholder) on this server.")
+                                .font(.caption)
+                                .foregroundStyle(QadbakPalette.muted)
+                        }
                     }
                 }
 
@@ -54,9 +81,10 @@ struct PanelLinkView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Link") { Task { await save() } }
-                        .disabled(isSaving || !canSave)
+                        .disabled(isSaving || isAutoSettingUp || !canSave)
                 }
             }
+            .task { await loadSetupHints() }
             .preferredColorScheme(.dark)
         }
     }
@@ -66,7 +94,7 @@ struct PanelLinkView: View {
         switch panel {
         case .hestiaCP:
             Section("Hestia API") {
-                Toggle("Use access key", isOn: $useAccessKey)
+                Toggle("Use access key (recommended)", isOn: $useAccessKey)
                 if useAccessKey {
                     TextField("Access key", text: $accessKey)
                         .textInputAutocapitalization(.never)
@@ -105,7 +133,7 @@ struct PanelLinkView: View {
     private var helpText: String {
         switch panel {
         case .hestiaCP:
-            return "Credentials stay on your server inside the Qadbak agent. Manage domains, DNS, mail, databases, and SSL from the app."
+            return "Credentials stay on your server inside the Qadbak agent. Use automatic setup, or paste an existing Hestia access key."
         case .coolify:
             return "The agent calls the Coolify API on localhost. Deploy, start, and stop apps from the Apps tab."
         case .casaOS:
@@ -145,6 +173,73 @@ struct PanelLinkView: View {
         }
     }
 
+    private func loadSetupHints() async {
+        guard panel == .hestiaCP, server.isAgentManaged else { return }
+        guard let client = appState.makeAgentClient(for: server) else { return }
+        useAccessKey = true
+        if baseURL.isEmpty {
+            baseURL = defaultBasePlaceholder
+        }
+        do {
+            let res = try await client.hestiaSetup()
+            if let setup = res.hestiaSetup {
+                canAutoSetup = setup.canAutoSetup == true
+                if let url = setup.defaultBaseUrl, !url.isEmpty, baseURL == defaultBasePlaceholder {
+                    baseURL = url
+                }
+                if setup.recommendedAuth == "accessKey" {
+                    useAccessKey = true
+                }
+            }
+        } catch {
+            // Non-fatal; manual entry still works.
+        }
+    }
+
+    private func autoSetupAndLink() async {
+        isAutoSettingUp = true
+        errorMessage = nil
+        defer { isAutoSettingUp = false }
+
+        guard let client = appState.makeAgentClient(for: server) else {
+            errorMessage = "Agent session not available."
+            return
+        }
+
+        do {
+            let res = try await client.hestiaBootstrap(autoLink: true)
+            guard res.ok != false else {
+                errorMessage = res.error ?? "Automatic Hestia setup failed."
+                if let key = res.accessKey, let secret = res.secretKey {
+                    accessKey = key
+                    secretKey = secret
+                    useAccessKey = true
+                }
+                if let url = res.baseUrl, !url.isEmpty {
+                    baseURL = url
+                }
+                return
+            }
+            if res.linked == true {
+                await applyLinkedCapabilities(res.capabilities)
+                await onLinked()
+                dismiss()
+                return
+            }
+            if let key = res.accessKey, let secret = res.secretKey {
+                accessKey = key
+                secretKey = secret
+                useAccessKey = true
+            }
+            if let url = res.baseUrl, !url.isEmpty {
+                baseURL = url
+            }
+            await save()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     private func save() async {
         isSaving = true
         errorMessage = nil
@@ -171,17 +266,27 @@ struct PanelLinkView: View {
                 errorMessage = res.error ?? "Could not link panel."
                 return
             }
-            if let caps = res.capabilities?.toServerCapabilities() {
-                var updated = server
-                updated.capabilities = caps
-                appState.updateServerProfileIfExists(updated)
-            } else {
-                await appState.refreshActiveServerCapabilities()
-            }
+            await applyLinkedCapabilities(res.capabilities)
             await onLinked()
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    private func applyLinkedCapabilities(_ caps: AgentCapabilitiesPayload?) async {
+        if let caps {
+            var updated = server
+            updated.capabilities = caps.toServerCapabilities()
+            if panel == .hestiaCP {
+                updated.serverKind = .hestiaCP
+            }
+            appState.updateServerProfileIfExists(updated)
+            if appState.activeServerId == server.id {
+                await appState.refreshActiveServerCapabilities()
+            }
+        } else {
+            await appState.refreshActiveServerCapabilities()
         }
     }
 }

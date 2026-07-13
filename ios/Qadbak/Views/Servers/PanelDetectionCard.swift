@@ -72,7 +72,7 @@ struct PanelDetectionCard: View {
                         .font(.caption.weight(.semibold))
                 }
             } else {
-                Text("Link \(kind.displayName) with an API token or admin login. Domains, mail, and apps unlock in the app after linking.")
+                Text("Link \(kind.displayName) with one tap (Hestia) or paste API credentials. Domains, mail, and apps unlock after linking.")
                     .font(.caption)
                     .foregroundStyle(QadbakPalette.muted)
                 Button("Link \(kind.displayName)") { showLinkSheet = true }

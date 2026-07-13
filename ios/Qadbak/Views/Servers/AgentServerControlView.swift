@@ -4,6 +4,9 @@ struct AgentServerControlView: View {
     @Environment(AppState.self) private var appState
 
     @State private var updates: PackageUpdateInfo?
+    @State private var upgradeManifest: AgentReleaseManifest?
+    @State private var agentVersion: String?
+    @State private var showAgentUpgrade = false
     @State private var isLoading = false
     @State private var isBusy = false
     @State private var errorMessage: String?
@@ -22,6 +25,7 @@ struct AgentServerControlView: View {
                     if let errorMessage { ErrorBanner(message: errorMessage) }
                     if let successMessage { SuccessBanner(message: successMessage) }
 
+                    agentUpgradeCard
                     updatesCard
                     powerCard
                 }
@@ -32,6 +36,21 @@ struct AgentServerControlView: View {
         .navigationTitle("Control")
         .navigationBarTitleDisplayMode(.inline)
         .task { await reload() }
+        .sheet(isPresented: $showAgentUpgrade) {
+            if let server = appState.activeServer,
+               let manifest = upgradeManifest,
+               let current = agentVersion,
+               let client = (appState.activeProvider as? QadbakAgentProvider)?.apiClient {
+                AgentUpgradeView(
+                    server: server,
+                    manifest: manifest,
+                    currentVersion: current,
+                    client: client
+                ) {
+                    Task { await reload() }
+                }
+            }
+        }
         .confirmationDialog(
             pendingPowerAction?.title ?? "Confirm",
             isPresented: Binding(
@@ -48,6 +67,29 @@ struct AgentServerControlView: View {
             Text(pendingPowerAction?.message ?? "")
         }
         .preferredColorScheme(.dark)
+    }
+
+    private var agentUpgradeCard: some View {
+        Group {
+            if let manifest = upgradeManifest,
+               let current = agentVersion,
+               AgentCompatibility.isAtLeast(manifest.version, required: current),
+               manifest.version != current {
+                QBGlassCard {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Label("Qadbak agent", systemImage: "app.connected.to.app.below.fill")
+                            .font(.headline)
+                            .foregroundStyle(QadbakPalette.text)
+                        Text("Installed \(current) · App bundle has \(manifest.version)")
+                            .font(.caption)
+                            .foregroundStyle(QadbakPalette.muted)
+                        Button("Upgrade agent") { showAgentUpgrade = true }
+                            .buttonStyle(.borderedProminent)
+                            .tint(QadbakPalette.accent)
+                    }
+                }
+            }
+        }
     }
 
     private var updatesCard: some View {
@@ -124,6 +166,10 @@ struct AgentServerControlView: View {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
+        upgradeManifest = try? AgentInstallService.loadManifest()
+        if let overview = try? await provider.fetchOverview() {
+            agentVersion = overview.agentVersion
+        }
         do {
             updates = try await provider.fetchUpdates()
         } catch {

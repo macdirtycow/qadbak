@@ -12,10 +12,7 @@ import (
 func defaultCoolifyBase() string { return "http://127.0.0.1:8000" }
 
 func fetchCoolifyOverview(cfg LinkConfig) (Overview, error) {
-	base := strings.TrimSpace(cfg.BaseURL)
-	if base == "" {
-		base = defaultCoolifyBase()
-	}
+	base := ResolvePanelBaseURL(cfg.BaseURL, defaultCoolifyBase)
 	token := strings.TrimSpace(cfg.Secrets["apiToken"])
 	if token == "" {
 		return Overview{}, fmt.Errorf("coolify apiToken required")
@@ -70,8 +67,15 @@ func coolifyGET(baseURL, token, path string) ([]byte, error) {
 }
 
 func coolifyRequest(baseURL, token, method, path string, body []byte) ([]byte, error) {
+	base, err := ValidatePanelBaseURL(baseURL)
+	if err != nil {
+		return nil, err
+	}
+	if !strings.HasPrefix(path, "/") {
+		return nil, fmt.Errorf("invalid coolify path")
+	}
 	client := &http.Client{Timeout: 30 * time.Second}
-	endpoint := strings.TrimRight(baseURL, "/") + path
+	endpoint := strings.TrimRight(base, "/") + path
 	var reader io.Reader
 	if body != nil {
 		reader = strings.NewReader(string(body))

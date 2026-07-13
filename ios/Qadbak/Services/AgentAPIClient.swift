@@ -1,57 +1,6 @@
 import CryptoKit
 import Foundation
 
-/// Retained URLSession delegate for self-signed Qadbak agent TLS (Tailscale / LAN IPs).
-final class AgentURLSessionDelegate: NSObject, URLSessionDelegate, URLSessionTaskDelegate, @unchecked Sendable {
-    private let pinnedFingerprint: String?
-
-    init(pinnedFingerprint: String?) {
-        self.pinnedFingerprint = pinnedFingerprint?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-        super.init()
-    }
-
-    @objc
-    func urlSession(
-        _ session: URLSession,
-        task: URLSessionTask,
-        didReceive challenge: URLAuthenticationChallenge,
-        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
-    ) {
-        handle(challenge, completionHandler: completionHandler)
-    }
-
-    @objc
-    func urlSession(
-        _ session: URLSession,
-        didReceive challenge: URLAuthenticationChallenge,
-        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
-    ) {
-        handle(challenge, completionHandler: completionHandler)
-    }
-
-    private func handle(
-        _ challenge: URLAuthenticationChallenge,
-        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
-    ) {
-        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
-              let trust = challenge.protectionSpace.serverTrust else {
-            completionHandler(.performDefaultHandling, nil)
-            return
-        }
-
-        if let pinnedFingerprint, !pinnedFingerprint.isEmpty {
-            guard let fp = ServerTrustFingerprint.sha256(trust), fp == pinnedFingerprint else {
-                completionHandler(.cancelAuthenticationChallenge, nil)
-                return
-            }
-        }
-
-        completionHandler(.useCredential, URLCredential(trust: trust))
-    }
-}
-
 enum ServerTrustFingerprint {
     static func sha256(_ trust: SecTrust) -> String? {
         guard let chain = SecTrustCopyCertificateChain(trust) as? [SecCertificate],
@@ -69,8 +18,6 @@ final class AgentAPIClient: @unchecked Sendable {
     private var accessToken: String?
     private let refreshTokenProvider: () -> String?
     private let onTokensRefreshed: (String, String) -> Void
-    private let tlsDelegate: AgentURLSessionDelegate
-    private let session: URLSession
 
     init(
         baseURL: URL,
@@ -86,19 +33,6 @@ final class AgentAPIClient: @unchecked Sendable {
         self.accessToken = accessToken
         self.refreshTokenProvider = refreshTokenProvider
         self.onTokensRefreshed = onTokensRefreshed
-        self.tlsDelegate = AgentURLSessionDelegate(pinnedFingerprint: self.pinnedFingerprint)
-        let queue = OperationQueue()
-        queue.maxConcurrentOperationCount = 1
-        queue.name = "com.qadbak.agent-api-client"
-        let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 90
-        config.timeoutIntervalForResource = 180
-        config.waitsForConnectivity = true
-        self.session = URLSession(configuration: config, delegate: tlsDelegate, delegateQueue: queue)
-    }
-
-    deinit {
-        session.invalidateAndCancel()
     }
 
     func setAccessToken(_ token: String?) {
@@ -220,6 +154,22 @@ final class AgentAPIClient: @unchecked Sendable {
         try await request("GET", path: "/api/v1/panels/link")
     }
 
+    func hestiaSetup() async throws -> AgentPanelLinkStatusResponse {
+        try await request("GET", path: "/api/v1/panels/hestia/setup")
+    }
+
+    func hestiaBootstrap(autoLink: Bool = true) async throws -> AgentHestiaBootstrapResponse {
+        struct Body: Encodable {
+            let autoLink: Bool
+        }
+        return try await request(
+            "POST",
+            path: "/api/v1/panels/hestia/bootstrap",
+            body: Body(autoLink: autoLink),
+            authorized: true
+        )
+    }
+
     func linkPanel(_ body: PanelLinkRequest) async throws -> AgentPanelLinkStatusResponse {
         try await request("POST", path: "/api/v1/panels/link", body: body)
     }
@@ -274,87 +224,124 @@ final class AgentAPIClient: @unchecked Sendable {
         authorized: Bool,
         retried: Bool
     ) async throws -> Data {
+        var bodyData: Data?
+        if let body {
+            bodyData = try JSONEncoder().encode(AnyEncodableAgent(body))
+        }
+        return try await requestRawData(
+            method,
+            path: path,
+            body: bodyData,
+            extraHeaders: [:],
+            confirmToken: confirmToken,
+            authorized: authorized,
+            retried: retried,
+            timeout: 90
+        )
+    }
+
+    func requestRawData(
+        _ method: String,
+        path: String,
+        body: Data?,
+        extraHeaders: [String: String],
+        confirmToken: String?,
+        authorized: Bool,
+        retried: Bool,
+        timeout: TimeInterval = 90
+    ) async throws -> Data {
         let url = try resolveURL(path)
-        var req = URLRequest(url: url)
-        req.httpMethod = method
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.setValue("application/json", forHTTPHeaderField: "Accept")
-        req.setValue("Qadbak-iOS/1.0", forHTTPHeaderField: "User-Agent")
+        var headers: [String: String] = extraHeaders
         if authorized, let token = accessToken {
-            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            headers["Authorization"] = "Bearer \(token)"
         }
         if let confirmToken, !confirmToken.isEmpty {
-            req.setValue(confirmToken, forHTTPHeaderField: "X-Qadbak-Confirm")
-        }
-        if let body {
-            req.httpBody = try JSONEncoder().encode(AnyEncodableAgent(body))
+            headers["X-Qadbak-Confirm"] = confirmToken
         }
 
-        let (data, response) = try await performRequest(req)
+        let response = try await AgentHTTPSClient.request(
+            method: method,
+            url: url,
+            headers: headers,
+            body: body,
+            pinnedFingerprint: pinnedFingerprint,
+            timeout: timeout
+        )
 
-        guard let http = response as? HTTPURLResponse else {
-            throw APIError.message("No response from agent.")
-        }
-
-        if http.statusCode == 401, authorized, !retried {
+        if response.statusCode == 401, authorized, !retried {
             _ = try await rotate()
-            return try await requestData(
+            return try await requestRawData(
                 method,
                 path: path,
                 body: body,
+                extraHeaders: extraHeaders,
                 confirmToken: confirmToken,
                 authorized: authorized,
-                retried: true
+                retried: true,
+                timeout: timeout
             )
         }
 
-        guard (200 ... 299).contains(http.statusCode) else {
-            let message = (try? JSONDecoder().decode(AgentErrorResponse.self, from: data)).flatMap(\.error)
-            throw APIError.http(http.statusCode, message)
+        guard (200 ... 299).contains(response.statusCode) else {
+            let message = (try? JSONDecoder().decode(AgentErrorResponse.self, from: response.body)).flatMap(\.error)
+            throw APIError.http(response.statusCode, message)
         }
-        return data
+        return response.body
     }
 
-    private func performRequest(_ request: URLRequest) async throws -> (Data, URLResponse) {
-        try await withCheckedThrowingContinuation { continuation in
-            let task = session.dataTask(with: request) { data, response, error in
-                if let error {
-                    if let urlError = error as? URLError,
-                       urlError.code == .secureConnectionFailed
-                        || urlError.code == .serverCertificateUntrusted
-                        || urlError.code == .clientCertificateRejected
-                        || urlError.code == .cannotConnectToHost
-                        || urlError.code == .timedOut {
-                        continuation.resume(throwing: APIError.message(Self.userFacingNetworkError(urlError)))
-                    } else {
-                        continuation.resume(throwing: error)
-                    }
-                    return
-                }
-                guard let data, let response else {
-                    continuation.resume(throwing: APIError.message("No response from agent."))
-                    return
-                }
-                continuation.resume(returning: (data, response))
-            }
-            task.resume()
+    func uploadMultipart(
+        path: String,
+        fields: [String: String],
+        files: [(fieldName: String, fileName: String, mimeType: String, data: Data)],
+        authorized: Bool = true,
+        retried: Bool = false
+    ) async throws -> Data {
+        let boundary = "QadbakAgentBoundary-\(UUID().uuidString)"
+        var body = Data()
+        for (key, value) in fields {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(value)\r\n".data(using: .utf8)!)
         }
+        for file in files {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append(
+                "Content-Disposition: form-data; name=\"\(file.fieldName)\"; filename=\"\(file.fileName)\"\r\n"
+                    .data(using: .utf8)!
+            )
+            body.append("Content-Type: \(file.mimeType)\r\n\r\n".data(using: .utf8)!)
+            body.append(file.data)
+            body.append("\r\n".data(using: .utf8)!)
+        }
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        return try await requestRawData(
+            "POST",
+            path: path,
+            body: body,
+            extraHeaders: ["Content-Type": "multipart/form-data; boundary=\(boundary)"],
+            confirmToken: nil,
+            authorized: authorized,
+            retried: retried,
+            timeout: 300
+        )
     }
 
-    private static func userFacingNetworkError(_ error: URLError) -> String {
-        switch error.code {
-        case .secureConnectionFailed, .serverCertificateUntrusted, .clientCertificateRejected:
-            return """
-            Could not verify the agent TLS certificate (\(error.code.rawValue)). \
-            Install Qadbak build 9+ from Desktop, keep Tailscale enabled, and allow Local Network access for Qadbak in iOS Settings.
-            """
-        case .cannotConnectToHost, .networkConnectionLost:
-            return "Could not reach the agent at the given host. Turn on Tailscale on this iPhone and use the Tailscale IP (100.x), not the SSH IP."
-        case .timedOut:
-            return "Agent connection timed out. Confirm Tailscale is connected on this iPhone."
-        default:
-            return "Agent connection failed (\(error.code.rawValue)): \(error.localizedDescription)"
-        }
+    func upgradeAgent(binary: Data, version: String, sha256: String) async throws {
+        let token = try await requestConfirm(action: "agent.upgrade", target: version)
+        _ = try await requestRawData(
+            "POST",
+            path: "/api/v1/agent/upgrade",
+            body: binary,
+            extraHeaders: [
+                "Content-Type": "application/octet-stream",
+                "X-Agent-Version": version,
+                "X-Agent-SHA256": sha256.lowercased(),
+            ],
+            confirmToken: token,
+            authorized: true,
+            retried: false,
+            timeout: 300
+        )
     }
 
     private func resolveURL(_ path: String) throws -> URL {
