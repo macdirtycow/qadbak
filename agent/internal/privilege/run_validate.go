@@ -13,15 +13,17 @@ import (
 )
 
 var allowedRootBinaries = map[string]bool{
-	"systemctl":        true,
-	"docker":           true,
-	"apt-get":          true,
-	"env":              true,
-	"/usr/bin/tail":    true,
-	"/usr/bin/install": true,
-	"/usr/bin/chown":   true,
-	"/usr/bin/chmod":   true,
-	"/usr/bin/ln":      true,
+	"systemctl":                            true,
+	"docker":                               true,
+	"apt-get":                              true,
+	"env":                                  true,
+	"/usr/bin/tail":                        true,
+	"/usr/bin/install":                     true,
+	"/usr/bin/chown":                       true,
+	"/usr/bin/chmod":                       true,
+	"/usr/bin/ln":                          true,
+	"/usr/local/hestia/bin/v-add-sys-api-ip": true,
+	"/usr/local/hestia/bin/v-add-access-key": true,
 }
 
 var allowedPrivActions = map[string]bool{

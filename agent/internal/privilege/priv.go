@@ -57,7 +57,7 @@ func privHestiaCmd(args []string) error {
 		if ip != "127.0.0.1" && ip != "::1" {
 			return fmt.Errorf("invalid hestia api ip")
 		}
-		_, err := Run([]string{hestiaBin + "/v-add-sys-api-ip", ip})
+		_, err := execRootArgv([]string{hestiaBin + "/v-add-sys-api-ip", ip})
 		if err != nil {
 			msg := strings.ToLower(err.Error())
 			if strings.Contains(msg, "exists") || strings.Contains(msg, "already") {
@@ -74,7 +74,11 @@ func privHestiaCmd(args []string) error {
 		if comment == "" || strings.ContainsAny(comment, "'\"\\") {
 			return fmt.Errorf("invalid hestia access key comment")
 		}
-		_, err := Run([]string{hestiaBin + "/v-add-access-key", "admin", "*", comment, "json"})
+		rootUser, err := hestiaRootUser()
+		if err != nil {
+			return err
+		}
+		_, err = execRootArgv([]string{hestiaBin + "/v-add-access-key", rootUser, "*", comment, "json"})
 		return err
 	default:
 		return fmt.Errorf("unknown hestia action")

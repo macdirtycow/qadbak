@@ -499,7 +499,6 @@ struct SSHSessionService {
           "ExecStart=${INSTALL_DIR}/qadbak-agent -listen ${AGENT_LISTEN} -data-dir ${DATA_DIR}" \\
           'Restart=on-failure' \\
           'RestartSec=3' \\
-          'NoNewPrivileges=true' \\
           'ProtectSystem=strict' \\
           'ProtectHome=true' \\
           "ReadWritePaths=${DATA_DIR} ${CONFIG_DIR}" \\
