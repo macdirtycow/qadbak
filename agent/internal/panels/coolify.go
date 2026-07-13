@@ -12,17 +12,20 @@ import (
 func defaultCoolifyBase() string { return "http://127.0.0.1:8000" }
 
 func fetchCoolifyOverview(cfg LinkConfig) (Overview, error) {
-	base := ResolvePanelBaseURL(cfg.BaseURL, defaultCoolifyBase)
+	endpoint, err := ResolveLoopbackEndpoint(cfg.BaseURL, "http", 8000)
+	if err != nil {
+		return Overview{}, err
+	}
 	token := strings.TrimSpace(cfg.Secrets["apiToken"])
 	if token == "" {
 		return Overview{}, fmt.Errorf("coolify apiToken required")
 	}
 
-	appsRaw, err := coolifyGET(base, token, "/api/v1/applications")
+	appsRaw, err := coolifyGET(endpoint, token, "/api/v1/applications")
 	if err != nil {
 		return Overview{}, err
 	}
-	projectsRaw, _ := coolifyGET(base, token, "/api/v1/projects")
+	projectsRaw, _ := coolifyGET(endpoint, token, "/api/v1/projects")
 
 	overview := Overview{
 		Panel: "coolify",
@@ -62,25 +65,21 @@ func fetchCoolifyOverview(cfg LinkConfig) (Overview, error) {
 	return overview, nil
 }
 
-func coolifyGET(baseURL, token, path string) ([]byte, error) {
-	return coolifyRequest(baseURL, token, http.MethodGet, path, nil)
+func coolifyGET(endpoint LoopbackEndpoint, token, path string) ([]byte, error) {
+	return coolifyRequest(endpoint, token, http.MethodGet, path, nil)
 }
 
-func coolifyRequest(baseURL, token, method, path string, body []byte) ([]byte, error) {
-	base, err := ParseLoopbackPanelURL(baseURL)
-	if err != nil {
-		return nil, err
+func coolifyRequest(endpoint LoopbackEndpoint, token, method, path string, body []byte) ([]byte, error) {
+	if !strings.HasPrefix(path, "/") || strings.Contains(path, "..") {
+		return nil, fmt.Errorf("invalid coolify path")
 	}
-	endpoint, err := JoinPanelPath(base, path)
-	if err != nil {
-		return nil, err
-	}
+	url := endpoint.URL(path)
 	client := &http.Client{Timeout: 30 * time.Second}
 	var reader io.Reader
 	if body != nil {
 		reader = strings.NewReader(string(body))
 	}
-	req, err := http.NewRequest(method, endpoint, reader)
+	req, err := http.NewRequest(method, url, reader)
 	if err != nil {
 		return nil, err
 	}

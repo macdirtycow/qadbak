@@ -28,13 +28,13 @@ type hestiaAuth struct {
 }
 
 type hestiaClient struct {
-	apiBase *url.URL
-	auth    hestiaAuth
-	client  *http.Client
+	endpoint LoopbackEndpoint
+	auth     hestiaAuth
+	client   *http.Client
 }
 
 func newHestiaClient(cfg LinkConfig) (*hestiaClient, error) {
-	apiBase, err := ResolvePanelBase(cfg.BaseURL, defaultHestiaBase)
+	endpoint, err := ResolveLoopbackEndpoint(cfg.BaseURL, "https", 8083)
 	if err != nil {
 		return nil, err
 	}
@@ -55,15 +55,15 @@ func newHestiaClient(cfg LinkConfig) (*hestiaClient, error) {
 	}
 
 	return &hestiaClient{
-		apiBase: apiBase,
-		auth:    auth,
-		client:  hestiaHTTPClient(apiBase),
+		endpoint: endpoint,
+		auth:     auth,
+		client:   hestiaHTTPClient(endpoint),
 	}, nil
 }
 
-func hestiaHTTPClient(apiBase *url.URL) *http.Client {
+func hestiaHTTPClient(endpoint LoopbackEndpoint) *http.Client {
 	transport := &http.Transport{}
-	if apiBase != nil && apiBase.Scheme == "https" {
+	if endpoint.scheme == "https" {
 		transport.TLSClientConfig = &tls.Config{
 			InsecureSkipVerify: true, //nolint:gosec // loopback-only panel URL validated in ResolvePanelBaseURL
 			MinVersion:         tls.VersionTLS12,
@@ -95,10 +95,7 @@ func (c *hestiaClient) exec(cmd string, args ...string) ([]byte, error) {
 		form.Set("password", c.auth.password)
 	}
 
-	endpoint, err := JoinPanelPath(c.apiBase, "/api/")
-	if err != nil {
-		return nil, err
-	}
+	endpoint := c.endpoint.URL("/api/")
 	req, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(form.Encode()))
 	if err != nil {
 		return nil, err
@@ -157,10 +154,10 @@ func parseHestiaResponse(res *http.Response, body []byte) ([]byte, error) {
 
 // testHestiaClient wires a client to an httptest server (tests only).
 func testHestiaClient(server *httptest.Server, auth hestiaAuth) *hestiaClient {
-	u, _ := url.Parse(server.URL)
+	ep, _ := ResolveLoopbackEndpoint(server.URL, "http", 80)
 	return &hestiaClient{
-		apiBase: u,
-		auth:    auth,
-		client:  server.Client(),
+		endpoint: ep,
+		auth:     auth,
+		client:   server.Client(),
 	}
 }

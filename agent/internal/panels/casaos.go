@@ -13,7 +13,10 @@ import (
 func defaultCasaOSBase() string { return "http://127.0.0.1" }
 
 func fetchCasaOSOverview(cfg LinkConfig) (Overview, error) {
-	base := ResolvePanelBaseURL(cfg.BaseURL, defaultCasaOSBase)
+	endpoint, err := ResolveLoopbackEndpoint(cfg.BaseURL, "http", 80)
+	if err != nil {
+		return Overview{}, err
+	}
 
 	token := strings.TrimSpace(cfg.Secrets["apiToken"])
 	if token == "" {
@@ -23,17 +26,17 @@ func fetchCasaOSOverview(cfg LinkConfig) (Overview, error) {
 			return Overview{}, fmt.Errorf("casaOS apiToken or username/password required")
 		}
 		var err error
-		token, err = casaOSLogin(base, user, pass)
+		token, err = casaOSLogin(endpoint, user, pass)
 		if err != nil {
 			return Overview{}, err
 		}
 	}
 
-	appsRaw, err := casaOSGET(base, token, "/v2/app/my")
+	appsRaw, err := casaOSGET(endpoint, token, "/v2/app/my")
 	if err != nil {
 		return Overview{}, err
 	}
-	sysRaw, _ := casaOSGET(base, token, "/v1/sys/info")
+	sysRaw, _ := casaOSGET(endpoint, token, "/v1/sys/info")
 
 	overview := Overview{
 		Panel: "casaOS",
@@ -78,21 +81,14 @@ func fetchCasaOSOverview(cfg LinkConfig) (Overview, error) {
 	return overview, nil
 }
 
-func casaOSLogin(baseURL, username, password string) (string, error) {
-	base, err := ParseLoopbackPanelURL(baseURL)
-	if err != nil {
-		return "", err
-	}
-	endpoint, err := JoinPanelPath(base, "/v2/users/login")
-	if err != nil {
-		return "", err
-	}
+func casaOSLogin(endpoint LoopbackEndpoint, username, password string) (string, error) {
 	payload, _ := json.Marshal(map[string]string{
 		"username": username,
 		"password": password,
 	})
 	client := &http.Client{Timeout: 20 * time.Second}
-	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(payload))
+	url := endpoint.URL("/v2/users/login")
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(payload))
 	if err != nil {
 		return "", err
 	}
@@ -124,17 +120,13 @@ func casaOSLogin(baseURL, username, password string) (string, error) {
 	return envelope.Data.Token, nil
 }
 
-func casaOSGET(baseURL, token, path string) ([]byte, error) {
-	base, err := ParseLoopbackPanelURL(baseURL)
-	if err != nil {
-		return nil, err
-	}
-	endpoint, err := JoinPanelPath(base, path)
-	if err != nil {
-		return nil, err
+func casaOSGET(endpoint LoopbackEndpoint, token, path string) ([]byte, error) {
+	if !strings.HasPrefix(path, "/") || strings.Contains(path, "..") {
+		return nil, fmt.Errorf("invalid casaos path")
 	}
 	client := &http.Client{Timeout: 20 * time.Second}
-	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
+	url := endpoint.URL(path)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}

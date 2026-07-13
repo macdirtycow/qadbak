@@ -17,12 +17,15 @@ type PanelApp struct {
 }
 
 func CoolifyListApps(cfg LinkConfig) ([]PanelApp, error) {
-	base := ResolvePanelBaseURL(cfg.BaseURL, defaultCoolifyBase)
+	endpoint, err := ResolveLoopbackEndpoint(cfg.BaseURL, "http", 8000)
+	if err != nil {
+		return nil, err
+	}
 	token := strings.TrimSpace(cfg.Secrets["apiToken"])
 	if token == "" {
 		return nil, fmt.Errorf("coolify apiToken required")
 	}
-	raw, err := coolifyGET(base, token, "/api/v1/applications")
+	raw, err := coolifyGET(endpoint, token, "/api/v1/applications")
 	if err != nil {
 		return nil, err
 	}
@@ -56,12 +59,15 @@ func CoolifyStopApp(cfg LinkConfig, id string) error {
 }
 
 func coolifyPOST(cfg LinkConfig, path string, body []byte) error {
-	base := ResolvePanelBaseURL(cfg.BaseURL, defaultCoolifyBase)
+	endpoint, err := ResolveLoopbackEndpoint(cfg.BaseURL, "http", 8000)
+	if err != nil {
+		return err
+	}
 	token := strings.TrimSpace(cfg.Secrets["apiToken"])
 	if token == "" {
 		return fmt.Errorf("coolify apiToken required")
 	}
-	_, err := coolifyRequest(base, token, http.MethodPost, path, body)
+	_, err = coolifyRequest(endpoint, token, http.MethodPost, path, body)
 	return err
 }
 
