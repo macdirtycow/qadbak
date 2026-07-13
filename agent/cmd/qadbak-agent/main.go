@@ -20,7 +20,7 @@ import (
 	"github.com/macdirtycow/qadbak/agent/internal/tlsutil"
 )
 
-const version = "0.6.20"
+const version = "0.6.21"
 
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "priv" {

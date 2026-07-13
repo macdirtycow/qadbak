@@ -88,7 +88,7 @@ func casaOSLogin(endpoint LoopbackEndpoint, username, password string) (string, 
 		"password": password,
 	})
 	client := httploopback.Client(endpoint.scheme, endpoint.port)
-	req, err := http.NewRequest(http.MethodPost, httploopback.RequestURL("/v2/users/login"), bytes.NewReader(payload))
+	req, err := http.NewRequest(http.MethodPost, httploopback.RequestURL(endpoint.scheme, endpoint.port, "/v2/users/login"), bytes.NewReader(payload))
 	if err != nil {
 		return "", err
 	}
@@ -125,7 +125,7 @@ func casaOSGET(endpoint LoopbackEndpoint, token, path string) ([]byte, error) {
 		return nil, fmt.Errorf("invalid casaos path")
 	}
 	client := httploopback.Client(endpoint.scheme, endpoint.port)
-	req, err := http.NewRequest(http.MethodGet, httploopback.RequestURL(path), nil)
+	req, err := http.NewRequest(http.MethodGet, httploopback.RequestURL(endpoint.scheme, endpoint.port, path), nil)
 	if err != nil {
 		return nil, err
 	}

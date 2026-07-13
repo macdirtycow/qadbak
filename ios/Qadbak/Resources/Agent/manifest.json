@@ -1,14 +1,14 @@
 {
-  "version": "0.6.20",
+  "version": "0.6.21",
   "minAppVersion": "1.2.0",
-  "minAgentVersion": "0.6.20",
+  "minAgentVersion": "0.6.21",
   "binaries": {
     "linux-amd64": {
-      "sha256": "f11d7782d690492fbed9df28afce0792ee9510dd14c5bd7c63b32419dfbf3790",
+      "sha256": "4be05afb356d340516a5ac9c6fdb8566ca7a644c5dabb109e30bc87828786d42",
       "file": "qadbak-agent-linux-amd64"
     },
     "linux-arm64": {
-      "sha256": "aba532d87329d3c560c88dc785a244709a5f591caf8199c0660d9b23923439c5",
+      "sha256": "f4f3c1541d5bfd8aa96ec1672473ac136365d95bedc1cea9ab6d9fa865b708e5",
       "file": "qadbak-agent-linux-arm64"
     }
   }

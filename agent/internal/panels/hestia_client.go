@@ -81,7 +81,7 @@ func (c *hestiaClient) exec(cmd string, args ...string) ([]byte, error) {
 		form.Set("password", c.auth.password)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, httploopback.RequestURL("/api/"), strings.NewReader(form.Encode()))
+	req, err := http.NewRequest(http.MethodPost, httploopback.RequestURL(c.endpoint.scheme, c.endpoint.port, "/api/"), strings.NewReader(form.Encode()))
 	if err != nil {
 		return nil, err
 	}

@@ -79,7 +79,7 @@ func coolifyRequest(endpoint LoopbackEndpoint, token, method, path string, body 
 	if body != nil {
 		reader = strings.NewReader(string(body))
 	}
-	req, err := http.NewRequest(method, httploopback.RequestURL(path), reader)
+	req, err := http.NewRequest(method, httploopback.RequestURL(endpoint.scheme, endpoint.port, path), reader)
 	if err != nil {
 		return nil, err
 	}

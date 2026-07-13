@@ -67,13 +67,19 @@ func ClientWithServerName(scheme string, port int, tlsServerName string) *http.C
 	}
 }
 
-// RequestURL builds a loopback request URL with a fixed host; the client dialer pins the port.
-func RequestURL(path string) string {
+// RequestURL builds a loopback request URL; the client dialer still pins 127.0.0.1:port.
+func RequestURL(scheme string, port int, path string) string {
+	if scheme != "http" && scheme != "https" {
+		scheme = "http"
+	}
+	if port < 1 || port > 65535 {
+		port = 80
+	}
 	if path == "" {
 		path = "/"
 	}
 	if path[0] != '/' {
 		path = "/" + path
 	}
-	return fmt.Sprintf("http://127.0.0.1%s", path)
+	return fmt.Sprintf("%s://127.0.0.1:%d%s", scheme, port, path)
 }
