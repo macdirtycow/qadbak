@@ -3,11 +3,11 @@ package privilege
 import "testing"
 
 func TestParseHestiaRootUser(t *testing.T) {
-	user, err := parseHestiaRootUser([]byte("FOO=bar\nROOT_USER='macdirtycow'\n"))
+	user, err := parseHestiaRootUser([]byte("FOO=bar\nROOT_USER='paneladmin'\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if user != "macdirtycow" {
+	if user != "paneladmin" {
 		t.Fatalf("got %q", user)
 	}
 

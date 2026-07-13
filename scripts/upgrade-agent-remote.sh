@@ -2,7 +2,7 @@
 # Upload bundled agent binary from this repo to a remote Linux server and install it.
 # Usage: ./scripts/upgrade-agent-remote.sh user@host [linux-amd64|linux-arm64]
 #
-# On HestiaCP VPS hosts, web users (e.g. macdirtycow) are often SFTP-only — use the
+# On HestiaCP VPS hosts, web users (e.g. siteowner) are often SFTP-only — use the
 # Hestia admin SSH user instead (usually admin@host), or run the printed install
 # command in your provider console / Hestia web terminal as root.
 set -euo pipefail
