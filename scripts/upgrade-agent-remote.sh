@@ -25,9 +25,9 @@ INSTALLER="$ROOT/agent/packaging/install.sh"
 [[ -f "$BIN" ]] || { echo "Missing $BIN — run: bash scripts/copy-agent-to-ios.sh" >&2; exit 1; }
 [[ -f "$INSTALLER" ]] || { echo "Missing $INSTALLER" >&2; exit 1; }
 
-REMOTE_BIN="/tmp/$BIN_NAME"
-echo "→ Uploading $BIN_NAME to $TARGET…"
-scp "$BIN" "$MANIFEST" "$INSTALLER" "$TARGET:/tmp/"
-echo "→ Installing (requires sudo on server)…"
-ssh -t "$TARGET" "sudo bash /tmp/install.sh '$REMOTE_BIN' /tmp/manifest.json && rm -f '$REMOTE_BIN' /tmp/manifest.json /tmp/install.sh"
-echo "✓ Agent upgraded on $TARGET"
+REMOTE_BIN="/tmp/${BIN_NAME}"
+echo "Uploading ${BIN_NAME} to ${TARGET}..."
+scp "$BIN" "$MANIFEST" "$INSTALLER" "${TARGET}:/tmp/"
+echo "Installing (requires sudo on server)..."
+ssh -t "$TARGET" "sudo bash /tmp/install.sh '${REMOTE_BIN}' /tmp/manifest.json && rm -f '${REMOTE_BIN}' /tmp/manifest.json /tmp/install.sh"
+echo "Agent upgraded on ${TARGET}"
