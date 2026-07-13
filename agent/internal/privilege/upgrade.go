@@ -2,7 +2,6 @@ package privilege
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/macdirtycow/qadbak/agent/internal/validate"
@@ -17,16 +16,9 @@ func privAgentUpgrade(args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("invalid agent-upgrade invocation")
 	}
-	binSrc, err := validate.UpgradeStagingPath(args[0])
+	binSrc, err := validate.UpgradeStagingBinary(args[0])
 	if err != nil {
 		return err
-	}
-	info, err := os.Stat(binSrc)
-	if err != nil {
-		return fmt.Errorf("staging binary missing")
-	}
-	if info.Size() < 1024 {
-		return fmt.Errorf("staging binary too small")
 	}
 	_ = RunSimple([]string{"systemctl", "stop", "qadbak-agent.service"})
 	if err := RunSimple([]string{"/usr/bin/install", "-d", "-m", "0750", agentInstallDir}); err != nil {

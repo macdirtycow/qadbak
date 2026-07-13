@@ -8,8 +8,7 @@ query-filters:
   - exclude:
       id: go/path-injection
       paths:
-        # Privileged root helpers: paths are validated via validate.HomeAbsPath,
-        # validate.BackupAbsPath, or validate.UpgradeStagingPath before any I/O.
-        - agent/internal/privilege/files.go
-        - agent/internal/privilege/backup.go
-        - agent/internal/privilege/upgrade.go
+        # Privileged root helpers: paths validated before I/O (see validate/home_path.go).
+        - agent/internal/privilege/
+        - agent/internal/validate/backup_io.go
+        - agent/internal/validate/upgrade_io.go
