@@ -199,5 +199,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image).*)"],
+  // Skip multipart upload routes so Next does not buffer the whole body in
+  // middleware (default 10MB truncate caused HTML 500 on zip uploads).
+  // Auth still runs in the route handlers via requireDomainApi / requireSession.
+  matcher: [
+    "/((?!_next/static|_next/image|.*\\/files\\/upload$|.*\\/backups\\/upload$).*)",
+  ],
 };

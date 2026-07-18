@@ -15,6 +15,7 @@ import { isIndependentMode } from "@/lib/provisioner/native-stub";
 import { runProvisioningHelper } from "@/lib/provisioner/native-exec";
 import { getMaxUploadBytes } from "@/lib/upload-limits-server";
 import { exceedsUploadLimit, formatUploadLimit } from "@/lib/upload-limits";
+import { asUploadFile, readUploadFormData } from "@/lib/upload-request";
 
 type Params = { params: Promise<{ domain: string }> };
 
@@ -47,9 +48,9 @@ export async function POST(request: Request, { params }: Params) {
 
     const maxBytes = await getMaxUploadBytes();
     const limitLabel = formatUploadLimit(maxBytes);
-    const form = await request.formData();
-    const file = form.get("file");
-    if (!(file instanceof File)) {
+    const form = await readUploadFormData(request);
+    const file = asUploadFile(form.get("file") ?? "");
+    if (!file) {
       return jsonError("No backup file received. Use form field \"file\".");
     }
     if (!file.name.toLowerCase().endsWith(".tar.gz")) {

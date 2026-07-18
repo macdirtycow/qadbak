@@ -12,12 +12,12 @@ import { isPanelFilesMode, normalizeDir, uploadDomainFile } from "@/lib/domain-f
 import {
   liveFilesEnabled,
   uploadDomainFileFromTempLive,
-  uploadDomainFileLive,
 } from "@/lib/domain-files-service";
 import { requireDomainApi } from "@/lib/domain-api";
 import { PanelError } from "@/lib/errors";
 import { getMaxUploadBytes } from "@/lib/upload-limits-server";
 import { exceedsUploadLimit, formatUploadLimit } from "@/lib/upload-limits";
+import { asUploadFile, readUploadFormData } from "@/lib/upload-request";
 
 type Params = { params: Promise<{ domain: string }> };
 
@@ -45,7 +45,7 @@ export async function POST(request: Request, { params }: Params) {
     const maxBytes = await getMaxUploadBytes();
     const limitLabel = formatUploadLimit(maxBytes);
 
-    const form = await request.formData();
+    const form = await readUploadFormData(request);
     const dir = String(form.get("dir") ?? "");
     const overwrite = form.get("overwrite") !== "false";
     const parentNorm = normalizeDir(dir);
@@ -54,21 +54,22 @@ export async function POST(request: Request, { params }: Params) {
 
     const uploaded: string[] = [];
     for (const item of files) {
-      if (!(item instanceof File)) continue;
+      const file = asUploadFile(item);
+      if (!file) continue;
 
-      const safe = item.name.replace(/[/\\]/g, "").trim();
+      const safe = file.name.replace(/[/\\]/g, "").trim();
       if (!safe) throw new PanelError("Invalid file name.");
       const rel = parentNorm ? `${parentNorm}/${safe}` : safe;
 
-      if (exceedsUploadLimit(item.size, maxBytes)) {
-        return jsonError(`File ${item.name} is larger than ${limitLabel}.`);
+      if (exceedsUploadLimit(file.size, maxBytes)) {
+        return jsonError(`File ${file.name} is larger than ${limitLabel}.`);
       }
 
       if (live) {
-        const { tempPath, size } = await streamFileToTemp(item);
+        const { tempPath, size } = await streamFileToTemp(file);
         tempPaths.push(tempPath);
         if (exceedsUploadLimit(size, maxBytes)) {
-          return jsonError(`File ${item.name} is larger than ${limitLabel}.`);
+          return jsonError(`File ${file.name} is larger than ${limitLabel}.`);
         }
         await uploadDomainFileFromTempLive(domain, rel, tempPath, maxBytes, session, {
           overwrite,
@@ -77,11 +78,11 @@ export async function POST(request: Request, { params }: Params) {
         tempPaths = tempPaths.filter((p) => p !== tempPath);
         await unlink(tempPath).catch(() => {});
       } else {
-        const bytes = new Uint8Array(await item.arrayBuffer());
+        const bytes = new Uint8Array(await file.arrayBuffer());
         if (exceedsUploadLimit(bytes.byteLength, maxBytes)) {
-          return jsonError(`File ${item.name} is larger than ${limitLabel}.`);
+          return jsonError(`File ${file.name} is larger than ${limitLabel}.`);
         }
-        uploadDomainFile(dir, item.name, bytes, { overwrite });
+        uploadDomainFile(dir, file.name, bytes, { overwrite });
       }
 
       uploaded.push(rel);

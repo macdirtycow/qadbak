@@ -38,7 +38,8 @@ server {
     listen [::]:80${DEFAULT_SERVER_KW};
     server_name ${PANEL_HOST};
 
-    client_max_body_size 100m;
+    # 0 = unlimited (panel enforces its own upload caps)
+    client_max_body_size 0;
 
     location / {
         proxy_pass http://127.0.0.1:${PORT};
